@@ -360,6 +360,10 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       Riesgo
     </div>
+    <div class="nav-item" onclick="showPage('mc-finanzas',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+      Cartera personal
+    </div>
     <div class="nav-item" onclick="showPage('ayuda',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       Ayuda
@@ -1165,6 +1169,74 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <button class="mc-btn" onclick="document.getElementById('mc-import-file').click()">↑ Elegir archivo .json</button>
     <input type="file" id="mc-import-file" accept="application/json,.json" style="display:none" onchange="mcImportTrade(this)">
     <div id="mc-import-msg" class="mc-note"></div>
+  </div>
+</div>
+
+<style>
+  .fin-hero{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px}
+  .fin-bal{display:flex;flex-direction:column}
+  .fin-bal-lbl{font-size:12px;color:var(--text2);font-weight:600}
+  .fin-bal-num{font-size:30px;font-weight:800;font-family:'Roboto Mono',monospace;color:var(--text);line-height:1.1}
+  .fin-hero-side{display:flex;gap:22px;flex-wrap:wrap;margin-left:auto}
+  .fin-mini-lbl{display:block;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px}
+  .fin-mini-num{font-size:16px;font-weight:700;font-family:'Roboto Mono',monospace}
+  .fin-mini-num.up{color:var(--green)} .fin-mini-num.down{color:var(--red)}
+  #fin-tipo-pills .pill.on[data-t="Gasto"]{background:var(--red2);color:var(--red);border-color:var(--red)}
+  #fin-tipo-pills .pill.on[data-t="Ingreso"]{background:var(--green2);color:var(--green);border-color:var(--green)}
+  .fin-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .fin-row .amt{margin-left:auto;font-family:'Roboto Mono',monospace;font-weight:700}
+  .fin-cat-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:14px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text2);font-weight:600}
+  .fin-bar{height:7px;border-radius:4px;background:var(--accent)}
+</style>
+<div id="page-mc-finanzas" class="page">
+  <div class="page-title">Cartera personal</div>
+  <div class="page-sub">Tu capital en el banco · ingresos y gastos del día a día (€)</div>
+  <div class="fin-hero">
+    <div class="fin-bal">
+      <span class="fin-bal-lbl">Saldo actual</span>
+      <span class="fin-bal-num" id="fin-bal-num">€0,00</span>
+    </div>
+    <div class="fin-hero-side">
+      <div><span class="fin-mini-lbl">Ingresos del mes</span><span class="fin-mini-num up" id="fin-m-in">€0,00</span></div>
+      <div><span class="fin-mini-lbl">Gastos del mes</span><span class="fin-mini-num down" id="fin-m-out">€0,00</span></div>
+      <div><span class="fin-mini-lbl">Neto del mes</span><span class="fin-mini-num" id="fin-m-net">€0,00</span></div>
+    </div>
+    <button class="mc-btn ghost sm" onclick="finSetSaldo()">⚙ Set saldo inicial</button>
+  </div>
+  <div class="mc-grid2" style="margin-top:14px">
+    <div class="mc-card">
+      <div class="mc-qt">Nuevo movimiento</div>
+      <label class="mc-fl">Fecha</label><input id="fin-fecha" class="mc-in" type="date">
+      <label class="mc-fl">Tipo</label>
+      <div id="fin-tipo-pills" style="display:flex;gap:8px">
+        <div class="pill fin-tipo on" data-t="Gasto" onclick="finSelTipo(this,'Gasto')">Gasto ↓</div>
+        <div class="pill fin-tipo" data-t="Ingreso" onclick="finSelTipo(this,'Ingreso')">Ingreso ↑</div>
+      </div>
+      <label class="mc-fl">Categoría</label><select id="fin-cat" class="mc-in"></select>
+      <label class="mc-fl">Monto (€)</label><input id="fin-monto" class="mc-in" type="number" step="0.01" min="0" placeholder="0,00">
+      <label class="mc-fl">Nota (opcional)</label><input id="fin-nota" class="mc-in" type="text" placeholder="ej. super, nafta, sueldo…">
+      <button class="mc-btn" id="fin-add-btn" style="margin-top:14px" onclick="finAdd()">Agregar movimiento →</button>
+      <div id="fin-add-msg" class="mc-note"></div>
+      <div style="height:1px;background:var(--border);margin:14px 0"></div>
+      <div class="mc-qt" style="font-size:13px">Categorías</div>
+      <div id="fin-cats-mgr" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+      <div style="display:flex;gap:8px"><input id="fin-newcat" class="mc-in" type="text" placeholder="Nueva categoría"><button class="mc-btn ghost sm" onclick="finAddCat()">+ Add</button></div>
+    </div>
+    <div class="mc-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="mc-qt" style="margin:0">Resumen del mes</div>
+        <input id="fin-month" class="mc-in" type="month" style="max-width:160px" onchange="finRender()">
+      </div>
+      <p class="mc-note" style="margin:8px 0 0">Gastos por categoría</p>
+      <div id="fin-cat-breakdown" style="margin-top:10px"></div>
+    </div>
+  </div>
+  <div class="mc-card" style="margin-top:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div class="mc-qt" style="margin:0">Movimientos</div>
+      <span class="mc-note" id="fin-mov-count" style="margin:0"></span>
+    </div>
+    <div id="fin-mov-list" style="margin-top:10px"></div>
   </div>
 </div>
 
@@ -4697,6 +4769,204 @@ function installApp(){
   try{mcRenderFichas();}catch(e){}
   try{mcRenderGuard();}catch(e){}
   try{setTimeout(mcMaybePopup,1300);}catch(e){}
+})();
+
+</script>
+<script>
+/* ===== CARTERA PERSONAL · GASTOS (v1) — módulo aislado ===== */
+(function(){
+  const DEFAULT_CATS = ['Supermercado','Alquiler','Servicios','Transporte','Salud','Ocio','Restaurantes','Sueldo','Ahorro','Otros'];
+  let finMovs = [];
+  let finCfg = { saldoIni: 0, cats: DEFAULT_CATS.slice() };
+  let finCurTipo = 'Gasto';
+  let finEditId = null;
+  let finLoaded = false;
+
+  const E = id => document.getElementById(id);
+  const eur = n => '€' + (isFinite(n)?n:0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const todayISO = () => new Date().toISOString().slice(0,10);
+  const monthISO = () => new Date().toISOString().slice(0,7);
+
+  function saveFinMovs(){
+    try{ if(typeof _dbSet==='function') _dbSet('tj_finanzas', finMovs).catch(()=>{}); }catch(e){}
+    try{ localStorage.setItem('tj_finanzas', JSON.stringify(finMovs)); }catch(e){}
+  }
+  function saveFinCfg(){
+    try{ if(typeof _dbSet==='function') _dbSet('tj_fin_cfg', finCfg).catch(()=>{}); }catch(e){}
+    try{ localStorage.setItem('tj_fin_cfg', JSON.stringify(finCfg)); }catch(e){}
+  }
+
+  async function finLoad(){
+    if(finLoaded) return;
+    try{
+      let m, c;
+      if(typeof _dbGet==='function'){
+        m = await _dbGet('tj_finanzas').catch(()=>undefined);
+        c = await _dbGet('tj_fin_cfg').catch(()=>undefined);
+      }
+      if(m!==undefined && m!==null) finMovs = m;
+      else { const ls = localStorage.getItem('tj_finanzas'); finMovs = ls ? JSON.parse(ls) : []; }
+      if(c!==undefined && c!==null) finCfg = Object.assign({saldoIni:0,cats:DEFAULT_CATS.slice()}, c);
+      else { const ls = localStorage.getItem('tj_fin_cfg'); if(ls) finCfg = Object.assign(finCfg, JSON.parse(ls)); }
+    }catch(e){
+      try{ finMovs = JSON.parse(localStorage.getItem('tj_finanzas')||'[]'); const c=localStorage.getItem('tj_fin_cfg'); if(c) finCfg=Object.assign(finCfg,JSON.parse(c)); }catch(e2){}
+    }
+    if(!Array.isArray(finMovs)) finMovs = [];
+    if(!finCfg || typeof finCfg!=='object') finCfg = { saldoIni:0, cats:DEFAULT_CATS.slice() };
+    if(!Array.isArray(finCfg.cats) || !finCfg.cats.length) finCfg.cats = DEFAULT_CATS.slice();
+    finLoaded = true;
+  }
+
+  function finBalance(){
+    return finMovs.reduce((a,m)=> a + (m.tipo==='Ingreso'? +m.monto : -m.monto), (+finCfg.saldoIni||0));
+  }
+
+  function finSelTipo(el,t){
+    finCurTipo = t;
+    document.querySelectorAll('#fin-tipo-pills .pill').forEach(p=>p.classList.remove('on'));
+    el.classList.add('on');
+  }
+  window.finSelTipo = finSelTipo;
+
+  function finCatOptions(){
+    const sel = E('fin-cat'); if(!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = finCfg.cats.map(c=>'<option>'+c+'</option>').join('');
+    if(cur && finCfg.cats.includes(cur)) sel.value = cur;
+    const mgr = E('fin-cats-mgr');
+    if(mgr) mgr.innerHTML = finCfg.cats.map(c=>'<span class="fin-cat-chip">'+c+'<span style="cursor:pointer;color:var(--red);font-weight:700" onclick="finRemoveCat('+JSON.stringify(c)+')">×</span></span>').join('');
+  }
+
+  function finAddCat(){
+    const inp = E('fin-newcat'); if(!inp) return;
+    const v = inp.value.trim(); if(!v) return;
+    if(!finCfg.cats.includes(v)) finCfg.cats.push(v);
+    inp.value=''; saveFinCfg(); finCatOptions();
+  }
+  window.finAddCat = finAddCat;
+
+  function finRemoveCat(c){
+    finCfg.cats = finCfg.cats.filter(x=>x!==c);
+    if(!finCfg.cats.length) finCfg.cats = ['Otros'];
+    saveFinCfg(); finCatOptions();
+  }
+  window.finRemoveCat = finRemoveCat;
+
+  function finSetSaldo(){
+    const cur = +finCfg.saldoIni||0;
+    const v = prompt('Saldo inicial del banco (€):\n\nEs el punto de partida. Los ingresos suman y los gastos restan a partir de acá.', cur);
+    if(v===null) return;
+    const n = parseFloat(String(v).replace(',','.'));
+    if(isNaN(n)){ alert('Poné un número válido.'); return; }
+    finCfg.saldoIni = n; saveFinCfg(); finRender();
+  }
+  window.finSetSaldo = finSetSaldo;
+
+  function finAdd(){
+    const fecha = E('fin-fecha').value || todayISO();
+    const monto = parseFloat(String(E('fin-monto').value).replace(',','.'));
+    const cat = E('fin-cat').value || 'Otros';
+    const nota = E('fin-nota').value.trim();
+    const msg = E('fin-add-msg');
+    if(isNaN(monto) || monto<=0){ if(msg){msg.textContent='Poné un monto mayor a 0.'; msg.style.color='var(--red)';} return; }
+    if(finEditId){
+      const it = finMovs.find(m=>m.id===finEditId);
+      if(it){ it.fecha=fecha; it.tipo=finCurTipo; it.categoria=cat; it.monto=monto; it.nota=nota; }
+      finEditId = null;
+      const btn = E('fin-add-btn'); if(btn) btn.textContent='Agregar movimiento →';
+    } else {
+      finMovs.push({ id: Date.now(), fecha: fecha, tipo: finCurTipo, categoria: cat, monto: monto, nota: nota });
+    }
+    saveFinMovs();
+    E('fin-monto').value=''; E('fin-nota').value='';
+    if(msg){ msg.textContent='✓ Guardado'; msg.style.color='var(--green)'; setTimeout(()=>{ if(msg) msg.textContent=''; },1500); }
+    finRender();
+  }
+  window.finAdd = finAdd;
+
+  function finEdit(id){
+    const it = finMovs.find(m=>m.id===id); if(!it) return;
+    E('fin-fecha').value = it.fecha;
+    finCurTipo = it.tipo;
+    document.querySelectorAll('#fin-tipo-pills .pill').forEach(p=>p.classList.toggle('on', p.dataset.t===it.tipo));
+    finCatOptions(); E('fin-cat').value = it.categoria;
+    E('fin-monto').value = it.monto;
+    E('fin-nota').value = it.nota||'';
+    finEditId = id;
+    const btn = E('fin-add-btn'); if(btn) btn.textContent='Guardar cambios →';
+    const main = document.querySelector('.main'); if(main) main.scrollTo({top:0,behavior:'smooth'});
+  }
+  window.finEdit = finEdit;
+
+  function finDelete(id){
+    if(!confirm('¿Borrar este movimiento?')) return;
+    finMovs = finMovs.filter(m=>m.id!==id);
+    if(finEditId===id){ finEditId=null; const btn=E('fin-add-btn'); if(btn) btn.textContent='Agregar movimiento →'; }
+    saveFinMovs(); finRender();
+  }
+  window.finDelete = finDelete;
+
+  function finRender(){
+    if(!E('page-mc-finanzas')) return;
+    E('fin-bal-num').textContent = eur(finBalance());
+    const msel = E('fin-month');
+    const mon = (msel && msel.value) ? msel.value : monthISO();
+    const inMonth = finMovs.filter(m=>(m.fecha||'').slice(0,7)===mon);
+    const ing = inMonth.filter(m=>m.tipo==='Ingreso').reduce((a,m)=>a + (+m.monto),0);
+    const gas = inMonth.filter(m=>m.tipo==='Gasto').reduce((a,m)=>a + (+m.monto),0);
+    E('fin-m-in').textContent = eur(ing);
+    E('fin-m-out').textContent = eur(gas);
+    const net = ing-gas;
+    const netEl = E('fin-m-net');
+    netEl.textContent = (net<0?'−':'+') + eur(Math.abs(net));
+    netEl.style.color = net>=0?'var(--green)':'var(--red)';
+    const bd = E('fin-cat-breakdown');
+    const byCat = {};
+    inMonth.filter(m=>m.tipo==='Gasto').forEach(m=>{ byCat[m.categoria]=(byCat[m.categoria]||0)+(+m.monto); });
+    const cats = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+    const maxV = cats.length? cats[0][1] : 0;
+    if(!cats.length){ bd.innerHTML='<p class="mc-note" style="margin:0">Sin gastos este mes.</p>'; }
+    else {
+      bd.innerHTML = cats.map(function(e){ const c=e[0], v=e[1]; const w=maxV?Math.round(v/maxV*100):0;
+        return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px"><span style="color:var(--text2)">'+c+'</span><span style="font-family:\'Roboto Mono\',monospace;font-weight:700">'+eur(v)+'</span></div><div style="height:7px;border-radius:4px;background:var(--bg3)"><div class="fin-bar" style="width:'+w+'%"></div></div></div>';
+      }).join('');
+    }
+    const list = E('fin-mov-list');
+    const rows = inMonth.slice().sort((a,b)=> ((b.fecha||'').localeCompare(a.fecha||'')) || (b.id-a.id));
+    E('fin-mov-count').textContent = rows.length+' mov · '+mon;
+    if(!rows.length){ list.innerHTML='<p class="mc-note" style="margin:0">No hay movimientos este mes.</p>'; }
+    else {
+      list.innerHTML = rows.map(function(m){ const up = m.tipo==='Ingreso';
+        return '<div class="fin-row">'+
+          '<span style="font-family:\'Roboto Mono\',monospace;font-size:11.5px;color:var(--text2);min-width:74px">'+m.fecha+'</span>'+
+          '<span class="fin-cat-chip">'+m.categoria+'</span>'+
+          '<span style="font-size:12.5px;color:var(--text2)">'+(m.nota?m.nota:'')+'</span>'+
+          '<span class="amt" style="color:'+(up?'var(--green)':'var(--red)')+'">'+(up?'+':'−')+eur(m.monto)+'</span>'+
+          '<span style="cursor:pointer;color:var(--text2);padding:0 4px" title="Editar" onclick="finEdit('+m.id+')">✎</span>'+
+          '<span style="cursor:pointer;color:var(--red);padding:0 4px" title="Borrar" onclick="finDelete('+m.id+')">×</span>'+
+        '</div>';
+      }).join('');
+    }
+  }
+  window.finRender = finRender;
+
+  async function mcRenderFin(){
+    await finLoad();
+    if(!E('page-mc-finanzas')) return;
+    if(E('fin-fecha') && !E('fin-fecha').value) E('fin-fecha').value = todayISO();
+    if(E('fin-month') && !E('fin-month').value) E('fin-month').value = monthISO();
+    document.querySelectorAll('#fin-tipo-pills .pill').forEach(p=>p.classList.toggle('on', p.dataset.t===finCurTipo));
+    finCatOptions();
+    finRender();
+  }
+  window.mcRenderFin = mcRenderFin;
+
+  if(typeof window.showPage==='function'){
+    const _sp = window.showPage;
+    window.showPage = function(id,el){ _sp(id,el); if(id==='mc-finanzas'){ try{ mcRenderFin(); }catch(e){ console.error('fin render',e); } } };
+  }
+
+  try{ setTimeout(function(){ finLoad().catch(()=>{}); }, 1500); }catch(e){}
 })();
 
 </script>
