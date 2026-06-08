@@ -1448,12 +1448,8 @@ function _dbSet(key, value){
   }));
 }
 
-// Si no hay cuentas, crear una por defecto
-if(accounts.length === 0){
-  accounts = [{ id: 'default', name: 'Cuenta principal', createdAt: Date.now() }];
-  activeAccountId = 'default';
-  saveAccounts(); saveActiveAccount();
-}
+// (Fix Claude) La cuenta por defecto se crea dentro de initApp DESPUES de cargar los datos.
+// Antes, este bloque corria al inicio y pisaba las cuentas guardadas en cada arranque.
 
 // Guardado dual: IDB + localStorage como backup (datos chicos, sin riesgo de quota)
 function saveAccounts(){
