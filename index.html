@@ -21,10 +21,10 @@
 <link rel="manifest" href='data:application/manifest+json;utf8,{"name":"Backtesting Journal","short_name":"Trading Journal","description":"Datos · patrones · decisiones","start_url":".","display":"standalone","orientation":"any","background_color":"%230d0f12","theme_color":"%230d0f12","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22><rect width=%22512%22 height=%22512%22 rx=%2296%22 fill=%22%230d0f12%22/><path d=%22M96 384 L96 128 L160 128 L160 384 Z%22 fill=%22%234f9cf9%22/><path d=%22M192 384 L192 192 L256 192 L256 384 Z%22 fill=%22%233ecf8e%22/><path d=%22M288 384 L288 96 L352 96 L352 384 Z%22 fill=%22%23f472b6%22/><path d=%22M384 384 L384 256 L448 256 L448 384 Z%22 fill=%22%23f59e0b%22/></svg>","sizes":"any","type":"image/svg+xml","purpose":"any"}]}'>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap');
 :root{--bg:#0d0f12;--bg2:#13161a;--bg3:#1a1e24;--bg4:#21262e;--border:#2a313b;--border2:#36404d;--text:#e8edf2;--text2:#8a97a8;--text3:#556070;--accent:#4f9cf9;--accent2:#1a3d6b;--green:#3ecf8e;--green2:#0d3d26;--red:#f05252;--red2:#3d1212;--amber:#f59e0b;--amber2:#3d2800;--purple:#a78bfa;--purple2:#2d1f5e;--pink:#f472b6;--pink2:#3d1030;--radius:8px;--radius-lg:12px}
 *{box-sizing:border-box;margin:0;padding:0}
-html{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;font-size:14px;min-height:100vh}
+html{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;min-height:100vh}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:var(--bg2)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
@@ -57,7 +57,7 @@ html{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;font-s
 .logo-text:hover{background:var(--bg3)}
 .logo-text:focus{background:var(--bg3);box-shadow:0 0 0 1px var(--accent)}
 .logo-text:empty:before{content:'Tu nombre';color:var(--text3);font-weight:500}
-.logo-sub{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-top:2px}
+.logo-sub{font-size:10px;font-family:'Roboto Mono',monospace;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-top:2px}
 .nav{padding:12px 10px;flex:1}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius);cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:2px;border:1px solid transparent}
 .nav-item:hover{background:var(--bg3);color:var(--text)}
@@ -65,9 +65,9 @@ html{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;font-s
 .nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
 .nav-item.active svg{opacity:1}
 .sidebar-bottom{padding:16px;border-top:1px solid var(--border)}
-.stats-mini{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;line-height:1.7}
+.stats-mini{font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace;line-height:1.7}
 .stats-mini span{color:var(--accent);font-weight:600}
-.export-btn{width:100%;margin-top:10px;padding:7px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);font-size:11px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s}
+.export-btn{width:100%;margin-top:10px;padding:7px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);font-size:11px;cursor:pointer;font-family:'Roboto Mono',monospace;transition:all .15s}
 .export-btn:hover{color:var(--text);border-color:var(--text2)}
 .main{flex:1;padding:32px 36px;overflow-y:auto;min-width:0}
 
@@ -105,20 +105,20 @@ html{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;font-s
 }
 .page{display:none}.page.active{display:block}
 .page-title{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
-.page-sub{font-size:13px;color:var(--text3);margin-bottom:28px;font-family:'JetBrains Mono',monospace}
-.section-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.page-sub{font-size:13px;color:var(--text3);margin-bottom:28px;font-family:'Roboto Mono',monospace}
+.section-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 .form-grid{display:grid;gap:14px;margin-bottom:4px}
 .g2{grid-template-columns:1fr 1fr}
 .g3{grid-template-columns:1fr 1fr 1fr}
 .g4{grid-template-columns:1fr 1fr 1fr 1fr}
 .form-group{display:flex;flex-direction:column;gap:5px}
-.form-group label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace}
-input[type=text],input[type=number],input[type=date],select,textarea{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 11px;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;transition:border-color .15s;width:100%;outline:none}
+.form-group label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace}
+input[type=text],input[type=number],input[type=date],select,textarea{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 11px;font-size:13px;color:var(--text);font-family:'Outfit',sans-serif;transition:border-color .15s;width:100%;outline:none}
 input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 select option{background:var(--bg3)}
 textarea{resize:vertical;min-height:68px;line-height:1.5}
 .pills{display:flex;flex-wrap:wrap;gap:6px}
-.pill{padding:5px 13px;border-radius:20px;border:1px solid var(--border2);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--text2);background:var(--bg3);font-family:'Syne',sans-serif;user-select:none}
+.pill{padding:5px 13px;border-radius:20px;border:1px solid var(--border2);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--text2);background:var(--bg3);font-family:'Outfit',sans-serif;user-select:none}
 .pill:hover{color:var(--text)}
 .p-blue.on{background:#0f2a4a;border-color:#4f9cf9;color:#4f9cf9}
 .p-red.on{background:#3d1212;border-color:#f05252;color:#f05252}
@@ -140,44 +140,44 @@ textarea{resize:vertical;min-height:68px;line-height:1.5}
 .p-orden.on{background:var(--purple2);border-color:var(--purple);color:var(--purple)}
 .rr-grid{display:grid;grid-template-columns:160px 1fr 180px;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:4px}
 .rr-cell{display:flex;align-items:center}
-.rr-header{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.rr-header{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;padding-bottom:6px;border-bottom:1px solid var(--border)}
 .rr-label{font-size:12px;font-weight:500;color:var(--text2);padding:4px 0}
-.rr-hint{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
-.rr-auto{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);width:100%;min-height:34px}
+.rr-hint{font-size:10px;color:var(--text3);font-family:'Roboto Mono',monospace}
+.rr-auto{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-family:'Roboto Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);width:100%;min-height:34px}
 .rr-auto-big{font-size:15px;border-color:var(--accent);background:var(--accent2)}
-.rr-grid input[type=text]{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;outline:none;width:100%}
+.rr-grid input[type=text]{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-size:13px;color:var(--text);font-family:'Outfit',sans-serif;outline:none;width:100%}
 .rr-grid input[type=text]:focus{border-color:var(--accent)}
 .gallery-item{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);aspect-ratio:16/10;background:var(--bg3)}
 .gallery-item img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer}
-.gallery-item button{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.85);border:none;color:#fff;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;font-family:'Syne',sans-serif}
+.gallery-item button{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.85);border:none;color:#fff;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;font-family:'Outfit',sans-serif}
 .gallery-item button:hover{background:var(--red)}
 .tf-slot{display:flex;flex-direction:column;gap:4px}
-.tf-slot-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;text-align:center}
+.tf-slot-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;text-align:center}
 .tf-slot-empty{background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--radius);aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:all .15s}
 .tf-slot-empty:hover{border-color:var(--accent);background:var(--bg4)}
-.tf-slot-empty span{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.tf-slot-empty span{font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace}
 .tf-slot-thumb{position:relative;aspect-ratio:1/1;border-radius:var(--radius);border:1px solid var(--border);background-size:cover;background-position:center;cursor:zoom-in;background-color:var(--bg3)}
 .tf-slot-thumb:hover{border-color:var(--accent)}
 .tf-slot-thumb button{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.85);border:none;color:#fff;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:11px}
 .tf-slot-thumb button:hover{background:var(--red)}
-.tf-slot-note{margin-top:4px;width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:5px 7px;font-size:11px;color:var(--text);font-family:'Syne',sans-serif;outline:none;resize:vertical;min-height:48px;line-height:1.4}
+.tf-slot-note{margin-top:4px;width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:5px 7px;font-size:11px;color:var(--text);font-family:'Outfit',sans-serif;outline:none;resize:vertical;min-height:48px;line-height:1.4}
 .tf-slot-note:focus{border-color:var(--accent)}
-.btn-save{width:100%;padding:12px;background:var(--accent);border:none;border-radius:var(--radius);font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:'Syne',sans-serif;letter-spacing:-.2px;transition:all .15s;margin-top:18px}
+.btn-save{width:100%;padding:12px;background:var(--accent);border:none;border-radius:var(--radius);font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:'Outfit',sans-serif;letter-spacing:-.2px;transition:all .15s;margin-top:18px}
 .btn-save:hover{background:#3a87e8}
 .btn-save:active{transform:scale(.99)}
 .img-zone{background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--radius);padding:22px 12px;cursor:pointer;text-align:center;transition:border-color .15s;min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px}
 .img-zone:hover{border-color:var(--accent)}
 .img-zone.dragover{border-color:var(--accent);background:var(--accent2)}
-.img-zone span{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.img-zone span{font-size:12px;color:var(--text3);font-family:'Roboto Mono',monospace}
 .img-zone .hint{font-size:10px;color:var(--text3);opacity:.7}
 .filters-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;padding:14px;background:var(--bg2);border-radius:var(--radius-lg);border:1px solid var(--border)}
-.filter-sel{padding:7px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--text);font-family:'Syne',sans-serif;outline:none;cursor:pointer}
+.filter-sel{padding:7px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--text);font-family:'Outfit',sans-serif;outline:none;cursor:pointer}
 table{width:100%;border-collapse:collapse}
-thead th{text-align:left;padding:10px 12px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border)}
+thead th{text-align:left;padding:10px 12px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;border-bottom:1px solid var(--border)}
 tbody td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);vertical-align:middle}
 tbody tr:hover td{background:var(--bg2)}
 .tbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
-.badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:'Roboto Mono',monospace}
 .b-blue{background:#0f2a4a;color:#4f9cf9}.b-red{background:#3d1212;color:#f05252}.b-pink{background:#3d1030;color:#f472b6}
 .b-white{background:#2a2f36;color:#c0c9d4}.b-black{background:#1a1e24;color:#e8edf2}.b-green{background:#0d2a1a;color:#3ecf8e}
 .b-win{background:var(--green2);color:var(--green)}.b-loss{background:var(--red2);color:var(--red)}
@@ -187,25 +187,25 @@ tbody tr:hover td{background:var(--bg2)}
 .del-btn:hover{color:var(--red);border-color:var(--red)}
 .edit-btn{padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:11px;transition:all .15s;margin-right:4px}
 .edit-btn:hover{color:var(--accent);border-color:var(--accent)}
-.editing-banner{background:var(--accent2);border:1px solid var(--accent);color:var(--accent);padding:10px 14px;border-radius:var(--radius);font-size:12px;font-family:'JetBrains Mono',monospace;margin-bottom:18px;display:none;align-items:center;justify-content:space-between;gap:12px}
+.editing-banner{background:var(--accent2);border:1px solid var(--accent);color:var(--accent);padding:10px 14px;border-radius:var(--radius);font-size:12px;font-family:'Roboto Mono',monospace;margin-bottom:18px;display:none;align-items:center;justify-content:space-between;gap:12px}
 .editing-banner.active{display:flex}
-.editing-banner button{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-family:'JetBrains Mono',monospace}
+.editing-banner button{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-family:'Roboto Mono',monospace}
 .editing-banner button:hover{background:var(--accent);color:#fff}
-.empty{text-align:center;padding:3rem;color:var(--text3);font-size:13px;font-family:'JetBrains Mono',monospace}
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:13px;font-family:'Roboto Mono',monospace}
 .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px}
 .kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px}
-.kpi-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:6px}
+.kpi-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:6px}
 .kpi-val{font-size:26px;font-weight:700;color:var(--text);letter-spacing:-1px}
-.kpi-sub{font-size:10px;color:var(--text3);margin-top:3px;font-family:'JetBrains Mono',monospace}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:3px;font-family:'Roboto Mono',monospace}
 .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .adv-metric{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px}
 
 /* Página de Ayuda */
 .help-toc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:30px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-.help-toc a{display:block;padding:8px 12px;border-radius:var(--radius);color:var(--text2);text-decoration:none;font-size:13px;border:1px solid transparent;transition:all .15s;font-family:'JetBrains Mono',monospace}
+.help-toc a{display:block;padding:8px 12px;border-radius:var(--radius);color:var(--text2);text-decoration:none;font-size:13px;border:1px solid transparent;transition:all .15s;font-family:'Roboto Mono',monospace}
 .help-toc a:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
 .help-section{margin-bottom:40px;scroll-margin-top:20px}
-.help-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);background:var(--accent2);padding:3px 9px;border-radius:4px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin-bottom:10px}
+.help-tag{display:inline-block;font-family:'Roboto Mono',monospace;font-size:10px;color:var(--accent);background:var(--accent2);padding:3px 9px;border-radius:4px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin-bottom:10px}
 .help-h3{font-size:22px;font-weight:700;letter-spacing:-.3px;margin-bottom:12px;color:var(--text)}
 .help-h4{font-size:14px;font-weight:600;color:var(--text);margin:18px 0 8px;padding-top:6px}
 .help-p{color:var(--text2);font-size:14px;line-height:1.6;margin-bottom:10px}
@@ -221,35 +221,35 @@ tbody tr:hover td{background:var(--bg2)}
 .help-callout.warn{border-left-color:var(--amber);background:rgba(245,158,11,0.04)}
 .help-callout.tip{border-left-color:var(--green);background:rgba(62,207,142,0.04)}
 .help-callout.danger{border-left-color:var(--red);background:rgba(240,82,82,0.04)}
-.help-callout-label{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;color:var(--accent)}
+.help-callout-label{font-family:'Roboto Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;color:var(--accent)}
 .help-callout.warn .help-callout-label{color:var(--amber)}
 .help-callout.tip .help-callout-label{color:var(--green)}
 .help-callout.danger .help-callout-label{color:var(--red)}
 @media (max-width:700px){.help-toc{grid-template-columns:1fr}}
-.filter-preset-btn{padding:5px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;transition:all .15s}
+.filter-preset-btn{padding:5px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);cursor:pointer;font-family:'Roboto Mono',monospace;font-size:10px;transition:all .15s}
 .filter-preset-btn:hover{background:var(--bg4);color:var(--text);border-color:var(--text3)}
 .filter-preset-btn.on{background:var(--accent2);color:var(--accent);border-color:var(--accent)}
-.adv-metric-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-family:'JetBrains Mono',monospace;margin-bottom:4px}
-.adv-metric-val{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;color:var(--text)}
+.adv-metric-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-family:'Roboto Mono',monospace;margin-bottom:4px}
+.adv-metric-val{font-family:'Roboto Mono',monospace;font-size:16px;font-weight:600;color:var(--text)}
 .adv-metric-sub{font-size:10px;color:var(--text3);margin-top:2px}
 .matrix-tbl{width:100%;border-collapse:collapse;font-size:11px}
-.matrix-tbl th, .matrix-tbl td{padding:6px 8px;border:1px solid var(--border);text-align:center;font-family:'JetBrains Mono',monospace}
+.matrix-tbl th, .matrix-tbl td{padding:6px 8px;border:1px solid var(--border);text-align:center;font-family:'Roboto Mono',monospace}
 .matrix-tbl th{background:var(--bg3);color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:10px}
 .matrix-tbl th.row-head{text-align:left;background:var(--bg2)}
 .matrix-tbl td.row-head{text-align:left;font-weight:600;background:var(--bg2);color:var(--text)}
 .matrix-cell{position:relative}
 .matrix-cell.empty{color:var(--text3);opacity:.4}
 .chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px}
-.chart-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:14px}
+.chart-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:14px}
 .chart-card.full{grid-column:1/-1}
 .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .bar-lbl{font-size:11px;color:var(--text2);width:140px;flex-shrink:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bar-track{flex:1;background:var(--bg3);border-radius:4px;height:20px;overflow:hidden;border:1px solid var(--border)}
-.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:10px;font-weight:600;color:rgba(255,255,255,.85);font-family:'JetBrains Mono',monospace;transition:width .4s ease}
-.bar-cnt{font-size:11px;color:var(--text3);width:50px;text-align:right;flex-shrink:0;font-family:'JetBrains Mono',monospace}
-.no-data{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;padding:.5rem 0}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:10px;font-weight:600;color:rgba(255,255,255,.85);font-family:'Roboto Mono',monospace;transition:width .4s ease}
+.bar-cnt{font-size:11px;color:var(--text3);width:50px;text-align:right;flex-shrink:0;font-family:'Roboto Mono',monospace}
+.no-data{font-size:12px;color:var(--text3);font-family:'Roboto Mono',monospace;padding:.5rem 0}
 .asr-info{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:24px}
-.asr-info-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-family:'JetBrains Mono',monospace;margin-bottom:8px}
+.asr-info-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-family:'Roboto Mono',monospace;margin-bottom:8px}
 .asr-info p{font-size:13px;color:var(--text2);line-height:1.6}
 .asr-info strong{color:var(--text)}
 .p-emo.on{background:#3d1212;border-color:var(--red);color:var(--red)}
@@ -261,31 +261,31 @@ tbody tr:hover td{background:var(--bg2)}
 .p-mood-amber.on{background:var(--amber2);border-color:var(--amber);color:var(--amber)}
 .p-mood-red.on{background:#3d1212;border-color:#f05252;color:#f05252}
 .checklist-bar{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:18px;flex-wrap:wrap}
-.checklist-bar-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.checklist-bar-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;flex-shrink:0}
 .p-check-ok.on{background:#0d3d26;border-color:var(--green);color:var(--green)}
 .p-check-no.on{background:#3d1212;border-color:var(--red);color:var(--red)}
 .p-check-nc.on{background:var(--amber2);border-color:var(--amber);color:var(--amber)}
 .p-check-red.on{background:#3d1212;border-color:#ff6b6b;color:#ff6b6b}
 .asr-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:14px}
 .asr-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
-.asr-card-date{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2)}
+.asr-card-date{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text2)}
 .asr-card-actions{display:flex;gap:6px}
 .asr-card-block{margin-bottom:10px}
-.asr-card-block-title{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:4px}
+.asr-card-block-title{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:4px}
 .asr-card-block-text{font-size:13px;color:var(--text);line-height:1.55;white-space:pre-wrap}
 .asr-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
-.asr-rating{display:inline-block;padding:3px 10px;border-radius:20px;background:var(--bg3);border:1px solid var(--border2);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);font-weight:600}
+.asr-rating{display:inline-block;padding:3px 10px;border-radius:20px;background:var(--bg3);border:1px solid var(--border2);font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text);font-weight:600}
 .auto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
 .auto-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px}
 .auto-item.full{grid-column:1/-1}
-.auto-item label{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:6px}
+.auto-item label{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:6px}
 .auto-row{display:flex;align-items:center;gap:8px}
-.auto-val{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 9px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600;min-height:28px;display:flex;align-items:center}
-.auto-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 9px;font-size:12px;color:var(--text);font-family:'Syne',sans-serif;outline:none;width:100%}
+.auto-val{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 9px;font-family:'Roboto Mono',monospace;font-size:12px;color:var(--accent);font-weight:600;min-height:28px;display:flex;align-items:center}
+.auto-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 9px;font-size:12px;color:var(--text);font-family:'Outfit',sans-serif;outline:none;width:100%}
 .auto-row input:focus{border-color:var(--accent)}
 .top-trade-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px}
 .top-trade-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-.top-trade-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text3)}
+.top-trade-badge{font-family:'Roboto Mono',monospace;font-size:11px;font-weight:600;color:var(--text3)}
 .top-trade-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
 .top-trade-grid textarea{min-height:50px}
 .top-trade-imgs{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
@@ -297,6 +297,11 @@ tbody tr:hover td{background:var(--bg2)}
 .toast{position:fixed;bottom:24px;right:24px;padding:12px 18px;background:var(--green2);border:1px solid var(--green);color:var(--green);border-radius:var(--radius);font-size:13px;font-weight:500;z-index:9998;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 @keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
 </style>
+<style id="mc-theme">
+:root{ --bg:#0a1219; --bg2:#0f1c26; --bg3:#14242f; --bg4:#1b2f3b; --border:#1f3340; --border2:#2b4654; --text:#e6eef2; --text2:#8aa0ac; --text3:#566f7c; --accent:#34c5d8; --accent2:#0c3540; --green:#3ed9a4; --green2:#0c3a2c; --red:#f0606e; --red2:#3d1418; --amber:#f5b73f; --amber2:#3d2a06; --purple:#a78bfa; --purple2:#23234a; --pink:#f472b6; --pink2:#3d1030; }
+html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4ebef; --border:#dce4e9; --border2:#c5d0d7; --text:#12242d; --text2:#52656f; --text3:#8598a2; --accent:#0e93a8; --accent2:#d6eff3; --green:#0f8a62; --green2:#dcf3ea; --red:#cf4250; --red2:#fbe3e6; --amber:#b07916; --amber2:#f6ecd7; --purple:#7c5cf0; --purple2:#e9e3fb; --pink:#c43f7e; --pink2:#fbe6f0; }
+</style>
+<script>(function(){try{var m=localStorage.getItem('mc_theme')||'auto';var h=new Date().getHours();var t=(m==='auto')?((h>=7&&h<19)?'light':'dark'):m;document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body>
 <button class="menu-toggle" id="menu-toggle" onclick="toggleSidebar()" aria-label="Menú">
@@ -330,6 +335,18 @@ tbody tr:hover td{background:var(--bg2)}
     <div class="nav-item" onclick="showPage('asr',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
       ASR
+    </div>
+    <div class="nav-item" onclick="showPage('mc-rutina',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      Rutina
+    </div>
+    <div class="nav-item" onclick="showPage('mc-plan',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>
+      Trading Plan
+    </div>
+    <div class="nav-item" onclick="showPage('mc-diversif',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15.5A9 9 0 1 1 8.5 3"/><path d="M21 12A9 9 0 0 0 12 3v9z"/></svg>
+      Diversificación
     </div>
     <div class="nav-item" onclick="showPage('mc-activos',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="4" y2="12"/><line x1="10" y1="20" x2="10" y2="4"/><line x1="16" y1="20" x2="16" y2="9"/><line x1="22" y1="20" x2="2" y2="20"/></svg>
@@ -378,11 +395,11 @@ tbody tr:hover td{background:var(--bg2)}
     </div>
     <div class="form-group">
       <label style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">Capital actual de la cuenta</label>
-      <div id="account-current-capital" style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;padding:8px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);font-size:13px">$ –</div>
+      <div id="account-current-capital" style="font-family:'Roboto Mono',monospace;color:var(--accent);font-weight:600;padding:8px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);font-size:13px">$ –</div>
     </div>
     <div class="form-group">
       <label style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">Gestionar cuentas</label>
-      <button onclick="showPage('cartera', document.querySelectorAll('.nav-item')[3])" style="padding:8px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);cursor:pointer;font-family:'Syne',sans-serif;font-size:12px;text-align:left">→ Ir a Cartera</button>
+      <button onclick="showPage('cartera', document.querySelectorAll('.nav-item')[3])" style="padding:8px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;text-align:left">→ Ir a Cartera</button>
     </div>
   </div>
 
@@ -435,7 +452,7 @@ tbody tr:hover td{background:var(--bg2)}
     </div>
     <div class="form-group">
       <label>Duración del trade</label>
-      <input type="text" id="inp-duracion" placeholder="auto" readonly style="background:var(--bg2);color:var(--text2);font-family:'JetBrains Mono',monospace">
+      <input type="text" id="inp-duracion" placeholder="auto" readonly style="background:var(--bg2);color:var(--text2);font-family:'Roboto Mono',monospace">
     </div>
   </div>
 
@@ -547,7 +564,7 @@ tbody tr:hover td{background:var(--bg2)}
         <label>Link del gráfico (TradingView, etc.)</label>
         <input type="text" id="inp-link" placeholder="https://www.tradingview.com/…" oninput="previewLink(this.value)">
         <div id="link-preview" style="display:none;margin-top:5px">
-          <a id="link-anchor" href="#" target="_blank" style="font-size:11px;color:var(--accent);font-family:'JetBrains Mono',monospace;text-decoration:none">→ Abrir gráfico</a>
+          <a id="link-anchor" href="#" target="_blank" style="font-size:11px;color:var(--accent);font-family:'Roboto Mono',monospace;text-decoration:none">→ Abrir gráfico</a>
         </div>
       </div>
       <div class="form-group">
@@ -565,7 +582,7 @@ tbody tr:hover td{background:var(--bg2)}
     </div>
     <div class="form-group">
       <label>Capital final ($) <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">auto</span></label>
-      <input type="text" id="inp-capital-final" placeholder="auto · = inicial + B/P Neto" readonly style="background:var(--bg2);color:var(--accent);font-family:'JetBrains Mono',monospace">
+      <input type="text" id="inp-capital-final" placeholder="auto · = inicial + B/P Neto" readonly style="background:var(--bg2);color:var(--accent);font-family:'Roboto Mono',monospace">
     </div>
     <div class="form-group">
       <label>Lotaje ejecutado</label>
@@ -662,7 +679,7 @@ tbody tr:hover td{background:var(--bg2)}
   <!-- Filtros de estadísticas -->
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:18px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <span style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace">Filtros</span>
+      <span style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace">Filtros</span>
       <select class="filter-sel" id="sf-account" onchange="renderStats()"><option value="">Todas las cuentas</option></select>
       <select class="filter-sel" id="sf-mode" onchange="renderStats()"><option value="">Operado + Backtest</option><option>Operado</option><option>Backtest</option></select>
       <select class="filter-sel" id="sf-tipo" onchange="renderStats()"><option value="">Todos los estilos</option><option>Day</option><option>Swing</option><option>Scalp</option></select>
@@ -671,10 +688,10 @@ tbody tr:hover td{background:var(--bg2)}
       <select class="filter-sel" id="sf-result" onchange="renderStats()"><option value="">Todos los resultados</option><option value="Win">TP</option><option value="Loss">SL</option><option value="BE">BE</option><option value="Open">Abierto</option></select>
       <select class="filter-sel" id="sf-session" onchange="renderStats()"><option value="">Todas las sesiones</option><option>Sydney</option><option>Tokio</option><option>Londres</option><option>New York</option></select>
       <select class="filter-sel" id="sf-mercado" onchange="renderStats()"><option value="">Todos los mercados</option><option>Forex</option><option>Indices</option><option>Cripto</option><option>Acciones</option><option>Materias primas</option></select>
-      <button onclick="resetStatsFilters()" style="padding:6px 12px;background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:var(--radius);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px">↻ limpiar</button>
+      <button onclick="resetStatsFilters()" style="padding:6px 12px;background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:var(--radius);cursor:pointer;font-family:'Roboto Mono',monospace;font-size:10px">↻ limpiar</button>
     </div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-      <span style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace">Período</span>
+      <span style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace">Período</span>
       <input type="date" id="sf-from" onchange="renderStats()" class="filter-sel" title="Desde">
       <span style="color:var(--text3);font-size:11px">→</span>
       <input type="date" id="sf-to" onchange="renderStats()" class="filter-sel" title="Hasta">
@@ -684,7 +701,7 @@ tbody tr:hover td{background:var(--bg2)}
       <button onclick="setStatsPreset('last90')" class="filter-preset-btn">Últimos 90d</button>
       <button onclick="setStatsPreset('thisYear')" class="filter-preset-btn">Este año</button>
       <button onclick="setStatsPreset('all')" class="filter-preset-btn">Todo</button>
-      <span id="sf-period-label" style="font-size:11px;color:var(--accent);font-family:'JetBrains Mono',monospace;margin-left:auto"></span>
+      <span id="sf-period-label" style="font-size:11px;color:var(--accent);font-family:'Roboto Mono',monospace;margin-left:auto"></span>
     </div>
   </div>
 
@@ -718,16 +735,16 @@ tbody tr:hover td{background:var(--bg2)}
   <!-- Selector de cuentas + acciones -->
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:18px">
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace">Cuenta activa</div>
-      <select id="cartera-account-select" onchange="changeActiveAccount()" style="padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;outline:none;cursor:pointer;min-width:200px"></select>
-      <button onclick="showAccountModal('new')" style="padding:7px 14px;background:var(--accent2);border:1px solid var(--accent);color:var(--accent);border-radius:var(--radius);cursor:pointer;font-family:'Syne',sans-serif;font-size:12px;font-weight:500">+ Nueva cuenta</button>
-      <button onclick="showAccountModal('rename')" style="padding:7px 14px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Syne',sans-serif;font-size:12px">✎ Renombrar</button>
-      <button onclick="deleteAccount()" style="padding:7px 14px;background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:var(--radius);cursor:pointer;font-family:'Syne',sans-serif;font-size:12px">✕ Eliminar</button>
+      <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace">Cuenta activa</div>
+      <select id="cartera-account-select" onchange="changeActiveAccount()" style="padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;outline:none;cursor:pointer;min-width:200px"></select>
+      <button onclick="showAccountModal('new')" style="padding:7px 14px;background:var(--accent2);border:1px solid var(--accent);color:var(--accent);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;font-weight:500">+ Nueva cuenta</button>
+      <button onclick="showAccountModal('rename')" style="padding:7px 14px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px">✎ Renombrar</button>
+      <button onclick="deleteAccount()" style="padding:7px 14px;background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px">✕ Eliminar</button>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button onclick="showMovementModal('Ingreso')" style="padding:8px 16px;background:#0d3d26;border:1px solid var(--green);color:var(--green);border-radius:var(--radius);cursor:pointer;font-family:'Syne',sans-serif;font-size:13px;font-weight:500">↓ Registrar ingreso</button>
-      <button onclick="showMovementModal('Retiro')" style="padding:8px 16px;background:#3d1212;border:1px solid var(--red);color:var(--red);border-radius:var(--radius);cursor:pointer;font-family:'Syne',sans-serif;font-size:13px;font-weight:500">↑ Registrar retiro</button>
-      <button onclick="showMovementModal('Capital inicial')" style="padding:8px 16px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Syne',sans-serif;font-size:13px">⚙ Set capital inicial</button>
+      <button onclick="showMovementModal('Ingreso')" style="padding:8px 16px;background:#0d3d26;border:1px solid var(--green);color:var(--green);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500">↓ Registrar ingreso</button>
+      <button onclick="showMovementModal('Retiro')" style="padding:8px 16px;background:#3d1212;border:1px solid var(--red);color:var(--red);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500">↑ Registrar retiro</button>
+      <button onclick="showMovementModal('Capital inicial')" style="padding:8px 16px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px">⚙ Set capital inicial</button>
     </div>
   </div>
 
@@ -779,8 +796,8 @@ tbody tr:hover td{background:var(--bg2)}
       </div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button onclick="closeAccountModal()" style="padding:8px 16px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Syne',sans-serif;font-size:13px">Cancelar</button>
-      <button onclick="saveAccountModal()" style="padding:8px 16px;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);cursor:pointer;font-family:'Syne',sans-serif;font-size:13px;font-weight:500">Guardar</button>
+      <button onclick="closeAccountModal()" style="padding:8px 16px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px">Cancelar</button>
+      <button onclick="saveAccountModal()" style="padding:8px 16px;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500">Guardar</button>
     </div>
   </div>
 </div>
@@ -804,8 +821,8 @@ tbody tr:hover td{background:var(--bg2)}
       <input type="text" id="movement-note-input" placeholder="ej: Retiro mensual">
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button onclick="closeMovementModal()" style="padding:8px 16px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Syne',sans-serif;font-size:13px">Cancelar</button>
-      <button onclick="saveMovementModal()" style="padding:8px 16px;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);cursor:pointer;font-family:'Syne',sans-serif;font-size:13px;font-weight:500">Guardar</button>
+      <button onclick="closeMovementModal()" style="padding:8px 16px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px">Cancelar</button>
+      <button onclick="saveMovementModal()" style="padding:8px 16px;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500">Guardar</button>
     </div>
   </div>
 </div>
@@ -828,7 +845,7 @@ tbody tr:hover td{background:var(--bg2)}
       <input type="date" id="asr-fecha">
     </div>
   </div>
-  <div id="asr-trade-preview" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-bottom:18px"></div>
+  <div id="asr-trade-preview" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--text2);font-family:'Roboto Mono',monospace;margin-bottom:18px"></div>
 
   <div class="section-label">Checklist</div>
   <div class="form-grid g2" style="align-items:start;margin-bottom:14px">
@@ -1020,6 +1037,69 @@ tbody tr:hover td{background:var(--bg2)}
 </div>
 
 <!-- AYUDA · Cómo usar la app -->
+<div id="page-mc-rutina" class="page">
+  <div class="page-title">Mi rutina · empresa de trading</div>
+  <div class="page-sub">Horario de oficina con vida. Italia (CEST, UTC+2). Menos tiempo, más foco.</div>
+  <div class="mc-card">
+    <div class="mc-qt">Mis ventanas de mercado (hora Italia)</div>
+    <ul class="mc-help">
+      <li><b>Londres 09:00–12:00</b> — forex, oro, plata, DAX, petróleo. Mi ventana principal (casi siempre libre).</li>
+      <li><b>NY + solape 15:30–17:30</b> — índices, acciones, cripto, continuación. Máxima liquidez, pero la uso solo cuando no tengo clase.</li>
+      <li><b>Fin de semana</b> — un rato de cripto (BTC/ETH, estrategia Green), tamaño chico: el finde es ilíquido y hace mechas trampa.</li>
+      <li>Noticias USA fuertes 14:30 · Fed 20:00 · petróleo (EIA) 16:30.</li>
+    </ul>
+  </div>
+  <div class="mc-card" style="margin-top:12px">
+    <div class="mc-qt">Día tipo (flexible — es un orden, no una cárcel)</div>
+    <ul class="mc-help">
+      <li><b>07:00–07:45</b> — Despertar sin pantallas de trading. Café, movimiento suave o meditación (10–15 min).</li>
+      <li><b>07:45–08:45</b> — Rutina previa: briefing del día, checklist pre-trade, revisar zonas y watchlist.</li>
+      <li><b>09:00–12:00</b> — Bloque Londres (operativa). Opero cuando hay setup; máx 2–3 trades.</li>
+      <li><b>12:00–13:00</b> — Cargar trades + ASR, almuerzo.</li>
+      <li><b>13:00–15:00</b> — Vida: ejercicio, perros, casa, lectura (mercado o psicología).</li>
+      <li><b>15:30–17:30</b> — Bloque NY (cuando estoy libre). Si hay clase/paciente, se saltea sin culpa.</li>
+      <li><b>Noche</b> — clases, pareja, Netflix, lectura. Cierre con mini-journaling emocional (5 min).</li>
+    </ul>
+  </div>
+  <div class="mc-card" style="margin-top:12px">
+    <div class="mc-qt">Compromisos fijos</div>
+    <ul class="mc-help">
+      <li>Lun 8:30 y 18:00 (clases) · Mar 17:00 · Mié 11:00 (psicólogo) y 18:00 · Jue 8:30 y 17:00 · Vie 16:00 (clase) y 17:30 (paciente).</li>
+      <li>Lun, Mié, Jue y Vie tengo la tarde ocupada → esos días opero la <b>mañana de Londres</b>. Martes y huecos libres puedo sumar la tarde NY.</li>
+    </ul>
+  </div>
+  <div class="mc-card" style="margin-top:12px">
+    <div class="mc-qt">Semanal y mensual</div>
+    <ul class="mc-help">
+      <li><b>Dom noche / Lun temprano:</b> análisis top-down de los 20 activos + armar watchlist.</li>
+      <li><b>Fin de semana (un rato):</b> cripto (BTC/ETH, Green) + ojo a la semana.</li>
+      <li><b>Viernes o sábado:</b> repaso semanal (ASR + medidor semanal).</li>
+      <li><b>Fin de mes:</b> revisión mensual de estadísticas y ajustes al plan.</li>
+    </ul>
+  </div>
+  <div class="mc-card" style="margin-top:12px">
+    <div class="mc-qt">Reglas que me dejan vivir</div>
+    <ul class="mc-help">
+      <li>Máximo ~3–4h de pantalla de trading al día. Si no hay setup, no me quedo "por las dudas".</li>
+      <li>Si a las 20:00 me pinta mirar el gráfico: puedo mirar y anotar/analizar, pero <b>no operar</b> fuera de mis ventanas (la cripto, con plan, es aparte).</li>
+      <li>Los perros, mi pareja y el ejercicio son tan sagrados como el trading.</li>
+      <li>Esto es mi empresa: tengo horario de entrada y de salida. El gráfico no me come el día.</li>
+    </ul>
+  </div>
+</div>
+
+<div id="page-mc-plan" class="page">
+  <div class="page-title">Trading Plan</div>
+  <div class="page-sub">Documento vivo: se edita y se guarda solo. Lo vamos completando juntas. <span id="mc-plan-saved" style="color:var(--text3);font-family:'Roboto Mono',monospace;font-size:12px"></span></div>
+  <div id="mc-plan-body"></div>
+</div>
+
+<div id="page-mc-diversif" class="page">
+  <div class="page-title">Diversificación de capital</div>
+  <div class="page-sub">Sección para profundizar más adelante. Lista para activar. Se edita y se guarda sola. <span id="mc-diversif-saved" style="color:var(--text3);font-family:'Roboto Mono',monospace;font-size:12px"></span></div>
+  <div id="mc-diversif-body"></div>
+</div>
+
 <div id="page-mc-activos" class="page">
   <div class="page-title">Activos · 20 fichas</div>
   <div class="page-sub">Tu universo operable: cómo se mueve, liquida, rompe, Elliott y fibo</div>
@@ -1070,6 +1150,12 @@ tbody tr:hover td{background:var(--bg2)}
         <label class="mc-fl">Máx. operaciones por día</label><input id="mc-maxtr" class="mc-in" type="number" min="1" oninput="mcSaveRules()">
         <label class="mc-fl">Pérdida máx. del día (% de la cuenta)</label><input id="mc-maxloss" class="mc-in" type="number" min="0" step="0.1" oninput="mcSaveRules()">
         <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px;color:var(--text2)"><input type="checkbox" id="mc-rules-en" onchange="mcSaveRules()"> Activar aviso de bloqueo</label>
+        <div style="height:1px;background:var(--border);margin:14px 0"></div>
+        <div class="mc-qt" style="font-size:14px">Objetivo semanal</div>
+        <p class="mc-note" style="margin:0 0 10px">Meta orientativa (no obligación). Al llegar: enough is enough, bajá riesgo o cerrá la semana.</p>
+        <label class="mc-fl">Meta semanal (%)</label><input id="mc-wktarget" class="mc-in" type="number" min="0" step="0.5" oninput="mcSaveRules()">
+        <label class="mc-fl">Límite de pérdida semanal (%)</label><input id="mc-wkloss" class="mc-in" type="number" min="0" step="0.5" oninput="mcSaveRules()">
+        <div id="mc-week3" style="margin-top:12px"></div>
       </div>
     </div>
   </div>
@@ -1319,7 +1405,7 @@ tbody tr:hover td{background:var(--bg2)}
     </div>
   </div>
 
-  <div style="text-align:center;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.05em;margin-top:50px;padding-top:30px;border-top:1px solid var(--border)">
+  <div style="text-align:center;color:var(--text3);font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.05em;margin-top:50px;padding-top:30px;border-top:1px solid var(--border)">
     // Backtesting Journal · datos · patrones · decisiones
   </div>
 </div>
@@ -1943,7 +2029,7 @@ function showImgModal(id){
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;flex-direction:column;gap:14px;padding:20px';
   const labelEl = document.createElement('div');
-  labelEl.style.cssText = 'color:#fff;font-family:JetBrains Mono,monospace;font-size:13px;background:rgba(0,0,0,.6);padding:6px 14px;border-radius:6px';
+  labelEl.style.cssText = 'color:#fff;font-family:Roboto Mono,monospace;font-size:13px;background:rgba(0,0,0,.6);padding:6px 14px;border-radius:6px';
   const img = document.createElement('img');
   img.style.cssText = 'max-width:92vw;max-height:70vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.7)';
   const noteEl = document.createElement('div');
@@ -1963,7 +2049,7 @@ function showImgModal(id){
     nav.style.cssText = 'display:flex;align-items:center;gap:14px;background:rgba(0,0,0,.6);padding:8px 14px;border-radius:6px';
     const prev = document.createElement('button');
     prev.textContent = '‹ Anterior';
-    prev.style.cssText = 'background:transparent;border:1px solid #4f9cf9;color:#4f9cf9;padding:5px 12px;border-radius:4px;cursor:pointer;font-family:JetBrains Mono,monospace;font-size:12px';
+    prev.style.cssText = 'background:transparent;border:1px solid #4f9cf9;color:#4f9cf9;padding:5px 12px;border-radius:4px;cursor:pointer;font-family:Roboto Mono,monospace;font-size:12px';
     prev.onclick = e=>{ e.stopPropagation(); idx = (idx-1+imgs.length)%imgs.length; update(); };
     const next = document.createElement('button');
     next.textContent = 'Siguiente ›';
@@ -1977,7 +2063,7 @@ function showImgModal(id){
   if(t.link){
     const link = document.createElement('a');
     link.href = t.link; link.target='_blank'; link.textContent = '→ Abrir gráfico en TradingView';
-    link.style.cssText = 'color:#4f9cf9;font-size:13px;text-decoration:none;font-family:JetBrains Mono,monospace;background:rgba(0,0,0,.6);padding:8px 14px;border-radius:6px';
+    link.style.cssText = 'color:#4f9cf9;font-size:13px;text-decoration:none;font-family:Roboto Mono,monospace;background:rgba(0,0,0,.6);padding:8px 14px;border-radius:6px';
     link.onclick = e=>e.stopPropagation();
     overlay.appendChild(link);
   }
@@ -2296,9 +2382,9 @@ function renderTable(){
     const accName = acc ? acc.name : '–';
     const accColor = acc ? accColorMap[acc.id] : 'var(--text3)';
     return `<tr>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2)">${t.fecha}${t.hora?' <span style="color:var(--text3)">'+t.hora+'</span>':''}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3)">${t.duracion||'–'}</td>
-      <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;color:${accColor};background:${accColor}15;border:1px solid ${accColor}40;font-family:'JetBrains Mono',monospace">${escapeHtml(accName)}</span></td>
+      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2)">${t.fecha}${t.hora?' <span style="color:var(--text3)">'+t.hora+'</span>':''}</td>
+      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)">${t.duracion||'–'}</td>
+      <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;color:${accColor};background:${accColor}15;border:1px solid ${accColor}40;font-family:'Roboto Mono',monospace">${escapeHtml(accName)}</span></td>
       <td style="font-size:11px;font-weight:500;color:${t.mode==='Operado'?'var(--green)':(t.mode==='Backtest'?'var(--text2)':'var(--text3)')}">${t.mode||'–'}</td>
       <td><span class="badge ${stratBC[t.estrategia]||''}">${t.estrategia}${t.variante?' · '+t.variante:''}</span></td>
       <td style="font-size:11px;color:var(--text3)">${t.tipo||''}</td>
@@ -2309,9 +2395,9 @@ function renderTable(){
       <td style="font-size:11px;color:var(--amber)">${t.gestion||'–'}</td>
       <td style="font-size:11px;color:var(--text2)">${t.fibonacci||'–'}</td>
       <td style="font-size:11px;color:var(--text2)">${t.patron||'–'}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2)">${t.lotaje||'–'}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-weight:600">${t.rr?t.rr+'R':'–'}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${t.pnl&&t.pnl.startsWith('+')?'var(--green)':(t.pnl&&t.pnl.startsWith('-')?'var(--red)':'var(--text3)')}">${t.pnl||'–'}</td>
+      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2)">${t.lotaje||'–'}</td>
+      <td style="font-family:'Roboto Mono',monospace;font-weight:600">${t.rr?t.rr+'R':'–'}</td>
+      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:${t.pnl&&t.pnl.startsWith('+')?'var(--green)':(t.pnl&&t.pnl.startsWith('-')?'var(--red)':'var(--text3)')}">${t.pnl||'–'}</td>
       <td><span class="badge ${resBC[t.resultado]||''}">${t.resultado||'–'}</span></td>
       <td style="text-align:center">${asrs.some(a=>a.tradeId===t.id)
         ? '<span title="ASR realizado" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--green2);color:var(--green);border:1px solid var(--green);font-weight:700;font-size:12px">✓</span>'
@@ -2515,7 +2601,7 @@ function renderStats(){
         <div class="bar-track"><div class="bar-fill" style="width:${wrate}%;background:${d.color}">${wrate>15?wrate+'%':''}</div></div>
         <span class="bar-cnt" style="color:${wrColor};font-weight:600">${wrate}% WR</span>
       </div>
-      <div style="display:flex;gap:12px;padding-left:90px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3)">
+      <div style="display:flex;gap:12px;padding-left:90px;font-size:11px;font-family:'Roboto Mono',monospace;color:var(--text3)">
         <span>${st.length} trades</span>
         <span style="color:var(--green)">${w}W</span>
         <span style="color:var(--red)">${l}L</span>
@@ -2763,7 +2849,7 @@ function renderCartera(){
     const yLabels = [0,0.25,0.5,0.75,1].map(p=>{
       const val = minY + p*(maxY-minY);
       const y = pad.top + innerH - p*innerH;
-      return `<text x="${pad.left-8}" y="${y+4}" text-anchor="end" fill="var(--text3)" font-size="10" font-family="JetBrains Mono">$${val.toFixed(0)}</text><line x1="${pad.left}" y1="${y}" x2="${pad.left+innerW}" y2="${y}" stroke="var(--border)" stroke-dasharray="2,3"/>`;
+      return `<text x="${pad.left-8}" y="${y+4}" text-anchor="end" fill="var(--text3)" font-size="10" font-family="Roboto Mono">$${val.toFixed(0)}</text><line x1="${pad.left}" y1="${y}" x2="${pad.left+innerW}" y2="${y}" stroke="var(--border)" stroke-dasharray="2,3"/>`;
     }).join('');
     const baselineY = yScale(capInicial);
     const baseline = `<line x1="${pad.left}" y1="${baselineY}" x2="${pad.left+innerW}" y2="${baselineY}" stroke="var(--text3)" stroke-dasharray="4,4" opacity=".5"/>`;
@@ -2801,14 +2887,14 @@ function renderCartera(){
       const pnl = parseFloat(String(t.pnl||'').replace(',','.').replace('+',''));
       const deltaPct = info.prev > 0 ? (pnl/info.prev*100) : 0;
       return `<tr>
-        <td style="font-family:'JetBrains Mono',monospace;color:var(--text3);font-size:11px">#${num}</td>
-        <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2)">${t.fecha}${t.hora?' '+t.hora:''}</td>
+        <td style="font-family:'Roboto Mono',monospace;color:var(--text3);font-size:11px">#${num}</td>
+        <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2)">${t.fecha}${t.hora?' '+t.hora:''}</td>
         <td style="font-weight:600">${t.activo}</td>
-        <td><span style="color:${stratColors[t.estrategia]||'var(--text)'};font-weight:600;font-size:11px;font-family:'JetBrains Mono',monospace">${t.estrategia}${t.variante?' '+t.variante:''}</span></td>
+        <td><span style="color:${stratColors[t.estrategia]||'var(--text)'};font-weight:600;font-size:11px;font-family:'Roboto Mono',monospace">${t.estrategia}${t.variante?' '+t.variante:''}</span></td>
         <td><span class="badge ${resBC[t.resultado]||''}">${t.resultado||'–'}</span></td>
-        <td style="font-family:'JetBrains Mono',monospace;font-weight:600;color:${pnl>0?'var(--green)':(pnl<0?'var(--red)':'var(--text3)')}">${isNaN(pnl)?'–':((pnl>=0?'+':'')+'$ '+pnl.toFixed(2))}</td>
-        <td style="font-family:'JetBrains Mono',monospace;font-size:12px">$ ${info.cap.toFixed(2)}</td>
-        <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${deltaPct>0?'var(--green)':(deltaPct<0?'var(--red)':'var(--text3)')}">${deltaPct>=0?'+':''}${deltaPct.toFixed(2)} %</td>
+        <td style="font-family:'Roboto Mono',monospace;font-weight:600;color:${pnl>0?'var(--green)':(pnl<0?'var(--red)':'var(--text3)')}">${isNaN(pnl)?'–':((pnl>=0?'+':'')+'$ '+pnl.toFixed(2))}</td>
+        <td style="font-family:'Roboto Mono',monospace;font-size:12px">$ ${info.cap.toFixed(2)}</td>
+        <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:${deltaPct>0?'var(--green)':(deltaPct<0?'var(--red)':'var(--text3)')}">${deltaPct>=0?'+':''}${deltaPct.toFixed(2)} %</td>
       </tr>`;
     }).join('');
   }
@@ -2825,10 +2911,10 @@ function renderCartera(){
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px">
         <div>
           <div style="font-weight:600;color:${color}">${m.type}</div>
-          <div style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">${m.date||'–'}${m.note?' · '+escapeHtml(m.note):''}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace">${m.date||'–'}${m.note?' · '+escapeHtml(m.note):''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <div style="font-family:'JetBrains Mono',monospace;font-weight:600;color:${color}">${sign}$ ${amt.toFixed(2)}</div>
+          <div style="font-family:'Roboto Mono',monospace;font-weight:600;color:${color}">${sign}$ ${amt.toFixed(2)}</div>
           <button onclick="deleteMovement(${m.id})" class="del-btn" title="Eliminar">✕</button>
         </div>
       </div>`;
@@ -2841,7 +2927,7 @@ function renderCartera(){
     const isActive = a.id === activeAccountId;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;cursor:pointer;${isActive?'background:var(--bg3)':''}" onclick="setActiveAccountById('${a.id}')">
       <div style="font-weight:${isActive?'600':'500'};color:${isActive?'var(--accent)':'var(--text)'}">${escapeHtml(a.name)}${isActive?' · activa':''}</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-weight:600">$ ${c.toFixed(2)}</div>
+      <div style="font-family:'Roboto Mono',monospace;font-weight:600">$ ${c.toFixed(2)}</div>
     </div>`;
   }).join('');
 }
@@ -3045,7 +3131,7 @@ function loadAsrTradePreview(){
   accounts.forEach((a,i)=>{ accColorMap[a.id] = accColors[i % accColors.length]; });
   const acc = accounts.find(a=>a.id===t.accountId);
   const accBadge = acc
-    ? `<span style="padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;color:${accColorMap[acc.id]};background:${accColorMap[acc.id]}15;border:1px solid ${accColorMap[acc.id]}40;font-family:'JetBrains Mono',monospace">${escapeHtml(acc.name)}</span> &nbsp;|&nbsp; `
+    ? `<span style="padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;color:${accColorMap[acc.id]};background:${accColorMap[acc.id]}15;border:1px solid ${accColorMap[acc.id]}40;font-family:'Roboto Mono',monospace">${escapeHtml(acc.name)}</span> &nbsp;|&nbsp; `
     : '';
   prev.innerHTML = `${accBadge}<span style="color:${bc[t.estrategia]||'var(--text)'};font-weight:700">${t.estrategia}${t.variante?' '+t.variante:''}</span> &nbsp;|&nbsp; ${t.activo} &nbsp;|&nbsp; ${t.tipo||''} ${t.sesion?'· '+t.sesion:''} &nbsp;|&nbsp; <span style="color:${t.dir==='Long'?'var(--green)':'var(--red)'}">${t.dir||''}</span> &nbsp;|&nbsp; <span style="color:${rc[t.resultado]||'var(--text2)'}">${t.resultado||'?'}${t.rr?' · '+t.rr+'R':''}</span>${t.pnl?' &nbsp;|&nbsp; '+t.pnl:''}`;
 }
@@ -3216,10 +3302,10 @@ function renderAsrList(){
     const t = trades.find(x=>x.id===a.tradeId);
     const acc = t ? accounts.find(x=>x.id===t.accountId) : null;
     const accBadge = acc
-      ? `<span style="padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;color:${accColorMap[acc.id]};background:${accColorMap[acc.id]}15;border:1px solid ${accColorMap[acc.id]}40;font-family:'JetBrains Mono',monospace">${escapeHtml(acc.name)}</span>`
+      ? `<span style="padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;color:${accColorMap[acc.id]};background:${accColorMap[acc.id]}15;border:1px solid ${accColorMap[acc.id]}40;font-family:'Roboto Mono',monospace">${escapeHtml(acc.name)}</span>`
       : '';
     const tradeInfo = t
-      ? `${accBadge} <span class="badge ${bc[t.estrategia]||''}">${t.estrategia}${t.variante?' · '+t.variante:''}</span> <span style="font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace">${t.activo} · ${t.dir||''}</span> <span class="badge ${rc[t.resultado]||''}">${t.resultado||'?'}${t.rr?' · '+t.rr+'R':''}</span>`
+      ? `${accBadge} <span class="badge ${bc[t.estrategia]||''}">${t.estrategia}${t.variante?' · '+t.variante:''}</span> <span style="font-size:11px;color:var(--text2);font-family:'Roboto Mono',monospace">${t.activo} · ${t.dir||''}</span> <span class="badge ${rc[t.resultado]||''}">${t.resultado||'?'}${t.rr?' · '+t.rr+'R':''}</span>`
       : '<span style="color:var(--text3)">trade no encontrado</span>';
     const block = (title, val) => val ? `<div class="asr-card-block"><div class="asr-card-block-title">${title}</div><div class="asr-card-block-text">${escapeHtml(val)}</div></div>` : '';
     const yn = (label, val, txt) => (val||txt) ? `<div class="asr-card-block"><div class="asr-card-block-title">${label}${val?' <span style="color:var(--accent)">· '+val+'</span>':''}</div>${txt?`<div class="asr-card-block-text">${escapeHtml(txt)}</div>`:''}</div>` : '';
@@ -3701,7 +3787,7 @@ async function initApp(){
       <path d="M288 384 L288 96 L352 96 L352 384 Z" fill="#f472b6"/>
       <path d="M384 384 L384 256 L448 256 L448 384 Z" fill="#f59e0b"/>
     </svg>
-    <div style="color:#556070;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em">Cargando datos...</div>`;
+    <div style="color:#556070;font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.1em">Cargando datos...</div>`;
   document.body.appendChild(overlay);
 
   try {
@@ -3917,14 +4003,14 @@ function installApp(){
   .mc-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   @media(max-width:820px){.mc-grid2{grid-template-columns:1fr}}
   .mc-filters{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}
-  .mc-chip{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:7px 13px;border-radius:999px;cursor:pointer;font-size:12.5px;font-weight:600;font-family:'Syne',sans-serif}
+  .mc-chip{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:7px 13px;border-radius:999px;cursor:pointer;font-size:12.5px;font-weight:600;font-family:'Outfit',sans-serif}
   .mc-chip.on{background:var(--accent2);color:var(--accent);border-color:var(--accent)}
-  .mc-search{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:11px 14px;border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:13px;margin-bottom:12px}
+  .mc-search{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:11px 14px;border-radius:var(--radius);font-family:'Roboto Mono',monospace;font-size:13px;margin-bottom:12px}
   .mc-asset{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;overflow:hidden}
   .mc-ah{display:flex;align-items:center;gap:12px;padding:13px 15px;cursor:pointer}
-  .mc-tk{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:14px;color:var(--accent);min-width:96px}
+  .mc-tk{font-family:'Roboto Mono',monospace;font-weight:600;font-size:14px;color:var(--accent);min-width:96px}
   .mc-nm{font-weight:600}
-  .mc-catlab{margin-left:auto;font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);padding:3px 9px;border:1px solid var(--border);border-radius:999px}
+  .mc-catlab{margin-left:auto;font-size:10.5px;font-family:'Roboto Mono',monospace;color:var(--text3);padding:3px 9px;border:1px solid var(--border);border-radius:999px}
   .mc-chev{color:var(--text2);transition:.2s;font-size:12px}
   .mc-asset.open .mc-chev{transform:rotate(90deg)}
   .mc-ab{display:none;padding:0 15px 13px;border-top:1px solid var(--border)}
@@ -3937,39 +4023,51 @@ function installApp(){
   .mc-q{padding:13px 0;border-bottom:1px solid var(--border)}
   .mc-q:last-child{border-bottom:none}
   .mc-qt{font-weight:600;font-size:14px;margin-bottom:9px}
-  .mc-qt .ix{font-family:'JetBrains Mono',monospace;color:var(--accent);margin-right:7px}
+  .mc-qt .ix{font-family:'Roboto Mono',monospace;color:var(--accent);margin-right:7px}
   .mc-opts{display:flex;gap:8px;flex-wrap:wrap}
-  .mc-opt{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:8px 14px;border-radius:var(--radius);cursor:pointer;font-size:12.5px;font-weight:600;font-family:'Syne',sans-serif}
+  .mc-opt{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:8px 14px;border-radius:var(--radius);cursor:pointer;font-size:12.5px;font-weight:600;font-family:'Outfit',sans-serif}
   .mc-opt.sel{background:var(--accent2);border-color:var(--accent);color:var(--accent)}
   .mc-opt.sel.good{background:var(--green2);border-color:var(--green);color:var(--green)}
   .mc-opt.sel.bad{background:var(--red2);border-color:var(--red);color:var(--red)}
-  .mc-ta{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:11px;font-family:'Syne',sans-serif;font-size:13px;resize:vertical;min-height:64px}
-  .mc-btn{background:var(--accent);color:#fff;border:none;padding:10px 18px;border-radius:var(--radius);font-family:'Syne',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer}
+  .mc-ta{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:11px;font-family:'Outfit',sans-serif;font-size:13px;resize:vertical;min-height:64px}
+  .mc-btn{background:var(--accent);color:#fff;border:none;padding:10px 18px;border-radius:var(--radius);font-family:'Outfit',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer}
   .mc-btn.gold{background:var(--amber);color:#1a1300}
   .mc-btn.ghost{background:transparent;border:1px solid var(--border2);color:var(--text)}
   .mc-btn.sm{padding:7px 13px;font-size:12.5px}
   .mc-verdict{text-align:center;padding:20px;border-radius:var(--radius-lg);margin-top:12px}
-  .mc-verdict h3{font-family:'Syne',sans-serif;font-weight:700;font-size:22px;margin:6px 0}
+  .mc-verdict h3{font-family:'Outfit',sans-serif;font-weight:700;font-size:22px;margin:6px 0}
   .mc-bar{height:11px;border-radius:999px;background:var(--bg3);overflow:hidden;margin:13px 0 4px;border:1px solid var(--border)}
   .mc-fill{height:100%;border-radius:999px;transition:width .5s ease}
-  .mc-pill{display:inline-block;padding:4px 11px;border-radius:999px;font-size:11.5px;font-weight:600;font-family:'JetBrains Mono',monospace}
+  .mc-pill{display:inline-block;padding:4px 11px;border-radius:999px;font-size:11.5px;font-weight:600;font-family:'Roboto Mono',monospace}
   .mc-pill.green{background:var(--green2);color:var(--green)} .mc-pill.amber{background:var(--amber2);color:var(--amber)}
   .mc-pill.red{background:var(--red2);color:var(--red)} .mc-pill.gray{background:var(--bg3);color:var(--text2)}
-  .mc-hist .mc-hr{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2)}
+  .mc-hist .mc-hr{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text2)}
   .mc-fl{display:block;font-size:12px;color:var(--text2);margin:10px 0 5px;font-weight:600}
-  .mc-in{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:13.5px}
-  select.mc-in{font-family:'Syne',sans-serif;font-weight:600}
+  .mc-in{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius);font-family:'Roboto Mono',monospace;font-size:13.5px}
+  select.mc-in{font-family:'Outfit',sans-serif;font-weight:600}
   .mc-res{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:15px;min-height:80px}
   .mc-rr{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px dashed var(--border)}
   .mc-rr:last-child{border-bottom:none}
   .mc-rk{color:var(--text2);font-size:12.5px}
-  .mc-rv{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:15px}
+  .mc-rv{font-family:'Roboto Mono',monospace;font-weight:600;font-size:15px}
   .mc-rv.big{font-size:20px;color:var(--accent)}
   .mc-warn{background:var(--red2);border:1px solid var(--red);color:#ffb3bf;padding:9px 12px;border-radius:var(--radius);font-size:12.5px;margin-top:9px}
   .mc-note{color:var(--text2);font-size:11.5px;line-height:1.5;margin-top:8px}
   .mc-guard{border-radius:var(--radius-lg);padding:13px 16px;margin:0 0 16px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .mc-guard .gtxt{font-weight:700;font-size:14px}
-  .mc-guard .gcount{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);margin-left:auto}
+  .mc-guard .gcount{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text2);margin-left:auto}
+  .mc-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}
+  .mc-modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;max-width:430px;width:100%;padding:26px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .mc-modal h3{font-family:'Outfit',sans-serif;font-weight:700;font-size:21px;margin:0 0 8px}
+  .mc-modal p{color:var(--text2);font-size:13.5px;margin:0 0 18px;line-height:1.55}
+  .mc-modal .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .mc-help{margin:4px 0;padding-left:20px}
+  .mc-help li{margin:9px 0;line-height:1.55;color:var(--text);font-size:13.5px}
+  .mc-help code{background:var(--bg3);padding:1px 6px;border-radius:4px;font-family:'Roboto Mono',monospace;font-size:12px;color:var(--accent)}
+  .mc-fc-wrap{margin:6px 0 14px}
+  .mc-fc{display:flex;gap:16px;flex-wrap:wrap;align-items:baseline;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 14px}
+  .mc-fc-item{font-size:13px;color:var(--text2)}
+  .mc-fc-item b{color:var(--text);font-family:'Roboto Mono',monospace;font-weight:600}
   `;
   const st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
 
@@ -4228,7 +4326,7 @@ function installApp(){
   /* ================= RIESGO + CUENTAS ================= */
   const balStore=()=>{try{return JSON.parse(localStorage.getItem('mc_calc_bal')||'{}')}catch(e){return{}}};
   const setBalStore=o=>localStorage.setItem('mc_calc_bal',JSON.stringify(o));
-  function defRules(){return Object.assign({en:true,maxSL:2,maxTr:3,maxLoss:3},(function(){try{return JSON.parse(localStorage.getItem('mc_daily_rules')||'{}')}catch(e){return{}}})());}
+  function defRules(){return Object.assign({en:true,maxSL:2,maxTr:3,maxLoss:3,wkTarget:3,wkLoss:3},(function(){try{return JSON.parse(localStorage.getItem('mc_daily_rules')||'{}')}catch(e){return{}}})());}
   function setRules(r){localStorage.setItem('mc_daily_rules',JSON.stringify(r));}
 
   window.mcInitRiesgo=function(){
@@ -4244,8 +4342,9 @@ function installApp(){
     const r=defRules();
     const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
     set('mc-maxsl',r.maxSL); set('mc-maxtr',r.maxTr); set('mc-maxloss',r.maxLoss);
+    set('mc-wktarget',r.wkTarget); set('mc-wkloss',r.wkLoss);
     const en=document.getElementById('mc-rules-en'); if(en)en.checked=r.en;
-    mcCalc(); mcAtr(); mcRenderGuard();
+    mcCalc(); mcAtr(); mcRenderGuard(); mcRenderWeekly();
   };
   window.mcAccChange=function(){
     const sel=document.getElementById('mc-acc'); const bal=document.getElementById('mc-balance');
@@ -4259,8 +4358,8 @@ function installApp(){
   };
   window.mcSaveRules=function(){
     const g=id=>parseFloat(document.getElementById(id)?.value);
-    setRules({en:document.getElementById('mc-rules-en')?.checked!==false,maxSL:g('mc-maxsl')||2,maxTr:g('mc-maxtr')||3,maxLoss:g('mc-maxloss')||3});
-    mcRenderGuard();
+    setRules({en:document.getElementById('mc-rules-en')?.checked!==false,maxSL:g('mc-maxsl')||2,maxTr:g('mc-maxtr')||3,maxLoss:g('mc-maxloss')||3,wkTarget:g('mc-wktarget')||3,wkLoss:g('mc-wkloss')||3});
+    mcRenderGuard(); mcRenderWeekly();
   };
   window.mcCalc=function(){
     const bal=parseFloat(document.getElementById('mc-balance')?.value)||0;
@@ -4365,12 +4464,214 @@ function installApp(){
       <span class="gtxt" style="color:${col}">${txt}</span>
       <span class="gcount">Hoy: SL ${slCount}/${r.maxSL} · Trades ${trCount}/${r.maxTr} · Riesgo perdido ${fmt(lostPct,1)}%/${r.maxLoss}%</span></div>`;
     slots.forEach(s=>s.innerHTML=html);
+    try{mcRenderWeekly();}catch(e){}
+  };
+
+  /* ================= MEDIDOR SEMANAL ================= */
+  function mcWeekStart(){var d=new Date();var day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);return d.toISOString().slice(0,10);}
+  function mcRenderWeekly(){
+    var wslots=['mc-week','mc-week3'].map(function(id){return document.getElementById(id);}).filter(Boolean);
+    if(!wslots.length)return;
+    var r=defRules();
+    var tAll=(typeof trades!=='undefined')?trades:[];
+    var act=(typeof activeAccountId!=='undefined')?activeAccountId:'default';
+    var ws=mcWeekStart();
+    var td=tAll.filter(function(t){return t.accountId===act && t.fecha && t.fecha>=ws;});
+    var wp=0,n=0;
+    td.forEach(function(t){var risk=parseFloat(t.riesgoPct)||1;var rr=parseFloat(t.rr)||parseFloat(t.rrPlan)||2;
+      if(t.resultado==='Win'){wp+=risk*rr;n++;}else if(t.resultado==='Loss'){wp-=risk;n++;}});
+    var tgt=r.wkTarget||3, lim=r.wkLoss||3;
+    var cls='gray',msg='Semana en curso. Foco en el proceso, no en el número.';
+    if(wp>=tgt){cls='green';msg='🎯 Meta semanal alcanzada (+'+fmt(tgt,1)+'%). Enough is enough: bajá el riesgo o cerrá la semana para proteger lo ganado.';}
+    else if(lim>0 && wp<=-lim){cls='red';msg='🛑 Límite de pérdida semanal (-'+fmt(lim,1)+'%). Mejor parar la semana.';}
+    else if(lim>0 && wp<=-lim*0.66){cls='amber';msg='Atención: te acercás al límite de pérdida semanal.';}
+    else if(wp>0){cls='amber';msg='Vas sumando. Falta para la meta de +'+fmt(tgt,1)+'%.';}
+    var col=cls==='red'?'var(--red)':cls==='amber'?'var(--amber)':cls==='green'?'var(--green)':'var(--text2)';
+    var bg=cls==='red'?'var(--red2)':cls==='amber'?'var(--amber2)':cls==='green'?'var(--green2)':'var(--bg3)';
+    var span=lim+tgt; if(span<=0)span=1; var zero=lim/span*100; var pos=Math.max(0,Math.min(100,(wp+lim)/span*100));
+    var whtml='<div class="mc-guard" style="display:block;background:'+bg+';border-color:'+col+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span class="gtxt" style="color:'+col+'">Semana: '+(wp>=0?'+':'')+fmt(wp,2)+'%</span>'
+      +'<span class="gcount">meta +'+fmt(tgt,1)+'% · freno -'+fmt(lim,1)+'% · '+n+' trades</span></div>'
+      +'<div style="position:relative;height:8px;border-radius:999px;background:var(--bg);margin:10px 0 8px;overflow:hidden">'
+        +'<div style="position:absolute;left:0;top:0;bottom:0;width:'+zero+'%;background:rgba(239,90,111,.22)"></div>'
+        +'<div style="position:absolute;left:'+zero+'%;top:0;bottom:0;right:0;background:rgba(62,207,142,.16)"></div>'
+        +'<div style="position:absolute;left:'+pos+'%;top:-2px;width:3px;height:12px;background:'+col+';border-radius:2px"></div>'
+      +'</div>'
+      +'<div class="mc-note" style="margin:0;color:'+col+'">'+msg+'</div></div>';
+    wslots.forEach(function(s){s.innerHTML=whtml;});
+  }
+
+  /* ================= TRADING PLAN (documento vivo) ================= */
+  function mcEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  var MC_PLAN_SECTIONS=[
+    {k:'perfil',t:'01 · Perfil del trader',h:80,d:'Trader principiante en consolidación. Estilo: Day + Swing (Scalp ocasional). 80% reglas / 20% discrecional. Vivo en Italia (CEST). Esto es mi empresa de trading: tengo horario de entrada y de salida, no estoy todo el día.'},
+    {k:'objetivos',t:'02 · Objetivos y metas',h:110,d:'Prioridad 1: NO perder dinero (preservar capital). Prioridad 2: ejecutar solo las mejores oportunidades, no operar por aburrimiento. Prioridad 3: quitar el riesgo cuanto antes (BE).\nMeta semanal orientativa: +3% (enough is enough: al llegar, bajar riesgo o cerrar la semana). Freno semanal: -3%. Mensual realista: 5-10%. El objetivo es operar BIEN; los resultados son la consecuencia.'},
+    {k:'riesgo',t:'03 · Gestión de riesgo',h:120,d:'Riesgo por operación: 1% fijo (aviso si lo cambio). Tope diario: 2 SL / 3 trades / -3% (lo que pase primero, paro el día). Freno semanal: -3%. R:R objetivo: mínimo 1:2 (a revisar con estadísticas). Correlación: si dos activos están correlacionados, 0,75% en cada uno. Nunca aumentar el tamaño por racha positiva.'},
+    {k:'estrategias',t:'04 · Estrategias',h:110,d:'6 estrategias por color (Ondas de Elliott + SMC): Blue, Red, Pink, White, Black, Green. Green = única para cripto. Regla RCC (Ruptura + Cierre + Confirmación) SIEMPRE antes de entrar, sin excepción. Patrones: los canales se operan solo si terminan en doble techo/suelo; los rangos NO se operan.'},
+    {k:'mercados',t:'05 · Mercados y activos',h:120,d:'20 activos. Forex: EURUSD, GBPUSD, USDCHF, USDCAD, AUDUSD, NZDUSD. Metales: Oro, Plata. Materias primas: WTI, Soja. Cripto: BTC, ETH. Índices: US100, US500, DAX. Acciones: AAPL, NVDA, TSLA, AMZN, MSFT. Foco principal: Forex.\nSesiones (hora Italia): Londres 09:00-12:00 (ventana principal), NY/solape 15:30-17:30, cripto el fin de semana un rato.'},
+    {k:'ejecucion',t:'06 · Ejecución',h:110,d:'Confluencia mínima de 3 factores (Fibonacci, EMA, soporte/resistencia). Entrada tras RCC. Mercado vs limit: A DEFINIR (estoy probando limit y me gustó; Claude me indica cuándo conviene). No operar ~30 min antes/después de noticias de alto impacto. No ejecutar el mismo activo si ya tengo posición abierta (salvo BE puesto).'},
+    {k:'gestion',t:'07 · Gestión de la posición',h:130,d:'TP1 fijo (~1:2) siempre puesto (red de seguridad si me tengo que ir). En 1:1 muevo el SL a BE + un par de pips (cubre spread/comisión). Si estoy presente y quiero dejar correr: trailing con la EMA de 15min (salgo cuando una vela de 15min cierra del otro lado). Si dudo con buen profit: SUBO el stop, no cierro a mercado. Sin parciales (gestiono la posición completa). Cierro antes del cierre del viernes y antes de noticias fuertes.'},
+    {k:'psico',t:'08 · Gestión emocional',h:110,d:'Checklist pre-trade todos los días antes de operar (semáforo). Si da rojo, no opero. No operar con emociones alteradas (miedo, euforia, tras una pérdida). No revenge trading. Una mala racha no significa que el sistema falle: miro las estadísticas. Días intensos: escribo y reflexiono al final del día. Si estoy agobiada por la vida, no abro gráficos.'},
+    {k:'revision',t:'09 · Revisión',h:100,d:'Cada trade: registro + ASR (la parte objetiva la completa Claude; lo emocional lo pongo yo). Semanal: repaso con ASR + medidor semanal. Mensual: revisión profunda, patrones repetidos. Trimestral: revisión del plan completo. Una vez al mes: limpio los dibujos del gráfico y arranco HTF de cero.'},
+    {k:'pendientes',t:'10 · Pendientes (a definir juntas)',h:90,d:'- Regla de mercado vs limit.\n- Broker(s) a usar.\n- Exchange de cripto.\n- Mapeo fino color -> estilo.\n- Parámetros de cuentas de fondeo.\n(Se completa a medida que avanzamos.)'},
+  ];
+  function mcPlanStore(){try{return JSON.parse(localStorage.getItem('mc_trading_plan')||'{}')}catch(e){return{};}}
+  window.mcPlanSave=function(){
+    var o={}; [].slice.call(document.querySelectorAll('#mc-plan-body textarea[data-k]')).forEach(function(t){o[t.getAttribute('data-k')]=t.value;});
+    localStorage.setItem('mc_trading_plan',JSON.stringify(o));
+    var s=document.getElementById('mc-plan-saved'); if(s)s.textContent='Guardado '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  };
+  window.mcRenderPlan=function(){
+    var body=document.getElementById('mc-plan-body'); if(!body)return;
+    var saved=mcPlanStore();
+    body.innerHTML=MC_PLAN_SECTIONS.map(function(s){
+      var val=(saved[s.k]!=null)?saved[s.k]:s.d;
+      return '<div class="mc-card" style="margin-bottom:12px"><div class="mc-qt">'+s.t+'</div>'
+        +'<textarea class="mc-ta" data-k="'+s.k+'" oninput="mcPlanSave()" style="min-height:'+(s.h||90)+'px">'+mcEsc(val)+'</textarea></div>';
+    }).join('');
+  };
+
+  /* ================= DIVERSIFICACIÓN (esqueleto editable) ================= */
+  var MC_DIVERSIF_SECTIONS=[
+    {k:'objetivo',t:'Objetivo',h:90,d:'No tener todo el capital en trading. Diversificar para bajar el estrés y el riesgo: combinar trading activo con inversión de largo plazo (ETFs/indexadas), holdeo de cripto (BTC/ETH) y eventuales compras spot. (Para profundizar más adelante.)'},
+    {k:'distribucion',t:'Distribución del capital (referencia, a ajustar)',h:120,d:'- Trading activo: 80%\n- Inversión de largo plazo (no tocar): 20% -> 80% ETFs/indexadas + 20% cripto (BTC/ETH)\n- Reserva / efectivo: a definir.\n(La cripto de holdeo es aparte de la cripto que opero con Green.)'},
+    {k:'reglas',t:'Reglas',h:90,d:'La parte de largo plazo NO se toca para operar. Aportes periódicos (DCA). Rebalanceo cada 3-6 meses. Primero la consistencia en trading, después escalar la diversificación.'},
+    {k:'estadisticas',t:'Estadísticas a seguir',h:90,d:'(Lo iremos llenando juntas): % del total por bucket, rendimiento de cada bucket, evolución mensual, aporte mensual, y comparación trading vs largo plazo.'},
+    {k:'pendientes',t:'Pendientes a definir',h:90,d:'- Exchange para cripto.\n- Qué comprar en spot y con qué criterio.\n- DCA: monto y frecuencia.\n- Cómo conectarlo con el resumen de Cartera del journal.'},
+  ];
+  function mcDiversifStore(){try{return JSON.parse(localStorage.getItem('mc_diversificacion')||'{}')}catch(e){return{};}}
+  window.mcDiversifSave=function(){
+    var o={}; [].slice.call(document.querySelectorAll('#mc-diversif-body textarea[data-k]')).forEach(function(t){o[t.getAttribute('data-k')]=t.value;});
+    localStorage.setItem('mc_diversificacion',JSON.stringify(o));
+    var s=document.getElementById('mc-diversif-saved'); if(s)s.textContent='Guardado '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  };
+  window.mcRenderDiversif=function(){
+    var body=document.getElementById('mc-diversif-body'); if(!body)return;
+    var saved=mcDiversifStore();
+    body.innerHTML=MC_DIVERSIF_SECTIONS.map(function(s){
+      var val=(saved[s.k]!=null)?saved[s.k]:s.d;
+      return '<div class="mc-card" style="margin-bottom:12px"><div class="mc-qt">'+s.t+'</div>'
+        +'<textarea class="mc-ta" data-k="'+s.k+'" oninput="mcDiversifSave()" style="min-height:'+(s.h||90)+'px">'+mcEsc(val)+'</textarea></div>';
+    }).join('');
+  };
+
+  /* ================= RR + LOTE AUTO EN NUEVA OPERACIÓN ================= */
+  function mcFormCalc(){
+    var panel=document.getElementById('mc-formcalc'); if(!panel)return;
+    var num=function(id){return parseFloat(String(document.getElementById(id)?.value||'').replace(',','.'));};
+    var entry=num('inp-entrada'), sl=num('inp-sl'), tp=num('inp-tp');
+    if(isNaN(entry)||isNaN(sl)||entry<=0||sl<=0){panel.innerHTML='<span class="mc-note">Cargá entrada y SL para ver RR-plan y lote sugerido (1%).</span>';return;}
+    var dist=Math.abs(entry-sl);
+    if(dist===0){panel.innerHTML='<span class="mc-note" style="color:var(--red)">El SL no puede ser igual a la entrada.</span>';return;}
+    var dir=sl<entry?'Long':'Short';
+    var mercado=document.getElementById('inp-mercado')?.value||'Forex';
+    var catMap={'Forex':'forex','Metales':'metal','Commodities':'commodity','Cripto':'crypto','Índices':'index','Acciones':'stock'};
+    var cat=catMap[mercado]||'forex';
+    // RR-plan
+    var rr=null;
+    if(!isNaN(tp)&&tp>0){var ok=(sl<entry&&tp>entry)||(sl>entry&&tp<entry); if(ok)rr=Math.abs(tp-entry)/dist;}
+    if(rr!=null){var rp=document.getElementById('inp-rr-plan'); if(rp)rp.value=rr.toFixed(2);}
+    // riesgo% fijo 1% (para que los medidores diario/semanal cuenten bien)
+    var rpct=document.getElementById('inp-riesgo-pct'); if(rpct)rpct.value='1';
+    // lote según saldo de la cuenta (definido en pestaña Riesgo) y 1%
+    var acc=document.getElementById('inp-account')?.value||'default';
+    var bal=balStore()[acc]; var riskPct=1; var lotLine='';
+    if(bal!=null && bal>0){
+      var riskAmt=bal*riskPct/100, units=riskAmt/dist, sizeTxt;
+      if(cat==='forex'){var lots=units/100000;sizeTxt=lots.toFixed(2)+' lotes';var lt=document.getElementById('inp-lotaje');if(lt)lt.value=lots.toFixed(2);}
+      else if(cat==='metal'){sizeTxt=units.toFixed(2)+' oz';}
+      else if(cat==='crypto'){sizeTxt=units.toFixed(6);}
+      else if(cat==='index'){sizeTxt=units.toFixed(2)+' cont';}
+      else if(cat==='stock'){sizeTxt=Math.floor(units)+' acc';}
+      else{sizeTxt=units.toFixed(2);}
+      lotLine='<span class="mc-fc-item">Lote (1%): <b>'+sizeTxt+'</b></span><span class="mc-fc-item">Riesgo: <b>$'+riskAmt.toFixed(2)+'</b></span>';
+    } else { lotLine='<span class="mc-note">Definí el saldo de esta cuenta en la pestaña Riesgo para ver el lote.</span>'; }
+    var pips=cat==='forex'?(' · '+Math.round(dist/0.0001)+' pips'):'';
+    var rrTxt=rr!=null?('1 : '+rr.toFixed(2)):'– (cargá TP)';
+    var rrCol=rr!=null?(rr>=2?'var(--green)':rr>=1?'var(--amber)':'var(--red)'):'var(--text2)';
+    panel.innerHTML='<div class="mc-fc"><span class="mc-fc-item">'+dir+'</span><span class="mc-fc-item">SL: <b>'+dist.toFixed(cat==='forex'?5:2)+'</b>'+pips+'</span><span class="mc-fc-item">RR-plan: <b style="color:'+rrCol+'">'+rrTxt+'</b></span>'+lotLine+'</div>';
+  }
+  function mcFormCalcInit(){
+    if(document.getElementById('mc-formcalc'))return;
+    var slEl=document.getElementById('inp-sl'); if(!slEl)return;
+    var anchor=slEl.closest('.form-grid')||slEl.closest('.form-group')||slEl.parentElement;
+    var panel=document.createElement('div'); panel.id='mc-formcalc'; panel.className='mc-fc-wrap';
+    anchor.parentElement.insertBefore(panel, anchor.nextSibling);
+    ['inp-entrada','inp-sl','inp-tp','inp-mercado','inp-account'].forEach(function(id){var e=document.getElementById(id);if(e){e.addEventListener('input',mcFormCalc);e.addEventListener('change',mcFormCalc);}});
+    mcFormCalc();
+  }
+
+  /* ================= TEMA CLARO/OSCURO AUTOMÁTICO ================= */
+  function mcApplyTheme(){
+    var m=localStorage.getItem('mc_theme')||'auto';
+    var h=new Date().getHours();
+    var t=(m==='auto')?((h>=7&&h<19)?'light':'dark'):m;
+    document.documentElement.setAttribute('data-theme',t);
+    var b=document.getElementById('mc-theme-btn');
+    if(b)b.textContent=(t==='light'?'☀️ ':'🌙 ')+'Tema: '+(m==='auto'?('Auto · '+(t==='light'?'claro':'oscuro')):(m==='dark'?'Oscuro':'Claro'));
+  }
+  window.mcCycleTheme=function(){
+    var m=localStorage.getItem('mc_theme')||'auto';
+    var nx=(m==='auto')?'dark':(m==='dark'?'light':'auto');
+    localStorage.setItem('mc_theme',nx); mcApplyTheme();
+  };
+  function mcThemeInit(){
+    var sb=document.querySelector('.sidebar-bottom');
+    if(sb&&!document.getElementById('mc-theme-btn')){
+      var b=document.createElement('button'); b.id='mc-theme-btn'; b.className='export-btn';
+      b.title='Cambiar tema: Auto (claro de día / oscuro de noche) → Oscuro → Claro';
+      b.onclick=window.mcCycleTheme;
+      sb.insertBefore(b, sb.firstChild);
+    }
+    mcApplyTheme();
+    setInterval(function(){ if((localStorage.getItem('mc_theme')||'auto')==='auto') mcApplyTheme(); }, 900000);
+  }
+
+  /* ================= PULIDOS DE INTERFAZ ================= */
+  function mcPulido(){
+    var hide=function(el){if(el)el.style.display='none';};
+    var fg=function(id){var e=document.getElementById(id);return e?(e.closest('.form-group')||e):null;};
+    // 1) sacar horas de entrada/salida y duración (derivada)
+    hide(fg('inp-hora')); hide(fg('inp-hora-salida')); hide(fg('inp-duracion'));
+    // 2) sacar confirmaciones y gestión del trade del formulario de registro
+    hide(fg('confPills'));
+    hide(fg('gestionPills'));
+    // 3) sacar imágenes del ASR (checklist, gestión, SS THEM/NOW)
+    hide(fg('asr-check-input')); hide(fg('asr-gest-input'));
+    var sl=[].slice.call(document.querySelectorAll('#page-asr .section-label')).find(function(e){return /Capturas SS/i.test(e.textContent);});
+    if(sl){ hide(sl); hide(sl.nextElementSibling); }
+    // 4) Ayuda -> guía breve personal
+    var ay=document.getElementById('page-ayuda');
+    if(ay){ ay.innerHTML='<div class="page-title">Cómo trabajo con Claude</div><div class="page-sub">Mi guía rápida del día a día</div>'
+      +'<div class="mc-card" style="margin-top:8px"><ul class="mc-help">'
+      +'<li><b>Antes de operar:</b> guardo la captura del setup en mi carpeta "MIS TRADES" como <code>PAR-pre.png</code> y le digo a Claude: "pre-trade [par], cuenta [nombre]". Me devuelve lote, R:R, referencia ATR, análisis (calendario + fundamental + ficha del activo) y un go/no-go.</li>'
+      +'<li><b>Durante el trade:</b> le mando una captura y me dice la acción según mi plan: no tocar / mover a BE / seguir la EMA50 / cerrar.</li>'
+      +'<li><b>Al salir:</b> guardo <code>PAR-resultado.png</code> y le digo "resultado [par]". Lo carga en el journal con la imagen y el ASR (parte objetiva ya completada por Claude; lo emocional lo pongo yo).</li>'
+      +'<li><b>Checklist:</b> me salta sola cada día antes de operar (semáforo verde / amarillo / rojo).</li>'
+      +'<li><b>Riesgo:</b> 1% por operación. Tope diario: 2 SL / 3 trades / 3%. Meta semanal +3% (enough is enough), freno -3%.</li>'
+      +'<li><b>Reglas de oro:</b> sin RCC no entro · sin parciales · muevo a BE al 50% del TP1 · sigo la EMA50 · si la checklist da rojo, no opero.</li>'
+      +'</ul></div>'; }
+  }
+
+  /* ================= CHECKLIST QUE SALTA SOLA ================= */
+  window.mcMaybePopup=function(){
+    try{ if(loadHist().some(x=>x.date===todayKey()))return; }catch(e){return;}
+    try{ if(sessionStorage.getItem('mc_popup_skip')===todayKey())return; }catch(e){}
+    if(document.getElementById('mc-modal-bg'))return;
+    var d=document.createElement('div'); d.id='mc-modal-bg'; d.className='mc-modal-bg';
+    d.innerHTML='<div class="mc-modal"><h3>☀️ Antes de operar</h3><p>Todavía no hiciste la checklist pre-trade de hoy. Lleva 30 segundos y te dice si estás bien para operar.</p><div class="row"><button class="mc-btn gold" id="mc-modal-go">Hacer checklist ahora</button><button class="mc-btn ghost" id="mc-modal-skip">Más tarde</button></div></div>';
+    document.body.appendChild(d);
+    document.getElementById('mc-modal-go').onclick=function(){d.remove();var nav=[...document.querySelectorAll('.nav-item')].find(n=>/Pre-trade/i.test(n.textContent));if(nav)nav.click();};
+    document.getElementById('mc-modal-skip').onclick=function(){try{sessionStorage.setItem('mc_popup_skip',todayKey());}catch(e){}d.remove();};
+    d.onclick=function(e){if(e.target===d){try{sessionStorage.setItem('mc_popup_skip',todayKey());}catch(e){}d.remove();}};
   };
 
   /* ================= WRAPPERS (no invasivos) ================= */
   const _sp=showPage;
   showPage=function(id,el){ _sp(id,el);
-    if(id==='mc-activos')mcRenderFichas();
+    if(id==='mc-plan')mcRenderPlan();
+    else if(id==='mc-diversif')mcRenderDiversif();
+    else if(id==='mc-activos')mcRenderFichas();
     else if(id==='mc-pretrade')mcRenderPretrade();
     else if(id==='mc-riesgo')mcInitRiesgo();
     else if(id==='registro')mcRenderGuard();
@@ -4386,11 +4687,20 @@ function installApp(){
       const d=document.createElement('div');d.id='mc-guard';
       reg.insertBefore(d, reg.children[2]||null);
     }
+    const g=document.getElementById('mc-guard');
+    if(reg&&g&&!document.getElementById('mc-week')){
+      const w=document.createElement('div');w.id='mc-week';
+      reg.insertBefore(w, g.nextSibling);
+    }
   })();
 
   // primer render (los datos se cargan async; updateSidebar lo refresca al terminar)
+  try{mcThemeInit();}catch(e){}
+  try{mcPulido();}catch(e){}
+  try{mcFormCalcInit();}catch(e){}
   try{mcRenderFichas();}catch(e){}
   try{mcRenderGuard();}catch(e){}
+  try{setTimeout(mcMaybePopup,1300);}catch(e){}
 })();
 
 </script>
