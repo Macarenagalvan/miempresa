@@ -1608,6 +1608,13 @@ function onAccountChange(){
     if(capInp) capInp.value = cap.toFixed(2);
     if(typeof calcRisk === 'function') calcRisk();
   }
+  /* FIX: la cuenta elegida para el trade pasa a ser la cuenta activa, para que el freno del dia (arriba de Nueva operacion) muestre ESA cuenta */
+  if(sel && sel.value && typeof activeAccountId!=='undefined' && activeAccountId!==sel.value){
+    activeAccountId = sel.value;
+    try{ if(typeof saveActiveAccount==='function') saveActiveAccount(); }catch(e){}
+    try{ if(typeof mcRenderGuard==='function') mcRenderGuard(); }catch(e){}
+    try{ if(typeof mcRenderWeekly==='function') mcRenderWeekly(); }catch(e){}
+  }
 }
 let curStrat='Blue', curType='Day', curDir='', curResult='', curPatron='', curVariant='', curImagenes={}, curSession=[], curGestion=[], curMode='', curOrden='';
 let curImgNotes = {}; // notas por slot de imagen
@@ -4417,7 +4424,13 @@ function installApp(){
   window.mcAccChange=function(){
     const sel=document.getElementById('mc-acc'); const bal=document.getElementById('mc-balance');
     if(sel&&bal){const b=balStore()[sel.value]; bal.value=(b!=null?b:'');}
-    mcCalc(); mcRenderGuard();
+    /* FIX: la cuenta elegida en la calculadora pasa a ser la cuenta activa, para que el freno diario/semanal refleje ESA cuenta */
+    if(sel && sel.value && typeof activeAccountId!=='undefined' && activeAccountId!==sel.value){
+      activeAccountId = sel.value;
+      try{ if(typeof saveActiveAccount==='function') saveActiveAccount(); }catch(e){}
+      try{ if(typeof refreshAccountSelectors==='function') refreshAccountSelectors(); }catch(e){}
+    }
+    mcCalc(); mcRenderGuard(); try{ if(typeof mcRenderWeekly==='function') mcRenderWeekly(); }catch(e){}
   };
   window.mcBalInput=function(){
     const sel=document.getElementById('mc-acc'); const bal=document.getElementById('mc-balance');
