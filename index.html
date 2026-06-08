@@ -4747,6 +4747,14 @@ function installApp(){
   window.showPage=showPage;
   if(typeof updateSidebar==='function'){const _us=updateSidebar;updateSidebar=function(){_us.apply(this,arguments);try{mcRenderGuard();}catch(e){}};window.updateSidebar=updateSidebar;}
   if(typeof addTrade==='function'){const _at=addTrade;addTrade=function(){const r=_at.apply(this,arguments);try{mcRenderGuard();}catch(e){}return r;};window.addTrade=addTrade;}
+  /* FIX: refrescar el guard diario/semanal al cambiar de cuenta activa */
+  ['changeActiveAccount','setActiveAccountById'].forEach(function(fnName){
+    if(typeof window[fnName]==='function'){
+      var _o=window[fnName];
+      window[fnName]=function(){ var r=_o.apply(this,arguments); try{mcRenderGuard();}catch(e){} try{ if(typeof mcRenderWeekly==='function') mcRenderWeekly(); }catch(e){} return r; };
+    }
+  });
+
 
   // slot del guard en la página de registro (Nueva operación)
   (function ensureSlot(){
