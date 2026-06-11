@@ -454,7 +454,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <label>Hora salida</label>
       <input type="time" id="inp-hora-salida" onchange="calcDuration()">
     </div>
-    <div class="form-group">
+    <div class="form-group" style="display:none">
       <label>Duración del trade</label>
       <input type="text" id="inp-duracion" placeholder="auto" readonly style="background:var(--bg2);color:var(--text2);font-family:'Roboto Mono',monospace">
     </div>
@@ -665,7 +665,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   <div class="tbl-wrap" style="overflow-x:auto">
     <table>
       <thead><tr>
-        <th>Fecha</th><th>Duración</th><th>Cuenta</th><th>Modo</th><th>Estrategia</th><th>Tipo</th><th>Activo</th>
+        <th>Fecha</th><th>Cuenta</th><th>Modo</th><th>Estrategia</th><th>Tipo</th><th>Activo</th>
         <th>Sesión</th><th>Dir.</th><th>Orden</th><th>Gestión</th><th>Fibonacci</th><th>Patrón</th>
         <th>Lotaje</th><th>R:R</th><th>P&L</th><th>Resultado</th><th>ASR</th><th>Gráfico</th><th>Notas</th><th></th>
       </tr></thead>
@@ -1105,7 +1105,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 </div>
 
 <div id="page-mc-activos" class="page">
-  <div class="page-title">Activos · 20 fichas</div>
+  <div class="page-title">Activos · 35 fichas</div>
   <div class="page-sub">Tu universo operable: cómo se mueve, liquida, rompe, Elliott y fibo</div>
   <div id="mc-cat-filters" class="mc-filters"></div>
   <input id="mc-search" class="mc-search" placeholder="Buscar… (oro, nasdaq, EURUSD)" oninput="mcRenderFichas()">
@@ -1919,6 +1919,9 @@ function showImageOverlay(src){
 }
 
 function calcDuration(){
+  // Duración desactivada a pedido: no se usa y daba error con horas en formato HH:MM:SS.
+  const _dur = document.getElementById('inp-duracion'); if(_dur) _dur.value = '';
+  return;
   const fe = document.getElementById('inp-fecha').value;
   const he = document.getElementById('inp-hora').value;
   const fs = document.getElementById('inp-fecha-salida').value;
@@ -2458,7 +2461,6 @@ function renderTable(){
     const accColor = acc ? accColorMap[acc.id] : 'var(--text3)';
     return `<tr>
       <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2)">${t.fecha}${t.hora?' <span style="color:var(--text3)">'+t.hora+'</span>':''}</td>
-      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)">${t.duracion||'–'}</td>
       <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;color:${accColor};background:${accColor}15;border:1px solid ${accColor}40;font-family:'Roboto Mono',monospace">${escapeHtml(accName)}</span></td>
       <td style="font-size:11px;font-weight:500;color:${t.mode==='Operado'?'var(--green)':(t.mode==='Backtest'?'var(--text2)':'var(--text3)')}">${t.mode||'–'}</td>
       <td><span class="badge ${stratBC[t.estrategia]||''}">${t.estrategia}${t.variante?' · '+t.variante:''}</span></td>
@@ -3038,7 +3040,7 @@ function showAccountModal(action){
     initialInp.value = '';
   } else if(action === 'rename'){
     title.textContent = 'Renombrar cuenta';
-    nameInp.value = getActiveAccount().name;
+    nameInp.value = getSelectedCarteraAccount().name;
     initial.style.display = 'none';
   }
   modal.style.display = 'flex';
@@ -3071,7 +3073,7 @@ function saveAccountModal(){
       saveMovements();
     }
   } else if(pendingAccountAction === 'rename'){
-    const acc = getActiveAccount();
+    const acc = getSelectedCarteraAccount();
     if(acc){ acc.name = name; saveAccounts(); }
   }
   closeAccountModal();
@@ -3079,9 +3081,17 @@ function saveAccountModal(){
   refreshAccountSelectors();
 }
 
+// Devuelve la cuenta ELEGIDA en el selector de Cartera (no la "activa"),
+// para que renombrar/eliminar siempre apunten a lo que ves en pantalla.
+function getSelectedCarteraAccount(){
+  const sel = document.getElementById('cartera-account-select');
+  const acc = (sel && sel.value) ? accounts.find(a=>a.id===sel.value) : null;
+  return acc || getActiveAccount();
+}
 function deleteAccount(){
   if(accounts.length <= 1){ alert('Debe quedar al menos una cuenta'); return; }
-  const acc = getActiveAccount();
+  const acc = getSelectedCarteraAccount();
+  if(!acc){ alert('Elegí una cuenta en el selector de Cartera.'); return; }
   const tradesCount = trades.filter(t=>t.accountId===acc.id).length;
   const movsCount = movements.filter(m=>m.accountId===acc.id).length;
   if(!confirm(`¿Eliminar la cuenta "${acc.name}"?\n\nEsto eliminará también sus ${tradesCount} trade(s) y ${movsCount} movimiento(s).\n\nEsta acción no se puede deshacer.`)) return;
@@ -4196,43 +4206,203 @@ function installApp(){
  liq:"Liquida con mechas más erráticas (menor liquidez): exigí RCC muy claro. Rompe en tendencia siguiendo al Aussie/China. Gaps: domingo y noticias asiáticas.",
  ell:"Respeta Elliott aceptablemente. Onda 2 a 0,5–0,618. Mejor como confluencia que como estrella.",
  enc:"Blue y Red · Day/Swing · Asia/Londres."},
+{c:"Forex",t:"USD/JPY",n:"Dólar / Yen",
+ que:"Refleja el diferencial Fed vs BoJ y los rendimientos de los bonos de EE.UU. Muy sensible al risk-on/off.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×1,5–2,0. Sesión: Asia y NY. Ojo intervención del BoJ/MoF cuando se estira.",
+ mov:"Rango diario 70–110 pips. Tendencias limpias y persistentes. 1 pip = 2° decimal (yenes).",
+ niv:"Redondos enteros y medios (psicológicos) muy respetados; zona de intervención cuando sube fuerte.",
+ liq:"Rompe ordenado siguiendo a los yields. Cuidado velas explosivas por intervención. Gaps de domingo.",
+ ell:"Respeta Elliott bien. Onda 2 a 0,5–0,618. Direccional.",
+ enc:"Blue y Red · Day · Asia/NY."},
+{c:"Forex",t:"EUR/GBP",n:"Euro / Libra",
+ que:"Cruce BCE vs BoE: mide la fuerza relativa euro-libra. Lento y poco direccional.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×1,5. Sesión: Londres. Spread fino.",
+ mov:"Rango diario CHICO (30–50 pips). Serruchea: es de RANGO, no de momentum.",
+ niv:"Opera entre niveles; redondos (0,85/0,86) como techo/piso de rango.",
+ liq:"Muchas falsas rupturas y reversión a la media. Premia comprar pisos / vender techos, no romper.",
+ ell:"Ondas cortas y solapadas; Elliott menos claro. Pullbacks a 0,5.",
+ enc:"Rango/swing más que day · en extremos de rango · Londres."},
+{c:"Forex",t:"EUR/JPY",n:"Euro / Yen",
+ que:"Riesgo (euro) y refugio (yen). Lo mueven BCE, BoJ, los yields y el apetito de riesgo global.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,0. Sesión: Asia (yen) y Europa. 1 pip = 2° decimal.",
+ mov:"Rango diario 80–120 pips. Tendencias intradía limpias. Buen híbrido de sesiones.",
+ niv:"Redondos enteros y medios muy respetados.",
+ liq:"Rompe ordenado en tendencia. Barridos limpios. Gaps de domingo.",
+ ell:"Respeta Elliott bien. Onda 2 a 0,5–0,618.",
+ enc:"Blue, Red y Pink · Day · Asia/Europa."},
+{c:"Forex",t:"EUR/CHF",n:"Euro / Franco suizo",
+ que:"Dos europeas (BCE vs SNB). Muy estable, históricamente intervenido por el SNB. Baja volatilidad.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×1,5. Sesión: Londres. Movimientos chicos.",
+ mov:"Rango diario MUY chico (30–50 pips). De los más lentos del tablero.",
+ niv:"Rangos estrechos; el SNB pone pisos históricos.",
+ liq:"Poco direccional, reversión a la media. OJO intervención SNB (saltos sin aviso).",
+ ell:"Ondas chatas, Elliott poco útil. Más rango que impulso.",
+ enc:"Rango/swing, no day · solo setups muy claros · Londres."},
+{c:"Forex",t:"EUR/CAD",n:"Euro / Dólar canadiense",
+ que:"Euro vs loonie (petróleo). Mezcla BCE, BoC y crudo. Volatilidad media.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,0. Mirá el WTI de fondo. Sesión: solape Londres/NY.",
+ mov:"Rango diario 70–110 pips. Decente para day con sesgo de crudo o euro.",
+ niv:"Redondos y S/R previos.",
+ liq:"Rompe razonable en tendencia; algo más sucia que las majors.",
+ ell:"Respeta Elliott aceptablemente. Onda 2 a 0,5–0,618.",
+ enc:"Blue y Red · Day · solape Londres/NY."},
+{c:"Forex",t:"EUR/AUD",n:"Euro / Dólar australiano",
+ que:"Euro (estable) vs Aussie (riesgo/China). Cruce volátil que combina dos sesiones.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,0–2,5. Sesión: Asia-tarde / Londres.",
+ mov:"Rango diario amplio (100–140 pips). Volátil, mechas grandes.",
+ niv:"Redondos y S/R previos. Sensible a China (Aussie) y a Europa.",
+ liq:"Barridos amplios, más falsas rupturas → RCC claro y SL amplio.",
+ ell:"Tendencias largas cuando diverge el sesgo riesgo/refugio. Onda 2 a 0,5–0,618.",
+ enc:"Blue, Red y Pink · Day/Swing · Londres."},
+{c:"Forex",t:"EUR/NZD",n:"Euro / Dólar neozelandés",
+ que:"Como EUR/AUD pero con Kiwi: más volátil y menos líquido. Euro vs riesgo/commodities de NZ.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,5. Tamaño chico (mechas anchas). Sesión: Asia-tarde/Londres.",
+ mov:"Rango diario MUY amplio (120–160 pips) pero sucio. Spreads más altos.",
+ niv:"Redondos y S/R previos.",
+ liq:"Mechas anchas y erráticas, falsas rupturas frecuentes → RCC muy claro.",
+ ell:"Tendencias largas pero ruidosas. Pullbacks 0,5–0,618.",
+ enc:"Red y Pink · Swing más que day · tamaño chico."},
+{c:"Forex",t:"GBP/JPY",n:"Libra / Yen (the Dragon)",
+ que:"El cruce volátil por excelencia. Combina libra (BoE) y yen (yields/risk). Mucho recorrido.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,5–3,0 (SL amplio). Sesión: Londres y NY. 1 pip = 2° decimal.",
+ mov:"Rango diario ENORME (120–180 pips). Tu candidata para R grande con TP de swing.",
+ niv:"Redondos enteros y medios. Movimientos explosivos.",
+ liq:"Barridos muy amplios; SL ajustado salta seguro. Rompe fuerte en tendencia.",
+ ell:"Impulsos potentes, tendencias largas. Onda 2 a 0,5–0,786. Ideal para Pink/White.",
+ enc:"Pink, White y Red · Day con TP de swing · SL amplio · Londres/NY."},
+{c:"Forex",t:"GBP/CHF",n:"Libra / Franco suizo",
+ que:"Libra (volátil) vs franco (refugio). Volatilidad media-alta, menos líquido que las majors.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,5. Sesión: Londres. OJO intervención SNB.",
+ mov:"Rango diario 90–130 pips. Direccional cuando la libra manda.",
+ niv:"Redondos y S/R previos.",
+ liq:"Barridos amplios, falsas rupturas → RCC claro. Saltos por SNB.",
+ ell:"Respeta Elliott en tendencia. Onda 2 a 0,5–0,618.",
+ enc:"Red y Pink · Day · Londres."},
+{c:"Forex",t:"GBP/CAD",n:"Libra / Dólar canadiense",
+ que:"Libra vs loonie (petróleo). Volátil: combina BoE, BoC y crudo. Recorrido amplio.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,5. Mirá el WTI. Sesión: solape Londres/NY.",
+ mov:"Rango diario amplio (110–150 pips). Buen recorrido para day momentum.",
+ niv:"Redondos y S/R previos.",
+ liq:"Barridos amplios, más sucia que las majors → RCC claro y SL amplio.",
+ ell:"Tendencias largas. Onda 2 a 0,5–0,618.",
+ enc:"Red y Pink · Day · solape Londres/NY."},
+{c:"Forex",t:"GBP/AUD",n:"Libra / Dólar australiano",
+ que:"Libra (Europa) vs Aussie (riesgo/China). Muy volátil, dos sesiones cruzadas.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,5–3,0. Tamaño chico. Sesión: Asia-tarde/Londres.",
+ mov:"Rango diario MUY amplio (130–180 pips). Mechas grandes.",
+ niv:"Redondos y S/R previos. Sensible a China.",
+ liq:"Barridos anchos, falsas rupturas frecuentes → RCC muy claro, SL amplio.",
+ ell:"Tendencias largas y direccionales cuando diverge el sesgo. Onda 2 a 0,5–0,786.",
+ enc:"Pink y Red · Day/Swing · SL amplio."},
+{c:"Forex",t:"GBP/NZD",n:"Libra / Dólar neozelandés",
+ que:"Como GBP/AUD pero con Kiwi: aún más volátil y menos líquido. El más salvaje del bloque libra.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×3,0. Tamaño chico. Sesión: Asia-tarde/Londres.",
+ mov:"Rango diario ENORME (140–200 pips) y sucio. Spreads altos.",
+ niv:"Redondos y S/R previos.",
+ liq:"Mechas muy anchas y trampa; falsas rupturas constantes → RCC clarísimo.",
+ ell:"Tendencias largas pero ruidosas. Pullbacks 0,5–0,786.",
+ enc:"Pink y Red · Swing más que day · tamaño chico."},
+{c:"Forex",t:"AUD/JPY",n:"Dólar australiano / Yen",
+ que:"El termómetro de riesgo puro: Aussie (riesgo) + yen (refugio). Sube en optimismo, cae en miedo.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,0. Barómetro del risk-on/off. Sesión: Asia y NY.",
+ mov:"Rango diario 70–110 pips. Tendencias limpias con sesgo de riesgo claro.",
+ niv:"Redondos enteros/medios. Correlaciona con índices/cripto.",
+ liq:"Rompe limpio en tendencia de riesgo. Gaps de domingo.",
+ ell:"Respeta Elliott bien. Onda 2 a 0,5–0,618. Buen confluente con Nasdaq/cripto.",
+ enc:"Blue, Red y Pink · Day · Asia/NY."},
+{c:"Forex",t:"NZD/JPY",n:"Dólar neozelandés / Yen",
+ que:"Primo del AUD/JPY, también termómetro de riesgo pero más fino y menos líquido.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,0–2,5. No con AUD/JPY a la vez. Sesión: Asia y NY.",
+ mov:"Rango diario 60–100 pips. Algo más sucio que AUD/JPY.",
+ niv:"Redondos y S/R previos.",
+ liq:"Mechas más erráticas; sigue al AUD/JPY y al apetito de riesgo. RCC claro.",
+ ell:"Respeta Elliott aceptablemente. Onda 2 a 0,5–0,618.",
+ enc:"Blue y Red · Day · Asia/NY · como confluencia."},
+{c:"Forex",t:"CAD/JPY",n:"Dólar canadiense / Yen",
+ que:"Loonie (petróleo) vs yen (refugio). Mezcla crudo y risk-on/off.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,0. Mirá el WTI. Sesión: NY (y Asia).",
+ mov:"Rango diario 70–110 pips. Direccional cuando el crudo manda.",
+ niv:"Redondos enteros/medios.",
+ liq:"Rompe en tendencia cuando el petróleo acompaña. Gaps de domingo.",
+ ell:"Respeta Elliott. Onda 2 a 0,5–0,618.",
+ enc:"Blue y Red · Day · NY."},
+{c:"Forex",t:"CHF/JPY",n:"Franco suizo / Yen",
+ que:"Dos refugios enfrentados (SNB vs BoJ). Poco direccional salvo divergencia de yields o intervención.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,0. Sesión: Asia/Europa. Ojo SNB y BoJ.",
+ mov:"Rango diario 60–90 pips. Tendencias suaves; refugio vs refugio.",
+ niv:"Redondos enteros/medios.",
+ liq:"Movimientos contenidos; saltos por intervención. Reversión a la media frecuente.",
+ ell:"Ondas más chatas. Onda 2 a 0,5. Elliott menos nítido.",
+ enc:"Red · Day/Swing · como confluencia."},
+{c:"Forex",t:"AUD/CHF",n:"Dólar australiano / Franco suizo",
+ que:"Riesgo (Aussie) vs refugio (franco): cruce de risk-on/off neto. Lo mueven China, RBA y la aversión al riesgo.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,0. Sesión: Asia/Londres. Ojo SNB.",
+ mov:"Rango diario 60–90 pips. Direccional con sesgo de riesgo claro.",
+ niv:"Redondos y S/R previos.",
+ liq:"Rompe en tendencia de riesgo; menos líquido (mechas) → RCC claro.",
+ ell:"Respeta Elliott aceptablemente. Onda 2 a 0,5–0,618.",
+ enc:"Red · Day · Asia/Londres · confluencia de riesgo."},
+{c:"Forex",t:"NZD/CHF",n:"Dólar neozelandés / Franco suizo",
+ que:"Como AUD/CHF pero con Kiwi: riesgo vs refugio, más fino y menos líquido.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,5. Tamaño chico. Sesión: Asia/Londres.",
+ mov:"Rango diario 50–80 pips, sucio. Spreads altos.",
+ niv:"Redondos y S/R previos.",
+ liq:"Mechas erráticas, falsas rupturas → RCC muy claro.",
+ ell:"Ondas ruidosas. Pullbacks 0,5–0,618.",
+ enc:"Red · Swing más que day · tamaño chico."},
+{c:"Forex",t:"CAD/CHF",n:"Dólar canadiense / Franco suizo",
+ que:"Loonie (petróleo) vs franco (refugio). Mezcla crudo y aversión al riesgo. Volatilidad media-baja.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,0. Mirá el WTI. Sesión: NY/Londres. Ojo SNB.",
+ mov:"Rango diario 50–80 pips. Lento-medio.",
+ niv:"Redondos y S/R previos.",
+ liq:"Movimientos contenidos; direccional con sesgo de crudo. Reversión a la media.",
+ ell:"Ondas chatas. Onda 2 a 0,5. Elliott poco nítido.",
+ enc:"Red · Day/Swing · confluencia."},
+{c:"Forex",t:"AUD/CAD",n:"Dólar australiano / Dólar canadiense",
+ que:"Dos commodity currencies: Aussie (China/metales) vs loonie (petróleo). Tiende a rango cuando los commodities van juntos.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,0. Mirá WTI vs metales/China. Sesión: Asia/NY.",
+ mov:"Rango diario 50–80 pips. Se compensan: tiende a rango.",
+ niv:"Opera entre niveles; redondos como techo/piso.",
+ liq:"Reversión a la media frecuente; rompe solo cuando divergen petróleo y China. Falsas rupturas → RCC claro.",
+ ell:"Ondas solapadas, Elliott menos claro. Más rango.",
+ enc:"Rango/swing más que day · en extremos de rango · Asia/NY."},
+{c:"Forex",t:"NZD/CAD",n:"Dólar neozelandés / Dólar canadiense",
+ que:"Kiwi (lácteos/China) vs loonie (petróleo). Cruce lento, de rango y poco líquido.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,5. Tamaño chico. Sesión: Asia/NY.",
+ mov:"Rango diario 50–70 pips, lento y sucio. Spreads altos.",
+ niv:"Opera entre niveles; redondos como techo/piso.",
+ liq:"Mean-reverting: serruchea, falsas rupturas frecuentes → RCC muy claro. (La que veníamos operando.)",
+ ell:"Ondas cortas solapadas. Más rango que impulso.",
+ enc:"Rango/swing, NO day-momentum · en extremos de rango."},
+{c:"Forex",t:"AUD/NZD",n:"Dólar australiano / Dólar neozelandés",
+ que:"Dos primas (RBA vs RBNZ): el diferencial de tasas Australia-NZ es el driver. El cruce más mean-reverting del tablero.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR ×2,0. Sesión: Asia. Driver: divergencia RBA/RBNZ.",
+ mov:"Rango diario CHICO (40–70 pips). Lentísimo, de rango puro. Mata el day-momentum.",
+ niv:"Rangos largos; redondos como techo/piso.",
+ liq:"Mean-reverting extremo: serruchea las EMAs, falsas rupturas constantes. Premia rango, castiga ruptura.",
+ ell:"Ondas solapadas, Elliott poco útil intradía. Sí en swing por el diferencial de tasas.",
+ enc:"Swing/posicional por tasas, NO day · en extremos de rango."},
 {c:"Metal",t:"XAU/USD",n:"Oro",
- que:"Refugio por excelencia y tu metal base. Lo mueve el miedo geopolítico, la inflación, las TASAS REALES (sube cuando bajan), el dólar débil y las compras de bancos centrales.",
- par:"EMA50 4h/1h/5min, RSI(14) (divergencias en extremos), ATR(14) ×2,5–3,0 (SL amplio). Sesión: Londres/NY. Cuidado IPC USA y Fed.",
- mov:"Rango diario ~$40–90 (en 2026, a veces más). Tendencias largas y limpias. Redondos cada $50/$100 son imanes.",
- niv:"Jun 2026 ~$4.400. Rango 52 sem ~$3.248–$5.595 (máximo histórico ~$5.595).",
- liq:"Liquida con barridos MUY claros antes de girar (de lo mejor para RCC). Rompe fiable. Gaps: domingo, chicos. 'Inyección' real: bancos centrales comprando físico en caídas → piso estructural.",
+ que:"Refugio por excelencia y tu metal base. Lo mueven el miedo geopolítico, la inflación, las TASAS REALES (sube cuando bajan), el dólar débil y, sobre todo, las compras de bancos centrales (piso estructural). AHORA: el conflicto EE.UU.–Irán y un NFP fuerte de mayo (172k vs ~80k esperado) subieron las expectativas de tasas de la Fed (CME pricea un alza en noviembre ~50/50), metiendo presión bajista.",
+ par:"EMA50 4h/1h/5min, RSI(14) (divergencias en extremos), ATR(14) ×2,5–3,0 (SL amplio, es volátil). Sesión: Londres/NY. CUIDADO IPC USA y reuniones de la Fed (esta semana hay CPI).",
+ mov:"Rango diario ~$40–90 (más en semanas de datos). Tendencias largas y limpias. Redondos cada $50/$100 son imanes fuertes.",
+ niv:"Jun 2026 ~$4.077, tras caer >4,7% la semana pasada hacia el soporte del yearly open ~$4.319. Rango del mes estimado ~$4.186–4.933. Targets fin de año dispersos: alcistas $5.243–6.300, bajistas $3.816–4.370 si la Fed sube.",
+ liq:"Liquida con barridos MUY claros antes de girar (de lo mejor para RCC). Rompe fiable. Gaps de domingo, chicos. Inyección real: bancos centrales comprando físico en las caídas → suelen poner piso.",
  ell:"Excelente con Elliott y fibo: ondas limpias. Onda 2 a 0,5–0,618; onda 4 a 0,382. Tendencias persistentes.",
- enc:"Green (swing) y Red/Pink (day) · SL amplio · Londres/NY."},
-{c:"Metal",t:"XAG/USD",n:"Plata",
- que:"El oro con esteroides: sigue al oro pero amplifica. Tiene componente industrial. Mismos fundamentales del oro + ciclo industrial. El ratio oro/plata mide valor relativo.",
- par:"EMA50 4h/1h/5min, RSI(14), ATR(14) ×2,5–3,0. Tamaño REDUCIDO. Oro como guía de sesgo; plata para extender en tendencia, nunca al revés. Sesión: Londres/NY.",
- mov:"Mucho más volátil que el oro: rango diario $2–4 a niveles actuales, saltos bruscos, spreads amplios.",
- niv:"Jun 2026 ~$73 (año explosivo). Máximo histórico ~$121,67 (ene 2026).",
- liq:"Liquida con MÁS mechas y falsas rupturas que el oro (menos líquida). Rompe más fuerte (y corrige más fuerte). Gaps: domingo, más marcados que el oro.",
- ell:"Respeta Elliott con ondas más sucias y extendidas. Pullbacks profundos (0,5–0,786 frecuente). Bueno en tendencia clara, peligroso a contra-tendencia.",
- enc:"Green (swing) y Red · tamaño reducido · Londres/NY."},
+ enc:"Green (swing) y Red/Pink (day) · SL amplio · Londres/NY. ADVERTENCIA: el sesgo macro de corto está mixto (tasas vs refugio); operá la estructura, no el titular."},
 {c:"Commodity",t:"WTI",n:"Petróleo crudo (WTI)",
- que:"Commodity energético. Lo mueve oferta/demanda, OPEP+ (recortes/aumentos), inventarios semanales EIA (miércoles) y geopolítica (Medio Oriente). Mucho peso de titulares.",
- par:"EMA50 4h/1h/5min, RSI(14), ATR(14) ×2,0–2,5. NO entrar minutos antes de inventarios. Confluencia con USD/CAD. Sesión: NY.",
- mov:"Rango diario $2–4. Reacciona en segundos a noticias. Redondos ($90/$95/$100) muy respetados.",
- niv:"Jun 2026 ~$90–93 (tensión Medio Oriente, negociaciones EE.UU.–Irán).",
- liq:"Liquida en redondos y extremos de rango. Rompe con violencia ante titulares y revierte igual de rápido (falsas rupturas por noticias). Gaps: domingo y eventos geopolíticos. La OPEP+ es el 'banco': recortes ponen piso, aumentos techo.",
- ell:"Respeta Elliott en marcos altos (Diario/4h); en intradía el ruido de noticias ensucia las ondas. Onda 2 a 0,382–0,618. Operar como swing.",
- enc:"Green (swing) y Red · NY (apertura y EIA)."},
-{c:"Commodity",t:"ZS · Soja",n:"Soja (Soybeans, CBOT)",
- que:"Tu agrícola (muy argentina). La mueve el clima (EE.UU., Brasil, Argentina), los informes del USDA (WASDE), la demanda de China y la estacionalidad. Cotiza en centavos/bushel.",
- par:"EMA50 en Diario/4h (marcos altos, evitá scalp). RSI(14), ATR para SL amplio (gaps). Estacionalidad: tensión climática jun–ago. Horario CBOT acotado. Tamaño chico.",
- mov:"Movimiento moderado con saltos por clima/informes. Tendencias estacionales claras. 1170 = $11,70/bushel.",
- niv:"Jun 2026 ~$11,70 (~1.170 ctvs), cerca de mínimos de 5 semanas por buen clima y siembra adelantada (87%).",
- liq:"Liquida en extremos de rango y redondos (1.200/1.150). Rompe fuerte en informes USDA. GAPS FRECUENTES: overnight, finde y sobre todo en reportes USDA → SL amplio y tamaño chico. No quedar abierta sobre un WASDE sin plan.",
- ell:"Respeta Elliott en Diario/4h dentro de los ciclos estacionales, pero los gaps por informes saltan niveles. Onda 2 a 0,382–0,618. Solo swing (Green).",
- enc:"Green (swing) en Diario/4h · tamaño chico · evitar días de USDA."},
+ que:"Commodity energético. Lo mueven oferta/demanda, OPEP+ (recortes/aumentos = piso/techo), inventarios semanales EIA (miércoles) y la geopolítica de Medio Oriente. Mucho peso de titulares. AHORA: prima geopolítica fuerte por tensión Israel-Irán y riesgo en el Estrecho de Ormuz; producción OPEP en mínimos desde junio 2020; pero la demanda global se revisó a la baja (-1,1M b/d).",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR(14) ×2,0–2,5. NO entrar minutos antes de inventarios (miércoles EIA). Confluencia con USD/CAD y CAD/JPY. Sesión: NY.",
+ mov:"Rango diario $2–4 (más en días de noticias). Reacciona en segundos a titulares. Redondos ($90/$95/$100) muy respetados.",
+ niv:"Jun 2026 zona ~$90s con prima geopolítica (Brent rozó ~$97). Rango del mes estimado ~$72–107 según el desenlace de Medio Oriente y Ormuz.",
+ liq:"Liquida en redondos y extremos de rango. Rompe con violencia ante titulares y revierte igual de rápido (falsas rupturas por noticias). Gaps de domingo y por eventos geopolíticos. La OPEP+ es el banco: recortes ponen piso, aumentos techo.",
+ ell:"Respeta Elliott en marcos altos (Diario/4h); en intradía el ruido de noticias ensucia las ondas. Onda 2 a 0,382–0,618. Mejor como swing.",
+ enc:"Green (swing) y Red · NY (apertura y EIA). ADVERTENCIA: instrumento de titular — SL amplio y nunca abierta sobre inventarios sin plan."},
 {c:"Cripto",t:"BTC/USD",n:"Bitcoin",
  que:"La cripto líder; marca el rumbo de todo el mercado. 24/7. La mueven flujos de ETFs, ballenas, apetito de riesgo (correlaciona con Nasdaq), regulación y halving.",
  par:"EMA50 4h/1h/5min, RSI(14), ATR(14) ×2,5–3,0. Tamaño chico. Ejecutá en horario activo (NY); evitá finde ilíquido. Mirá el 'CME gap' (suele rellenarse).",
  mov:"Muy volátil: 3–6% diario normal (miles de dólares). Tendencias potentes y caídas verticales. Redondos cada $5k/$10k clave.",
- niv:"Jun 2026 ~$63k, corrigiendo desde ~$76k+. Fuerte risk-off.",
+ niv:"Jun 2026 ~$60–62k, corrigiendo fuerte desde el máximo histórico de $122k (risk-off por Irán, salidas de ETFs y ventas de Strategy).",
  liq:"Liquida BRUTAL: barre stops sobre máximos/mínimos obvios y redondos, sobre todo en baja liquidez de finde (mechas trampa). Rompe con impulsos enormes. Gaps: spot no (24/7); el futuro CME deja huecos de finde que tienden a rellenarse.",
  ell:"Respeta Elliott sorprendentemente bien (muy usado para conteos), 5 ondas claras. Pullbacks PROFUNDOS: onda 2 a 0,618–0,786.",
  enc:"Green (swing) · NY, evitar finde · tamaño chico."},
@@ -4240,26 +4410,26 @@ function installApp(){
  que:"La segunda cripto; amplifica a BTC (más beta). Fundamentales de BTC + actividad de su red (DeFi, staking). 24/7.",
  par:"EMA50 4h/1h/5min, RSI(14), ATR(14) ×2,5–3,0. Confirmá SIEMPRE el sesgo con BTC. Tamaño chico. Sesión: NY.",
  mov:"Aún más volátil que BTC en % (4–7% diario). Redondos ($1.500/$2.000) relevantes.",
- niv:"Jun 2026 ~$1.566, en zona baja tras la corrección.",
+ niv:"Jun 2026 ~$1.660, RSI ~33 (cerca de sobreventa); consolidando $1.620–1.650, recupera si reclama ~$1.674.",
  liq:"Liquida igual de agresivo que BTC, amplificado. Rompe siguiendo a BTC (más fuerte). Gaps: spot no, futuro CME sí (finde). Si BTC gira, ETH gira con más fuerza.",
  ell:"Respeta Elliott bien, ondas amplias. Pullbacks profundos (0,618–0,786).",
  enc:"Green (swing) · NY · guía: BTC."},
 {c:"Índice",t:"US100",n:"Nasdaq 100",
- que:"Las 100 mayores tecnológicas USA. El más tendencial y volátil; dominado por AAPL/NVDA/MSFT. Lo mueven las tasas de la Fed, los earnings tech y el sentimiento de riesgo.",
- par:"EMA50 4h/1h/5min, RSI(14), ATR(14) ×2,0–2,5. NO operar los primeros 5 min del open. Mirá el VIX. Sesión: NY (10:30–13:00 ART).",
- mov:"Rango diario amplio en puntos. Tendencias fuertes; muy sensible a tasas y a chips/IA.",
- niv:"Jun 2026 corrigiendo fuerte (selloff de semis, -4,77% el 5/jun). S/R en máximos/mínimos previos.",
- liq:"Liquida en máximos/mínimos del día y en cierre/apertura. Rompe limpio en tendencia. GAPS: casi diarios (apertura) y por earnings de sus pesos pesados. 'Inyección': liquidez institucional + Fed (bajas de tasas y recompras sostienen).",
+ que:"Las 100 mayores tecnológicas USA. El índice más tendencial y volátil; dominado por NVDA/AAPL/MSFT/GOOGL. Lo mueven las tasas de la Fed, los earnings tech y el sentimiento de riesgo/IA. AHORA: corrección fuerte — el 5/jun cayó ~-4,77% (peor día desde abr-2025) por un selloff de semis que borró ~US$1 billón tras el reporte de Broadcom que decepcionó en el outlook de chips de IA. Miedo a las valuaciones de IA + CPI caliente + empleo fuerte = tasas de descuento altas que comprimen múltiplos.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR(14) ×2,0–2,5. NO operar los primeros 5 min del open. Mirá el VIX. Sesión: NY.",
+ mov:"Rango diario amplio en puntos. Tendencias fuertes; muy sensible a tasas y a chips/IA. Gaps de apertura casi diarios.",
+ niv:"Jun 2026 corrigiendo tras el selloff de semis. S/R en máximos/mínimos previos; redondos de 250/500 puntos.",
+ liq:"Liquida en máximos/mínimos del día y en cierre/apertura. Rompe limpio en tendencia. GAPS casi diarios y ENORMES por earnings de sus pesos pesados. CONCENTRACIÓN: NVDA/MU/GOOGL explican 40%+ de la revisión de ganancias 2026 → un nombre te mueve el índice.",
  ell:"Respeta muy bien Elliott/fibo (índice técnico). Onda 2 a 0,5–0,618; onda 4 a 0,382.",
- enc:"Green y Red · NY · evitar primeros 5 min."},
+ enc:"Green y Red · NY · evitar primeros 5 min. ADVERTENCIA: el tema IA es arma de doble filo (lo subió y ahora lo corrige); en day seguí la estructura intradía, no el relato."},
 {c:"Índice",t:"US500",n:"S&P 500",
- que:"Las 500 mayores empresas USA: el referente, más diversificado y menos brusco que el Nasdaq. Lo mueven la Fed, la macro (empleo, IPC, PIB) y los resultados.",
- par:"EMA50 4h/1h/5min, RSI(14), ATR(14) ×2,0. Mirá el VIX. Si S&P y Nasdaq caen con VIX subiendo = risk-off. Sesión: NY.",
- mov:"Rango diario moderado-amplio. Tendencias más suaves que el Nasdaq.",
- niv:"Jun 2026 ~7.383 (cayó 2,64% el 5/jun). S/R en máximos/mínimos previos.",
- liq:"Liquida en máximos/mínimos previos y aperturas. Rompe más ordenado que el Nasdaq (menos falsas rupturas). GAPS: diarios de apertura, más suaves.",
+ que:"Las 500 mayores empresas USA: el referente, más diversificado y menos brusco que el Nasdaq. Lo mueven la Fed, la macro (empleo, IPC, PIB) y los resultados. AHORA: en consolidación tras la corrección de principios de junio; el boom de capex en IA (~US$754.000M en 2026, +83%) sostiene el relato de ganancias (EPS proyectado +25% para el año), pero pesan las valuaciones altas, la inflación pegajosa y la prima de petróleo por Israel-Irán.",
+ par:"EMA50 4h/1h/5min, RSI(14), ATR(14) ×2,0. Mirá el VIX: si S&P y Nasdaq caen con VIX subiendo = risk-off. Sesión: NY.",
+ mov:"Rango diario moderado-amplio. Tendencias más suaves que el Nasdaq (mejor para aprender índices).",
+ niv:"Jun 2026 ~7.380, en consolidación; un quiebre por debajo de ~7.334 vira el corto a bajista. Targets fin de 2026: mediana Reuters 7.620, Goldman 8.000, Oppenheimer 8.100.",
+ liq:"Liquida en máximos/mínimos previos y aperturas. Rompe más ordenado que el Nasdaq (menos falsas rupturas). Gaps diarios de apertura, más suaves.",
  ell:"De los que mejor respeta Elliott/fibo. Onda 2 a 0,5–0,618, onda 4 a 0,382.",
- enc:"Green y Red · NY."},
+ enc:"Green y Red · NY. EMPEZÁ POR ACÁ para aprender índices: el más limpio y educativo. No lo operes en la misma dirección que el Nasdaq (correlación)."},
 {c:"Índice",t:"GER40",n:"DAX 40",
  que:"Índice alemán (40 empresas). Tu índice europeo: activo TEMPRANO, da setups en tu bloque de Londres. Lo mueven el BCE, la macro europea y el arrastre de Wall Street.",
  par:"EMA50 4h/1h/5min, RSI(14), ATR(14) ×2,0–2,5. Sesión: Londres (07:00–11:00 ART); en el solape con NY acelera o revierte según Wall Street.",
@@ -4268,46 +4438,6 @@ function installApp(){
  liq:"Liquida en máximos/mínimos previos y en la apertura europea. Rompe limpio en tendencia. GAPS: diarios de apertura. Sensible al cierre de Wall Street del día anterior.",
  ell:"Respeta Elliott/fibo bien. Onda 2 a 0,5–0,618. Ideal para operar en tu bloque de Londres.",
  enc:"Green y Red · Londres."},
-{c:"Acción",t:"AAPL",n:"Apple",
- que:"Mega-cap líquida y de las más ordenadas. La mueven ventas de iPhone/servicios, earnings, recompras y el ánimo del Nasdaq. Menos volátil que NVDA/TSLA.",
- par:"EMA50 Diario/4h/1h, RSI(14), ATR ×2,0. Swing (Green). NO tener posición sobre earnings sin plan. Sesión: NY.",
- mov:"Movimiento diario 1–3% normal. Respeta bien estructura y medias.",
- niv:"Jun 2026 ~$308 (rango 5/jun $307–$315). Redondos ($300/$310).",
- liq:"Liquida en máximos/mínimos previos y redondos. Rompe ordenado. GAPS: de apertura y SALTOS GRANDES en earnings (5–10%). 'Inyección': recompras y fondos indexados.",
- ell:"Respeta Elliott/fibo bien en Diario/4h. Onda 2 a 0,5–0,618, onda 4 a 0,382.",
- enc:"Green (swing) · NY · evitar earnings sin plan."},
-{c:"Acción",t:"NVDA",n:"NVIDIA",
- que:"Estrella de la IA y los semis. Altísima liquidez, gran volatilidad, tendencias explosivas. Motor del Nasdaq: cuando cae fuerte, arrastra al índice. La mueven la demanda de chips/IA, earnings y regulación de exportaciones.",
- par:"EMA50 Diario/4h/1h, RSI(14), ATR ×2,5–3,0. Tamaño REDUCIDO. Confirmá sesgo con el Nasdaq. NO operar sobre earnings sin plan. Sesión: NY.",
- mov:"Movimiento diario 3–6%+, más en días de noticias de chips. Tendencias muy fuertes en ambos sentidos.",
- niv:"Jun 2026 en corrección (lideró el selloff de semis del 5/jun). Referencia: máximos/mínimos previos.",
- liq:"Liquida con barridos amplios por su volatilidad. Rompe con violencia (impulsos y caídas verticales). GAPS: de apertura frecuentes y ENORMES en earnings.",
- ell:"Respeta Elliott con impulsos potentes; pullbacks más profundos (0,5–0,786).",
- enc:"Green (swing) y Red · tamaño chico · NY."},
-{c:"Acción",t:"TSLA",n:"Tesla",
- que:"La mega-cap más emocional y volátil: la mueven noticias, Musk y sentimiento más que fundamentales puros. También entregas, márgenes y earnings.",
- par:"EMA50 Diario/4h/1h, RSI(14), ATR ×3,0. Tamaño chico, SL amplio. Solo con tendencia clara. NO operar en días de baja energía emocional. Sesión: NY.",
- mov:"Movimiento diario 3–7%. Muy especulativa, con mechas grandes.",
- niv:"Jun 2026 volátil junto al tech. Redondos muy respetados.",
- liq:"Liquida con barridos AMPLIOS por su componente especulativo. Rompe brusco y revierte brusco (muchas falsas rupturas). GAPS: de apertura frecuentes y por titulares/earnings. La más impredecible de tu lista.",
- ell:"Respeta Elliott con ondas sucias y extendidas. Pullbacks profundos e irregulares (0,5–0,786). Solo en tendencia muy clara.",
- enc:"Green (swing) y Red · solo tendencia clara · NY."},
-{c:"Acción",t:"AMZN",n:"Amazon",
- que:"Mega-cap de consumo/tech, líquida y algo más estable que NVDA/TSLA. La mueven el e-commerce, la nube (AWS), earnings y el ánimo del Nasdaq.",
- par:"EMA50 Diario/4h/1h, RSI(14), ATR ×2,0–2,5. Swing (Green). Confirmá con el Nasdaq. Evitar earnings sin plan. Sesión: NY.",
- mov:"Movimiento diario 2–4%. Tendencias claras.",
- niv:"Jun 2026 dentro del movimiento general del tech. Redondos y máximos/mínimos previos como S/R.",
- liq:"Liquida en máximos/mínimos previos. Rompe ordenado en tendencia. GAPS: de apertura y por earnings. 'Inyección': flujos indexados y AWS como motor de resultados.",
- ell:"Respeta Elliott/fibo bien. Onda 2 a 0,5–0,618.",
- enc:"Green (swing) y Red · NY."},
-{c:"Acción",t:"MSFT",n:"Microsoft",
- que:"Mega-cap ordenada y de las más estables: software, nube (Azure) e IA (OpenAI). La mueven el crecimiento de Azure, earnings, recompras y dividendos. Técnicamente muy prolija.",
- par:"EMA50 Diario/4h/1h, RSI(14), ATR ×2,0. Swing (Green). Evitar earnings sin plan. Sesión: NY.",
- mov:"Movimiento diario 1–3%. De las más limpias y respetuosas de la estructura.",
- niv:"Jun 2026 ~$412. Rango 52 sem $356–$555. Redondos ($400/$450).",
- liq:"Liquida en máximos/mínimos previos y redondos. Rompe ordenado (pocas falsas rupturas). GAPS: de apertura y por earnings (más contenidos que NVDA/TSLA). 'Inyección': recompras y fondos indexados.",
- ell:"De las acciones que mejor respeta Elliott/fibo. Onda 2 a 0,5–0,618, onda 4 a 0,382.",
- enc:"Green (swing) · NY · evitar earnings sin plan."},
 ];
   const MC_QS=[
  {q:"¿Cómo dormiste anoche?",o:[["Bien",2,"good"],["Regular",1,""],["Mal",0,"bad"]]},
@@ -4332,7 +4462,7 @@ function installApp(){
 
   /* ================= FICHAS ================= */
   let mcCat='Todos';
-  const MC_CATS=['Todos','Forex','Metal','Commodity','Cripto','Índice','Acción'];
+  const MC_CATS=['Todos','Forex','Metal','Commodity','Cripto','Índice'];
   window.mcSetCat=function(c){mcCat=c;mcRenderFichas();};
   window.mcRenderFichas=function(){
     const cf=document.getElementById('mc-cat-filters');
