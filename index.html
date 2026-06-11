@@ -3133,13 +3133,15 @@ function saveMovementModal(){
   if(!amt || isNaN(parseFloat(String(amt).replace(',','.')))){ alert('Ingresá un monto válido'); return; }
   const date = document.getElementById('movement-date-input').value || new Date().toISOString().slice(0,10);
   const note = document.getElementById('movement-note-input').value.trim();
+  // FIX: el movimiento (ingreso/retiro/capital) va a la cuenta ELEGIDA en el selector de Cartera, no a la activa.
+  const accId = getSelectedCarteraAccount().id;
   // Si es Capital inicial, reemplazar el anterior
   if(pendingMovType === 'Capital inicial'){
-    movements = movements.filter(m => !(m.accountId===activeAccountId && m.type==='Capital inicial'));
+    movements = movements.filter(m => !(m.accountId===accId && m.type==='Capital inicial'));
   }
   movements.push({
     id: Date.now(),
-    accountId: activeAccountId,
+    accountId: accId,
     type: pendingMovType,
     amount: amt,
     date,
