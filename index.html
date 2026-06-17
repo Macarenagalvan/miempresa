@@ -364,6 +364,10 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
       Cartera personal
     </div>
+    <div class="nav-item" onclick="showPage('potencial',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>
+      Potencial
+    </div>
     <div class="nav-item" onclick="showPage('ayuda',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       Ayuda
@@ -1240,6 +1244,42 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   </div>
 </div>
 
+<div id="page-potencial" class="page">
+  <div class="page-title">Potencial</div>
+  <div class="page-sub">Proyección de la cuenta por interés compuesto · qué pasa si sostenés tu sistema</div>
+  <div class="mc-grid2">
+    <div class="mc-card">
+      <div class="mc-qt">Parámetros de la proyección</div>
+      <label class="mc-fl">Cuenta</label><select id="pt-acc" class="mc-in" onchange="ptAccChange()"></select>
+      <label class="mc-fl">Capital inicial (USD)</label><input id="pt-cap" class="mc-in" type="number" step="any" placeholder="1000" oninput="ptCalc()">
+      <label class="mc-fl">Riesgo por operación (%)</label><input id="pt-risk" class="mc-in" type="number" step="0.1" value="1" oninput="ptCalc()">
+      <label class="mc-fl">Win rate (%)</label><input id="pt-wr" class="mc-in" type="number" step="1" placeholder="50" oninput="ptCalc()">
+      <label class="mc-fl">R:R promedio (ganás 1 : R)</label><input id="pt-rr" class="mc-in" type="number" step="0.1" placeholder="2" oninput="ptCalc()">
+      <label class="mc-fl">Operaciones por semana</label><input id="pt-tpw" class="mc-in" type="number" step="1" placeholder="10" oninput="ptCalc()">
+      <label class="mc-fl">Horizonte (semanas)</label><input id="pt-weeks" class="mc-in" type="number" step="1" value="52" oninput="ptCalc()">
+      <button class="mc-btn ghost sm" style="margin-top:12px;padding:7px 13px;font-size:12px" onclick="ptFromStats()" title="Tomar win rate y R:R de tus trades reales">↺ Usar mis estadísticas reales</button>
+      <div id="pt-stats-note" class="mc-note"></div>
+    </div>
+    <div>
+      <div class="mc-res" id="pt-res"></div>
+      <div class="mc-card" style="margin-top:12px">
+        <div class="mc-qt" style="font-size:14px">Curva proyectada</div>
+        <div id="pt-chart" style="position:relative;width:100%;height:200px"></div>
+        <p class="mc-note" style="margin-top:10px">Modelo simplificado: cada operación arriesga el % indicado del capital del momento (interés compuesto). La ganancia esperada por trade = WR×R − (1−WR), en unidades de riesgo. Es una proyección estadística, no una promesa: la varianza real (rachas) puede ser mucho mayor.</p>
+      </div>
+    </div>
+  </div>
+  <div class="mc-card" style="margin-top:14px">
+    <div class="mc-qt" style="font-size:14px">Hitos de la proyección</div>
+    <div class="tbl-wrap" style="border:none;background:transparent">
+      <table>
+        <thead><tr><th>Semana</th><th>Operaciones</th><th>Capital proyectado</th><th>Crecimiento</th></tr></thead>
+        <tbody id="pt-tbl"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div id="page-ayuda" class="page">
   <div class="page-title">Ayuda · Cómo usar</div>
   <div class="page-sub">Guía completa de cada funcionalidad · datos · patrones · decisiones</div>
@@ -1666,6 +1706,7 @@ function showPage(id, el){
   if(id==='estadisticas') renderStats();
   if(id==='cartera') renderCartera();
   if(id==='asr'){ refreshAsrSelect(); renderAsrList(); }
+  if(id==='potencial' && typeof ptInit==='function') ptInit();
   // En móvil, cerrar sidebar al navegar
   if(window.innerWidth <= 900){
     const sidebar = document.getElementById('sidebar');
@@ -3470,6 +3511,10 @@ async function checkAutoExport(){
   }
 }
 
+function tjStamp(){
+  const d=new Date(), p=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"_"+p(d.getHours())+"-"+p(d.getMinutes())+"-"+p(d.getSeconds());
+}
 function autoExportJSON(){
   const payload = {
     version: 3,
@@ -3482,7 +3527,7 @@ function autoExportJSON(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'trading_journal_auto_' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = 'trading_journal_auto_' + tjStamp() + '.json';
   a.click();
   URL.revokeObjectURL(url);
   showToast('💾 Respaldo automático descargado · cada 5 trades', 4000);
@@ -3507,7 +3552,7 @@ function exportData(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'trading_journal_respaldo_' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = 'trading_journal_respaldo_' + tjStamp() + '.json';
   a.click();
   URL.revokeObjectURL(url);
   showToast('Respaldo descargado · ' + trades.length + ' ops · ' + asrs.length + ' ASRs · ' + accounts.length + ' cuentas · ' + movements.length + ' mov.');
@@ -3587,7 +3632,7 @@ function exportCSV(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'trading_journal_trades_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.download = 'trading_journal_trades_' + tjStamp() + '.csv';
   a.click();
   URL.revokeObjectURL(url);
   showToast('CSV exportado · ' + trades.length + ' trades');
@@ -3767,7 +3812,13 @@ function importData(input){
       if(isEmpty){
         action = 'replace';
       } else {
+        const fewer = impTrades.length < trades.length;
+        const warn = fewer
+          ? '⚠️ OJO: el respaldo tiene MENOS operaciones (' + impTrades.length + ') que las que ya tenés cargadas (' + trades.length + ').\n' +
+            'Si elegís Reemplazar, perderías ' + (trades.length - impTrades.length) + ' operaciones.\n\n'
+          : '';
         const choice = confirm(
+          warn +
           'Datos actuales: ' + trades.length + ' ops · ' + asrs.length + ' ASRs · ' + accounts.length + ' cuentas · ' + movements.length + ' mov.\n' +
           'En el respaldo: ' + impTrades.length + ' ops · ' + impAsrs.length + ' ASRs · ' + impAccounts.length + ' cuentas · ' + impMovs.length + ' mov.\n\n' +
           'ACEPTAR = Reemplazar TODO con el respaldo\n' +
@@ -5122,6 +5173,134 @@ function installApp(){
   try{ setTimeout(function(){ finLoad().catch(()=>{}); }, 1500); }catch(e){}
 })();
 
+</script>
+
+<script>
+/* ===== POTENCIAL · proyección de cuenta (portado · con opción Todas las cuentas) ===== */
+(function(){
+  const fmt=(n,d=2)=>(isFinite(n)?n:0).toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const accList=()=>(typeof accounts!=='undefined'&&accounts.length)?accounts:[{id:'default',name:'Cuenta principal'}];
+  const actAcc=()=>(typeof activeAccountId!=='undefined'&&activeAccountId)?activeAccountId:accList()[0].id;
+  /* ================= POTENCIAL · proyección de cuenta ================= */
+  window.ptInit=function(){
+    const sel=document.getElementById('pt-acc');
+    if(sel){
+      const opts=accList().map(a=>`<option value="${a.id}" ${a.id===actAcc()?'selected':''}>${a.name}</option>`).join('');
+      sel.innerHTML='<option value="__ALL__">★ Todas las cuentas (global)</option>'+opts;
+    }
+    ptAccChange();
+  };
+  window.ptAccChange=function(){
+    const sel=document.getElementById('pt-acc');
+    const capEl=document.getElementById('pt-cap');
+    if(sel&&capEl&&typeof getAccountCapital==='function'){
+      let c=0;
+      if(sel.value==='__ALL__'){
+        c=accList().reduce((acc,a)=>acc+(getAccountCapital(a.id)||0),0);
+      } else {
+        c=getAccountCapital(sel.value);
+      }
+      if(c) capEl.value=c.toFixed(2);
+    }
+    ptCalc();
+  };
+  window.ptFromStats=function(){
+    const sel=document.getElementById('pt-acc');
+    const accId=sel?sel.value:actAcc();
+    const isAll=(accId==='__ALL__');
+    const tAll=(typeof trades!=='undefined')?trades:[];
+    const closed=tAll.filter(t=>(isAll||t.accountId===accId) && (t.resultado==='Win'||t.resultado==='Loss'));
+    const note=document.getElementById('pt-stats-note');
+    if(closed.length<5){ if(note)note.innerHTML='<span style="color:var(--amber)">Necesitás al menos 5 trades cerrados (TP/SL) '+(isAll?'entre todas las cuentas':'en esta cuenta')+' para estimar bien. Cargá más o ajustá a mano.</span>'; return; }
+    const wins=closed.filter(t=>t.resultado==='Win').length;
+    const wr=wins/closed.length*100;
+    // R:R promedio a partir de rr/rrPlan de los trades
+    const rrs=closed.map(t=>Math.abs(parseFloat(t.rr)||parseFloat(t.rrPlan)||0)).filter(x=>x>0);
+    const avgRR=rrs.length?rrs.reduce((a,b)=>a+b,0)/rrs.length:2;
+    // riesgo % promedio
+    const risks=closed.map(t=>parseFloat(t.riesgoPct)||0).filter(x=>x>0);
+    const avgRisk=risks.length?risks.reduce((a,b)=>a+b,0)/risks.length:1;
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+    set('pt-wr',Math.round(wr));
+    set('pt-rr',avgRR.toFixed(1));
+    if(avgRisk>0) set('pt-risk',avgRisk.toFixed(2));
+    if(note)note.innerHTML='<span style="color:var(--green)">✓ Tomé tus '+closed.length+' trades cerrados'+(isAll?' de TODAS las cuentas':'')+': win rate '+Math.round(wr)+'% · R:R promedio '+avgRR.toFixed(1)+' · riesgo '+avgRisk.toFixed(2)+'%.</span>';
+    ptCalc();
+  };
+  window.ptCalc=function(){
+    const num=id=>parseFloat(String(document.getElementById(id)?.value||'').replace(',','.'));
+    const C0=num('pt-cap')||0;
+    const riskPct=num('pt-risk');
+    const wr=num('pt-wr');
+    const rr=num('pt-rr');
+    const tpw=Math.max(0,Math.round(num('pt-tpw')||0));
+    const weeks=Math.max(1,Math.min(520,Math.round(num('pt-weeks')||52)));
+    const res=document.getElementById('pt-res');
+    const tbl=document.getElementById('pt-tbl');
+    const chart=document.getElementById('pt-chart');
+    if(!res)return;
+    if(!(C0>0)||isNaN(riskPct)||isNaN(wr)||isNaN(rr)||tpw<=0){
+      res.innerHTML='<div class="mc-note">Completá capital, riesgo %, win rate, R:R y operaciones por semana para ver la proyección.</div>';
+      if(tbl)tbl.innerHTML=''; if(chart)chart.innerHTML=''; return;
+    }
+    const f=riskPct/100;            // fracción de riesgo por trade
+    const w=Math.max(0,Math.min(1,wr/100));
+    const expR=w*rr-(1-w);          // expectativa por trade en unidades de R (riesgo)
+    const mult=1+f*expR;            // multiplicador esperado del capital por trade
+    const totalTrades=tpw*weeks;
+    // serie semanal
+    const series=[]; let cap=C0;
+    for(let wk=0; wk<=weeks; wk++){
+      series.push({week:wk, cap:C0*Math.pow(mult, tpw*wk)});
+    }
+    const finalCap=series[series.length-1].cap;
+    const totalRet=(finalCap/C0-1)*100;
+    const expColor=expR>0?'var(--green)':expR<0?'var(--red)':'var(--text2)';
+    const mColor=mult>=1?'var(--green)':'var(--red)';
+    res.innerHTML=
+      `<div class="mc-rr"><span class="mc-rk">Expectativa por trade</span><span class="mc-rv" style="color:${expColor}">${expR>=0?'+':''}${fmt(expR,3)} R</span></div>`
+      +`<div class="mc-rr"><span class="mc-rk">Riesgo $ por trade (hoy)</span><span class="mc-rv">$${fmt(C0*f)}</span></div>`
+      +`<div class="mc-rr"><span class="mc-rk">Operaciones proyectadas</span><span class="mc-rv">${totalTrades}</span></div>`
+      +`<div class="mc-rr"><span class="mc-rk">Capital final (${weeks} sem)</span><span class="mc-rv big" style="color:${mColor}">$${fmt(finalCap)}</span></div>`
+      +`<div class="mc-rr"><span class="mc-rk">Retorno total</span><span class="mc-rv" style="color:${mColor}">${totalRet>=0?'+':''}${fmt(totalRet,1)}%</span></div>`
+      +(expR<=0?`<div class="mc-warn">Con estos números tu expectativa es ≤ 0: el sistema pierde a largo plazo. Subí el win rate o el R:R antes de escalar el riesgo.</div>`:'')
+      +(riskPct>2?`<div class="mc-warn">${riskPct}% de riesgo por trade es alto: una mala racha pega fuerte. La proyección asume el caso promedio, no las rachas.</div>`:'');
+    // tabla de hitos
+    if(tbl){
+      const marks=[];
+      const step=Math.max(1,Math.round(weeks/8));
+      for(let wk=step; wk<weeks; wk+=step) marks.push(wk);
+      marks.push(weeks);
+      let rows='';
+      let prev=C0;
+      [0,...marks].forEach((wk,i)=>{
+        const c=C0*Math.pow(mult, tpw*wk);
+        const grow=i===0?0:(c/C0-1)*100;
+        rows+=`<tr><td>${wk}</td><td>${tpw*wk}</td><td style="font-family:'JetBrains Mono',monospace">$${fmt(c)}</td><td style="font-family:'JetBrains Mono',monospace;color:${grow>=0?'var(--green)':'var(--red)'}">${grow>=0?'+':''}${fmt(grow,1)}%</td></tr>`;
+      });
+      tbl.innerHTML=rows;
+    }
+    // mini-gráfico SVG
+    if(chart){
+      const W=chart.clientWidth||600, H=200, pad=6;
+      const caps=series.map(s=>s.cap);
+      const min=Math.min(...caps), max=Math.max(...caps);
+      const rng=(max-min)||1;
+      const X=i=>pad+(i/(series.length-1))*(W-2*pad);
+      const Y=v=>H-pad-((v-min)/rng)*(H-2*pad);
+      let d='';
+      series.forEach((s,i)=>{ d+=(i===0?'M':'L')+X(i).toFixed(1)+' '+Y(s.cap).toFixed(1)+' '; });
+      const area=d+`L ${X(series.length-1).toFixed(1)} ${H-pad} L ${X(0).toFixed(1)} ${H-pad} Z`;
+      const stroke=mult>=1?'var(--green)':'var(--red)';
+      chart.innerHTML=
+        `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none">`
+        +`<defs><linearGradient id="ptg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${stroke}" stop-opacity="0.25"/><stop offset="100%" stop-color="${stroke}" stop-opacity="0"/></linearGradient></defs>`
+        +`<path d="${area}" fill="url(#ptg)"/>`
+        +`<path d="${d}" fill="none" stroke="${stroke}" stroke-width="2"/>`
+        +`</svg>`;
+    }
+  };
+})();
 </script>
 </body>
 </html>
