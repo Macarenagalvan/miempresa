@@ -58,13 +58,13 @@ html{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font
 .logo-text:focus{background:var(--bg3);box-shadow:0 0 0 1px var(--accent)}
 .logo-text:empty:before{content:'Tu nombre';color:var(--text3);font-weight:500}
 .logo-sub{font-size:10px;font-family:'Roboto Mono',monospace;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-top:2px}
-.nav{padding:12px 10px;flex:1}
+.nav{padding:12px 10px;flex:1 1 auto;min-height:0;overflow-y:auto}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius);cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:2px;border:1px solid transparent}
 .nav-item:hover{background:var(--bg3);color:var(--text)}
 .nav-item.active{background:var(--bg3);color:var(--text);border-color:var(--border2)}
 .nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
 .nav-item.active svg{opacity:1}
-.sidebar-bottom{padding:16px;border-top:1px solid var(--border)}
+.sidebar-bottom{padding:16px;border-top:1px solid var(--border);flex-shrink:0}
 .stats-mini{font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace;line-height:1.7}
 .stats-mini span{color:var(--accent);font-weight:600}
 .export-btn{width:100%;margin-top:10px;padding:7px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);font-size:11px;cursor:pointer;font-family:'Roboto Mono',monospace;transition:all .15s}
