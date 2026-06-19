@@ -3838,11 +3838,31 @@ function importMT5(input){
       if(dataRows.length<2){ alert('El reporte no tiene posiciones cerradas para importar.'); return; }
       const body = dataRows.slice(1); // saltar encabezado
 
-      // 5) Resolver a qué cuenta del journal van (por número en el nombre), si no, la activa
-      let targetAcc = activeAccountId;
-      if(reportAcc){
+      // 5) Resolver a qué cuenta del journal van.
+      // Orden: mapeo guardado (número MT5 → cuenta) → nombre que contiene el número → PREGUNTAR.
+      let accMap = {};
+      try { accMap = JSON.parse(localStorage.getItem('mc_mt5_accmap')||'{}'); } catch(e){}
+      let targetAcc = '';
+      if(reportAcc && accMap[reportAcc] && accounts.some(a=>a.id===accMap[reportAcc])){
+        targetAcc = accMap[reportAcc];
+      }
+      if(!targetAcc && reportAcc){
         const found = accounts.find(a => (a.name||'').includes(reportAcc));
         if(found) targetAcc = found.id;
+      }
+      if(!targetAcc){
+        // No se pudo deducir: que Maca elija la cuenta (y la recordamos para la próxima)
+        const list = accounts.map((a,i)=>`${i+1}. ${a.name}`).join('\n');
+        const ans = prompt(
+          `¿En qué cuenta del journal cargo las operaciones de MT5` +
+          (reportAcc?` (cuenta ${reportAcc})`:'') + `?\n\nEscribí el número y dale Aceptar:\n\n${list}`,
+          '1'
+        );
+        if(ans===null){ return; } // canceló
+        const idx = parseInt(ans,10)-1;
+        if(isNaN(idx) || idx<0 || idx>=accounts.length){ alert('Opción inválida. No se importó nada.'); return; }
+        targetAcc = accounts[idx].id;
+        if(reportAcc){ accMap[reportAcc]=targetAcc; try{ localStorage.setItem('mc_mt5_accmap',JSON.stringify(accMap)); }catch(e){} }
       }
 
       const mercadoDe = sym => {
