@@ -336,10 +336,6 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
       ASR
     </div>
-    <div class="nav-item" onclick="showPage('mc-rutina',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-      Rutina
-    </div>
     <div class="nav-item" onclick="showPage('mc-plan',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>
       Trading Plan
@@ -352,10 +348,6 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="4" y2="12"/><line x1="10" y1="20" x2="10" y2="4"/><line x1="16" y1="20" x2="16" y2="9"/><line x1="22" y1="20" x2="2" y2="20"/></svg>
       Activos
     </div>
-    <div class="nav-item" onclick="showPage('mc-pretrade',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      Pre-trade
-    </div>
     <div class="nav-item" onclick="showPage('mc-riesgo',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       Riesgo
@@ -367,10 +359,6 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <div class="nav-item" onclick="showPage('potencial',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>
       Potencial
-    </div>
-    <div class="nav-item" onclick="showPage('ayuda',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      Ayuda
     </div>
   </nav>
   <div class="sidebar-bottom">
@@ -527,42 +515,9 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     </div>
   </div>
 
-  <div class="form-grid g2" style="margin-top:14px">
-    <div class="form-group">
-      <label>Dónde colocaste el SL (opcional)</label>
-      <input type="text" id="inp-sl-tecnico" placeholder="ej: detrás de EMA50 4h, último mínimo, fuera del patrón…">
-    </div>
-    <div class="form-group">
-      <label>Dónde colocaste el TP (opcional)</label>
-      <input type="text" id="inp-tp-tecnico" placeholder="ej: máximo anterior, EMA50 4h, inicio del patrón…">
-    </div>
-  </div>
-
-
-  <div class="section-label">Contexto técnico</div>
-  <div class="form-group" style="margin-bottom:14px">
-    <label>Nivel Fibonacci del pullback</label>
-    <div class="pills" id="fibPills">
-      <div class="pill p-fib" onclick="togPill(this)">0.382</div>
-      <div class="pill p-fib" onclick="togPill(this)">0.5</div>
-      <div class="pill p-fib" onclick="togPill(this)">0.618</div>
-      <div class="pill p-fib" onclick="togPill(this)">0.75</div>
-    </div>
-  </div>
-  <div class="form-group" style="margin-bottom:14px">
+  <div class="form-group" style="margin-top:14px;margin-bottom:14px">
     <label>Confirmaciones presentes <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(EMAs según el tipo de trading)</span></label>
     <div class="pills" id="confPills"></div>
-  </div>
-  <div class="form-group" style="margin-bottom:14px">
-    <label>Patrón</label>
-    <div class="pills" id="patronPills">
-      <div class="pill p-patron" onclick="selPatron(this)">Triángulo</div>
-      <div class="pill p-patron" onclick="selPatron(this)">Cuña</div>
-      <div class="pill p-patron" onclick="selPatron(this)">Canal</div>
-      <div class="pill p-patron" onclick="selPatron(this)">Hombro Cabeza Hombro</div>
-      <div class="pill p-patron" onclick="selPatron(this)">Doble techo</div>
-      <div class="pill p-patron" onclick="selPatron(this)">Doble suelo</div>
-    </div>
   </div>
 
   <div class="section-label">Gráficos de la operación <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(uno por temporalidad)</span></div>
@@ -672,8 +627,8 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <table>
       <thead><tr>
         <th>Fecha</th><th>Cuenta</th><th>Modo</th><th>Estrategia</th><th>Tipo</th><th>Activo</th>
-        <th>Sesión</th><th>Dir.</th><th>Orden</th><th>Gestión</th><th>Fibonacci</th><th>Patrón</th>
-        <th>Lotaje</th><th>R:R</th><th>P&L</th><th>Resultado</th><th>ASR</th><th>Gráfico</th><th>Notas</th><th></th>
+        <th>Dir.</th><th>Orden</th>
+        <th>Lotaje</th><th>R:R</th><th>P&L</th><th>Resultado</th><th>ASR</th><th>Gráfico</th><th></th>
       </tr></thead>
       <tbody id="tbl-body"></tbody>
     </table>
@@ -728,10 +683,8 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <div class="chart-card"><div class="chart-title">Win rate por estilo</div><div id="chart-style"></div></div>
     <div class="chart-card"><div class="chart-title">Win rate por dirección · Long vs Short</div><div id="chart-dir"></div></div>
     <div class="chart-card"><div class="chart-title">Win rate por sesión</div><div id="chart-session"></div></div>
-    <div class="chart-card"><div class="chart-title">Fibonacci del pullback</div><div id="chart-fib"></div></div>
     <div class="chart-card full"><div class="chart-title">Matriz · estrategia × estilo × sesión</div><div id="chart-matrix"></div></div>
     <div class="chart-card full"><div class="chart-title">Confirmaciones — tasa de win</div><div id="chart-conf"></div></div>
-    <div class="chart-card full"><div class="chart-title">Patrones — tasa de win</div><div id="chart-patron"></div></div>
     <div class="chart-card full"><div class="chart-title">Errores principales — frecuencia y win rate (desde ASRs)</div><div id="chart-errors"></div></div>
     <div class="chart-card full"><div class="chart-title">Estado mental — win rate (desde ASRs)</div><div id="chart-moods"></div></div>
   </div>
@@ -1046,58 +999,6 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   <div id="asr-list"></div>
 </div>
 
-<!-- AYUDA · Cómo usar la app -->
-<div id="page-mc-rutina" class="page">
-  <div class="page-title">Mi rutina · empresa de trading</div>
-  <div class="page-sub">Horario de oficina con vida. Italia (CEST, UTC+2). Menos tiempo, más foco.</div>
-  <div class="mc-card">
-    <div class="mc-qt">Mis ventanas de mercado (hora Italia)</div>
-    <ul class="mc-help">
-      <li><b>Londres 09:00–12:00</b> — forex, oro, plata, DAX, petróleo. Mi ventana principal (casi siempre libre).</li>
-      <li><b>NY + solape 15:30–17:30</b> — índices, acciones, cripto, continuación. Máxima liquidez, pero la uso solo cuando no tengo clase.</li>
-      <li><b>Fin de semana</b> — un rato de cripto (BTC/ETH, estrategia Green), tamaño chico: el finde es ilíquido y hace mechas trampa.</li>
-      <li>Noticias USA fuertes 14:30 · Fed 20:00 · petróleo (EIA) 16:30.</li>
-    </ul>
-  </div>
-  <div class="mc-card" style="margin-top:12px">
-    <div class="mc-qt">Día tipo (flexible — es un orden, no una cárcel)</div>
-    <ul class="mc-help">
-      <li><b>07:00–07:45</b> — Despertar sin pantallas de trading. Café, movimiento suave o meditación (10–15 min).</li>
-      <li><b>07:45–08:45</b> — Rutina previa: briefing del día, checklist pre-trade, revisar zonas y watchlist.</li>
-      <li><b>09:00–12:00</b> — Bloque Londres (operativa). Opero cuando hay setup; máx 2–3 trades.</li>
-      <li><b>12:00–13:00</b> — Cargar trades + ASR, almuerzo.</li>
-      <li><b>13:00–15:00</b> — Vida: ejercicio, perros, casa, lectura (mercado o psicología).</li>
-      <li><b>15:30–17:30</b> — Bloque NY (cuando estoy libre). Si hay clase/paciente, se saltea sin culpa.</li>
-      <li><b>Noche</b> — clases, pareja, Netflix, lectura. Cierre con mini-journaling emocional (5 min).</li>
-    </ul>
-  </div>
-  <div class="mc-card" style="margin-top:12px">
-    <div class="mc-qt">Compromisos fijos</div>
-    <ul class="mc-help">
-      <li>Lun 8:30 y 18:00 (clases) · Mar 17:00 · Mié 11:00 (psicólogo) y 18:00 · Jue 8:30 y 17:00 · Vie 16:00 (clase) y 17:30 (paciente).</li>
-      <li>Lun, Mié, Jue y Vie tengo la tarde ocupada → esos días opero la <b>mañana de Londres</b>. Martes y huecos libres puedo sumar la tarde NY.</li>
-    </ul>
-  </div>
-  <div class="mc-card" style="margin-top:12px">
-    <div class="mc-qt">Semanal y mensual</div>
-    <ul class="mc-help">
-      <li><b>Dom noche / Lun temprano:</b> análisis top-down de los 20 activos + armar watchlist.</li>
-      <li><b>Fin de semana (un rato):</b> cripto (BTC/ETH, Green) + ojo a la semana.</li>
-      <li><b>Viernes o sábado:</b> repaso semanal (ASR + medidor semanal).</li>
-      <li><b>Fin de mes:</b> revisión mensual de estadísticas y ajustes al plan.</li>
-    </ul>
-  </div>
-  <div class="mc-card" style="margin-top:12px">
-    <div class="mc-qt">Reglas que me dejan vivir</div>
-    <ul class="mc-help">
-      <li>Máximo ~3–4h de pantalla de trading al día. Si no hay setup, no me quedo "por las dudas".</li>
-      <li>Si a las 20:00 me pinta mirar el gráfico: puedo mirar y anotar/analizar, pero <b>no operar</b> fuera de mis ventanas (la cripto, con plan, es aparte).</li>
-      <li>Los perros, mi pareja y el ejercicio son tan sagrados como el trading.</li>
-      <li>Esto es mi empresa: tengo horario de entrada y de salida. El gráfico no me come el día.</li>
-    </ul>
-  </div>
-</div>
-
 <div id="page-mc-plan" class="page">
   <div class="page-title">Trading Plan</div>
   <div class="page-sub">Documento vivo: se edita y se guarda solo. Lo vamos completando juntas. <span id="mc-plan-saved" style="color:var(--text3);font-family:'Roboto Mono',monospace;font-size:12px"></span></div>
@@ -1118,20 +1019,6 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   <div id="mc-asset-list"></div>
 </div>
 
-<div id="page-mc-pretrade" class="page">
-  <div class="page-title">Checklist pre-trade</div>
-  <div class="page-sub">¿Estás bien para operar hoy? Respondé con honestidad — es para protegerte de un mal día</div>
-  <div id="mc-guard2b"></div>
-  <div class="mc-card"><div id="mc-questions"></div></div>
-  <div class="mc-card" style="margin-top:12px"><div class="mc-qt">Nota emocional de hoy (opcional)</div><textarea id="mc-emo" class="mc-ta" placeholder="¿Cómo llegás hoy? ¿Algo para dejar registrado antes de operar?"></textarea></div>
-  <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-    <button class="mc-btn gold" onclick="mcEval()">Evaluar mi estado</button>
-    <button class="mc-btn ghost" onclick="mcResetCl()">Reiniciar</button>
-  </div>
-  <div id="mc-verdict"></div>
-  <div class="page-title" style="margin-top:26px;font-size:17px">Historial</div>
-  <div class="mc-card"><div id="mc-hist" class="mc-hist">Sin registros todavía.</div></div>
-</div>
 
 <div id="page-mc-riesgo" class="page">
   <div class="page-title">Riesgo y tope diario</div>
@@ -1282,247 +1169,6 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   </div>
 </div>
 
-<div id="page-ayuda" class="page">
-  <div class="page-title">Ayuda · Cómo usar</div>
-  <div class="page-sub">Guía completa de cada funcionalidad · datos · patrones · decisiones</div>
-
-  <div class="help-toc">
-    <a href="#h-instalar">01 · Cómo instalar</a>
-    <a href="#h-privacidad">02 · Privacidad y datos</a>
-    <a href="#h-registro">03 · Registro · Nueva operación</a>
-    <a href="#h-historial">04 · Historial</a>
-    <a href="#h-stats">05 · Estadísticas</a>
-    <a href="#h-cartera">06 · Cartera</a>
-    <a href="#h-asr">07 · ASR · Auto-Self Review</a>
-    <a href="#h-respaldos">08 · Respaldos y exportación</a>
-  </div>
-
-  <!-- 01 INSTALAR -->
-  <div class="help-section" id="h-instalar">
-    <div class="help-tag">01 · Empezar</div>
-    <h3 class="help-h3">Cómo instalar como app</h3>
-    <p class="help-p">La aplicación funciona desde un link y puede instalarse como app real con su propio ícono e independencia del navegador. En la barra lateral aparece automáticamente el botón <strong>📱 Instalar app</strong> cuando el navegador lo permite.</p>
-    <div class="help-step"><div class="help-step-num">📱</div><div><strong>iPhone / iPad (Safari)</strong><p class="help-p">Abrir el link en Safari · botón Compartir · "Agregar a pantalla de inicio".</p></div></div>
-    <div class="help-step"><div class="help-step-num">🤖</div><div><strong>Android (Chrome)</strong><p class="help-p">Aviso automático "Agregar a pantalla de inicio" o menú de tres puntos · "Instalar app".</p></div></div>
-    <div class="help-step"><div class="help-step-num">💻</div><div><strong>Mac (Safari · macOS Sonoma 14+)</strong><p class="help-p">Menú Archivo · Agregar al Dock. Queda como app independiente.</p></div></div>
-    <div class="help-step"><div class="help-step-num">🖥️</div><div><strong>Windows o Mac (Chrome / Edge)</strong><p class="help-p">Ícono de instalación a la derecha de la barra de direcciones · clic e instalar.</p></div></div>
-    <div class="help-callout warn">
-      <div class="help-callout-label">Importante</div>
-      <p class="help-p">Cada forma de abrir la app (link, app instalada, archivo HTML local) guarda los datos por separado. Conviene elegir <strong>una forma como principal</strong>.</p>
-      <p class="help-p">En móvil la barra lateral se oculta por defecto. Tocar el botón <strong>☰</strong> (arriba a la izquierda) para abrirla y navegar entre pestañas.</p>
-    </div>
-  </div>
-
-  <!-- 02 PRIVACIDAD -->
-  <div class="help-section" id="h-privacidad">
-    <div class="help-tag">02 · Privacidad</div>
-    <h3 class="help-h3">Cómo se manejan los datos</h3>
-    <p class="help-p">100% local. Toda la información se guarda en el almacenamiento del navegador del propio dispositivo (localStorage). No hay servidor, ni nube, ni cuentas compartidas.</p>
-    <ul class="help-list">
-      <li><strong>Privacidad total:</strong> nadie tiene acceso a los trades de otros, ni siquiera quien comparte la app.</li>
-      <li><strong>Sin internet:</strong> una vez cargada, funciona sin conexión durante la sesión.</li>
-      <li><strong>Sin costos:</strong> no hay suscripciones ni inicio de sesión.</li>
-      <li><strong>Respaldo manual:</strong> exportar a JSON o CSV cuando se quiera.</li>
-    </ul>
-    <div class="help-callout danger">
-      <div class="help-callout-label">Atención</div>
-      <p class="help-p">Si se borran las cookies o el almacenamiento del navegador, los datos se pierden. Exportar respaldos periódicamente desde la barra lateral.</p>
-    </div>
-  </div>
-
-  <!-- 03 REGISTRO -->
-  <div class="help-section" id="h-registro">
-    <div class="help-tag">03 · Pestaña</div>
-    <h3 class="help-h3">Registro · Nueva operación</h3>
-    <p class="help-p">Pantalla principal donde se carga cada operación. Dividida en bloques visuales ordenados.</p>
-
-    <h4 class="help-h4">Cuenta del trade</h4>
-    <p class="help-p">En la parte superior. Cada trade se asigna a una cuenta (Cuenta principal, fondeada FTMO, demo, etc.). El capital actual de la cuenta seleccionada aparece como referencia. El capital inicial se rellena automáticamente. Para crear más cuentas, ir a Cartera.</p>
-
-    <h4 class="help-h4">Estrategia y variantes</h4>
-    <p class="help-p">Seis estrategias: Blue · Red · Pink · White · Black · Green. La estrategia Blue tiene 3 variantes (A · B · C) que aparecen al seleccionarla.</p>
-
-    <h4 class="help-h4">Tipo, dirección, modo y orden</h4>
-    <ul class="help-list">
-      <li><strong>Tipo de trading:</strong> Day · Swing · Scalp. Modifica las temporalidades de los gráficos.</li>
-      <li><strong>Dirección:</strong> Long o Short.</li>
-      <li><strong>Modo:</strong> <em>Operado</em> (cuenta para Cartera y ASR) o <em>Backtest</em> (solo para estadísticas).</li>
-      <li><strong>Tipo de orden:</strong> Market o Limit.</li>
-      <li><strong>Fechas y horas:</strong> entrada y salida · la duración se calcula automáticamente.</li>
-    </ul>
-
-    <h4 class="help-h4">Activo, precios y contexto técnico</h4>
-    <ul class="help-list">
-      <li><strong>Activo y mercado:</strong> nombre del par y categoría (Forex, Indices, Cripto, etc.).</li>
-      <li><strong>Precios:</strong> entrada · SL · TP · salida real · ubicación técnica de cada uno.</li>
-      <li><strong>Sesión de mercado:</strong> Sydney · Tokio · Londres · New York. <strong>Multi-selección</strong> si hay solapamiento.</li>
-      <li><strong>Fibonacci · confirmaciones · patrones:</strong> las confirmaciones cambian según el tipo de trading.</li>
-      <li><strong>Gestión del trade:</strong> short term · long term · parciales · etc. Multi-selección.</li>
-    </ul>
-
-    <h4 class="help-h4">Gráficos por temporalidad</h4>
-    <p class="help-p">5 slots de imagen, uno por temporalidad. Cambian según el tipo de trading:</p>
-    <ul class="help-list">
-      <li><strong>Day:</strong> Conjunto · Diario · 4h · 1h · Ejecución</li>
-      <li><strong>Swing:</strong> Conjunto · Mensual · Semanal · Diario · Ejecución</li>
-      <li><strong>Scalp:</strong> Conjunto · 1h · 15min · 5min · Ejecución</li>
-    </ul>
-    <p class="help-p">Para cargar: clic en el slot · pegar imagen · arrastrar archivo. Cada slot tiene su propio cuadro de notas.</p>
-
-    <h4 class="help-h4">Capital y riesgo · al final del formulario</h4>
-    <ul class="help-list">
-      <li><strong>Capital inicial:</strong> manual · se autorellena con el capital actual de la cuenta.</li>
-      <li><strong>RR Inicial %:</strong> manual · lo planeado antes de entrar.</li>
-      <li><strong>Riesgo $:</strong> manual.</li>
-      <li><strong>Riesgo %:</strong> automático · = Riesgo $ ÷ Capital.</li>
-      <li><strong>B/P Bruto $:</strong> manual · usar − para pérdidas.</li>
-      <li><strong>RR Final %:</strong> automático · = B/P Bruto ÷ Riesgo $.</li>
-      <li><strong>Comisiones $:</strong> manual.</li>
-      <li><strong>B/P Neto $:</strong> automático · = Bruto − Comisiones.</li>
-      <li><strong>Capital final:</strong> automático · = Capital + Neto.</li>
-      <li><strong>Resultado:</strong> TP · SL · BE · Abierto.</li>
-    </ul>
-  </div>
-
-  <!-- 04 HISTORIAL -->
-  <div class="help-section" id="h-historial">
-    <div class="help-tag">04 · Pestaña</div>
-    <h3 class="help-h3">Historial</h3>
-    <p class="help-p">Tabla con todas las operaciones cargadas. Cada fila muestra la cuenta a la que pertenece el trade con un <strong>badge de color único</strong> por cuenta, para diferenciarlas visualmente de un vistazo.</p>
-    <ul class="help-list">
-      <li><strong>Filtros:</strong> cuenta · estrategia · resultado · tipo · dirección · mercado · sesión · modo (Operado/Backtest).</li>
-      <li><strong>Columna Cuenta:</strong> badge coloreado que identifica a qué cuenta pertenece cada trade. Cada cuenta tiene un color fijo asignado automáticamente.</li>
-      <li><strong>Editar:</strong> botón con ícono de lápiz · carga el trade en el formulario para modificar.</li>
-      <li><strong>Eliminar:</strong> botón con cruz · pide confirmación.</li>
-      <li><strong>Ver gráficos:</strong> clic en la miniatura abre el visor a pantalla completa con navegación entre capturas y sus notas.</li>
-    </ul>
-  </div>
-
-  <!-- 05 ESTADÍSTICAS -->
-  <div class="help-section" id="h-stats">
-    <div class="help-tag">05 · Pestaña</div>
-    <h3 class="help-h3">Estadísticas</h3>
-    <p class="help-p">Análisis profundo del rendimiento. Es donde se identifican patrones y se sacan decisiones para mejorar.</p>
-
-    <h4 class="help-h4">Filtros</h4>
-    <p class="help-p">Todos los filtros se aplican en simultáneo a todas las métricas y gráficos.</p>
-    <ul class="help-list">
-      <li><strong>Cuenta · modo · estilo · estrategia · dirección · sesión · mercado.</strong></li>
-      <li><strong>Período (fechas):</strong> rango personalizado o presets rápidos: Este mes · Mes pasado · Últimos 30d · Últimos 90d · Este año · Todo.</li>
-    </ul>
-    <p class="help-p">Permite comparar, por ejemplo, cómo cambió el rendimiento por sesión entre abril y mayo, o comparar Long vs Short.</p>
-
-    <h4 class="help-h4">KPIs principales y métricas avanzadas</h4>
-    <ul class="help-list">
-      <li><strong>RR medio · Winrate (excl. BE) · Beneficio total · Número de trades.</strong></li>
-      <li><strong>AVG Win · AVG Loss</strong> · R promedio de ganadoras y perdedoras.</li>
-      <li><strong>Expectancy</strong> · esperanza matemática del sistema. Positivo = rentable.</li>
-      <li><strong>Profit Factor</strong> · ganancias / pérdidas. Mayor a 1 = rentable.</li>
-      <li><strong>BE %</strong> · porcentaje de trades en break-even.</li>
-    </ul>
-
-    <h4 class="help-h4">Gráficos</h4>
-    <ul class="help-list">
-      <li>Win rate por <strong>estrategia · estilo · sesión · fibonacci.</strong></li>
-      <li><strong>Win rate por dirección · Long vs Short:</strong> con conteo de trades y P&L total por dirección.</li>
-      <li><strong>Matriz combinada estrategia × estilo × sesión:</strong> tabla con WR coloreado en cada celda. Verde &gt;60% · amarillo 40-60% · rojo &lt;40%.</li>
-      <li><strong>Confirmaciones y patrones</strong> con tasa de win.</li>
-      <li><strong>Errores principales</strong> (desde ASRs) · frecuencia y WR asociado.</li>
-      <li><strong>Estado mental</strong> (desde ASRs) · cómo influye en el resultado.</li>
-    </ul>
-  </div>
-
-  <!-- 06 CARTERA -->
-  <div class="help-section" id="h-cartera">
-    <div class="help-tag">06 · Pestaña</div>
-    <h3 class="help-h3">Cartera</h3>
-    <p class="help-p">Gestión del capital. Cuentas múltiples, ingresos, retiros y curva de equity.</p>
-
-    <h4 class="help-h4">Cuentas múltiples</h4>
-    <p class="help-p">Es posible tener varias cuentas separadas (Cuenta principal · FTMO 100k · MFF 50k · demo · etc.). Cada trade se asigna a una cuenta al cargarse. Cada cuenta tiene un color único visible en el Historial y en el ASR.</p>
-    <ul class="help-list">
-      <li><strong>+ Nueva cuenta:</strong> crea con nombre y capital inicial opcional.</li>
-      <li><strong>✎ Renombrar:</strong> cambia el nombre de la cuenta activa.</li>
-      <li><strong>✕ Eliminar:</strong> borra cuenta y todos sus trades · pide confirmación.</li>
-    </ul>
-
-    <h4 class="help-h4">Movimientos · ingresos y retiros</h4>
-    <ul class="help-list">
-      <li><strong>↓ Registrar ingreso:</strong> suma capital (depósito · fondeo).</li>
-      <li><strong>↑ Registrar retiro:</strong> resta capital (retiro · transferencia).</li>
-      <li><strong>⚙ Set capital inicial:</strong> establece o modifica el capital inicial de la cuenta.</li>
-    </ul>
-
-    <h4 class="help-h4">KPIs y curva de equity</h4>
-    <p class="help-p">Capital inicial · Capital actual · Ganancia total ($ y %) · Máximo histórico · Max drawdown.</p>
-    <p class="help-p">Colores de la curva:</p>
-    <ul class="help-list">
-      <li><span style="color:var(--green)">●</span> Verde: trade ganador · <span style="color:var(--red)">●</span> Rojo: trade perdedor · <span style="color:var(--amber)">●</span> Amarillo: break-even</li>
-      <li><span style="color:var(--purple)">●</span> Morado: ingreso de capital · <span style="color:var(--pink)">●</span> Rosa: retiro de capital</li>
-    </ul>
-  </div>
-
-  <!-- 07 ASR -->
-  <div class="help-section" id="h-asr">
-    <div class="help-tag">07 · Pestaña</div>
-    <h3 class="help-h3">ASR · Auto-Self Review</h3>
-    <p class="help-p">Revisión profunda de cada trade. No es para llenar siempre · es una herramienta de auto-análisis cuando se quiere reflexionar sobre una operación importante.</p>
-
-    <h4 class="help-h4">Identificación del trade</h4>
-    <p class="help-p">El selector de trades muestra la <strong>cuenta entre corchetes</strong> junto a cada trade para diferenciarlos cuando el mismo instrumento fue operado en varias cuentas. El preview también muestra el badge de color de la cuenta. Los ASRs guardados muestran el badge de la cuenta del trade analizado.</p>
-
-    <h4 class="help-h4">Estructura del ASR</h4>
-    <ul class="help-list">
-      <li><strong>Selector de trade</strong> del historial al que aplica esta revisión · con cuenta identificada.</li>
-      <li><strong>Capturas SS THEM y SS NOW:</strong> contexto antes y después del trade.</li>
-      <li><strong>Checklist personal:</strong> respeté · ignoré · sin confirmación · operé en rojo.</li>
-      <li><strong>Error principal:</strong> 15 opciones (FOMO · Entrada temprana · Sin confirmación · Mala gestión · etc.). Multi-selección.</li>
-      <li><strong>Estado mental:</strong> 16 opciones (Claro · Disciplinado · FOMO · Ansioso · Impulsivo · etc.). Multi-selección.</li>
-      <li><strong>Gestión durante el trade:</strong> texto + captura opcional.</li>
-      <li><strong>Análisis técnico:</strong> 4 preguntas Sí/Parcial/No con detalle.</li>
-      <li><strong>Emociones:</strong> antes · durante · después.</li>
-      <li><strong>¿Volverías a entrar?</strong> y <strong>Lecciones.</strong></li>
-    </ul>
-
-    <div class="help-callout tip">
-      <div class="help-callout-label">Sugerencia de uso</div>
-      <p class="help-p">Los errores y estados mentales cargados en los ASRs alimentan automáticamente los gráficos de la pestaña Estadísticas. Cuantos más ASRs se completen, más claros son los patrones.</p>
-    </div>
-  </div>
-
-  <!-- 08 RESPALDOS -->
-  <div class="help-section" id="h-respaldos">
-    <div class="help-tag">08 · Respaldos y exportación</div>
-    <h3 class="help-h3">Respaldos · exportar e importar</h3>
-    <p class="help-p">Todos los botones están en la barra lateral inferior. Hay tres opciones:</p>
-
-    <h4 class="help-h4">↓ Exportar respaldo .json</h4>
-    <p class="help-p">Descarga un archivo JSON con <strong>todo</strong>: trades · ASRs · cuentas · movimientos · nombre del trader. Usar para hacer backup o transferir a otro dispositivo.</p>
-
-    <h4 class="help-h4">↓ Exportar trades .csv</h4>
-    <p class="help-p">Descarga los trades en formato tabla para abrir en <strong>Excel, Google Sheets o LibreOffice</strong>. El archivo usa <code>;</code> como separador para que Excel en español lo abra directamente con doble clic sin configuración extra. Incluye todas las columnas: cuenta, estrategia, precios, riesgo, R:R, P&L, notas, etc.</p>
-    <div class="help-callout warn">
-      <div class="help-callout-label">Nota sobre el CSV</div>
-      <p class="help-p">El CSV sirve para analizar en Excel o Sheets pero <strong>no reemplaza al respaldo .json</strong>: no incluye imágenes, ASRs ni movimientos de cartera. Para un backup completo, usar siempre el .json.</p>
-    </div>
-
-    <h4 class="help-h4">↑ Importar respaldo .json</h4>
-    <p class="help-p">Carga un archivo JSON exportado previamente. Si la app está vacía, importa todo directamente. Si ya hay datos, ofrece dos opciones:</p>
-    <ul class="help-list">
-      <li><strong>Reemplazar todo</strong> con el respaldo.</li>
-      <li><strong>Sumar</strong> el respaldo a lo que hay sin duplicar.</li>
-    </ul>
-
-    <div class="help-callout tip">
-      <div class="help-callout-label">Buena práctica</div>
-      <p class="help-p">Exportar respaldo .json una vez por semana o cada 10 trades importantes y guardar el archivo en Drive, iCloud o cualquier nube. Toma 5 segundos y evita pérdidas accidentales.</p>
-    </div>
-  </div>
-
-  <div style="text-align:center;color:var(--text3);font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.05em;margin-top:50px;padding-top:30px;border-top:1px solid var(--border)">
-    // Backtesting Journal · datos · patrones · decisiones
-  </div>
-</div>
 
 
 </div>
@@ -2239,8 +1885,8 @@ function addTrade(){
     sl: document.getElementById('inp-sl').value,
     tp: document.getElementById('inp-tp').value,
     salida: document.getElementById('inp-salida').value,
-    slTecnico: document.getElementById('inp-sl-tecnico').value,
-    tpTecnico: document.getElementById('inp-tp-tecnico').value,
+    slTecnico: document.getElementById('inp-sl-tecnico')?.value || '',
+    tpTecnico: document.getElementById('inp-tp-tecnico')?.value || '',
     gestion: Array.isArray(curGestion) ? curGestion.join(', ') : (curGestion||''),
     rr: document.getElementById('inp-rr').value,
     rrPlan: document.getElementById('inp-rr-plan').value,
@@ -2373,8 +2019,8 @@ function editTrade(id){
   document.getElementById('inp-sl').value = t.sl || '';
   document.getElementById('inp-tp').value = t.tp || '';
   document.getElementById('inp-salida').value = t.salida || '';
-  document.getElementById('inp-sl-tecnico').value = t.slTecnico || '';
-  document.getElementById('inp-tp-tecnico').value = t.tpTecnico || '';
+  { const _e1=document.getElementById('inp-sl-tecnico'); if(_e1) _e1.value = t.slTecnico || ''; }
+  { const _e2=document.getElementById('inp-tp-tecnico'); if(_e2) _e2.value = t.tpTecnico || ''; }
   document.getElementById('inp-rr').value = t.rr || '';
   document.getElementById('inp-rr-plan').value = t.rrPlan || '';
   document.getElementById('inp-capital').value = t.capital || '';
@@ -2481,6 +2127,12 @@ function renderTable(){
     (!ft||t.tipo===ft)&&(!fd||t.dir===fd)&&(!fm||t.mercado===fm)&&
     (!fses||(t.sesion||'').includes(fses))&&(!fmode||t.mode===fmode)
   );
+  // Ordenar por fecha/hora: las últimas ejecutadas arriba, las más antiguas abajo
+  filtered = filtered.slice().sort((a,b)=>{
+    const ka = (a.fecha||'') + ' ' + (a.hora||'00:00');
+    const kb = (b.fecha||'') + ' ' + (b.hora||'00:00');
+    return kb.localeCompare(ka);
+  });
   const body = document.getElementById('tbl-body');
   const empty = document.getElementById('tbl-empty');
   if(!filtered.length){ body.innerHTML=''; empty.style.display='block'; return; }
@@ -2509,12 +2161,8 @@ function renderTable(){
       <td><span class="badge ${stratBC[t.estrategia]||''}">${t.estrategia}${t.variante?' · '+t.variante:''}</span></td>
       <td style="font-size:11px;color:var(--text3)">${t.tipo||''}</td>
       <td style="font-weight:600">${t.activo}</td>
-      <td style="font-size:11px;color:var(--pink);font-weight:500">${t.sesion||'–'}</td>
       <td class="${t.dir==='Long'?'b-long':(t.dir==='Short'?'b-short':'')}" style="font-size:12px">${t.dir||'–'}</td>
       <td style="font-size:11px;color:var(--purple)">${t.orden||'–'}</td>
-      <td style="font-size:11px;color:var(--amber)">${t.gestion||'–'}</td>
-      <td style="font-size:11px;color:var(--text2)">${t.fibonacci||'–'}</td>
-      <td style="font-size:11px;color:var(--text2)">${t.patron||'–'}</td>
       <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2)">${t.lotaje||'–'}</td>
       <td style="font-family:'Roboto Mono',monospace;font-weight:600">${t.rr?t.rr+'R':'–'}</td>
       <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:${t.pnl&&t.pnl.startsWith('+')?'var(--green)':(t.pnl&&t.pnl.startsWith('-')?'var(--red)':'var(--text3)')}">${t.pnl||'–'}</td>
@@ -2524,7 +2172,6 @@ function renderTable(){
         : '<span title="Sin ASR" style="color:var(--text3);font-size:14px">–</span>'
       }</td>
       <td>${grafCol||'–'}</td>
-      <td style="font-size:11px;color:var(--text3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(t.notas||'').replace(/"/g,'&quot;')}">${t.notas||'–'}</td>
       <td><button class="edit-btn" onclick="editTrade(${t.id})">✎</button><button class="del-btn" onclick="delTrade(${t.id})">✕</button></td>
     </tr>`;
   }).join('');
@@ -2742,14 +2389,17 @@ function renderStats(){
     return `<div class="bar-row"><span class="bar-lbl">${s}</span><div class="bar-track"><div class="bar-fill" style="width:${wrate}%;background:${color}">${wrate>15?wrate+'%':''}</div></div><span class="bar-cnt">${st.length}</span></div>`;
   }).join('');
 
-  // === Fibonacci ===
-  const fibs = ['0.382','0.5','0.618','0.75'];
-  const fibTotal = t.filter(x=>x.fibonacci && fibs.includes(x.fibonacci)).length || 1;
-  document.getElementById('chart-fib').innerHTML = fibs.map(f=>{
-    const ct = t.filter(x=>x.fibonacci===f).length;
-    const pct = Math.round(ct/fibTotal*100);
-    return `<div class="bar-row"><span class="bar-lbl">${f}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--purple)">${pct>15?pct+'%':''}</div></div><span class="bar-cnt">${ct}</span></div>`;
-  }).join('');
+  // === Fibonacci (gráfico removido; se omite si no existe el contenedor) ===
+  const _fibEl = document.getElementById('chart-fib');
+  if(_fibEl){
+    const fibs = ['0.382','0.5','0.618','0.75'];
+    const fibTotal = t.filter(x=>x.fibonacci && fibs.includes(x.fibonacci)).length || 1;
+    _fibEl.innerHTML = fibs.map(f=>{
+      const ct = t.filter(x=>x.fibonacci===f).length;
+      const pct = Math.round(ct/fibTotal*100);
+      return `<div class="bar-row"><span class="bar-lbl">${f}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--purple)">${pct>15?pct+'%':''}</div></div><span class="bar-cnt">${ct}</span></div>`;
+    }).join('');
+  }
 
   // === MATRIZ estrategia × estilo × sesión ===
   // Filas: cada combo estrategia + estilo. Columnas: sesiones + total
@@ -2807,19 +2457,22 @@ function renderStats(){
     return `<div class="bar-row"><span class="bar-lbl">${x.c}</span><div class="bar-track"><div class="bar-fill" style="width:${x.wr}%;background:${color}">${x.wr>15?x.wr+'%':''}</div></div><span class="bar-cnt">${x.n}</span></div>`;
   }).join('') : '<div class="no-data">// Sin datos</div>';
 
-  // === Patrones ===
-  const allPats = new Set();
-  t.forEach(x=>{ if(x.patron) allPats.add(x.patron); });
-  const pStats = Array.from(allPats).map(p=>{
-    const st = t.filter(x=>x.patron===p);
-    const w = st.filter(x=>x.resultado==='Win').length;
-    const l = st.filter(x=>x.resultado==='Loss').length;
-    const wr = (w+l) ? Math.round(w/(w+l)*100) : 0;
-    return { p, wr, n: st.length };
-  }).filter(x=>x.n>0).sort((a,b)=>b.wr-a.wr);
-  document.getElementById('chart-patron').innerHTML = pStats.length ? pStats.map(x=>
-    `<div class="bar-row"><span class="bar-lbl">${x.p}</span><div class="bar-track"><div class="bar-fill" style="width:${x.wr}%;background:var(--amber)">${x.wr>15?x.wr+'%':''}</div></div><span class="bar-cnt">${x.n}</span></div>`
-  ).join('') : '<div class="no-data">// Sin datos</div>';
+  // === Patrones (gráfico removido; se omite si no existe el contenedor) ===
+  const _patEl = document.getElementById('chart-patron');
+  if(_patEl){
+    const allPats = new Set();
+    t.forEach(x=>{ if(x.patron) allPats.add(x.patron); });
+    const pStats = Array.from(allPats).map(p=>{
+      const st = t.filter(x=>x.patron===p);
+      const w = st.filter(x=>x.resultado==='Win').length;
+      const l = st.filter(x=>x.resultado==='Loss').length;
+      const wr = (w+l) ? Math.round(w/(w+l)*100) : 0;
+      return { p, wr, n: st.length };
+    }).filter(x=>x.n>0).sort((a,b)=>b.wr-a.wr);
+    _patEl.innerHTML = pStats.length ? pStats.map(x=>
+      `<div class="bar-row"><span class="bar-lbl">${x.p}</span><div class="bar-track"><div class="bar-fill" style="width:${x.wr}%;background:var(--amber)">${x.wr>15?x.wr+'%':''}</div></div><span class="bar-cnt">${x.n}</span></div>`
+    ).join('') : '<div class="no-data">// Sin datos</div>';
+  }
 
   // === Errores y Estados mentales (desde ASRs vinculados a trades) ===
   const tIds = new Set(t.map(x=>x.id));
@@ -5127,18 +4780,8 @@ function installApp(){
       +'</ul></div>'; }
   }
 
-  /* ================= CHECKLIST QUE SALTA SOLA ================= */
-  window.mcMaybePopup=function(){
-    try{ if(loadHist().some(x=>x.date===todayKey()))return; }catch(e){return;}
-    try{ if(sessionStorage.getItem('mc_popup_skip')===todayKey())return; }catch(e){}
-    if(document.getElementById('mc-modal-bg'))return;
-    var d=document.createElement('div'); d.id='mc-modal-bg'; d.className='mc-modal-bg';
-    d.innerHTML='<div class="mc-modal"><h3>☀️ Antes de operar</h3><p>Todavía no hiciste la checklist pre-trade de hoy. Lleva 30 segundos y te dice si estás bien para operar.</p><div class="row"><button class="mc-btn gold" id="mc-modal-go">Hacer checklist ahora</button><button class="mc-btn ghost" id="mc-modal-skip">Más tarde</button></div></div>';
-    document.body.appendChild(d);
-    document.getElementById('mc-modal-go').onclick=function(){d.remove();var nav=[...document.querySelectorAll('.nav-item')].find(n=>/Pre-trade/i.test(n.textContent));if(nav)nav.click();};
-    document.getElementById('mc-modal-skip').onclick=function(){try{sessionStorage.setItem('mc_popup_skip',todayKey());}catch(e){}d.remove();};
-    d.onclick=function(e){if(e.target===d){try{sessionStorage.setItem('mc_popup_skip',todayKey());}catch(e){}d.remove();}};
-  };
+  /* ================= CHECKLIST QUE SALTA SOLA (desactivada) ================= */
+  window.mcMaybePopup=function(){ return; };
 
   /* ================= WRAPPERS (no invasivos) ================= */
   const _sp=showPage;
