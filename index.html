@@ -380,6 +380,8 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <button class="export-btn" onclick="exportCSV()" title="Exportar trades a CSV para Excel / Sheets" style="color:var(--green);border-color:var(--green2)">↓ Exportar trades .csv</button>
     <button class="export-btn" onclick="document.getElementById('imp-file').click()" title="Cargar respaldo desde otra PC">↑ Importar respaldo .json</button>
     <input type="file" id="imp-file" accept="application/json" style="display:none" onchange="importData(this)">
+    <button class="export-btn" onclick="document.getElementById('mt5-file').click()" title="Importar historial de MetaTrader 5 (Informe HTML)" style="color:var(--accent);border-color:var(--accent2)">↑ Importar MT5 (.html)</button>
+    <input type="file" id="mt5-file" accept=".html,.htm,text/html" style="display:none" onchange="importMT5(this)">
   </div>
 </div>
 
@@ -3782,6 +3784,194 @@ function parseCSVLine(line, sep=','){
   }
   result.push(cur);
   return result;
+}
+
+/* ================= IMPORTAR HISTORIAL DE METATRADER 5 ================= */
+// Lee el "Informe del historial de trading" (HTML) que exporta MT5 y carga
+// las posiciones cerradas como trades. Deja la estrategia (color) vacía para
+// que Maca la complete después. Evita duplicados por número de ticket (mt5Ticket).
+function importMT5(input){
+  const file = input.files[0];
+  if(!file){ return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      // El reporte de MT5 suele venir en UTF-16. Detectamos el BOM y decodificamos bien.
+      const buf = new Uint8Array(e.target.result);
+      let html;
+      if(buf.length>=2 && buf[0]===0xFF && buf[1]===0xFE){
+        html = new TextDecoder('utf-16le').decode(buf);
+      } else if(buf.length>=2 && buf[0]===0xFE && buf[1]===0xFF){
+        html = new TextDecoder('utf-16be').decode(buf);
+      } else {
+        html = new TextDecoder('utf-8').decode(buf);
+      }
+
+      // Helpers
+      const stripTags = s => s.replace(/<[^>]+>/g,'').replace(/&nbsp;/gi,' ')
+        .replace(/&amp;/gi,'&').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').trim();
+      const numOr = (s,def) => { const n = parseFloat(String(s).replace(/\s/g,'').replace(',','.')); return isNaN(n)?def:n; };
+
+      // 1) Detectar la cuenta del reporte (ej: "121791 (USD, Bullfy-Trade, demo, Hedge)")
+      let reportAcc = '';
+      const accMatch = html.match(/Cuenta de trading:[\s\S]{0,120}?([0-9]{4,})/i);
+      if(accMatch) reportAcc = accMatch[1];
+
+      // 2) Extraer todas las filas de tablas
+      const rawRows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
+      const rows = rawRows.map(r=>{
+        const cells = (r.match(/<t[dh][^>]*>[\s\S]*?<\/t[dh]>/gi) || []).map(stripTags);
+        return cells;
+      }).filter(c=>c.length);
+
+      // 3) Ubicar la sección "Posiciones": empieza tras la fila título y termina en "Órdenes"
+      let start=-1, end=rows.length;
+      for(let i=0;i<rows.length;i++){
+        const joined = rows[i].join(' ').toLowerCase();
+        if(start===-1 && /posiciones/.test(joined) && rows[i].length<=2){ start=i+1; continue; }
+        if(start!==-1 && /(órdenes|ordenes|transacciones)/.test(joined) && rows[i].length<=2){ end=i; break; }
+      }
+      if(start===-1){ alert('No encontré la tabla de "Posiciones" en el archivo.\n\nAsegurate de exportar desde MT5: Caja de herramientas → Historial → clic derecho → Informe (HTML).'); return; }
+
+      // 4) La primera fila de la sección son los encabezados. El resto, posiciones.
+      const dataRows = rows.slice(start, end);
+      if(dataRows.length<2){ alert('El reporte no tiene posiciones cerradas para importar.'); return; }
+      const body = dataRows.slice(1); // saltar encabezado
+
+      // 5) Resolver a qué cuenta del journal van (por número en el nombre), si no, la activa
+      let targetAcc = activeAccountId;
+      if(reportAcc){
+        const found = accounts.find(a => (a.name||'').includes(reportAcc));
+        if(found) targetAcc = found.id;
+      }
+
+      const mercadoDe = sym => {
+        const s=(sym||'').toUpperCase();
+        if(/XAU|XAG|XPT|XPD/.test(s)) return 'Metales';
+        if(/BTC|ETH|XRP|LTC|SOL|DOGE|ADA|BNB/.test(s)) return 'Crypto';
+        if(/^[A-Z]{6}$/.test(s)) return 'Forex';
+        if(/US30|US500|USTEC|NAS|SPX|GER|DAX|UK100|JP225|NDX/.test(s)) return 'Índices';
+        return '';
+      };
+      const fmtDur = (ms) => {
+        if(!(ms>0)) return '';
+        const m=Math.round(ms/60000);
+        if(m<60) return m+'m';
+        const h=Math.floor(m/60), rm=m%60;
+        if(h<24) return rm? (h+'h '+rm+'m') : (h+'h');
+        const d=Math.floor(h/24), rh=h%24;
+        return rh? (d+'d '+rh+'h') : (d+'d');
+      };
+      const parseDT = s => {
+        // "2026.06.12 18:11:03" -> {fecha:'2026-06-12', hora:'18:11', ts:Date}
+        const m = String(s).match(/(\d{4})\.(\d{2})\.(\d{2})\s+(\d{2}):(\d{2})/);
+        if(!m) return null;
+        return { fecha:`${m[1]}-${m[2]}-${m[3]}`, hora:`${m[4]}:${m[5]}`,
+                 ts:new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00`) };
+      };
+
+      const existingTickets = new Set(trades.map(t=>String(t.mt5Ticket||'')).filter(Boolean));
+      const existingIds = new Set(trades.map(t=>t.id));
+      const imported = [];
+      let skippedDup = 0, skippedBad = 0;
+
+      body.forEach(c => {
+        // Estructura columnas Posiciones (MT5, ES):
+        // 0 FechaOpen | 1 Ticket | 2 Símbolo | 3 Tipo | 4 (vacío) | 5 Volumen
+        // 6 PrecioOpen | 7 SL | 8 TP | 9 FechaClose | 10 PrecioClose | 11 Comisión | 12 Swap | 13 Beneficio
+        const open = parseDT(c[0]);
+        const ticket = (c[1]||'').replace(/\D/g,'');
+        const symbol = (c[2]||'').trim();
+        const tipoRaw = (c[3]||'').toLowerCase();
+        if(!open || !ticket || !symbol || !/^(buy|sell)/.test(tipoRaw)){ skippedBad++; return; }
+        if(existingTickets.has(ticket)){ skippedDup++; return; }
+
+        const vol      = c[5];
+        const pOpen    = c[6];
+        const sl       = c[7];
+        const tp       = c[8];
+        const close    = parseDT(c[9]);
+        const pClose   = c[10];
+        const comision = numOr(c[11],0);
+        const swap     = numOr(c[12],0);
+        const benef    = numOr(c[13],0);
+
+        const net = benef + comision + swap; // Beneficio neto
+        const dir = tipoRaw.startsWith('buy') ? 'Long' : 'Short';
+        let resultado = 'Open';
+        if(close){ resultado = net>0.0000001 ? 'Win' : (net<-0.0000001 ? 'Loss' : 'BE'); }
+
+        // R:R planificado y realizado (si hay SL numérico)
+        const eN=numOr(pOpen,NaN), sN=numOr(sl,NaN), tN=numOr(tp,NaN), cN=numOr(pClose,NaN);
+        let rrPlan='', rr='';
+        const risk = (!isNaN(eN)&&!isNaN(sN)) ? Math.abs(eN-sN) : NaN;
+        if(!isNaN(risk) && risk>0){
+          if(!isNaN(tN)) rrPlan = (Math.abs(tN-eN)/risk).toFixed(2);
+          if(!isNaN(cN)){
+            const ganado = dir==='Long' ? (cN-eN) : (eN-cN);
+            rr = (ganado/risk).toFixed(2);
+          }
+        }
+
+        const id = (!isNaN(Number(ticket)) && !existingIds.has(Number(ticket))) ? Number(ticket) : (Date.now()+imported.length);
+        existingIds.add(id);
+        existingTickets.add(ticket);
+
+        imported.push({
+          id,
+          mt5Ticket: ticket,
+          accountId: targetAcc,
+          fecha: open.fecha, hora: open.hora,
+          fechaSalida: close? close.fecha : '', horaSalida: close? close.hora : '',
+          duracion: (open&&close)? fmtDur(close.ts-open.ts) : '',
+          estrategia: '', variante: '', tipo: '', dir,
+          mercado: mercadoDe(symbol), activo: symbol,
+          entrada: pOpen||'', sl: (sl&&numOr(sl,0))? sl : '', tp: (tp&&numOr(tp,0))? tp : '',
+          salida: pClose||'',
+          slTecnico:'', tpTecnico:'',
+          gestion:'',
+          rr, rrPlan,
+          capital:'', capitalFinal:'',
+          riesgoMonto:'', riesgoPct:'',
+          bpBruto: benef.toFixed(2),
+          comisiones: (comision+swap).toFixed(2),
+          pnl: net.toFixed(2),
+          lotaje: vol||'',
+          sesion:'', mode:'', orden:'', resultado,
+          fibonacci:'', confirmaciones:'', patron:'',
+          link:'', imagenes:{}, imgNotes:{},
+          notas:'Importado de MT5'
+        });
+      });
+
+      if(!imported.length){
+        alert(`No se importaron trades nuevos.\n\nPosiciones encontradas: ${body.length}\nYa estaban (duplicadas): ${skippedDup}\nSin datos válidos: ${skippedBad}`);
+        return;
+      }
+
+      const accName = (accounts.find(a=>a.id===targetAcc)||{}).name || 'cuenta activa';
+      const ok = confirm(
+        `Voy a importar ${imported.length} operación(es) de MT5` +
+        (reportAcc? ` (cuenta ${reportAcc})`:'') +
+        `\n→ se cargan en: "${accName}"` +
+        (skippedDup? `\n· ${skippedDup} ya estaban y se saltean` : '') +
+        `\n\nLas operaciones quedan SIN color de estrategia para que lo asignes vos.\n\n¿Continuar?`
+      );
+      if(!ok) return;
+
+      trades = [...imported, ...trades];
+      save();
+      renderTable();
+      updateSidebar();
+      let msg = `MT5 importado · ${imported.length} operaciones cargadas`;
+      if(skippedDup) msg += ` · ${skippedDup} duplicadas omitidas`;
+      showToast(msg);
+    } catch(err){
+      alert('Error al leer el reporte de MT5: ' + err.message + '\n\nAsegurate de exportar el "Informe" en formato HTML desde la pestaña Historial.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value = '';
 }
 
 function importData(input){
