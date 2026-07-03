@@ -354,7 +354,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     </div>
     <div class="nav-item" onclick="showPage('mc-finanzas',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-      Cartera personal
+      Presupuesto
     </div>
     <div class="nav-item" onclick="showPage('potencial',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>
@@ -1066,70 +1066,190 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 </div>
 
 <style>
-  .fin-hero{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px}
-  .fin-bal{display:flex;flex-direction:column}
-  .fin-bal-lbl{font-size:12px;color:var(--text2);font-weight:600}
-  .fin-bal-num{font-size:30px;font-weight:800;font-family:'Roboto Mono',monospace;color:var(--text);line-height:1.1}
-  .fin-hero-side{display:flex;gap:22px;flex-wrap:wrap;margin-left:auto}
-  .fin-mini-lbl{display:block;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px}
-  .fin-mini-num{font-size:16px;font-weight:700;font-family:'Roboto Mono',monospace}
-  .fin-mini-num.up{color:var(--green)} .fin-mini-num.down{color:var(--red)}
-  #fin-tipo-pills .pill.on[data-t="Gasto"]{background:var(--red2);color:var(--red);border-color:var(--red)}
-  #fin-tipo-pills .pill.on[data-t="Ingreso"]{background:var(--green2);color:var(--green);border-color:var(--green)}
-  .fin-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
-  .fin-row .amt{margin-left:auto;font-family:'Roboto Mono',monospace;font-weight:700}
-  .fin-cat-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:14px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text2);font-weight:600}
-  .fin-bar{height:7px;border-radius:4px;background:var(--accent)}
+  .bu-hero{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px}
+  .bu-bal{display:flex;flex-direction:column}
+  .bu-bal-lbl{font-size:12px;color:var(--text2);font-weight:600}
+  .bu-bal-num{font-size:30px;font-weight:800;font-family:'Roboto Mono',monospace;color:var(--text);line-height:1.1}
+  .bu-hero-side{display:flex;gap:22px;flex-wrap:wrap;margin-left:auto}
+  .bu-mini-lbl{display:block;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px}
+  .bu-mini-num{font-size:16px;font-weight:700;font-family:'Roboto Mono',monospace}
+  .bu-mini-num.warn{color:var(--amber)}
+  .bu-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 14px}
+  .bu-view{display:none}
+  .bu-view.on{display:block}
+  .bu-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .bu-row .rmain{display:flex;flex-direction:column;min-width:120px}
+  .bu-row .rmain b{font-size:13px}
+  .bu-row .rsub{font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace}
+  .bu-row .amt{margin-left:auto;font-family:'Roboto Mono',monospace;font-weight:700;white-space:nowrap}
+  .bu-row .act{cursor:pointer;padding:0 4px;font-size:13px}
+  .bu-row .act.edit{color:var(--text2)}
+  .bu-row .act.del{color:var(--red)}
+  .bu-total-row{display:flex;justify-content:space-between;padding:11px 0 0;margin-top:4px;border-top:2px solid var(--border);font-weight:700}
+  .bu-acc-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:9px}
+  .bu-acc-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .bu-acc-name{font-weight:700;font-size:13.5px}
+  .bu-acc-type{font-size:10.5px;color:var(--text3);font-family:'Roboto Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
+  .bu-acc-amt{font-family:'Roboto Mono',monospace;font-weight:700;color:var(--accent)}
+  #bu-tipo-pills .pill.on[data-t="Automático"]{background:var(--accent2);color:var(--accent);border-color:var(--accent)}
+  #bu-tipo-pills .pill.on[data-t="Manual"]{background:var(--green2);color:var(--green);border-color:var(--green)}
+  #bu-mov-tipo-pills .pill.on[data-t="Aporte"]{background:var(--green2);color:var(--green);border-color:var(--green)}
+  #bu-mov-tipo-pills .pill.on[data-t="Retiro"]{background:var(--red2);color:var(--red);border-color:var(--red)}
 </style>
 <div id="page-mc-finanzas" class="page">
-  <div class="page-title">Cartera personal</div>
-  <div class="page-sub">Tu capital en el banco · ingresos y gastos del día a día (€)</div>
-  <div class="fin-hero">
-    <div class="fin-bal">
-      <span class="fin-bal-lbl">Saldo actual</span>
-      <span class="fin-bal-num" id="fin-bal-num">€0,00</span>
+  <div class="page-title">Presupuesto</div>
+  <div class="page-sub">Gastos fijos, sobres por cuenta/tarjeta y el circuito ARS → USD → BTC</div>
+
+  <div class="bu-hero">
+    <div class="bu-bal">
+      <span class="bu-bal-lbl">Saldo actual (€)</span>
+      <span class="bu-bal-num" id="bu-saldo-num">€0,00</span>
     </div>
-    <div class="fin-hero-side">
-      <div><span class="fin-mini-lbl">Ingresos del mes</span><span class="fin-mini-num up" id="fin-m-in">€0,00</span></div>
-      <div><span class="fin-mini-lbl">Gastos del mes</span><span class="fin-mini-num down" id="fin-m-out">€0,00</span></div>
-      <div><span class="fin-mini-lbl">Neto del mes</span><span class="fin-mini-num" id="fin-m-net">€0,00</span></div>
+    <div class="bu-hero-side">
+      <div><span class="bu-mini-lbl">Gasto fijo mensual</span><span class="bu-mini-num" id="bu-gasto-mes">€0,00</span></div>
+      <div><span class="bu-mini-lbl">Runway (meses)</span><span class="bu-mini-num" id="bu-runway">—</span></div>
+      <div><span class="bu-mini-lbl">Se agota aprox.</span><span class="bu-mini-num warn" id="bu-agota">—</span></div>
     </div>
-    <button class="mc-btn ghost sm" onclick="finSetSaldo()">⚙ Set saldo inicial</button>
+    <button class="mc-btn ghost sm" onclick="buSetSaldo()">⚙ Set saldo / fecha</button>
   </div>
-  <div class="mc-grid2" style="margin-top:14px">
+
+  <div class="bu-tabs">
+    <span class="mc-chip on" data-bu="resumen" onclick="buTab('resumen')">Resumen</span>
+    <span class="mc-chip" data-bu="gastos" onclick="buTab('gastos')">Gastos fijos</span>
+    <span class="mc-chip" data-bu="cuentas" onclick="buTab('cuentas')">Cuentas y tarjetas</span>
+    <span class="mc-chip" data-bu="arg" onclick="buTab('arg')">Argentina → USD → BTC</span>
+    <span class="mc-chip" data-bu="extra" onclick="buTab('extra')">Reservas / extra</span>
+  </div>
+
+  <!-- RESUMEN -->
+  <div id="bu-view-resumen" class="bu-view on">
     <div class="mc-card">
-      <div class="mc-qt">Nuevo movimiento</div>
-      <label class="mc-fl">Fecha</label><input id="fin-fecha" class="mc-in" type="date">
-      <label class="mc-fl">Tipo</label>
-      <div id="fin-tipo-pills" style="display:flex;gap:8px">
-        <div class="pill fin-tipo on" data-t="Gasto" onclick="finSelTipo(this,'Gasto')">Gasto ↓</div>
-        <div class="pill fin-tipo" data-t="Ingreso" onclick="finSelTipo(this,'Ingreso')">Ingreso ↑</div>
-      </div>
-      <label class="mc-fl">Categoría</label><select id="fin-cat" class="mc-in"></select>
-      <label class="mc-fl">Monto (€)</label><input id="fin-monto" class="mc-in" type="number" step="0.01" min="0" placeholder="0,00">
-      <label class="mc-fl">Nota (opcional)</label><input id="fin-nota" class="mc-in" type="text" placeholder="ej. super, nafta, sueldo…">
-      <button class="mc-btn" id="fin-add-btn" style="margin-top:14px" onclick="finAdd()">Agregar movimiento →</button>
-      <div id="fin-add-msg" class="mc-note"></div>
-      <div style="height:1px;background:var(--border);margin:14px 0"></div>
-      <div class="mc-qt" style="font-size:13px">Categorías</div>
-      <div id="fin-cats-mgr" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-      <div style="display:flex;gap:8px"><input id="fin-newcat" class="mc-in" type="text" placeholder="Nueva categoría"><button class="mc-btn ghost sm" onclick="finAddCat()">+ Add</button></div>
+      <div class="mc-qt">Sobres por cuenta / tarjeta</div>
+      <p class="mc-note" style="margin:0 0 10px">Cuánto de tus gastos fijos está asignado a cada cuenta o tarjeta. Se recalcula solo con lo que cargues en "Gastos fijos" y "Cuentas".</p>
+      <div id="bu-resumen-sobres"></div>
     </div>
-    <div class="mc-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-        <div class="mc-qt" style="margin:0">Resumen del mes</div>
-        <input id="fin-month" class="mc-in" type="month" style="max-width:160px" onchange="finRender()">
-      </div>
-      <p class="mc-note" style="margin:8px 0 0">Gastos por categoría</p>
-      <div id="fin-cat-breakdown" style="margin-top:10px"></div>
+    <div class="mc-card" style="margin-top:14px">
+      <div class="mc-qt" style="font-size:14px">Notas</div>
+      <p class="mc-note" style="margin:0">• El runway asume que no entra plata nueva en euros (aparte de retiros de trading si empezás a ser rentable).</p>
+      <p class="mc-note" style="margin:6px 0 0">• El circuito ARS → USD → BTC es un flujo aparte: no cubre gastos en euros salvo que vos lo decidas.</p>
+      <p class="mc-note" style="margin:6px 0 0">• Los montos de "Gastos fijos" son estimativos — agregá, editá o borrá líneas cuando quieras, todo se recalcula solo.</p>
     </div>
   </div>
-  <div class="mc-card" style="margin-top:14px">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-      <div class="mc-qt" style="margin:0">Movimientos</div>
-      <span class="mc-note" id="fin-mov-count" style="margin:0"></span>
+
+  <!-- GASTOS FIJOS -->
+  <div id="bu-view-gastos" class="bu-view">
+    <div class="mc-grid2">
+      <div class="mc-card">
+        <div class="mc-qt">Nuevo gasto fijo</div>
+        <label class="mc-fl">Ítem</label><input id="bu-g-item" class="mc-in" type="text" placeholder="ej. Mutuo, TIM, Supermercado…">
+        <label class="mc-fl">Categoría</label><input id="bu-g-cat" class="mc-in" type="text" placeholder="ej. Vivienda, Suscripciones…">
+        <label class="mc-fl">Monto (€)</label><input id="bu-g-monto" class="mc-in" type="number" step="0.01" min="0" placeholder="0,00">
+        <label class="mc-fl">Día de pago</label><input id="bu-g-dia" class="mc-in" type="text" placeholder="ej. 10-12, variable…">
+        <label class="mc-fl">Cuenta / tarjeta destino</label><select id="bu-g-cuenta" class="mc-in"></select>
+        <label class="mc-fl">Tipo</label>
+        <div id="bu-tipo-pills" style="display:flex;gap:8px">
+          <div class="pill bu-tipo on" data-t="Automático" onclick="buSelTipoGasto(this,'Automático')">Débito automático</div>
+          <div class="pill bu-tipo" data-t="Manual" onclick="buSelTipoGasto(this,'Manual')">Manual</div>
+        </div>
+        <label class="mc-fl">Nota (opcional)</label><input id="bu-g-nota" class="mc-in" type="text" placeholder="opcional">
+        <button class="mc-btn" id="bu-g-btn" style="margin-top:14px" onclick="buAddGasto()">Agregar gasto fijo →</button>
+        <div id="bu-g-msg" class="mc-note"></div>
+      </div>
+      <div class="mc-card">
+        <div class="mc-qt">Gastos fijos cargados</div>
+        <div id="bu-gastos-list"></div>
+      </div>
     </div>
-    <div id="fin-mov-list" style="margin-top:10px"></div>
+  </div>
+
+  <!-- CUENTAS -->
+  <div id="bu-view-cuentas" class="bu-view">
+    <div class="mc-grid2">
+      <div class="mc-card">
+        <div class="mc-qt">Nueva cuenta / tarjeta</div>
+        <label class="mc-fl">Nombre</label><input id="bu-c-nombre" class="mc-in" type="text" placeholder="ej. N26, Revolut, Efectivo…">
+        <label class="mc-fl">Tipo</label>
+        <select id="bu-c-tipo" class="mc-in">
+          <option>Banco</option>
+          <option>Tarjeta</option>
+          <option>Efectivo</option>
+          <option>Cuenta en USD</option>
+          <option>Otro</option>
+        </select>
+        <button class="mc-btn" style="margin-top:14px" onclick="buAddCuenta()">Agregar cuenta →</button>
+        <p class="mc-note">Tip: UniCredit tiene "Salvadanaio" (hasta 5 espacios), N26 tiene "Spaces" (hasta 10 sub-cuentas con IBAN propio) y Revolut tiene "Pockets" con tarjetas virtuales linkeadas — podés crear ahí las cuentas reales que dediques a cada sobre de acá abajo.</p>
+      </div>
+      <div class="mc-card">
+        <div class="mc-qt">Tus cuentas y lo asignado a cada una</div>
+        <div id="bu-cuentas-list"></div>
+      </div>
+    </div>
+    <div class="mc-card" style="margin-top:14px">
+      <div class="mc-qt">Aportes y retiros por sobre</div>
+      <p class="mc-note" style="margin:0 0 10px">Acá registrás lo que realmente metés (o sacás) de cada sobre cada mes. Si un mes no gastaste todo, te queda saldo en el sobre — podés aportar menos ese mes y mandar la diferencia a otro lado. Esto es un registro manual, no se sincroniza con el banco.</p>
+      <div class="mc-grid2">
+        <div>
+          <label class="mc-fl">Sobre / cuenta</label><select id="bu-m-cuenta" class="mc-in"></select>
+          <label class="mc-fl">Fecha</label><input id="bu-m-fecha" class="mc-in" type="date">
+          <label class="mc-fl">Tipo</label>
+          <div id="bu-mov-tipo-pills" style="display:flex;gap:8px">
+            <div class="pill bu-movtipo on" data-t="Aporte" onclick="buSelTipoMov(this,'Aporte')">Aporte ↑</div>
+            <div class="pill bu-movtipo" data-t="Retiro" onclick="buSelTipoMov(this,'Retiro')">Retiro ↓</div>
+          </div>
+          <label class="mc-fl">Monto (€)</label><input id="bu-m-monto" class="mc-in" type="number" step="0.01" min="0" placeholder="0,00">
+          <label class="mc-fl">Nota (opcional)</label><input id="bu-m-nota" class="mc-in" type="text" placeholder="ej. quedó residuo de agosto, aporté menos">
+          <button class="mc-btn" id="bu-m-btn" style="margin-top:14px" onclick="buAddMov()">Registrar →</button>
+          <div id="bu-m-msg" class="mc-note"></div>
+        </div>
+        <div>
+          <div class="mc-qt" style="font-size:13px">Historial</div>
+          <div id="bu-movs-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARGENTINA -->
+  <div id="bu-view-arg" class="bu-view">
+    <p class="mc-note" style="margin:0 0 12px">Referencia registrada el 2/jul/2026: dólar blue ≈ $1.515-1.525, MEP ≈ $1.520,44 (brecha ~2%). Actualizá el tipo de cambio real de cada mes al cargar la fila. Fuente: Ámbito.</p>
+    <div class="mc-grid2">
+      <div class="mc-card">
+        <div class="mc-qt">Nuevo mes</div>
+        <label class="mc-fl">Mes</label><input id="bu-a-mes" class="mc-in" type="month">
+        <label class="mc-fl">Ingreso ARS</label><input id="bu-a-ars" class="mc-in" type="number" step="1" placeholder="800000">
+        <label class="mc-fl">Tipo de cambio (ARS/USD)</label><input id="bu-a-tc" class="mc-in" type="number" step="0.01" placeholder="1520.44">
+        <label class="mc-fl">% para ahorro propio (el resto va a mamá/BTC)</label><input id="bu-a-pct" class="mc-in" type="number" min="0" max="100" step="1" placeholder="50" oninput="buArsPctPreview()">
+        <div id="bu-a-preview" class="mc-note"></div>
+        <label class="mc-fl">Nota (opcional)</label><input id="bu-a-nota" class="mc-in" type="text" placeholder="ej. destinado a saldar deudas">
+        <button class="mc-btn" id="bu-a-btn" style="margin-top:14px" onclick="buAddArs()">Agregar mes →</button>
+        <div id="bu-a-msg" class="mc-note"></div>
+      </div>
+      <div class="mc-card">
+        <div class="mc-qt">Historial mensual</div>
+        <div id="bu-arg-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXTRA -->
+  <div id="bu-view-extra" class="bu-view">
+    <div class="mc-grid2">
+      <div class="mc-card">
+        <div class="mc-qt">Nueva reserva / gasto extraordinario</div>
+        <label class="mc-fl">Concepto</label><input id="bu-e-concepto" class="mc-in" type="text" placeholder="ej. Colchón de emergencia">
+        <label class="mc-fl">Monto</label><input id="bu-e-monto" class="mc-in" type="number" step="0.01" min="0" placeholder="0,00">
+        <label class="mc-fl">Moneda</label>
+        <select id="bu-e-moneda" class="mc-in">
+          <option>EUR</option><option>USD</option><option>ARS</option><option>BTC</option>
+        </select>
+        <label class="mc-fl">Estado / uso</label><input id="bu-e-estado" class="mc-in" type="text" placeholder="ej. No tocar, reserva de emergencia">
+        <button class="mc-btn" style="margin-top:14px" onclick="buAddExtra()">Agregar →</button>
+      </div>
+      <div class="mc-card">
+        <div class="mc-qt">Lista</div>
+        <div id="bu-extra-list"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -4830,200 +4950,526 @@ function installApp(){
 
 </script>
 <script>
-/* ===== CARTERA PERSONAL · GASTOS (v1) — módulo aislado ===== */
+/* ===== PRESUPUESTO · sobres, gastos fijos y circuito ARS→USD→BTC (v1) — módulo aislado ===== */
 (function(){
-  const DEFAULT_CATS = ['Supermercado','Alquiler','Servicios','Transporte','Salud','Ocio','Restaurantes','Sueldo','Ahorro','Otros'];
-  let finMovs = [];
-  let finCfg = { saldoIni: 0, cats: DEFAULT_CATS.slice() };
-  let finCurTipo = 'Gasto';
-  let finEditId = null;
-  let finLoaded = false;
+  const DEFAULT_CUENTAS = [
+    {id:'uc', nombre:'UniCredit (cuenta principal)', tipo:'Banco'},
+    {id:'n26', nombre:'N26', tipo:'Banco'},
+    {id:'rev', nombre:'Revolut', tipo:'Tarjeta'},
+    {id:'cash', nombre:'Efectivo', tipo:'Efectivo'},
+    {id:'nx', nombre:'Naranja X (USD)', tipo:'Cuenta en USD'},
+  ];
+  const DEFAULT_GASTOS = [
+    {id:1, item:'Mutuo', categoria:'Vivienda', monto:512, dia:'10-12', cuentaId:'uc', tipo:'Automático', nota:''},
+    {id:2, item:'TradingView', categoria:'Suscripciones', monto:32, dia:'10-12', cuentaId:'uc', tipo:'Automático', nota:'Evaluar pasar a anual en Black Friday (nov)'},
+    {id:3, item:'TIM', categoria:'Servicios', monto:40, dia:'10-12', cuentaId:'uc', tipo:'Automático', nota:''},
+    {id:4, item:'Amazon Prime', categoria:'Suscripciones', monto:5, dia:'10-12', cuentaId:'uc', tipo:'Automático', nota:''},
+    {id:5, item:'Claude', categoria:'Suscripciones', monto:22, dia:'10-12', cuentaId:'uc', tipo:'Automático', nota:''},
+    {id:6, item:'Comida perros', categoria:'Mascotas', monto:80, dia:'10-12 (2 compras/mes)', cuentaId:'rev', tipo:'Manual', nota:''},
+    {id:7, item:'Supermercado', categoria:'Alimentación', monto:200, dia:'10-12 (3 compras/mes)', cuentaId:'rev', tipo:'Manual', nota:''},
+    {id:8, item:'Alquiler → novia', categoria:'Vivienda', monto:75, dia:'10-12', cuentaId:'n26', tipo:'Manual', nota:''},
+    {id:9, item:'Boletas → novia', categoria:'Servicios', monto:42, dia:'Variable', cuentaId:'n26', tipo:'Manual', nota:'Pagar cuando ella avisa que llegaron'},
+    {id:10, item:'Reserva Partita IVA', categoria:'Fiscal', monto:100, dia:'10-12', cuentaId:'n26', tipo:'Manual', nota:'Intocable'},
+    {id:11, item:'Efectivo día a día', categoria:'Efectivo', monto:200, dia:'10-12', cuentaId:'cash', tipo:'Manual', nota:''},
+    {id:12, item:'Fondo gimnasio', categoria:'Deporte', monto:83.33, dia:'10-12', cuentaId:'n26', tipo:'Manual', nota:'Renovación ~oct 2026, 250€ por 3 meses'},
+  ];
+  const DEFAULT_EXTRA = [
+    {id:1, concepto:'Colchón de emergencia', monto:2000, moneda:'USD', estado:'No tocar, reserva de emergencia'},
+    {id:2, concepto:'Tarjeta débito Naranja X', monto:115, moneda:'USD', estado:'Solo para compras con débito en Argentina'},
+    {id:3, concepto:'Deuda de Daniel', monto:300, moneda:'EUR', estado:'Pendiente, va llegando de a poco — NO contar como ingreso'},
+    {id:4, concepto:'Fiesta 8 de agosto', monto:200, moneda:'EUR', estado:'Apartar en la asignación de julio, antes del ciclo 10-12 de agosto'},
+    {id:5, concepto:'Renovación gimnasio', monto:250, moneda:'EUR', estado:'Vence ~octubre 2026 — cubierto por el fondo acumulado'},
+  ];
+  const DEFAULT_ARS = [
+    {id:1, mes:'2026-07', ars:800000, tc:null, pctPropio:null, nota:'Destinado a saldar deudas, no se convierte este mes'},
+    {id:2, mes:'2026-08', ars:800000, tc:1520.44, pctPropio:50, nota:''},
+  ];
+
+  let buCfg = { saldoIni: 10000, saldoFecha: '2026-07-07', cuentas: DEFAULT_CUENTAS.slice(), gastos: DEFAULT_GASTOS.slice(), extra: DEFAULT_EXTRA.slice(), arsRows: DEFAULT_ARS.slice(), movs: [] };
+  let buLoaded = false;
+  let buCurTab = 'resumen';
+  let buCurTipoGasto = 'Automático';
+  let buEditGastoId = null;
+  let buCurTipoMov = 'Aporte';
+  let buEditMovId = null;
+  let buEditArsId = null;
+  let buEditExtraId = null;
 
   const E = id => document.getElementById(id);
-  const eur = n => '€' + (isFinite(n)?n:0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const todayISO = () => new Date().toISOString().slice(0,10);
-  const monthISO = () => new Date().toISOString().slice(0,7);
-
-  function saveFinMovs(){
-    try{ if(typeof _dbSet==='function') _dbSet('tj_finanzas', finMovs).catch(()=>{}); }catch(e){}
-    try{ localStorage.setItem('tj_finanzas', JSON.stringify(finMovs)); }catch(e){}
+  const SYM = {EUR:'€', USD:'US$', ARS:'AR$', BTC:'₿'};
+  function money(n, cur){
+    cur = cur || 'EUR';
+    const dec = cur==='BTC' ? 8 : 2;
+    const s = SYM[cur] || '';
+    return s + (isFinite(n)?n:0).toLocaleString('es-AR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
   }
-  function saveFinCfg(){
-    try{ if(typeof _dbSet==='function') _dbSet('tj_fin_cfg', finCfg).catch(()=>{}); }catch(e){}
-    try{ localStorage.setItem('tj_fin_cfg', JSON.stringify(finCfg)); }catch(e){}
+  const num = v => { const n = parseFloat(String(v==null?'':v).replace(',','.')); return isNaN(n)?0:n; };
+
+  function buSaveAll(){
+    try{ if(typeof _dbSet==='function') _dbSet('tj_presupuesto', buCfg).catch(()=>{}); }catch(e){}
+    try{ localStorage.setItem('tj_presupuesto', JSON.stringify(buCfg)); }catch(e){}
   }
 
-  async function finLoad(){
-    if(finLoaded) return;
+  async function buLoad(){
+    if(buLoaded) return;
+    let c;
     try{
-      let m, c;
-      if(typeof _dbGet==='function'){
-        m = await _dbGet('tj_finanzas').catch(()=>undefined);
-        c = await _dbGet('tj_fin_cfg').catch(()=>undefined);
-      }
-      if(m!==undefined && m!==null) finMovs = m;
-      else { const ls = localStorage.getItem('tj_finanzas'); finMovs = ls ? JSON.parse(ls) : []; }
-      if(c!==undefined && c!==null) finCfg = Object.assign({saldoIni:0,cats:DEFAULT_CATS.slice()}, c);
-      else { const ls = localStorage.getItem('tj_fin_cfg'); if(ls) finCfg = Object.assign(finCfg, JSON.parse(ls)); }
+      if(typeof _dbGet==='function') c = await _dbGet('tj_presupuesto').catch(()=>undefined);
+      if(c===undefined || c===null){ const ls = localStorage.getItem('tj_presupuesto'); if(ls) c = JSON.parse(ls); }
     }catch(e){
-      try{ finMovs = JSON.parse(localStorage.getItem('tj_finanzas')||'[]'); const c=localStorage.getItem('tj_fin_cfg'); if(c) finCfg=Object.assign(finCfg,JSON.parse(c)); }catch(e2){}
+      try{ const ls = localStorage.getItem('tj_presupuesto'); if(ls) c = JSON.parse(ls); }catch(e2){}
     }
-    if(!Array.isArray(finMovs)) finMovs = [];
-    if(!finCfg || typeof finCfg!=='object') finCfg = { saldoIni:0, cats:DEFAULT_CATS.slice() };
-    if(!Array.isArray(finCfg.cats) || !finCfg.cats.length) finCfg.cats = DEFAULT_CATS.slice();
-    finLoaded = true;
+    if(c && typeof c==='object'){
+      buCfg = Object.assign({ saldoIni:10000, saldoFecha:'2026-07-07', cuentas:DEFAULT_CUENTAS.slice(), gastos:DEFAULT_GASTOS.slice(), extra:DEFAULT_EXTRA.slice(), arsRows:DEFAULT_ARS.slice(), movs:[] }, c);
+    }
+    if(!Array.isArray(buCfg.cuentas) || !buCfg.cuentas.length) buCfg.cuentas = DEFAULT_CUENTAS.slice();
+    if(!Array.isArray(buCfg.gastos)) buCfg.gastos = [];
+    if(!Array.isArray(buCfg.extra)) buCfg.extra = [];
+    if(!Array.isArray(buCfg.arsRows)) buCfg.arsRows = [];
+    if(!Array.isArray(buCfg.movs)) buCfg.movs = [];
+    buLoaded = true;
   }
 
-  function finBalance(){
-    return finMovs.reduce((a,m)=> a + (m.tipo==='Ingreso'? +m.monto : -m.monto), (+finCfg.saldoIni||0));
+  // ---------- tabs ----------
+  function buTab(name){
+    buCurTab = name;
+    document.querySelectorAll('.bu-tabs .mc-chip').forEach(c=>c.classList.toggle('on', c.dataset.bu===name));
+    document.querySelectorAll('.bu-view').forEach(v=>v.classList.toggle('on', v.id==='bu-view-'+name));
+  }
+  window.buTab = buTab;
+
+  // ---------- saldo / runway ----------
+  function buSetSaldo(){
+    const cur = num(buCfg.saldoIni);
+    const v = prompt('Saldo actual en el banco (€):', cur);
+    if(v===null) return;
+    const n = num(v);
+    const f = prompt('Fecha de ese saldo (AAAA-MM-DD):', buCfg.saldoFecha || new Date().toISOString().slice(0,10));
+    if(f===null) return;
+    buCfg.saldoIni = n;
+    buCfg.saldoFecha = f;
+    buSaveAll();
+    buRenderAll();
+  }
+  window.buSetSaldo = buSetSaldo;
+
+  function buGastoTotal(){
+    return buCfg.gastos.reduce((a,g)=>a+num(g.monto),0);
   }
 
-  function finSelTipo(el,t){
-    finCurTipo = t;
-    document.querySelectorAll('#fin-tipo-pills .pill').forEach(p=>p.classList.remove('on'));
+  function buRenderHero(){
+    const saldo = num(buCfg.saldoIni);
+    const gastoMes = buGastoTotal();
+    E('bu-saldo-num').textContent = money(saldo,'EUR');
+    E('bu-gasto-mes').textContent = money(gastoMes,'EUR');
+    const runwayEl = E('bu-runway');
+    const agotaEl = E('bu-agota');
+    if(gastoMes>0){
+      const meses = saldo/gastoMes;
+      runwayEl.textContent = meses.toFixed(1);
+      const base = buCfg.saldoFecha ? new Date(buCfg.saldoFecha+'T00:00:00') : new Date();
+      if(!isNaN(base.getTime())){
+        const d = new Date(base);
+        d.setMonth(d.getMonth() + Math.floor(meses));
+        agotaEl.textContent = d.toLocaleDateString('es-AR',{year:'numeric',month:'short'});
+      } else agotaEl.textContent = '—';
+    } else {
+      runwayEl.textContent = '—';
+      agotaEl.textContent = '—';
+    }
+  }
+
+  // ---------- cuentas ----------
+  function buCuentaNombre(id){
+    const c = buCfg.cuentas.find(x=>x.id===id);
+    return c ? c.nombre : 'Sin asignar';
+  }
+
+  function buCuentaOptions(){
+    const sel = E('bu-g-cuenta'); if(!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = buCfg.cuentas.map(c=>'<option value="'+c.id+'">'+c.nombre+'</option>').join('');
+    if(cur && buCfg.cuentas.some(c=>c.id===cur)) sel.value = cur;
+    buMovCuentaOptions();
+  }
+
+  function buMovCuentaOptions(){
+    const sel = E('bu-m-cuenta'); if(!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = buCfg.cuentas.map(c=>'<option value="'+c.id+'">'+c.nombre+'</option>').join('');
+    if(cur && buCfg.cuentas.some(c=>c.id===cur)) sel.value = cur;
+  }
+
+  function buSaldoSobre(cuentaId){
+    return buCfg.movs.filter(m=>m.cuentaId===cuentaId).reduce((a,m)=>a+(m.tipo==='Aporte'? num(m.monto): -num(m.monto)),0);
+  }
+
+  function buAddCuenta(){
+    const nombre = E('bu-c-nombre').value.trim();
+    if(!nombre) return;
+    const tipo = E('bu-c-tipo').value;
+    const id = 'c'+Date.now();
+    buCfg.cuentas.push({id, nombre, tipo});
+    E('bu-c-nombre').value='';
+    buSaveAll();
+    buCuentaOptions();
+    buRenderCuentas();
+    buRenderResumen();
+  }
+  window.buAddCuenta = buAddCuenta;
+
+  function buDeleteCuenta(id){
+    const enUso = buCfg.gastos.filter(g=>g.cuentaId===id).length;
+    if(enUso>0 && !confirm('Esta cuenta tiene '+enUso+' gasto(s) fijo(s) asignado(s). Si la borrás, esos gastos quedan "Sin asignar". ¿Continuar?')) return;
+    buCfg.cuentas = buCfg.cuentas.filter(c=>c.id!==id);
+    buSaveAll();
+    buCuentaOptions();
+    buRenderCuentas();
+    buRenderResumen();
+    buRenderGastos();
+  }
+  window.buDeleteCuenta = buDeleteCuenta;
+
+  function buRenderCuentas(){
+    const list = E('bu-cuentas-list'); if(!list) return;
+    if(!buCfg.cuentas.length){ list.innerHTML = '<p class="mc-note" style="margin:0">Sin cuentas cargadas.</p>'; return; }
+    list.innerHTML = buCfg.cuentas.map(function(c){
+      const plan = buCfg.gastos.filter(g=>g.cuentaId===c.id).reduce((a,g)=>a+num(g.monto),0);
+      const real = buSaldoSobre(c.id);
+      return '<div class="bu-acc-card"><div class="bu-acc-top">'+
+        '<div><span class="bu-acc-name">'+c.nombre+'</span><br><span class="bu-acc-type">'+c.tipo+'</span></div>'+
+        '<div style="text-align:right"><span class="bu-acc-amt">'+money(plan,'EUR')+'/mes plan</span><br>'+
+        '<span class="bu-acc-type">saldo aportado: '+money(real,'EUR')+'</span></div>'+
+        '<span class="act del" title="Borrar" onclick="buDeleteCuenta(\''+c.id+'\')">×</span>'+
+        '</div></div>';
+    }).join('');
+  }
+
+  // ---------- aportes / retiros por sobre ----------
+  function buSelTipoMov(el,t){
+    buCurTipoMov = t;
+    document.querySelectorAll('#bu-mov-tipo-pills .pill').forEach(p=>p.classList.remove('on'));
     el.classList.add('on');
   }
-  window.finSelTipo = finSelTipo;
+  window.buSelTipoMov = buSelTipoMov;
 
-  function finCatOptions(){
-    const sel = E('fin-cat'); if(!sel) return;
-    const cur = sel.value;
-    sel.innerHTML = finCfg.cats.map(c=>'<option>'+c+'</option>').join('');
-    if(cur && finCfg.cats.includes(cur)) sel.value = cur;
-    const mgr = E('fin-cats-mgr');
-    if(mgr) mgr.innerHTML = finCfg.cats.map(c=>'<span class="fin-cat-chip">'+c+'<span style="cursor:pointer;color:var(--red);font-weight:700" onclick="finRemoveCat('+JSON.stringify(c)+')">×</span></span>').join('');
-  }
-
-  function finAddCat(){
-    const inp = E('fin-newcat'); if(!inp) return;
-    const v = inp.value.trim(); if(!v) return;
-    if(!finCfg.cats.includes(v)) finCfg.cats.push(v);
-    inp.value=''; saveFinCfg(); finCatOptions();
-  }
-  window.finAddCat = finAddCat;
-
-  function finRemoveCat(c){
-    finCfg.cats = finCfg.cats.filter(x=>x!==c);
-    if(!finCfg.cats.length) finCfg.cats = ['Otros'];
-    saveFinCfg(); finCatOptions();
-  }
-  window.finRemoveCat = finRemoveCat;
-
-  function finSetSaldo(){
-    const cur = +finCfg.saldoIni||0;
-    const v = prompt('Saldo inicial del banco (€):\n\nEs el punto de partida. Los ingresos suman y los gastos restan a partir de acá.', cur);
-    if(v===null) return;
-    const n = parseFloat(String(v).replace(',','.'));
-    if(isNaN(n)){ alert('Poné un número válido.'); return; }
-    finCfg.saldoIni = n; saveFinCfg(); finRender();
-  }
-  window.finSetSaldo = finSetSaldo;
-
-  function finAdd(){
-    const fecha = E('fin-fecha').value || todayISO();
-    const monto = parseFloat(String(E('fin-monto').value).replace(',','.'));
-    const cat = E('fin-cat').value || 'Otros';
-    const nota = E('fin-nota').value.trim();
-    const msg = E('fin-add-msg');
-    if(isNaN(monto) || monto<=0){ if(msg){msg.textContent='Poné un monto mayor a 0.'; msg.style.color='var(--red)';} return; }
-    if(finEditId){
-      const it = finMovs.find(m=>m.id===finEditId);
-      if(it){ it.fecha=fecha; it.tipo=finCurTipo; it.categoria=cat; it.monto=monto; it.nota=nota; }
-      finEditId = null;
-      const btn = E('fin-add-btn'); if(btn) btn.textContent='Agregar movimiento →';
+  function buAddMov(){
+    const cuentaId = E('bu-m-cuenta').value;
+    const monto = num(E('bu-m-monto').value);
+    const msg = E('bu-m-msg');
+    if(!cuentaId){ if(msg){msg.textContent='Elegí un sobre.'; msg.style.color='var(--red)';} return; }
+    if(monto<=0){ if(msg){msg.textContent='Poné un monto mayor a 0.'; msg.style.color='var(--red)';} return; }
+    const data = { cuentaId, fecha: E('bu-m-fecha').value || new Date().toISOString().slice(0,10), tipo: buCurTipoMov, monto, nota: E('bu-m-nota').value.trim() };
+    if(buEditMovId){
+      const it = buCfg.movs.find(m=>m.id===buEditMovId);
+      if(it) Object.assign(it, data);
+      buEditMovId = null;
+      E('bu-m-btn').textContent = 'Registrar →';
     } else {
-      finMovs.push({ id: Date.now(), fecha: fecha, tipo: finCurTipo, categoria: cat, monto: monto, nota: nota });
+      buCfg.movs.push(Object.assign({id: Date.now()}, data));
     }
-    saveFinMovs();
-    E('fin-monto').value=''; E('fin-nota').value='';
+    buSaveAll();
+    E('bu-m-monto').value=''; E('bu-m-nota').value='';
     if(msg){ msg.textContent='✓ Guardado'; msg.style.color='var(--green)'; setTimeout(()=>{ if(msg) msg.textContent=''; },1500); }
-    finRender();
+    buRenderMovs(); buRenderCuentas();
   }
-  window.finAdd = finAdd;
+  window.buAddMov = buAddMov;
 
-  function finEdit(id){
-    const it = finMovs.find(m=>m.id===id); if(!it) return;
-    E('fin-fecha').value = it.fecha;
-    finCurTipo = it.tipo;
-    document.querySelectorAll('#fin-tipo-pills .pill').forEach(p=>p.classList.toggle('on', p.dataset.t===it.tipo));
-    finCatOptions(); E('fin-cat').value = it.categoria;
-    E('fin-monto').value = it.monto;
-    E('fin-nota').value = it.nota||'';
-    finEditId = id;
-    const btn = E('fin-add-btn'); if(btn) btn.textContent='Guardar cambios →';
+  function buEditMov(id){
+    const it = buCfg.movs.find(m=>m.id===id); if(!it) return;
+    buMovCuentaOptions();
+    E('bu-m-cuenta').value = it.cuentaId;
+    E('bu-m-fecha').value = it.fecha;
+    E('bu-m-monto').value = it.monto;
+    E('bu-m-nota').value = it.nota||'';
+    buCurTipoMov = it.tipo;
+    document.querySelectorAll('#bu-mov-tipo-pills .pill').forEach(p=>p.classList.toggle('on', p.dataset.t===it.tipo));
+    buEditMovId = id;
+    E('bu-m-btn').textContent = 'Guardar cambios →';
+    buTab('cuentas');
     const main = document.querySelector('.main'); if(main) main.scrollTo({top:0,behavior:'smooth'});
   }
-  window.finEdit = finEdit;
+  window.buEditMov = buEditMov;
 
-  function finDelete(id){
+  function buDeleteMov(id){
     if(!confirm('¿Borrar este movimiento?')) return;
-    finMovs = finMovs.filter(m=>m.id!==id);
-    if(finEditId===id){ finEditId=null; const btn=E('fin-add-btn'); if(btn) btn.textContent='Agregar movimiento →'; }
-    saveFinMovs(); finRender();
+    buCfg.movs = buCfg.movs.filter(m=>m.id!==id);
+    buSaveAll();
+    buRenderMovs(); buRenderCuentas();
   }
-  window.finDelete = finDelete;
+  window.buDeleteMov = buDeleteMov;
 
-  function finRender(){
-    if(!E('page-mc-finanzas')) return;
-    E('fin-bal-num').textContent = eur(finBalance());
-    const msel = E('fin-month');
-    const mon = (msel && msel.value) ? msel.value : monthISO();
-    const inMonth = finMovs.filter(m=>(m.fecha||'').slice(0,7)===mon);
-    const ing = inMonth.filter(m=>m.tipo==='Ingreso').reduce((a,m)=>a + (+m.monto),0);
-    const gas = inMonth.filter(m=>m.tipo==='Gasto').reduce((a,m)=>a + (+m.monto),0);
-    E('fin-m-in').textContent = eur(ing);
-    E('fin-m-out').textContent = eur(gas);
-    const net = ing-gas;
-    const netEl = E('fin-m-net');
-    netEl.textContent = (net<0?'−':'+') + eur(Math.abs(net));
-    netEl.style.color = net>=0?'var(--green)':'var(--red)';
-    const bd = E('fin-cat-breakdown');
-    const byCat = {};
-    inMonth.filter(m=>m.tipo==='Gasto').forEach(m=>{ byCat[m.categoria]=(byCat[m.categoria]||0)+(+m.monto); });
-    const cats = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
-    const maxV = cats.length? cats[0][1] : 0;
-    if(!cats.length){ bd.innerHTML='<p class="mc-note" style="margin:0">Sin gastos este mes.</p>'; }
-    else {
-      bd.innerHTML = cats.map(function(e){ const c=e[0], v=e[1]; const w=maxV?Math.round(v/maxV*100):0;
-        return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px"><span style="color:var(--text2)">'+c+'</span><span style="font-family:\'Roboto Mono\',monospace;font-weight:700">'+eur(v)+'</span></div><div style="height:7px;border-radius:4px;background:var(--bg3)"><div class="fin-bar" style="width:'+w+'%"></div></div></div>';
-      }).join('');
-    }
-    const list = E('fin-mov-list');
-    const rows = inMonth.slice().sort((a,b)=> ((b.fecha||'').localeCompare(a.fecha||'')) || (b.id-a.id));
-    E('fin-mov-count').textContent = rows.length+' mov · '+mon;
-    if(!rows.length){ list.innerHTML='<p class="mc-note" style="margin:0">No hay movimientos este mes.</p>'; }
-    else {
-      list.innerHTML = rows.map(function(m){ const up = m.tipo==='Ingreso';
-        return '<div class="fin-row">'+
-          '<span style="font-family:\'Roboto Mono\',monospace;font-size:11.5px;color:var(--text2);min-width:74px">'+m.fecha+'</span>'+
-          '<span class="fin-cat-chip">'+m.categoria+'</span>'+
-          '<span style="font-size:12.5px;color:var(--text2)">'+(m.nota?m.nota:'')+'</span>'+
-          '<span class="amt" style="color:'+(up?'var(--green)':'var(--red)')+'">'+(up?'+':'−')+eur(m.monto)+'</span>'+
-          '<span style="cursor:pointer;color:var(--text2);padding:0 4px" title="Editar" onclick="finEdit('+m.id+')">✎</span>'+
-          '<span style="cursor:pointer;color:var(--red);padding:0 4px" title="Borrar" onclick="finDelete('+m.id+')">×</span>'+
-        '</div>';
-      }).join('');
+  function buRenderMovs(){
+    const list = E('bu-movs-list'); if(!list) return;
+    if(!buCfg.movs.length){ list.innerHTML = '<p class="mc-note" style="margin:0">Sin movimientos registrados.</p>'; return; }
+    const rows = buCfg.movs.slice().sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||'') || (b.id-a.id));
+    list.innerHTML = rows.map(function(m){
+      const up = m.tipo==='Aporte';
+      return '<div class="bu-row"><div class="rmain"><b>'+buCuentaNombre(m.cuentaId)+'</b><span class="rsub">'+m.fecha+(m.nota?' · '+m.nota:'')+'</span></div>'+
+        '<span class="amt" style="color:'+(up?'var(--green)':'var(--red)')+'">'+(up?'+':'\u2212')+money(m.monto,'EUR')+'</span>'+
+        '<span class="act edit" title="Editar" onclick="buEditMov('+m.id+')">\u270e</span>'+
+        '<span class="act del" title="Borrar" onclick="buDeleteMov('+m.id+')">\u00d7</span></div>';
+    }).join('');
+  }
+
+  function buRenderResumen(){
+    buRenderHero();
+    const el = E('bu-resumen-sobres'); if(!el) return;
+    const total = buGastoTotal();
+    if(!buCfg.cuentas.length){ el.innerHTML = '<p class="mc-note" style="margin:0">Cargá cuentas en la pestaña "Cuentas y tarjetas".</p>'; return; }
+    el.innerHTML = buCfg.cuentas.map(function(c){
+      const sub = buCfg.gastos.filter(g=>g.cuentaId===c.id).reduce((a,g)=>a+num(g.monto),0);
+      const w = total>0 ? Math.round(sub/total*100) : 0;
+      return '<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px">'+
+        '<span style="color:var(--text2)">'+c.nombre+'</span>'+
+        '<span style="font-family:\'Roboto Mono\',monospace;font-weight:700">'+money(sub,'EUR')+'</span></div>'+
+        '<div class="mc-bar"><div class="mc-fill" style="width:'+w+'%;background:var(--accent)"></div></div></div>';
+    }).join('');
+    const sinAsignar = buCfg.gastos.filter(g=>!buCfg.cuentas.some(c=>c.id===g.cuentaId)).reduce((a,g)=>a+num(g.monto),0);
+    if(sinAsignar>0){
+      el.innerHTML += '<p class="mc-note" style="margin-top:6px;color:var(--amber)">Sin asignar: '+money(sinAsignar,'EUR')+'</p>';
     }
   }
-  window.finRender = finRender;
+
+  // ---------- gastos fijos ----------
+  function buSelTipoGasto(el,t){
+    buCurTipoGasto = t;
+    document.querySelectorAll('#bu-tipo-pills .pill').forEach(p=>p.classList.remove('on'));
+    el.classList.add('on');
+  }
+  window.buSelTipoGasto = buSelTipoGasto;
+
+  function buAddGasto(){
+    const item = E('bu-g-item').value.trim();
+    const monto = num(E('bu-g-monto').value);
+    const msg = E('bu-g-msg');
+    if(!item){ if(msg){msg.textContent='Poné un ítem.'; msg.style.color='var(--red)';} return; }
+    if(monto<=0){ if(msg){msg.textContent='Poné un monto mayor a 0.'; msg.style.color='var(--red)';} return; }
+    const data = {
+      item, monto,
+      categoria: E('bu-g-cat').value.trim() || 'Otros',
+      dia: E('bu-g-dia').value.trim(),
+      cuentaId: E('bu-g-cuenta').value,
+      tipo: buCurTipoGasto,
+      nota: E('bu-g-nota').value.trim(),
+    };
+    if(buEditGastoId){
+      const it = buCfg.gastos.find(g=>g.id===buEditGastoId);
+      if(it) Object.assign(it, data);
+      buEditGastoId = null;
+      E('bu-g-btn').textContent = 'Agregar gasto fijo →';
+    } else {
+      buCfg.gastos.push(Object.assign({id: Date.now()}, data));
+    }
+    buSaveAll();
+    E('bu-g-item').value=''; E('bu-g-monto').value=''; E('bu-g-cat').value=''; E('bu-g-dia').value=''; E('bu-g-nota').value='';
+    if(msg){ msg.textContent='✓ Guardado'; msg.style.color='var(--green)'; setTimeout(()=>{ if(msg) msg.textContent=''; },1500); }
+    buRenderGastos(); buRenderResumen(); buRenderCuentas();
+  }
+  window.buAddGasto = buAddGasto;
+
+  function buEditGasto(id){
+    const it = buCfg.gastos.find(g=>g.id===id); if(!it) return;
+    E('bu-g-item').value = it.item;
+    E('bu-g-cat').value = it.categoria;
+    E('bu-g-monto').value = it.monto;
+    E('bu-g-dia').value = it.dia;
+    buCuentaOptions();
+    E('bu-g-cuenta').value = it.cuentaId;
+    E('bu-g-nota').value = it.nota||'';
+    buCurTipoGasto = it.tipo;
+    document.querySelectorAll('#bu-tipo-pills .pill').forEach(p=>p.classList.toggle('on', p.dataset.t===it.tipo));
+    buEditGastoId = id;
+    E('bu-g-btn').textContent = 'Guardar cambios →';
+    buTab('gastos');
+    const main = document.querySelector('.main'); if(main) main.scrollTo({top:0,behavior:'smooth'});
+  }
+  window.buEditGasto = buEditGasto;
+
+  function buDeleteGasto(id){
+    if(!confirm('¿Borrar este gasto fijo?')) return;
+    buCfg.gastos = buCfg.gastos.filter(g=>g.id!==id);
+    buSaveAll();
+    buRenderGastos(); buRenderResumen(); buRenderCuentas();
+  }
+  window.buDeleteGasto = buDeleteGasto;
+
+  function buRenderGastos(){
+    const list = E('bu-gastos-list'); if(!list) return;
+    if(!buCfg.gastos.length){ list.innerHTML = '<p class="mc-note" style="margin:0">Sin gastos fijos cargados.</p>'; return; }
+    const rows = buCfg.gastos.slice().sort((a,b)=>num(b.monto)-num(a.monto));
+    list.innerHTML = rows.map(function(g){
+      return '<div class="bu-row"><div class="rmain"><b>'+g.item+'</b><span class="rsub">'+g.categoria+' · '+(g.dia||'—')+' · '+buCuentaNombre(g.cuentaId)+' · '+g.tipo+'</span></div>'+
+        '<span class="amt">'+money(g.monto,'EUR')+'</span>'+
+        '<span class="act edit" title="Editar" onclick="buEditGasto('+g.id+')">✎</span>'+
+        '<span class="act del" title="Borrar" onclick="buDeleteGasto('+g.id+')">×</span></div>';
+    }).join('') + '<div class="bu-total-row"><span>Total mensual</span><span>'+money(buGastoTotal(),'EUR')+'</span></div>';
+  }
+
+  // ---------- argentina ----------
+  function buArsPctPreview(){
+    const p = E('bu-a-preview'); if(!p) return;
+    const pct = num(E('bu-a-pct').value);
+    const ars = num(E('bu-a-ars').value);
+    const tc = num(E('bu-a-tc').value);
+    if(ars>0 && tc>0){
+      const usd = ars/tc;
+      const propio = usd*(pct/100);
+      const mama = usd-propio;
+      p.textContent = 'USD total: '+money(usd,'USD')+' · propio: '+money(propio,'USD')+' ('+pct+'%) · mamá/BTC: '+money(mama,'USD')+' ('+(100-pct)+'%)';
+    } else p.textContent = '';
+  }
+  window.buArsPctPreview = buArsPctPreview;
+
+  function buAddArs(){
+    const mes = E('bu-a-mes').value;
+    const msg = E('bu-a-msg');
+    if(!mes){ if(msg){msg.textContent='Elegí un mes.'; msg.style.color='var(--red)';} return; }
+    const data = {
+      mes,
+      ars: num(E('bu-a-ars').value),
+      tc: E('bu-a-tc').value===''? null : num(E('bu-a-tc').value),
+      pctPropio: E('bu-a-pct').value===''? null : num(E('bu-a-pct').value),
+      nota: E('bu-a-nota').value.trim(),
+    };
+    if(buEditArsId){
+      const it = buCfg.arsRows.find(r=>r.id===buEditArsId);
+      if(it) Object.assign(it, data);
+      buEditArsId = null;
+      E('bu-a-btn').textContent = 'Agregar mes →';
+    } else {
+      buCfg.arsRows.push(Object.assign({id: Date.now()}, data));
+    }
+    buSaveAll();
+    E('bu-a-mes').value=''; E('bu-a-ars').value=''; E('bu-a-tc').value=''; E('bu-a-pct').value=''; E('bu-a-nota').value=''; E('bu-a-preview').textContent='';
+    if(msg){ msg.textContent='✓ Guardado'; msg.style.color='var(--green)'; setTimeout(()=>{ if(msg) msg.textContent=''; },1500); }
+    buRenderArgentina();
+  }
+  window.buAddArs = buAddArs;
+
+  function buEditArs(id){
+    const it = buCfg.arsRows.find(r=>r.id===id); if(!it) return;
+    E('bu-a-mes').value = it.mes;
+    E('bu-a-ars').value = it.ars;
+    E('bu-a-tc').value = it.tc==null? '' : it.tc;
+    E('bu-a-pct').value = it.pctPropio==null? '' : it.pctPropio;
+    E('bu-a-nota').value = it.nota||'';
+    buArsPctPreview();
+    buEditArsId = id;
+    E('bu-a-btn').textContent = 'Guardar cambios →';
+    buTab('arg');
+    const main = document.querySelector('.main'); if(main) main.scrollTo({top:0,behavior:'smooth'});
+  }
+  window.buEditArs = buEditArs;
+
+  function buDeleteArs(id){
+    if(!confirm('¿Borrar este mes?')) return;
+    buCfg.arsRows = buCfg.arsRows.filter(r=>r.id!==id);
+    buSaveAll();
+    buRenderArgentina();
+  }
+  window.buDeleteArs = buDeleteArs;
+
+  function buRenderArgentina(){
+    const list = E('bu-arg-list'); if(!list) return;
+    if(!buCfg.arsRows.length){ list.innerHTML = '<p class="mc-note" style="margin:0">Sin meses cargados.</p>'; return; }
+    const rows = buCfg.arsRows.slice().sort((a,b)=> (a.mes||'').localeCompare(b.mes||''));
+    list.innerHTML = rows.map(function(r){
+      const ars = num(r.ars);
+      const tc = r.tc==null? 0 : num(r.tc);
+      const pct = r.pctPropio==null? null : num(r.pctPropio);
+      let detail = money(ars,'ARS');
+      if(tc>0){
+        const usd = ars/tc;
+        detail += ' → ' + money(usd,'USD');
+        if(pct!=null){
+          detail += ' (propio '+money(usd*pct/100,'USD')+' · mamá '+money(usd*(100-pct)/100,'USD')+')';
+        }
+      } else {
+        detail += ' — sin convertir';
+      }
+      return '<div class="bu-row"><div class="rmain"><b>'+r.mes+'</b><span class="rsub">'+detail+(r.nota?' · '+r.nota:'')+'</span></div>'+
+        '<span class="act edit" title="Editar" onclick="buEditArs('+r.id+')">✎</span>'+
+        '<span class="act del" title="Borrar" onclick="buDeleteArs('+r.id+')">×</span></div>';
+    }).join('');
+  }
+
+  // ---------- extra / reservas ----------
+  function buAddExtra(){
+    const concepto = E('bu-e-concepto').value.trim();
+    const monto = num(E('bu-e-monto').value);
+    if(!concepto || monto<=0) return;
+    const data = { concepto, monto, moneda: E('bu-e-moneda').value, estado: E('bu-e-estado').value.trim() };
+    if(buEditExtraId){
+      const it = buCfg.extra.find(x=>x.id===buEditExtraId);
+      if(it) Object.assign(it, data);
+      buEditExtraId = null;
+    } else {
+      buCfg.extra.push(Object.assign({id: Date.now()}, data));
+    }
+    buSaveAll();
+    E('bu-e-concepto').value=''; E('bu-e-monto').value=''; E('bu-e-estado').value='';
+    buRenderExtra();
+  }
+  window.buAddExtra = buAddExtra;
+
+  function buEditExtra(id){
+    const it = buCfg.extra.find(x=>x.id===id); if(!it) return;
+    E('bu-e-concepto').value = it.concepto;
+    E('bu-e-monto').value = it.monto;
+    E('bu-e-moneda').value = it.moneda;
+    E('bu-e-estado').value = it.estado||'';
+    buEditExtraId = id;
+    buTab('extra');
+  }
+  window.buEditExtra = buEditExtra;
+
+  function buDeleteExtra(id){
+    if(!confirm('¿Borrar este ítem?')) return;
+    buCfg.extra = buCfg.extra.filter(x=>x.id!==id);
+    buSaveAll();
+    buRenderExtra();
+  }
+  window.buDeleteExtra = buDeleteExtra;
+
+  function buRenderExtra(){
+    const list = E('bu-extra-list'); if(!list) return;
+    if(!buCfg.extra.length){ list.innerHTML = '<p class="mc-note" style="margin:0">Sin ítems cargados.</p>'; return; }
+    list.innerHTML = buCfg.extra.map(function(x){
+      return '<div class="bu-row"><div class="rmain"><b>'+x.concepto+'</b><span class="rsub">'+(x.estado||'')+'</span></div>'+
+        '<span class="amt">'+money(x.monto, x.moneda)+'</span>'+
+        '<span class="act edit" title="Editar" onclick="buEditExtra('+x.id+')">✎</span>'+
+        '<span class="act del" title="Borrar" onclick="buDeleteExtra('+x.id+')">×</span></div>';
+    }).join('');
+  }
+
+  // ---------- init ----------
+  function buRenderAll(){
+    if(!E('page-mc-finanzas')) return;
+    buCuentaOptions();
+    if(E('bu-m-fecha') && !E('bu-m-fecha').value) E('bu-m-fecha').value = new Date().toISOString().slice(0,10);
+    buRenderResumen();
+    buRenderGastos();
+    buRenderCuentas();
+    buRenderMovs();
+    buRenderArgentina();
+    buRenderExtra();
+  }
 
   async function mcRenderFin(){
-    await finLoad();
+    await buLoad();
     if(!E('page-mc-finanzas')) return;
-    if(E('fin-fecha') && !E('fin-fecha').value) E('fin-fecha').value = todayISO();
-    if(E('fin-month') && !E('fin-month').value) E('fin-month').value = monthISO();
-    document.querySelectorAll('#fin-tipo-pills .pill').forEach(p=>p.classList.toggle('on', p.dataset.t===finCurTipo));
-    finCatOptions();
-    finRender();
+    buTab(buCurTab);
+    buRenderAll();
   }
   window.mcRenderFin = mcRenderFin;
 
   if(typeof window.showPage==='function'){
     const _sp = window.showPage;
-    window.showPage = function(id,el){ _sp(id,el); if(id==='mc-finanzas'){ try{ mcRenderFin(); }catch(e){ console.error('fin render',e); } } };
+    window.showPage = function(id,el){ _sp(id,el); if(id==='mc-finanzas'){ try{ mcRenderFin(); }catch(e){ console.error('presupuesto render',e); } } };
   }
 
-  try{ setTimeout(function(){ finLoad().catch(()=>{}); }, 1500); }catch(e){}
+  try{ setTimeout(function(){ buLoad().then(buRenderAll).catch(()=>{}); }, 1500); }catch(e){}
 })();
 
 </script>
