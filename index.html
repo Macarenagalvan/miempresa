@@ -370,6 +370,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <input type="file" id="imp-file" accept="application/json" style="display:none" onchange="importData(this)">
     <button class="export-btn" onclick="document.getElementById('mt5-file').click()" title="Importar historial de MetaTrader 5 (Informe HTML)" style="color:var(--accent);border-color:var(--accent2)">↑ Importar MT5 (.html)</button>
     <input type="file" id="mt5-file" accept=".html,.htm,text/html" style="display:none" onchange="importMT5(this)">
+    <button class="export-btn" id="undo-btn" onclick="undoLast()" title="Deshacer la última importación o cambio grande" style="color:#ff8a8a;border-color:#ff8a8a">↺ Deshacer última importación</button>
   </div>
 </div>
 
@@ -1441,6 +1442,31 @@ function save(){
     });
 }
 
+// --- Deshacer: guarda una foto de los trades antes de una importación/cambio grande ---
+function snapshotUndo(label){
+  try{
+    const snap = { ts: Date.now(), label: label||'', trades: JSON.parse(JSON.stringify(trades)) };
+    localStorage.setItem('tj_undo', JSON.stringify(snap));
+    const b = document.getElementById('undo-btn');
+    if(b) b.title = 'Deshacer: '+(label||'último cambio grande');
+  }catch(e){ console.warn('snapshotUndo', e); }
+}
+function undoLast(){
+  let snap; try{ snap = JSON.parse(localStorage.getItem('tj_undo')||'null'); }catch(e){}
+  if(!snap || !Array.isArray(snap.trades)){ alert('No hay ninguna acción grande para deshacer.'); return; }
+  const cuando = new Date(snap.ts).toLocaleString();
+  if(!confirm('¿Deshacer "'+(snap.label||'último cambio')+'"?\n\nVolvés al estado de:\n'+cuando+'\n('+snap.trades.length+' operaciones)\n\nSirve para revertir la última importación grande.')) return;
+  const actual = JSON.parse(JSON.stringify(trades));
+  trades = snap.trades;
+  localStorage.setItem('tj_undo', JSON.stringify({ ts: Date.now(), label:'rehacer (volver adelante)', trades: actual }));
+  save();
+  if(window.renderTable) renderTable();
+  if(window.updateSidebar) updateSidebar();
+  if(window.renderStats) renderStats();
+  if(window.renderCartera) renderCartera();
+  showToast('Deshecho · volviste a '+snap.trades.length+' operaciones');
+}
+
 function updateSidebar(){
   document.getElementById('sb-total').textContent = trades.length;
   const closed = trades.filter(x => x.resultado==='Win'||x.resultado==='Loss');
@@ -2032,7 +2058,13 @@ function addTrade(){
   };
   if(editingId){
     const idx = trades.findIndex(x=>x.id===editingId);
-    if(idx>=0) trades[idx] = t;
+    if(idx>=0){
+      const prev = trades[idx];
+      // Conservar datos que el formulario no maneja (ej: número de MT5) para que
+      // al reimportar no se vuelva a duplicar la operación editada.
+      if(prev.mt5Ticket && !t.mt5Ticket) t.mt5Ticket = prev.mt5Ticket;
+      trades[idx] = t;
+    }
     save();
     showToast('Operación actualizada');
     exitEditMode();
@@ -3517,6 +3549,7 @@ function importCSV(input){
         action = choice ? 'replace' : 'merge';
       }
 
+      snapshotUndo('Importar CSV ('+imported.length+' ops · '+action+')');
       if(action === 'replace'){
         trades = imported;
       } else {
@@ -3665,6 +3698,11 @@ function importMT5(input){
 
       const existingTickets = new Set(trades.map(t=>String(t.mt5Ticket||'')).filter(Boolean));
       const existingIds = new Set(trades.map(t=>t.id));
+      // Firma por contenido: cuenta + activo + fecha de cierre + PnL. Así, aunque una
+      // operación importada haya sido editada y perdido su ticket, NO se vuelve a duplicar.
+      const _normSym = s => String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+      const _sig = t => (t.accountId||'')+'|'+_normSym(t.activo)+'|'+(t.fechaSalida||'')+'|'+(parseFloat(String(t.pnl).replace('+',''))||0).toFixed(2);
+      const existingSigs = new Set(trades.map(_sig));
       const imported = [];
       let skippedDup = 0, skippedBad = 0;
 
@@ -3690,9 +3728,16 @@ function importMT5(input){
         const benef    = numOr(c[13],0);
 
         const net = benef + comision + swap; // Beneficio neto
+        // Antiduplicado por contenido: si ya existe una operación con misma cuenta+activo+
+        // fecha de cierre+PnL, la salteamos (aunque una editada haya perdido su ticket).
+        const _candSig = targetAcc+'|'+_normSym(symbol)+'|'+(close?close.fecha:'')+'|'+net.toFixed(2);
+        if(existingSigs.has(_candSig)){ skippedDup++; return; }
+        existingSigs.add(_candSig);
         const dir = tipoRaw.startsWith('buy') ? 'Long' : 'Short';
         let resultado = 'Open';
-        if(close){ resultado = net>0.0000001 ? 'Win' : (net<-0.0000001 ? 'Loss' : 'BE'); }
+        // BE se decide por el resultado de MERCADO (sin comisión): si el precio salió
+        // plano es BE, aunque haya pagado una comisión chica.
+        if(close){ resultado = benef>0.0000001 ? 'Win' : (benef<-0.0000001 ? 'Loss' : 'BE'); }
 
         // R:R planificado y realizado (si hay SL numérico)
         const eN=numOr(pOpen,NaN), sN=numOr(sl,NaN), tN=numOr(tp,NaN), cN=numOr(pClose,NaN);
@@ -3752,6 +3797,7 @@ function importMT5(input){
       );
       if(!ok) return;
 
+      snapshotUndo('Importar MT5 ('+imported.length+' ops)');
       trades = [...imported, ...trades];
       save();
       renderTable();
@@ -3810,6 +3856,7 @@ function importData(input){
         action = choice ? 'replace' : 'merge';
       }
 
+      snapshotUndo('Importar respaldo JSON ('+action+')');
       if(action === 'replace'){
         // Si el respaldo no trae cuentas (versión vieja) creamos una por defecto y le asignamos los trades
         if(impAccounts.length === 0){
