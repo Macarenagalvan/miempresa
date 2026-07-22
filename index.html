@@ -703,6 +703,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <select id="cartera-account-select" onchange="changeActiveAccount()" style="padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;outline:none;cursor:pointer;min-width:200px"></select>
       <button onclick="showAccountModal('new')" style="padding:7px 14px;background:var(--accent2);border:1px solid var(--accent);color:var(--accent);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;font-weight:500">+ Nueva cuenta</button>
       <button onclick="showAccountModal('rename')" style="padding:7px 14px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px">✎ Renombrar</button>
+      <button onclick="archiveAccount()" style="padding:7px 14px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px" title="Archivar una cuenta vieja: conserva sus operaciones para estadísticas y la corre al final. El mismo botón la reactiva.">🗄 Archivar / Reactivar</button>
       <button onclick="deleteAccount()" style="padding:7px 14px;background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px">✕ Eliminar</button>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -2953,6 +2954,35 @@ function deleteAccount(){
   saveActiveAccount();
   renderCartera();
   refreshAccountSelectors();
+}
+
+// Archivar / reactivar una cuenta SIN borrar sus operaciones (siguen contando en estadísticas).
+function archiveAccount(){
+  const acc = getSelectedCarteraAccount();
+  if(!acc){ alert('Elegí una cuenta en el selector de Cartera.'); return; }
+  const n = trades.filter(t=>t.accountId===acc.id).length;
+  if(acc.archived){
+    if(!confirm(`¿Reactivar la cuenta "${acc.name}"?\n\nVuelve a estar disponible normalmente.`)) return;
+    acc.archived = false;
+    acc.name = acc.name.replace(/^\(ex\)\s*/i,'');
+  } else {
+    if(accounts.filter(a=>!a.archived).length <= 1){ alert('No podés archivar tu única cuenta activa. Creá o activá otra primero.'); return; }
+    if(!confirm(`¿Archivar la cuenta "${acc.name}"?\n\nSus ${n} operación(es) se CONSERVAN para estadísticas e historial. Solo se marca como "(ex)" y se manda al final de la lista, para que no moleste al cargar trades nuevos.\n\nLa podés reactivar cuando quieras con este mismo botón.`)) return;
+    acc.archived = true;
+    if(!/^\(ex\)/i.test(acc.name)) acc.name = '(ex) ' + acc.name;
+    // Si la cuenta activa era ésta, pasar la activa a otra que no esté archivada.
+    if(activeAccountId === acc.id){
+      const otra = accounts.find(a=>!a.archived && a.id!==acc.id);
+      if(otra){ activeAccountId = otra.id; saveActiveAccount(); }
+    }
+  }
+  // Mover al final de la lista (las archivadas quedan abajo en todos los selectores).
+  const idx = accounts.findIndex(a=>a.id===acc.id);
+  if(idx>=0){ const moved = accounts.splice(idx,1)[0]; accounts.push(moved); }
+  saveAccounts();
+  renderCartera();
+  refreshAccountSelectors();
+  showToast(acc.archived ? 'Cuenta archivada · sus trades siguen en estadísticas' : 'Cuenta reactivada');
 }
 
 let pendingMovType = null;
