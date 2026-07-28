@@ -650,7 +650,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   <div class="tbl-wrap" style="overflow-x:auto">
     <table>
       <thead><tr>
-        <th>Fecha</th><th>Cuenta</th><th>Modo</th><th>Estrategia</th><th>Tipo</th><th>Activo</th>
+        <th>Fecha</th><th>Cuenta</th><th>Modo</th><th>Estrategia</th><th>Score</th><th>Tipo</th><th>Activo</th>
         <th>Dir.</th><th>Orden</th>
         <th>Lotaje</th><th>R:R</th><th>P&L</th><th>Resultado</th><th>ASR</th><th>Gráfico</th><th></th>
       </tr></thead>
@@ -819,6 +819,29 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 <div id="page-asr" class="page">
   <div class="page-title">ASR · Auto Self Review</div>
   <div class="page-sub">Revisión profunda de cada trade ejecutado</div>
+
+  <!-- REVIEW SEMANAL -->
+  <div class="section-label">Review semanal</div>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:22px">
+    <div class="form-grid g3" style="margin-bottom:12px">
+      <div class="form-group">
+        <label>Desde</label>
+        <input type="date" id="wr-from">
+      </div>
+      <div class="form-group">
+        <label>Hasta</label>
+        <input type="date" id="wr-to">
+      </div>
+      <div class="form-group" style="justify-content:flex-end">
+        <label>&nbsp;</label>
+        <button onclick="runWeeklyReview()" style="padding:9px 14px;background:var(--accent);border:none;border-radius:var(--radius);color:#fff;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px">Generar review</button>
+      </div>
+    </div>
+    <div id="wr-result" style="font-size:13px;line-height:1.6;color:var(--text2)">
+      <span style="color:var(--text3)">Elegí rango de fechas y apretá Generar review.</span>
+    </div>
+    <button onclick="copyWeeklyReview()" id="wr-copy" style="display:none;margin-top:12px;padding:8px 12px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);cursor:pointer;font-size:12px;font-family:'Roboto Mono',monospace">Copiar resumen</button>
+  </div>
 
   <div class="section-label">Trade a evaluar</div>
   <div class="form-grid g2">
@@ -2525,6 +2548,7 @@ function renderTable(){
       <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;color:${accColor};background:${accColor}15;border:1px solid ${accColor}40;font-family:'Roboto Mono',monospace">${escapeHtml(accName)}</span></td>
       <td style="font-size:11px;font-weight:500;color:${t.mode==='Operado'?'var(--green)':(t.mode==='Backtest'?'var(--text2)':'var(--text3)')}">${t.mode||'–'}</td>
       <td><span class="badge ${stratBC[t.estrategia]||''}">${t.estrategia}${t.variante?' · '+t.variante:''}</span></td>
+      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--accent)">${(t.checklistScore&&t.checklistScore.total)?(t.checklistScore.done+'/'+t.checklistScore.total):'–'}</td>
       <td style="font-size:11px;color:var(--text3)">${t.tipo||''}</td>
       <td style="font-weight:600">${t.activo}</td>
       <td class="${t.dir==='Long'?'b-long':(t.dir==='Short'?'b-short':'')}" style="font-size:12px">${t.dir||'–'}</td>
@@ -3466,6 +3490,109 @@ function delAsr(id){
   if(!confirm('¿Eliminar este ASR?')) return;
   asrs = asrs.filter(a=>a.id!==id); saveAsrs(); renderAsrList(); renderTable();
 }
+
+
+function _wrTradesInRange(){
+  const from = document.getElementById('wr-from')?.value || '';
+  const to = document.getElementById('wr-to')?.value || '';
+  return (trades||[]).filter(t=>{
+    if(t.mode==='Backtest') return false;
+    const f = t.fecha || '';
+    if(from && f < from) return false;
+    if(to && f > to) return false;
+    return true;
+  });
+}
+
+function runWeeklyReview(){
+  const list = _wrTradesInRange();
+  const box = document.getElementById('wr-result');
+  const copyBtn = document.getElementById('wr-copy');
+  if(!box) return;
+  if(!list.length){
+    box.innerHTML = '<span style="color:var(--amber)">No hay trades operados en ese rango.</span>';
+    if(copyBtn) copyBtn.style.display='none';
+    window._wrText = '';
+    return;
+  }
+  const closed = list.filter(t=>t.resultado==='Win'||t.resultado==='Loss'||t.resultado==='BE');
+  const wins = closed.filter(t=>t.resultado==='Win').length;
+  const losses = closed.filter(t=>t.resultado==='Loss').length;
+  const wr = closed.length ? Math.round(wins/closed.length*100) : 0;
+
+  // scores
+  const withScore = list.filter(t=>t.checklistScore && t.checklistScore.total>0);
+  const avgPct = withScore.length ? Math.round(withScore.reduce((a,t)=>a+(t.checklistScore.pct||0),0)/withScore.length) : null;
+  const high = withScore.filter(t=>(t.checklistScore.pct||0)>=80);
+  const low = withScore.filter(t=>(t.checklistScore.pct||0)<80);
+  const highClosed = high.filter(t=>t.resultado==='Win'||t.resultado==='Loss');
+  const lowClosed = low.filter(t=>t.resultado==='Win'||t.resultado==='Loss');
+  const wrHigh = highClosed.length ? Math.round(highClosed.filter(t=>t.resultado==='Win').length/highClosed.length*100) : null;
+  const wrLow = lowClosed.length ? Math.round(lowClosed.filter(t=>t.resultado==='Win').length/lowClosed.length*100) : null;
+
+  // by strategy
+  const byStrat = {};
+  list.forEach(t=>{
+    const s = t.estrategia || '?';
+    if(!byStrat[s]) byStrat[s] = {n:0,w:0,l:0,scores:[]};
+    byStrat[s].n++;
+    if(t.resultado==='Win') byStrat[s].w++;
+    if(t.resultado==='Loss') byStrat[s].l++;
+    if(t.checklistScore && t.checklistScore.total) byStrat[s].scores.push(t.checklistScore.pct||0);
+  });
+
+  let stratHtml = Object.keys(byStrat).map(s=>{
+    const o = byStrat[s];
+    const total = o.w+o.l;
+    const swr = total ? Math.round(o.w/total*100) : '–';
+    const savg = o.scores.length ? Math.round(o.scores.reduce((a,b)=>a+b,0)/o.scores.length) : '–';
+    return `<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text)">${s}</span><span style="font-family:'Roboto Mono',monospace;font-size:12px">${o.n} trades · WR ${swr}% · Score ${savg}%</span></div>`;
+  }).join('');
+
+  const html = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px">
+      <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Trades</div><div style="font-size:20px;font-weight:700;margin-top:4px">${list.length}</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Win rate</div><div style="font-size:20px;font-weight:700;margin-top:4px;color:${wr>=50?'var(--green)':'var(--red)'}">${wr}%</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Score promedio</div><div style="font-size:20px;font-weight:700;margin-top:4px;color:var(--accent)">${avgPct!=null?avgPct+'%':'–'}</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">WR Score≥80%</div><div style="font-size:20px;font-weight:700;margin-top:4px">${wrHigh!=null?wrHigh+'%':'–'}</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">WR Score&lt;80%</div><div style="font-size:20px;font-weight:700;margin-top:4px">${wrLow!=null?wrLow+'%':'–'}</div></div>
+    </div>
+    <div style="margin-bottom:8px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-family:'Roboto Mono',monospace">Por estrategia</div>
+    ${stratHtml || '<span style="color:var(--text3)">Sin datos</span>'}
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);color:var(--text3);font-size:12px">
+      Trades con score cargado: ${withScore.length}/${list.length}.
+      ${wrHigh!=null && wrLow!=null ? (wrHigh>wrLow+10 ? ' El score alto está correlacionado con mejor WR.' : (wrLow>wrHigh+10 ? ' Ojo: score alto no está ayudando todavía.' : ' Todavía poca diferencia entre score alto y bajo.')) : ' Cargá más scores para ver correlación.'}
+    </div>
+  `;
+  box.innerHTML = html;
+  if(copyBtn) copyBtn.style.display = 'inline-block';
+
+  // text for copy
+  let txt = '=== REVIEW SEMANAL ===\n';
+  txt += 'Trades: '+list.length+'\n';
+  txt += 'Win rate: '+wr+'% ('+wins+'W / '+losses+'L)\n';
+  txt += 'Score promedio: '+(avgPct!=null?avgPct+'%':'–')+'\n';
+  txt += 'WR Score≥80%: '+(wrHigh!=null?wrHigh+'%':'–')+'\n';
+  txt += 'WR Score<80%: '+(wrLow!=null?wrLow+'%':'–')+'\n';
+  txt += '\nPor estrategia:\n';
+  Object.keys(byStrat).forEach(s=>{
+    const o=byStrat[s]; const total=o.w+o.l; const swr=total?Math.round(o.w/total*100):'–';
+    const savg=o.scores.length?Math.round(o.scores.reduce((a,b)=>a+b,0)/o.scores.length):'–';
+    txt += '- '+s+': '+o.n+' trades · WR '+swr+'% · Score '+savg+'%\n';
+  });
+  window._wrText = txt;
+}
+
+function copyWeeklyReview(){
+  const txt = window._wrText || '';
+  if(!txt) return;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>{ if(typeof showToast==='function') showToast('Review copiada'); });
+  } else {
+    prompt('Copiá este texto:', txt);
+  }
+}
+
 
 function renderAsrList(){
   refreshAsrSelect();
