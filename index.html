@@ -261,6 +261,18 @@ tbody tr:hover td{background:var(--bg2)}
 .p-mood-green.on{background:#0d3d26;border-color:var(--green);color:var(--green)}
 .p-mood-amber.on{background:var(--amber2);border-color:var(--amber);color:var(--amber)}
 .p-mood-red.on{background:#3d1212;border-color:#f05252;color:#f05252}
+
+/* === CHECKLIST INTERACTIVA POR ESTRATEGIA === */
+#strategy-checklist{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin:14px 0 18px;display:none}
+#strategy-checklist.visible{display:block}
+#strategy-checklist .cl-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:10px}
+#strategy-checklist .cl-item{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+#strategy-checklist .cl-item:last-child{border-bottom:none}
+#strategy-checklist .cl-item input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;cursor:pointer}
+#strategy-checklist .cl-item span{font-size:13px;color:var(--text2);line-height:1.4}
+#strategy-checklist .cl-item.checked span{color:var(--text)}
+#strategy-checklist .cl-score{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-family:'Roboto Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+
 .checklist-bar{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:18px;flex-wrap:wrap}
 .checklist-bar-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;flex-shrink:0}
 .p-check-ok.on{background:#0d3d26;border-color:var(--green);color:var(--green)}
@@ -413,6 +425,14 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <div class="pill p-green" onclick="selStrat(this,'Green')">Green</div>
   </div>
   <div id="variant-row" style="margin-top:10px"><div class="pills" id="variantPills"></div></div>
+
+  <!-- CHECKLIST INTERACTIVA -->
+  <div id="strategy-checklist">
+    <div class="cl-title" id="cl-title">Must-have</div>
+    <div id="cl-items"></div>
+    <div class="cl-score" id="cl-score">0 / 0 Must-have</div>
+  </div>
+
 
   <div class="section-label">Tipo y dirección</div>
   <div class="form-grid g3">
@@ -1613,6 +1633,87 @@ function showPage(id, el){
   }
 }
 
+
+const STRATEGY_CHECKLISTS = {
+  Blue: [
+    "Zona soporte/resistencia + desaceleración",
+    "Giro agresivo (Morning/Evening Star o Envolvente) — si no hay, se invalida",
+    "Ruptura de estructura + EMA50 1H con RCC",
+    "Pullback 0.38–0.50 a la EMA50 1H (sin confirmar ruptura en el pullback)",
+    "Diagonal limpia (mín. 3 toques) o EMA50 5m + RCC",
+    "RR ≥ 2R"
+  ],
+  Red: [
+    "Zona soporte/resistencia + envolvente con mucha fuerza — si no hay, se invalida",
+    "Ruptura EMA50 4H + estructura con RCC",
+    "Pullback 0.30–0.50 hasta cruce de EMAs (sin romper EMA 1H con fuerza)",
+    "Diagonal limpia + RCC",
+    "RR ≥ 2R"
+  ],
+  Pink: [
+    "Ruptura de zona S/R en diario + retest (1-2 velitas)",
+    "Ruptura EMA50 4H + estructura con RCC",
+    "Pullback que respeta la EMA50 4H (0.30–0.50)",
+    "Patrón en 1H (cuña / triángulo / canal) + diagonal limpia + RCC",
+    "RR ≥ 2R"
+  ],
+  White: [
+    "Vengo de una Pink (ejecutada o solo el movimiento se dio)",
+    "Impulso fuerte + pullback a EMA50 1H (0.38–0.50)",
+    "RCC de la EMA50 1H",
+    "Diagonal limpia + RCC",
+    "RR ≥ 2R"
+  ],
+  Black: [
+    "Zona S/R diaria muy importante (mín. 3 toques)",
+    "Consolidación / patrón (cuña-triángulo-canal) con ≥ 2/3 relleno",
+    "EMA50 1H fuera del patrón + no la tocó más de 2 veces recientemente",
+    "Diagonal limpia + RCC",
+    "RR ≥ 2R (ideal ≥ 3R)"
+  ],
+  Green: [
+    "Movimiento impulsivo fuerte + pullback lento a zona S/R importante",
+    "Patrón (cuña / triángulo / canal) con mín. 3 toques y ≥ 60% relleno",
+    "Diagonal limpia en temporalidad pequeña + RCC",
+    "RR ≥ 2R"
+  ]
+};
+
+function renderStrategyChecklist(){
+  const box = document.getElementById('strategy-checklist');
+  const itemsBox = document.getElementById('cl-items');
+  const title = document.getElementById('cl-title');
+  const scoreEl = document.getElementById('cl-score');
+  if(!box || !itemsBox) return;
+  const list = STRATEGY_CHECKLISTS[curStrat] || [];
+  if(!list.length){ box.classList.remove('visible'); return; }
+  title.textContent = curStrat + ' · Must-have';
+  itemsBox.innerHTML = list.map((txt,i)=>`<label class="cl-item" id="cl-item-${i}"><input type="checkbox" onchange="updateChecklistScore()"><span>${txt}</span></label>`).join('');
+  box.classList.add('visible');
+  updateChecklistScore();
+}
+
+function updateChecklistScore(){
+  const checks = document.querySelectorAll('#cl-items input[type=checkbox]');
+  const total = checks.length;
+  let done = 0;
+  checks.forEach((c,i)=>{
+    const item = document.getElementById('cl-item-'+i);
+    if(c.checked){ done++; item && item.classList.add('checked'); }
+    else if(item) item.classList.remove('checked');
+  });
+  const el = document.getElementById('cl-score');
+  if(el) el.textContent = done + ' / ' + total + ' Must-have';
+  window._checklistScore = { done, total, pct: total ? Math.round(done/total*100) : 0 };
+}
+
+function getChecklistScore(){
+  return window._checklistScore || { done:0, total:0, pct:0 };
+}
+
+// mostrar checklist de la estrategia por defecto al cargar
+setTimeout(function(){ if(typeof curStrat!=='undefined') renderStrategyChecklist(); }, 300);
+
 function selStrat(el, s){
   document.querySelectorAll('#stratPills .pill').forEach(p=>{
     const cls = p.className.match(/p-\w+/)?.[0];
@@ -1621,9 +1722,10 @@ function selStrat(el, s){
   el.className += ' on';
   curStrat = s;
   renderVariants();
-  // GREEN tiene temporalidades distintas — refrescar grid de imágenes
   renderTfSlots();
+  renderStrategyChecklist();
 }
+
 
 function renderVariants(){
   const vv = variants[curStrat]||[];
@@ -2126,6 +2228,7 @@ function addTrade(){
     horaSalida: document.getElementById('inp-hora-salida').value,
     duracion: document.getElementById('inp-duracion').value,
     estrategia: curStrat, variante: curVariant, tipo: curType, dir: curDir,
+    checklistScore: (typeof getChecklistScore==='function'?getChecklistScore():null),
     mercado: document.getElementById('inp-mercado').value, activo,
     entrada: document.getElementById('inp-entrada').value,
     sl: document.getElementById('inp-sl').value,
