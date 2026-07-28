@@ -357,18 +357,6 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15.5A9 9 0 1 1 8.5 3"/><path d="M21 12A9 9 0 0 0 12 3v9z"/></svg>
       Diversificación
     </div>
-    <div class="nav-item" onclick="showPage('mc-activos',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="4" y2="12"/><line x1="10" y1="20" x2="10" y2="4"/><line x1="16" y1="20" x2="16" y2="9"/><line x1="22" y1="20" x2="2" y2="20"/></svg>
-      Activos
-    </div>
-    <div class="nav-item" onclick="showPage('mc-riesgo',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      Riesgo
-    </div>
-    <div class="nav-item" onclick="showPage('mc-finanzas',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-      Presupuesto
-    </div>
     <div class="nav-item" onclick="showPage('potencial',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>
       Potencial
@@ -909,256 +897,85 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 
 <div id="page-mc-plan" class="page">
   <div class="page-title">Trading Plan</div>
-  <div class="page-sub">Documento vivo: se edita y se guarda solo. Lo vamos completando juntas. <span id="mc-plan-saved" style="color:var(--text3);font-family:'Roboto Mono',monospace;font-size:12px"></span></div>
-  <div id="mc-plan-body"></div>
+  <div class="page-sub">Actualizado julio 2026 · alineado con checklists y journal</div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;line-height:1.55;font-size:13px;color:var(--text2)">
+    <div style="font-weight:700;color:var(--text);margin-bottom:8px">01 · Perfil y propósito</div>
+    Day + Scalp, solo buenos setups. Conservadora. Prioridad: no perder dinero. Meta: +2% a +6% mensual. Disciplina medida por Score de checklist (objetivo ≥80% trades con score alto).
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;line-height:1.55;font-size:13px;color:var(--text2)">
+    <div style="font-weight:700;color:var(--text);margin-bottom:8px">02 · Gestión monetaria</div>
+    Day 1% · Scalp 0,5% · Máx 2 trades abiertos<br>
+    SL siempre · fuera de pantalla TP mín 1:2 · no mover SL por emoción<br>
+    3 losses seguidos → solo Score completo + 0,5% · 5 losses en la semana → stop hasta review
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;line-height:1.55;font-size:13px;color:var(--text2)">
+    <div style="font-weight:700;color:var(--text);margin-bottom:8px">03 · Reglas de oro</div>
+    RCC siempre · RR ≥ 1:2 · Must-have incompleto = no entro · Dudas/emoción = no opero<br>
+    Evitar noticias alto impacto · Cerrar trading antes del viernes (excepto BTC spot) · No recuperar el mismo día
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;line-height:1.55;font-size:13px;color:var(--text2)">
+    <div style="font-weight:700;color:var(--text);margin-bottom:8px">04 · Fibonacci unificado</div>
+    Pullback: Blue 0,38–0,50 · Red 0,30–0,50 · Pink 0,30–0,50 · White 0,38–0,50<br>
+    TP extensión (HTF a favor): Blue/Red 1,272 · Pink 0,618
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;line-height:1.55;font-size:13px;color:var(--text2)">
+    <div style="font-weight:700;color:var(--text);margin-bottom:8px">05 · Estrategias (Must-have)</div>
+    <b style="color:var(--text)">BLACK</b> Zona S/R · patrón ≥2/3 · EMA50 1H fuera · diagonal+RCC · RR≥2<br>
+    <b style="color:var(--text)">BLUE</b> Giro agresivo · RCC EMA50 1H · PB 0,38–0,50 · diagonal+RCC · RR≥2<br>
+    <b style="color:var(--text)">RED</b> Envolvente · RCC EMA50 4H · PB cruce EMAs · diagonal+RCC · RR≥2<br>
+    <b style="color:var(--text)">PINK</b> Retest diario · respeta EMA50 4H · patrón 1H · diagonal+RCC · RR≥2<br>
+    <b style="color:var(--text)">WHITE</b> Vengo de Pink · PB EMA50 1H · RCC · diagonal+RCC · RR≥2<br>
+    <b style="color:var(--amber)">GREEN</b> Aparcada — no operar en real hasta cierre
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;line-height:1.55;font-size:13px;color:var(--text2)">
+    <div style="font-weight:700;color:var(--text);margin-bottom:8px">06 · Plan BTC Spot</div>
+    ~200 €/mes · zonas 35–40k (prioridad) · 42–45k · 45–48k · alerta desde 48k<br>
+    Sin leverage · no consume el 1% de riesgo de trading · alertas Telegram · registrar como “Spot BTC – Plan”
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;line-height:1.55;font-size:13px;color:var(--text2)">
+    <div style="font-weight:700;color:var(--text);margin-bottom:8px">07 · Review</div>
+    Checklist antes de entrar · Score al editar trade · ASR rápido (error / mental / conclusión / ¿igual?)<br>
+    Review semanal en pestaña ASR · Repaso mensual de edge y errores
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;line-height:1.55;font-size:13px;color:var(--text2)">
+    <div style="font-weight:700;color:var(--text);margin-bottom:8px">08 · Psicología</div>
+    No operar emocional · si hay dudas no entro · no recuperar el mismo día · seguir el plan sin importar el trade anterior<br>
+    <i style="color:var(--text3)">“Prefiero proteger la cuenta antes que buscar beneficios.”</i>
+  </div>
 </div>
 
 <div id="page-mc-diversif" class="page">
   <div class="page-title">Diversificación de capital</div>
-  <div class="page-sub">Sección para profundizar más adelante. Lista para activar. Se edita y se guarda sola. <span id="mc-diversif-saved" style="color:var(--text3);font-family:'Roboto Mono',monospace;font-size:12px"></span></div>
+  <div class="page-sub">Líneas de capital y plan BTC spot</div>
+
+  <div style="background:var(--bg2);border:1px solid var(--accent);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px">
+    <div style="font-weight:700;color:var(--accent);margin-bottom:10px;font-size:14px">BTC SPOT · Acumulación</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.55">
+      <b style="color:var(--text)">Objetivo:</b> acumular BTC en spot sin apalancamiento.<br>
+      <b style="color:var(--text)">Presupuesto:</b> ~200 € al mes.<br>
+      <b style="color:var(--text)">Zonas:</b><br>
+      · Prioridad alta: 35.000 – 40.000<br>
+      · Media: 42.000 – 45.000<br>
+      · Observación: 45.000 – 48.000<br>
+      · Alerta temprana: desde 48.000<br><br>
+      <b style="color:var(--text)">Reglas:</b> solo comprar en zona (o muy cerca según alerta Telegram). No consume el 1% de riesgo de day/scalp. Cada compra se registra en el journal como “Spot BTC – Plan”.
+    </div>
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.55">
+    <div style="font-weight:700;color:var(--text);margin-bottom:8px">Trading (cuenta operativa)</div>
+    Capital de day trading / scalping con riesgo 1% / 0,5%. Estrategias Blue · Red · Pink · White · Black. Green aparcada.
+  </div>
+
   <div id="mc-diversif-body"></div>
-</div>
-
-<div id="page-mc-activos" class="page">
-  <div class="page-title">Activos · 35 fichas</div>
-  <div class="page-sub">Tu universo operable: cómo se mueve, liquida, rompe, Elliott y fibo</div>
-  <div id="mc-cat-filters" class="mc-filters"></div>
-  <input id="mc-search" class="mc-search" placeholder="Buscar… (oro, nasdaq, EURUSD)" oninput="mcRenderFichas()">
-  <div id="mc-asset-list"></div>
-</div>
-
-
-<div id="page-mc-riesgo" class="page">
-  <div class="page-title">Riesgo y tope diario</div>
-  <div class="page-sub">Tamaño de posición por operación + reglas de protección del día</div>
-  <div id="mc-guard3"></div>
-  <div class="mc-grid2">
-    <div class="mc-card">
-      <div class="mc-qt">Calculadora de posición</div>
-      <label class="mc-fl">Cuenta</label><select id="mc-acc" class="mc-in" onchange="mcAccChange()"></select>
-      <label class="mc-fl">Saldo de la cuenta (USD)</label><input id="mc-balance" class="mc-in" type="number" placeholder="1000" oninput="mcBalInput()">
-      <label class="mc-fl">Riesgo por operación (%)</label><input id="mc-risk" class="mc-in" type="number" value="1" step="0.1" oninput="mcCalc()">
-      <label class="mc-fl">Tipo de activo</label><select id="mc-cat" class="mc-in" onchange="mcCalc()"><option value="forex">Forex (lotes)</option><option value="metal">Metal — oro/plata (onzas)</option><option value="commodity">Materia prima (unidades)</option><option value="crypto">Cripto (monedas)</option><option value="index">Índice (contratos $1/punto)</option><option value="stock">Acción (acciones)</option></select>
-      <label class="mc-fl">Precio de entrada</label><input id="mc-entry" class="mc-in" type="number" step="any" placeholder="ej. 1.1615" oninput="mcCalc()">
-      <label class="mc-fl">Precio del Stop Loss</label><input id="mc-stop" class="mc-in" type="number" step="any" placeholder="ej. 1.1565" oninput="mcCalc()">
-      <label class="mc-fl">Take Profit (opcional)</label><input id="mc-tp" class="mc-in" type="number" step="any" placeholder="ej. 1.1745" oninput="mcCalc()">
-      <label class="mc-fl">ATR (opcional · sugiere distancia de SL)</label>
-      <div style="display:flex;gap:8px"><input id="mc-atr" class="mc-in" type="number" step="any" placeholder="ATR" oninput="mcAtr()"><select id="mc-atrm" class="mc-in" style="max-width:90px" onchange="mcAtr()"><option>1.5</option><option selected>2.0</option><option>2.5</option><option>3.0</option></select></div>
-      <div id="mc-atr-help" class="mc-note"></div>
-    </div>
-    <div>
-      <div class="mc-res" id="mc-calcres"></div>
-      <div class="mc-card" style="margin-top:12px">
-        <div class="mc-qt">Reglas de tope diario</div>
-        <p class="mc-note" style="margin:0 0 10px">Cuando tocás cualquiera de estos límites, la app te avisa: parar por hoy.</p>
-        <label class="mc-fl">Máx. Stop Loss (SL) por día</label><input id="mc-maxsl" class="mc-in" type="number" min="1" oninput="mcSaveRules()">
-        <label class="mc-fl">Máx. operaciones por día</label><input id="mc-maxtr" class="mc-in" type="number" min="1" oninput="mcSaveRules()">
-        <label class="mc-fl">Pérdida máx. del día (% de la cuenta)</label><input id="mc-maxloss" class="mc-in" type="number" min="0" step="0.1" oninput="mcSaveRules()">
-        <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px;color:var(--text2)"><input type="checkbox" id="mc-rules-en" onchange="mcSaveRules()"> Activar aviso de bloqueo</label>
-        <div style="height:1px;background:var(--border);margin:14px 0"></div>
-        <div class="mc-qt" style="font-size:14px">Objetivo semanal</div>
-        <p class="mc-note" style="margin:0 0 10px">Meta orientativa (no obligación). Al llegar: enough is enough, bajá riesgo o cerrá la semana.</p>
-        <label class="mc-fl">Meta semanal (%)</label><input id="mc-wktarget" class="mc-in" type="number" min="0" step="0.5" oninput="mcSaveRules()">
-        <label class="mc-fl">Límite de pérdida semanal (%)</label><input id="mc-wkloss" class="mc-in" type="number" min="0" step="0.5" oninput="mcSaveRules()">
-        <div id="mc-week3" style="margin-top:12px"></div>
-      </div>
-    </div>
-  </div>
-  <div class="mc-card" style="margin-top:14px">
-    <div class="mc-qt">Cargar análisis (.json)</div>
-    <p class="mc-note" style="margin:0 0 10px">Importá una operación que te armé (con su ASR) en un solo paso. Solo SUMA al historial — no toca ni borra el resto de tus datos.</p>
-    <button class="mc-btn" onclick="document.getElementById('mc-import-file').click()">↑ Elegir archivo .json</button>
-    <input type="file" id="mc-import-file" accept="application/json,.json" style="display:none" onchange="mcImportTrade(this)">
-    <div id="mc-import-msg" class="mc-note"></div>
-  </div>
-</div>
-
-<style>
-  .bu-hero{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px}
-  .bu-bal{display:flex;flex-direction:column}
-  .bu-bal-lbl{font-size:12px;color:var(--text2);font-weight:600}
-  .bu-bal-num{font-size:30px;font-weight:800;font-family:'Roboto Mono',monospace;color:var(--text);line-height:1.1}
-  .bu-hero-side{display:flex;gap:22px;flex-wrap:wrap;margin-left:auto}
-  .bu-mini-lbl{display:block;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px}
-  .bu-mini-num{font-size:16px;font-weight:700;font-family:'Roboto Mono',monospace}
-  .bu-mini-num.warn{color:var(--amber)}
-  .bu-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 14px}
-  .bu-view{display:none}
-  .bu-view.on{display:block}
-  .bu-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
-  .bu-row .rmain{display:flex;flex-direction:column;min-width:120px}
-  .bu-row .rmain b{font-size:13px}
-  .bu-row .rsub{font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace}
-  .bu-row .amt{margin-left:auto;font-family:'Roboto Mono',monospace;font-weight:700;white-space:nowrap}
-  .bu-row .act{cursor:pointer;padding:0 4px;font-size:13px}
-  .bu-row .act.edit{color:var(--text2)}
-  .bu-row .act.del{color:var(--red)}
-  .bu-total-row{display:flex;justify-content:space-between;padding:11px 0 0;margin-top:4px;border-top:2px solid var(--border);font-weight:700}
-  .bu-acc-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:9px}
-  .bu-acc-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-  .bu-acc-name{font-weight:700;font-size:13.5px}
-  .bu-acc-type{font-size:10.5px;color:var(--text3);font-family:'Roboto Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
-  .bu-acc-amt{font-family:'Roboto Mono',monospace;font-weight:700;color:var(--accent)}
-  #bu-tipo-pills .pill.on[data-t="Automático"]{background:var(--accent2);color:var(--accent);border-color:var(--accent)}
-  #bu-tipo-pills .pill.on[data-t="Manual"]{background:var(--green2);color:var(--green);border-color:var(--green)}
-  #bu-mov-tipo-pills .pill.on[data-t="Aporte"]{background:var(--green2);color:var(--green);border-color:var(--green)}
-  #bu-mov-tipo-pills .pill.on[data-t="Retiro"]{background:var(--red2);color:var(--red);border-color:var(--red)}
-</style>
-<div id="page-mc-finanzas" class="page">
-  <div class="page-title">Presupuesto</div>
-  <div class="page-sub">Gastos fijos, sobres por cuenta/tarjeta y el circuito ARS → USD → BTC</div>
-
-  <div class="bu-hero">
-    <div class="bu-bal">
-      <span class="bu-bal-lbl">Saldo actual (€)</span>
-      <span class="bu-bal-num" id="bu-saldo-num">€0,00</span>
-    </div>
-    <div class="bu-hero-side">
-      <div><span class="bu-mini-lbl">Gasto fijo mensual</span><span class="bu-mini-num" id="bu-gasto-mes">€0,00</span></div>
-      <div><span class="bu-mini-lbl">Runway (meses)</span><span class="bu-mini-num" id="bu-runway">—</span></div>
-      <div><span class="bu-mini-lbl">Se agota aprox.</span><span class="bu-mini-num warn" id="bu-agota">—</span></div>
-    </div>
-    <button class="mc-btn ghost sm" onclick="buSetSaldo()">⚙ Set saldo / fecha</button>
-  </div>
-
-  <div class="bu-tabs">
-    <span class="mc-chip on" data-bu="resumen" onclick="buTab('resumen')">Resumen</span>
-    <span class="mc-chip" data-bu="gastos" onclick="buTab('gastos')">Gastos fijos</span>
-    <span class="mc-chip" data-bu="cuentas" onclick="buTab('cuentas')">Cuentas y tarjetas</span>
-    <span class="mc-chip" data-bu="arg" onclick="buTab('arg')">Argentina → USD → BTC</span>
-    <span class="mc-chip" data-bu="extra" onclick="buTab('extra')">Reservas / extra</span>
-  </div>
-
-  <!-- RESUMEN -->
-  <div id="bu-view-resumen" class="bu-view on">
-    <div class="mc-card">
-      <div class="mc-qt">Sobres por cuenta / tarjeta</div>
-      <p class="mc-note" style="margin:0 0 10px">Cuánto de tus gastos fijos está asignado a cada cuenta o tarjeta. Se recalcula solo con lo que cargues en "Gastos fijos" y "Cuentas".</p>
-      <div id="bu-resumen-sobres"></div>
-    </div>
-    <div class="mc-card" style="margin-top:14px">
-      <div class="mc-qt" style="font-size:14px">Notas</div>
-      <p class="mc-note" style="margin:0">• El runway asume que no entra plata nueva en euros (aparte de retiros de trading si empezás a ser rentable).</p>
-      <p class="mc-note" style="margin:6px 0 0">• El circuito ARS → USD → BTC es un flujo aparte: no cubre gastos en euros salvo que vos lo decidas.</p>
-      <p class="mc-note" style="margin:6px 0 0">• Los montos de "Gastos fijos" son estimativos — agregá, editá o borrá líneas cuando quieras, todo se recalcula solo.</p>
-    </div>
-  </div>
-
-  <!-- GASTOS FIJOS -->
-  <div id="bu-view-gastos" class="bu-view">
-    <div class="mc-grid2">
-      <div class="mc-card">
-        <div class="mc-qt">Nuevo gasto fijo</div>
-        <label class="mc-fl">Ítem</label><input id="bu-g-item" class="mc-in" type="text" placeholder="ej. Mutuo, TIM, Supermercado…">
-        <label class="mc-fl">Categoría</label><input id="bu-g-cat" class="mc-in" type="text" placeholder="ej. Vivienda, Suscripciones…">
-        <label class="mc-fl">Monto (€)</label><input id="bu-g-monto" class="mc-in" type="number" step="0.01" min="0" placeholder="0,00">
-        <label class="mc-fl">Día de pago</label><input id="bu-g-dia" class="mc-in" type="text" placeholder="ej. 10-12, variable…">
-        <label class="mc-fl">Cuenta / tarjeta destino</label><select id="bu-g-cuenta" class="mc-in"></select>
-        <label class="mc-fl">Tipo</label>
-        <div id="bu-tipo-pills" style="display:flex;gap:8px">
-          <div class="pill bu-tipo on" data-t="Automático" onclick="buSelTipoGasto(this,'Automático')">Débito automático</div>
-          <div class="pill bu-tipo" data-t="Manual" onclick="buSelTipoGasto(this,'Manual')">Manual</div>
-        </div>
-        <label class="mc-fl">Nota (opcional)</label><input id="bu-g-nota" class="mc-in" type="text" placeholder="opcional">
-        <button class="mc-btn" id="bu-g-btn" style="margin-top:14px" onclick="buAddGasto()">Agregar gasto fijo →</button>
-        <div id="bu-g-msg" class="mc-note"></div>
-      </div>
-      <div class="mc-card">
-        <div class="mc-qt">Gastos fijos cargados</div>
-        <div id="bu-gastos-list"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CUENTAS -->
-  <div id="bu-view-cuentas" class="bu-view">
-    <div class="mc-grid2">
-      <div class="mc-card">
-        <div class="mc-qt">Nueva cuenta / tarjeta</div>
-        <label class="mc-fl">Nombre</label><input id="bu-c-nombre" class="mc-in" type="text" placeholder="ej. N26, Revolut, Efectivo…">
-        <label class="mc-fl">Tipo</label>
-        <select id="bu-c-tipo" class="mc-in">
-          <option>Banco</option>
-          <option>Tarjeta</option>
-          <option>Efectivo</option>
-          <option>Cuenta en USD</option>
-          <option>Otro</option>
-        </select>
-        <button class="mc-btn" style="margin-top:14px" onclick="buAddCuenta()">Agregar cuenta →</button>
-        <p class="mc-note">Tip: UniCredit tiene "Salvadanaio" (hasta 5 espacios), N26 tiene "Spaces" (hasta 10 sub-cuentas con IBAN propio) y Revolut tiene "Pockets" con tarjetas virtuales linkeadas — podés crear ahí las cuentas reales que dediques a cada sobre de acá abajo.</p>
-      </div>
-      <div class="mc-card">
-        <div class="mc-qt">Tus cuentas y lo asignado a cada una</div>
-        <div id="bu-cuentas-list"></div>
-      </div>
-    </div>
-    <div class="mc-card" style="margin-top:14px">
-      <div class="mc-qt">Aportes y retiros por sobre</div>
-      <p class="mc-note" style="margin:0 0 10px">Acá registrás lo que realmente metés (o sacás) de cada sobre cada mes. Si un mes no gastaste todo, te queda saldo en el sobre — podés aportar menos ese mes y mandar la diferencia a otro lado. Esto es un registro manual, no se sincroniza con el banco.</p>
-      <div class="mc-grid2">
-        <div>
-          <label class="mc-fl">Sobre / cuenta</label><select id="bu-m-cuenta" class="mc-in"></select>
-          <label class="mc-fl">Fecha</label><input id="bu-m-fecha" class="mc-in" type="date">
-          <label class="mc-fl">Tipo</label>
-          <div id="bu-mov-tipo-pills" style="display:flex;gap:8px">
-            <div class="pill bu-movtipo on" data-t="Aporte" onclick="buSelTipoMov(this,'Aporte')">Aporte ↑</div>
-            <div class="pill bu-movtipo" data-t="Retiro" onclick="buSelTipoMov(this,'Retiro')">Retiro ↓</div>
-          </div>
-          <label class="mc-fl">Monto (€)</label><input id="bu-m-monto" class="mc-in" type="number" step="0.01" min="0" placeholder="0,00">
-          <label class="mc-fl">Nota (opcional)</label><input id="bu-m-nota" class="mc-in" type="text" placeholder="ej. quedó residuo de agosto, aporté menos">
-          <button class="mc-btn" id="bu-m-btn" style="margin-top:14px" onclick="buAddMov()">Registrar →</button>
-          <div id="bu-m-msg" class="mc-note"></div>
-        </div>
-        <div>
-          <div class="mc-qt" style="font-size:13px">Historial</div>
-          <div id="bu-movs-list"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ARGENTINA -->
-  <div id="bu-view-arg" class="bu-view">
-    <p class="mc-note" style="margin:0 0 12px">Referencia registrada el 2/jul/2026: dólar blue ≈ $1.515-1.525, MEP ≈ $1.520,44 (brecha ~2%). Actualizá el tipo de cambio real de cada mes al cargar la fila. Fuente: Ámbito.</p>
-    <div class="mc-grid2">
-      <div class="mc-card">
-        <div class="mc-qt">Nuevo mes</div>
-        <label class="mc-fl">Mes</label><input id="bu-a-mes" class="mc-in" type="month">
-        <label class="mc-fl">Ingreso ARS</label><input id="bu-a-ars" class="mc-in" type="number" step="1" placeholder="800000">
-        <label class="mc-fl">Tipo de cambio (ARS/USD)</label><input id="bu-a-tc" class="mc-in" type="number" step="0.01" placeholder="1520.44">
-        <label class="mc-fl">% para ahorro propio (el resto va a mamá/BTC)</label><input id="bu-a-pct" class="mc-in" type="number" min="0" max="100" step="1" placeholder="50" oninput="buArsPctPreview()">
-        <div id="bu-a-preview" class="mc-note"></div>
-        <label class="mc-fl">Nota (opcional)</label><input id="bu-a-nota" class="mc-in" type="text" placeholder="ej. destinado a saldar deudas">
-        <button class="mc-btn" id="bu-a-btn" style="margin-top:14px" onclick="buAddArs()">Agregar mes →</button>
-        <div id="bu-a-msg" class="mc-note"></div>
-      </div>
-      <div class="mc-card">
-        <div class="mc-qt">Historial mensual</div>
-        <div id="bu-arg-list"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- EXTRA -->
-  <div id="bu-view-extra" class="bu-view">
-    <div class="mc-grid2">
-      <div class="mc-card">
-        <div class="mc-qt">Nueva reserva / gasto extraordinario</div>
-        <label class="mc-fl">Concepto</label><input id="bu-e-concepto" class="mc-in" type="text" placeholder="ej. Colchón de emergencia">
-        <label class="mc-fl">Monto</label><input id="bu-e-monto" class="mc-in" type="number" step="0.01" min="0" placeholder="0,00">
-        <label class="mc-fl">Moneda</label>
-        <select id="bu-e-moneda" class="mc-in">
-          <option>EUR</option><option>USD</option><option>ARS</option><option>BTC</option>
-        </select>
-        <label class="mc-fl">Estado / uso</label><input id="bu-e-estado" class="mc-in" type="text" placeholder="ej. No tocar, reserva de emergencia">
-        <button class="mc-btn" style="margin-top:14px" onclick="buAddExtra()">Agregar →</button>
-      </div>
-      <div class="mc-card">
-        <div class="mc-qt">Lista</div>
-        <div id="bu-extra-list"></div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <div id="page-potencial" class="page">
@@ -3546,6 +3363,1038 @@ window.mcRunMonteCarlo = function(){
   requestAnimationFrame(step);
 };
 
+
+
+function tjStamp(){
+  const d=new Date(), p=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"_"+p(d.getHours())+"-"+p(d.getMinutes())+"-"+p(d.getSeconds());
+}
+
+function exportData(){
+  if(trades.length === 0 && asrs.length === 0 && accounts.length <= 1 && movements.length === 0){
+    alert('No hay datos para exportar todavía.');
+    return;
+  }
+  const payload = {
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    trades,
+    asrs,
+    accounts,
+    movements,
+    activeAccountId,
+    traderName: localStorage.getItem('tj_trader_name') || ''
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'trading_journal_respaldo_' + tjStamp() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Respaldo descargado · ' + trades.length + ' ops · ' + asrs.length + ' ASRs · ' + accounts.length + ' cuentas · ' + movements.length + ' mov.');
+}
+
+function exportCSV(){
+  if(!trades.length){ alert('No hay trades para exportar.'); return; }
+
+  // Columnas del CSV — todas las que tienen sentido en una hoja de cálculo
+  const headers = [
+    'ID','Fecha','Hora','Fecha salida','Hora salida','Duración',
+    'Cuenta','Modo','Estrategia','Variante','Tipo','Dirección','Orden',
+    'Activo','Mercado','Sesión',
+    'Entrada','SL','TP','Salida','SL técnico','TP técnico',
+    'Fibonacci','Confirmaciones','Patrón','Gestión',
+    'Capital inicial','Capital final','Riesgo $','Riesgo %',
+    'RR Inicial','RR Final','B/P Bruto','Comisiones','B/P Neto',
+    'Resultado','Lotaje','Link','Notas'
+  ];
+
+  const SEP = ';'; // punto y coma para compatibilidad con Excel en español
+
+  const escape = v => {
+    if(v === null || v === undefined) return '';
+    const s = String(v).replace(/"/g, '""');
+    return (s.includes(SEP) || s.includes('"') || s.includes('\n')) ? `"${s}"` : s;
+  };
+
+  const rows = trades.map(t => {
+    const acc = accounts.find(a => a.id === t.accountId);
+    return [
+      t.id,
+      t.fecha || '',
+      t.hora || '',
+      t.fechaSalida || '',
+      t.horaSalida || '',
+      t.duracion || '',
+      acc ? acc.name : '',
+      t.mode || '',
+      t.estrategia || '',
+      t.variante || '',
+      t.tipo || '',
+      t.dir || '',
+      t.orden || '',
+      t.activo || '',
+      t.mercado || '',
+      t.sesion || '',
+      t.entrada || '',
+      t.sl || '',
+      t.tp || '',
+      t.salida || '',
+      t.slTecnico || '',
+      t.tpTecnico || '',
+      t.fibonacci || '',
+      t.confirmaciones || '',
+      t.patron || '',
+      Array.isArray(t.gestion) ? t.gestion.join(' | ') : (t.gestion || ''),
+      t.capital || '',
+      t.capitalFinal || '',
+      t.riesgoMonto || '',
+      t.riesgoPct || '',
+      t.rrPlan || '',
+      t.rr || '',
+      t.bpBruto || '',
+      t.comisiones || '',
+      t.pnl || '',
+      t.resultado || '',
+      t.lotaje || '',
+      t.link || '',
+      (t.notas || '').replace(/\n/g, ' ')
+    ].map(escape).join(SEP);
+  });
+
+  // 'sep=;' en la primera línea le indica a Excel qué separador usar
+  const csvContent = '\uFEFF' + 'sep=;\n' + [headers.join(SEP), ...rows].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'trading_journal_trades_' + tjStamp() + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exportado · ' + trades.length + ' trades');
+}
+
+function importCSV(input){
+  const file = input.files[0];
+  if(!file){ return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const text = e.target.result.replace(/^\uFEFF/,''); // quitar BOM si existe
+      const allLines = text.split('\n').map(l=>l.trimEnd()).filter(l=>l.length);
+      // Saltar la línea "sep=;" si existe (la ponemos nosotros para Excel)
+      const lines = allLines[0].startsWith('sep=') ? allLines.slice(1) : allLines;
+      if(lines.length < 2){ alert('El archivo CSV está vacío o no tiene datos.'); return; }
+      // Detectar separador automáticamente (;  o  ,)
+      const SEP = lines[0].includes(';') ? ';' : ',';
+
+      // Parsear headers (primera línea)
+      const headers = parseCSVLine(lines[0], SEP).map(h=>h.trim().toLowerCase()
+        .replace(/ /g,'_').replace(/\//g,'_').replace(/\./g,'').replace(/ó/g,'o')
+        .replace(/é/g,'e').replace(/á/g,'a').replace(/í/g,'i').replace(/ú/g,'u')
+        .replace(/ñ/g,'n'));
+
+      // Mapa de columnas → campo del trade
+      const colMap = {
+        'id': 'id',
+        'fecha': 'fecha',
+        'hora': 'hora',
+        'fecha_salida': 'fechaSalida',
+        'hora_salida': 'horaSalida',
+        'duracion': 'duracion',
+        'cuenta': '_cuenta_name', // especial: buscar cuenta por nombre
+        'modo': 'mode',
+        'estrategia': 'estrategia',
+        'variante': 'variante',
+        'tipo': 'tipo',
+        'direccion': 'dir',
+        'orden': 'orden',
+        'activo': 'activo',
+        'mercado': 'mercado',
+        'sesion': 'sesion',
+        'entrada': 'entrada',
+        'sl': 'sl',
+        'tp': 'tp',
+        'salida': 'salida',
+        'sl_tecnico': 'slTecnico',
+        'tp_tecnico': 'tpTecnico',
+        'fibonacci': 'fibonacci',
+        'confirmaciones': 'confirmaciones',
+        'patron': 'patron',
+        'gestion': 'gestion',
+        'capital_inicial': 'capital',
+        'capital_final': 'capitalFinal',
+        'riesgo_$': 'riesgoMonto',
+        'riesgo_%': 'riesgoPct',
+        'rr_inicial': 'rrPlan',
+        'rr_final': 'rr',
+        'b_p_bruto': 'bpBruto',
+        'comisiones': 'comisiones',
+        'b_p_neto': 'pnl',
+        'resultado': 'resultado',
+        'lotaje': 'lotaje',
+        'link': 'link',
+        'notas': 'notas'
+      };
+
+      // Parsear filas
+      const imported = [];
+      const skipped = [];
+      for(let i = 1; i < lines.length; i++){
+        const vals = parseCSVLine(lines[i], SEP);
+        if(!vals.length || vals.every(v=>!v)) continue;
+        const obj = { id: Date.now() + i, accountId: activeAccountId };
+        let cuentaNombre = '';
+        headers.forEach((h, idx) => {
+          const field = colMap[h];
+          const val = (vals[idx] || '').trim();
+          if(!field) return;
+          if(field === '_cuenta_name'){ cuentaNombre = val; return; }
+          if(field === 'id' && val){ obj.id = isNaN(Number(val)) ? obj.id : Number(val); return; }
+          obj[field] = val;
+        });
+        // Resolver cuenta por nombre
+        if(cuentaNombre){
+          const acc = accounts.find(a=>a.name.toLowerCase()===cuentaNombre.toLowerCase());
+          if(acc) obj.accountId = acc.id;
+        }
+        // Validación mínima: necesita al menos activo o fecha
+        if(!obj.activo && !obj.fecha){ skipped.push(i+1); continue; }
+        imported.push(obj);
+      }
+
+      if(!imported.length){ alert('No se encontraron trades válidos en el CSV.\n\nAsegurate de que el CSV tenga las columnas correctas (el mismo formato que usa la app al exportar).'); return; }
+
+      const isEmpty = trades.length === 0;
+      let action;
+      if(isEmpty){
+        action = 'merge';
+      } else {
+        const choice = confirm(
+          `Trades actuales: ${trades.length}\nTrades en CSV: ${imported.length}\n\n` +
+          `ACEPTAR = Reemplazar todos los trades con los del CSV\n` +
+          `CANCELAR = Sumar los trades del CSV a los actuales`
+        );
+        action = choice ? 'replace' : 'merge';
+      }
+
+      snapshotUndo('Importar CSV ('+imported.length+' ops · '+action+')');
+      if(action === 'replace'){
+        trades = imported;
+      } else {
+        const existingIds = new Set(trades.map(t=>t.id));
+        const newTrades = imported.filter(t=>!existingIds.has(t.id));
+        trades = [...newTrades, ...trades];
+      }
+
+      save();
+      renderTable();
+      updateSidebar();
+      let msg = `CSV importado · ${imported.length} trades cargados`;
+      if(skipped.length) msg += ` · ${skipped.length} filas saltadas (sin activo ni fecha)`;
+      showToast(msg);
+    } catch(err){
+      alert('Error al leer el CSV: ' + err.message + '\n\nAsegurate de que el archivo sea un CSV exportado desde esta app.');
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+  input.value = '';
+}
+
+// Parser de línea CSV que respeta comillas y el separador indicado
+function parseCSVLine(line, sep=','){
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for(let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if(ch === '"'){
+      if(inQuotes && line[i+1] === '"'){ cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if(line.slice(i, i+sep.length) === sep && !inQuotes){
+      result.push(cur); cur = ''; i += sep.length - 1;
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+/* ================= IMPORTAR HISTORIAL DE METATRADER 5 ================= */
+// Lee el "Informe del historial de trading" (HTML) que exporta MT5 y carga
+// las posiciones cerradas como trades. Deja la estrategia (color) vacía para
+// que Maca la complete después. Evita duplicados por número de ticket (mt5Ticket).
+function importMT5(input){
+  const file = input.files[0];
+  if(!file){ return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      // El reporte de MT5 suele venir en UTF-16. Detectamos el BOM y decodificamos bien.
+      const buf = new Uint8Array(e.target.result);
+      let html;
+      if(buf.length>=2 && buf[0]===0xFF && buf[1]===0xFE){
+        html = new TextDecoder('utf-16le').decode(buf);
+      } else if(buf.length>=2 && buf[0]===0xFE && buf[1]===0xFF){
+        html = new TextDecoder('utf-16be').decode(buf);
+      } else {
+        html = new TextDecoder('utf-8').decode(buf);
+      }
+
+      // Helpers
+      const stripTags = s => s.replace(/<[^>]+>/g,'').replace(/&nbsp;/gi,' ')
+        .replace(/&amp;/gi,'&').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').trim();
+      const numOr = (s,def) => { const n = parseFloat(String(s).replace(/\s/g,'').replace(',','.')); return isNaN(n)?def:n; };
+
+      // 1) Detectar la cuenta del reporte (ej: "121791 (USD, Bullfy-Trade, demo, Hedge)")
+      let reportAcc = '';
+      const accMatch = html.match(/Cuenta de trading:[\s\S]{0,120}?([0-9]{4,})/i);
+      if(accMatch) reportAcc = accMatch[1];
+
+      // 2) Extraer todas las filas de tablas
+      const rawRows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
+      const rows = rawRows.map(r=>{
+        const cells = (r.match(/<t[dh][^>]*>[\s\S]*?<\/t[dh]>/gi) || []).map(stripTags);
+        return cells;
+      }).filter(c=>c.length);
+
+      // 3) Ubicar la sección "Posiciones": empieza tras la fila título y termina en "Órdenes"
+      let start=-1, end=rows.length;
+      for(let i=0;i<rows.length;i++){
+        const joined = rows[i].join(' ').toLowerCase();
+        if(start===-1 && /posiciones/.test(joined) && rows[i].length<=2){ start=i+1; continue; }
+        if(start!==-1 && /(órdenes|ordenes|transacciones)/.test(joined) && rows[i].length<=2){ end=i; break; }
+      }
+      if(start===-1){ alert('No encontré la tabla de "Posiciones" en el archivo.\n\nAsegurate de exportar desde MT5: Caja de herramientas → Historial → clic derecho → Informe (HTML).'); return; }
+
+      // 4) La primera fila de la sección son los encabezados. El resto, posiciones.
+      const dataRows = rows.slice(start, end);
+      if(dataRows.length<2){ alert('El reporte no tiene posiciones cerradas para importar.'); return; }
+      const body = dataRows.slice(1); // saltar encabezado
+
+      // 5) Resolver a qué cuenta del journal van.
+      // Orden: mapeo guardado (número MT5 → cuenta) → nombre que contiene el número → PREGUNTAR.
+      let accMap = {};
+      try { accMap = JSON.parse(localStorage.getItem('mc_mt5_accmap')||'{}'); } catch(e){}
+      let targetAcc = '';
+      if(reportAcc && accMap[reportAcc] && accounts.some(a=>a.id===accMap[reportAcc])){
+        targetAcc = accMap[reportAcc];
+      }
+      if(!targetAcc && reportAcc){
+        const found = accounts.find(a => (a.name||'').includes(reportAcc));
+        if(found) targetAcc = found.id;
+      }
+      if(!targetAcc){
+        // No se pudo deducir: que Maca elija la cuenta (y la recordamos para la próxima)
+        const list = accounts.map((a,i)=>`${i+1}. ${a.name}`).join('\n');
+        const ans = prompt(
+          `¿En qué cuenta del journal cargo las operaciones de MT5` +
+          (reportAcc?` (cuenta ${reportAcc})`:'') + `?\n\nEscribí el número y dale Aceptar:\n\n${list}`,
+          '1'
+        );
+        if(ans===null){ return; } // canceló
+        const idx = parseInt(ans,10)-1;
+        if(isNaN(idx) || idx<0 || idx>=accounts.length){ alert('Opción inválida. No se importó nada.'); return; }
+        targetAcc = accounts[idx].id;
+        if(reportAcc){ accMap[reportAcc]=targetAcc; try{ localStorage.setItem('mc_mt5_accmap',JSON.stringify(accMap)); }catch(e){} }
+      }
+
+      const mercadoDe = sym => {
+        const s=(sym||'').toUpperCase();
+        if(/XAU|XAG|XPT|XPD/.test(s)) return 'Metales';
+        if(/BTC|ETH|XRP|LTC|SOL|DOGE|ADA|BNB/.test(s)) return 'Crypto';
+        if(/^[A-Z]{6}$/.test(s)) return 'Forex';
+        if(/US30|US500|USTEC|NAS|SPX|GER|DAX|UK100|JP225|NDX/.test(s)) return 'Índices';
+        return '';
+      };
+      const fmtDur = (ms) => {
+        if(!(ms>0)) return '';
+        const m=Math.round(ms/60000);
+        if(m<60) return m+'m';
+        const h=Math.floor(m/60), rm=m%60;
+        if(h<24) return rm? (h+'h '+rm+'m') : (h+'h');
+        const d=Math.floor(h/24), rh=h%24;
+        return rh? (d+'d '+rh+'h') : (d+'d');
+      };
+      const parseDT = s => {
+        // "2026.06.12 18:11:03" -> {fecha:'2026-06-12', hora:'18:11', ts:Date}
+        const m = String(s).match(/(\d{4})\.(\d{2})\.(\d{2})\s+(\d{2}):(\d{2})/);
+        if(!m) return null;
+        return { fecha:`${m[1]}-${m[2]}-${m[3]}`, hora:`${m[4]}:${m[5]}`,
+                 ts:new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00`) };
+      };
+
+      const existingTickets = new Set(trades.map(t=>String(t.mt5Ticket||'')).filter(Boolean));
+      const existingIds = new Set(trades.map(t=>t.id));
+      // Firma por contenido (reforzada): cuenta + activo + fecha cierre + hora + PnL + lote.
+      // Así dos tickets distintos con el mismo par/día/PnL pero lote u hora distinta NO se fusionan.
+      // Ticket sigue siendo la prioridad #1 (arriba). La firma solo evita re-importar ops editadas que perdieron el ticket.
+      const _normSym = s => String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+      const _sig = t => (t.accountId||'')+'|'+_normSym(t.activo)+'|'+(t.fechaSalida||'')+'|'+(t.horaSalida||'')+'|'+(parseFloat(String(t.pnl).replace('+',''))||0).toFixed(2)+'|'+(parseFloat(t.lotaje)||0).toFixed(2);
+      const existingSigs = new Set(trades.map(_sig));
+      const imported = [];
+      let skippedDup = 0, skippedBad = 0;
+
+      body.forEach(c => {
+        // Estructura columnas Posiciones (MT5, ES):
+        // 0 FechaOpen | 1 Ticket | 2 Símbolo | 3 Tipo | 4 (vacío) | 5 Volumen
+        // 6 PrecioOpen | 7 SL | 8 TP | 9 FechaClose | 10 PrecioClose | 11 Comisión | 12 Swap | 13 Beneficio
+        const open = parseDT(c[0]);
+        const ticket = (c[1]||'').replace(/\D/g,'');
+        const symbol = (c[2]||'').trim();
+        const tipoRaw = (c[3]||'').toLowerCase();
+        if(!open || !ticket || !symbol || !/^(buy|sell)/.test(tipoRaw)){ skippedBad++; return; }
+        if(existingTickets.has(ticket)){ skippedDup++; return; }
+
+        const vol      = c[5];
+        const pOpen    = c[6];
+        const sl       = c[7];
+        const tp       = c[8];
+        const close    = parseDT(c[9]);
+        const pClose   = c[10];
+        const comision = numOr(c[11],0);
+        const swap     = numOr(c[12],0);
+        const benef    = numOr(c[13],0);
+
+        const net = benef + comision + swap; // Beneficio neto
+        // Antiduplicado por contenido reforzado (fecha+hora+lote).
+        const _candSig = targetAcc+'|'+_normSym(symbol)+'|'+(close?close.fecha:'')+'|'+(close?close.hora:'')+'|'+net.toFixed(2)+'|'+(parseFloat(vol)||0).toFixed(2);
+        if(existingSigs.has(_candSig)){ skippedDup++; return; }
+        existingSigs.add(_candSig);
+        const dir = tipoRaw.startsWith('buy') ? 'Long' : 'Short';
+        let resultado = 'Open';
+        // BE se decide por el resultado de MERCADO (sin comisión): si el precio salió
+        // plano es BE, aunque haya pagado una comisión chica.
+        if(close){ resultado = benef>0.0000001 ? 'Win' : (benef<-0.0000001 ? 'Loss' : 'BE'); }
+
+        // R:R planificado y realizado (si hay SL numérico)
+        const eN=numOr(pOpen,NaN), sN=numOr(sl,NaN), tN=numOr(tp,NaN), cN=numOr(pClose,NaN);
+        let rrPlan='', rr='';
+        const risk = (!isNaN(eN)&&!isNaN(sN)) ? Math.abs(eN-sN) : NaN;
+        if(!isNaN(risk) && risk>0){
+          if(!isNaN(tN)) rrPlan = (Math.abs(tN-eN)/risk).toFixed(2);
+          if(!isNaN(cN)){
+            const ganado = dir==='Long' ? (cN-eN) : (eN-cN);
+            rr = (ganado/risk).toFixed(2);
+          }
+        }
+
+        const id = (!isNaN(Number(ticket)) && !existingIds.has(Number(ticket))) ? Number(ticket) : (Date.now()+imported.length);
+        existingIds.add(id);
+        existingTickets.add(ticket);
+
+        imported.push({
+          id,
+          mt5Ticket: ticket,
+          accountId: targetAcc,
+          fecha: open.fecha, hora: open.hora,
+          fechaSalida: close? close.fecha : '', horaSalida: close? close.hora : '',
+          duracion: (open&&close)? fmtDur(close.ts-open.ts) : '',
+          estrategia: '', variante: '', tipo: '', dir,
+          mercado: mercadoDe(symbol), activo: symbol,
+          entrada: pOpen||'', sl: (sl&&numOr(sl,0))? sl : '', tp: (tp&&numOr(tp,0))? tp : '',
+          salida: pClose||'',
+          slTecnico:'', tpTecnico:'',
+          gestion:'',
+          rr, rrPlan,
+          capital:'', capitalFinal:'',
+          riesgoMonto:'', riesgoPct:'',
+          bpBruto: benef.toFixed(2),
+          comisiones: (comision+swap).toFixed(2),
+          pnl: net.toFixed(2),
+          lotaje: vol||'',
+          sesion:'', mode:'', orden:'', resultado,
+          fibonacci:'', confirmaciones:'', patron:'',
+          link:'', imagenes:{}, imgNotes:{},
+          notas:'Importado de MT5'
+        });
+      });
+
+      if(!imported.length){
+        alert(`No se importaron trades nuevos.\n\nPosiciones encontradas: ${body.length}\nYa estaban (duplicadas): ${skippedDup}\nSin datos válidos: ${skippedBad}`);
+        return;
+      }
+
+      const accName = (accounts.find(a=>a.id===targetAcc)||{}).name || 'cuenta activa';
+      const ok = confirm(
+        `Voy a importar ${imported.length} operación(es) de MT5` +
+        (reportAcc? ` (cuenta ${reportAcc})`:'') +
+        `\n→ se cargan en: "${accName}"` +
+        (skippedDup? `\n· ${skippedDup} ya estaban y se saltean` : '') +
+        `\n\nLas operaciones quedan SIN color de estrategia para que lo asignes vos.\n\n¿Continuar?`
+      );
+      if(!ok) return;
+
+      snapshotUndo('Importar MT5 ('+imported.length+' ops)');
+      trades = [...imported, ...trades];
+      save();
+      renderTable();
+      updateSidebar();
+      let msg = `MT5 importado · ${imported.length} operaciones cargadas`;
+      if(skippedDup) msg += ` · ${skippedDup} duplicadas omitidas`;
+      showToast(msg);
+    } catch(err){
+      alert('Error al leer el reporte de MT5: ' + err.message + '\n\nAsegurate de exportar el "Informe" en formato HTML desde la pestaña Historial.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value = '';
+}
+
+function importData(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      // Estructura del import
+      let impTrades = [], impAsrs = [], impAccounts = [], impMovs = [], impActiveAcc = '', impName = '';
+      if(Array.isArray(data)){
+        // v1: array directo de trades
+        impTrades = data;
+      } else if(data && typeof data === 'object'){
+        impTrades = Array.isArray(data.trades) ? data.trades : [];
+        impAsrs = Array.isArray(data.asrs) ? data.asrs : [];
+        impAccounts = Array.isArray(data.accounts) ? data.accounts : [];
+        impMovs = Array.isArray(data.movements) ? data.movements : [];
+        impActiveAcc = data.activeAccountId || '';
+        impName = data.traderName || '';
+      } else {
+        throw new Error('Formato inválido');
+      }
+
+      const isEmpty = trades.length===0 && asrs.length===0 && movements.length===0 && accounts.length<=1;
+      let action;
+      if(isEmpty){
+        action = 'replace';
+      } else {
+        const fewer = impTrades.length < trades.length;
+        const warn = fewer
+          ? '⚠️ OJO: el respaldo tiene MENOS operaciones (' + impTrades.length + ') que las que ya tenés cargadas (' + trades.length + ').\n' +
+            'Si elegís Reemplazar, perderías ' + (trades.length - impTrades.length) + ' operaciones.\n\n'
+          : '';
+        const choice = confirm(
+          warn +
+          'Datos actuales: ' + trades.length + ' ops · ' + asrs.length + ' ASRs · ' + accounts.length + ' cuentas · ' + movements.length + ' mov.\n' +
+          'En el respaldo: ' + impTrades.length + ' ops · ' + impAsrs.length + ' ASRs · ' + impAccounts.length + ' cuentas · ' + impMovs.length + ' mov.\n\n' +
+          'ACEPTAR = Reemplazar TODO con el respaldo\n' +
+          'CANCELAR = Sumar el respaldo a lo que ya tenés'
+        );
+        action = choice ? 'replace' : 'merge';
+      }
+
+      snapshotUndo('Importar respaldo JSON ('+action+')');
+      if(action === 'replace'){
+        // Si el respaldo no trae cuentas (versión vieja) creamos una por defecto y le asignamos los trades
+        if(impAccounts.length === 0){
+          const defaultAcc = { id: 'default', name: 'Cuenta principal', createdAt: Date.now() };
+          impAccounts = [defaultAcc];
+          impActiveAcc = 'default';
+          impTrades.forEach(t=>{ if(!t.accountId) t.accountId = 'default'; });
+        } else {
+          // Asegurar que todos los trades importados tengan accountId válido
+          const validIds = new Set(impAccounts.map(a=>a.id));
+          impTrades.forEach(t=>{
+            if(!t.accountId || !validIds.has(t.accountId)) t.accountId = impAccounts[0].id;
+          });
+          if(!impActiveAcc || !validIds.has(impActiveAcc)) impActiveAcc = impAccounts[0].id;
+        }
+        trades = impTrades;
+        asrs = impAsrs;
+        accounts = impAccounts;
+        movements = impMovs;
+        activeAccountId = impActiveAcc;
+        if(impName){
+          try { localStorage.setItem('tj_trader_name', impName); } catch(e){}
+          loadTraderName();
+        }
+      } else {
+        // Merge: agregar cuentas nuevas (manteniendo las actuales)
+        const existingAccIds = new Set(accounts.map(a=>a.id));
+        const newAccounts = impAccounts.filter(a=>!existingAccIds.has(a.id));
+        accounts = [...accounts, ...newAccounts];
+        // Si el respaldo no traía cuentas, asignar trades sin accountId a la cuenta activa actual
+        if(impAccounts.length === 0){
+          impTrades.forEach(t=>{ if(!t.accountId) t.accountId = activeAccountId || accounts[0].id; });
+        } else {
+          const validIds = new Set(accounts.map(a=>a.id));
+          impTrades.forEach(t=>{
+            if(!t.accountId || !validIds.has(t.accountId)) t.accountId = activeAccountId || accounts[0].id;
+          });
+        }
+        // Sumar trades y ASRs sin duplicar por id
+        const existingTradeIds = new Set(trades.map(t=>t.id));
+        trades = [...impTrades.filter(t=>!existingTradeIds.has(t.id)), ...trades];
+        const existingAsrIds = new Set(asrs.map(a=>a.id));
+        asrs = [...impAsrs.filter(a=>!existingAsrIds.has(a.id)), ...asrs];
+        // Sumar movimientos sin duplicar por id
+        const existingMovIds = new Set(movements.map(m=>m.id));
+        movements = [...impMovs.filter(m=>!existingMovIds.has(m.id)), ...movements];
+      }
+
+      save();
+      saveAsrs();
+      saveAccounts();
+      saveMovements();
+      saveActiveAccount();
+      refreshAccountSelectors();
+      renderTable();
+      renderAsrList();
+      updateSidebar();
+      // Si estamos en cartera, refrescar
+      if(document.getElementById('page-cartera').classList.contains('active')) renderCartera();
+      if(document.getElementById('page-estadisticas').classList.contains('active')) renderStats();
+      showToast('Respaldo importado · ' + trades.length + ' ops · ' + asrs.length + ' ASRs · ' + accounts.length + ' cuentas · ' + movements.length + ' mov.');
+    } catch(err){ alert('Archivo inválido: ' + err.message); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function saveTraderName(){
+  const el = document.getElementById('logo-name');
+  const name = (el.textContent || '').trim();
+  try { localStorage.setItem('tj_trader_name', name); } catch(e){}
+  document.title = name ? (name + ' · Trading Journal') : 'Trading Journal';
+}
+
+function loadTraderName(){
+  const saved = localStorage.getItem('tj_trader_name');
+  const el = document.getElementById('logo-name');
+  if(saved && saved.length){
+    el.textContent = saved;
+    document.title = saved + ' · Trading Journal';
+  } else {
+    el.textContent = '';
+  }
+}
+
+// === Inicialización asíncrona (espera a IndexedDB) ===
+async function initApp(){
+  // Mostrar overlay de carga
+  const overlay = document.createElement('div');
+  overlay.id = 'loading-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#0d0f12;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
+  overlay.innerHTML = `
+    <svg width="48" height="48" viewBox="0 0 512 512" style="opacity:.8">
+      <path d="M96 384 L96 128 L160 128 L160 384 Z" fill="#4f9cf9"/>
+      <path d="M192 384 L192 192 L256 192 L256 384 Z" fill="#3ecf8e"/>
+      <path d="M288 384 L288 96 L352 96 L352 384 Z" fill="#f472b6"/>
+      <path d="M384 384 L384 256 L448 256 L448 384 Z" fill="#f59e0b"/>
+    </svg>
+    <div style="color:#556070;font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.1em">Cargando datos...</div>`;
+  document.body.appendChild(overlay);
+
+  try {
+    await _openDB();
+
+    // Cargar cada clave desde IndexedDB
+    const [idbTrades, idbAsrs, idbAccounts, idbMovements, idbActiveAcc] = await Promise.all([
+      _dbGet('tj_v2'), _dbGet('tj_asr'), _dbGet('tj_accounts'),
+      _dbGet('tj_movements'), _dbGet('tj_active_account')
+    ]);
+
+    // Migración automática desde localStorage (solo la primera vez)
+    if(idbTrades === undefined){
+      console.log('Migrando datos de localStorage a IndexedDB...');
+      const lsTrades   = _lsGet('tj_v2');
+      const lsAsrs     = _lsGet('tj_asr');
+      const lsAccounts = _lsGet('tj_accounts');
+      const lsMovs     = _lsGet('tj_movements');
+      const lsActive   = _lsGet('tj_active_account');
+
+      trades       = lsTrades   ? JSON.parse(lsTrades)   : [];
+      asrs         = lsAsrs     ? JSON.parse(lsAsrs)     : [];
+      accounts     = lsAccounts ? JSON.parse(lsAccounts) : [];
+      movements    = lsMovs     ? JSON.parse(lsMovs)     : [];
+      activeAccountId = lsActive || '';
+
+      // Guardar en IndexedDB
+      await Promise.all([
+        _dbSet('tj_v2', trades), _dbSet('tj_asr', asrs),
+        _dbSet('tj_accounts', accounts), _dbSet('tj_movements', movements),
+        _dbSet('tj_active_account', activeAccountId)
+      ]);
+
+      // IMPORTANTE: NO limpiamos localStorage. Lo mantenemos como backup
+      // permanente para datos chicos (cuentas, movimientos, activa) que es
+      // crítico que no se pierdan. Los trades grandes con imágenes viven
+      // solo en IDB porque podrían exceder el límite de 5MB de localStorage.
+      // Pero los datos chicos están duplicados a propósito.
+      console.log('Migración completada. localStorage retenido como backup.');
+    } else {
+      trades       = idbTrades    || [];
+      asrs         = idbAsrs      || [];
+      accounts     = idbAccounts  || [];
+      movements    = idbMovements || [];
+      activeAccountId = idbActiveAcc || '';
+    }
+
+    // === RECOVERY · si IDB perdió datos chicos, intentar recuperar de localStorage ===
+    // Esto protege contra el bug donde cuentas desaparecen sin razón aparente.
+    let recoveredAny = false;
+
+    if(!accounts || accounts.length === 0){
+      const lsBackup = _lsGet('tj_accounts');
+      if(lsBackup){
+        try {
+          const parsed = JSON.parse(lsBackup);
+          if(Array.isArray(parsed) && parsed.length > 0){
+            accounts = parsed;
+            console.log('✓ Cuentas recuperadas desde backup de localStorage');
+            recoveredAny = true;
+          }
+        } catch(e){}
+      }
+    }
+
+    if(!movements || movements.length === 0){
+      const lsBackup = _lsGet('tj_movements');
+      if(lsBackup){
+        try {
+          const parsed = JSON.parse(lsBackup);
+          if(Array.isArray(parsed) && parsed.length > 0){
+            movements = parsed;
+            console.log('✓ Movimientos recuperados desde backup de localStorage');
+            recoveredAny = true;
+          }
+        } catch(e){}
+      }
+    }
+
+    if(!activeAccountId){
+      const lsActive = _lsGet('tj_active_account');
+      if(lsActive){
+        activeAccountId = lsActive;
+        recoveredAny = true;
+      }
+    }
+
+    // Validar que la cuenta activa exista, si no, usar la primera disponible
+    if(activeAccountId && accounts.length > 0 && !accounts.find(a=>a.id===activeAccountId)){
+      activeAccountId = accounts[0].id;
+      recoveredAny = true;
+    }
+
+    if(recoveredAny){
+      // Re-guardar en IDB lo recuperado para que la próxima vez esté ahí
+      saveAccounts(); saveMovements(); saveActiveAccount();
+    }
+
+    // Cuenta default si no hay ninguna
+    if(accounts.length === 0){
+      // ÚLTIMA RED DE SEGURIDAD: si hay trades con accountIds, reconstruir las cuentas faltantes
+      // para no perder la asociación trade↔cuenta. Esto solo se ejecuta como rescate extremo.
+      const orphanIds = [...new Set(trades.map(t=>t.accountId).filter(Boolean))];
+      if(orphanIds.length > 0){
+        console.warn('⚠ Reconstruyendo ' + orphanIds.length + ' cuenta(s) desde trades huérfanos');
+        accounts = orphanIds.map((id, i) => ({
+          id: id,
+          name: 'Cuenta recuperada ' + (i+1),
+          createdAt: Date.now()
+        }));
+        activeAccountId = accounts[0].id;
+      } else {
+        accounts = [{ id: 'default', name: 'Cuenta principal', createdAt: Date.now() }];
+        activeAccountId = 'default';
+      }
+      saveAccounts(); saveActiveAccount();
+    }
+
+    // Migrar trades sin accountId
+    let migratedAny = false;
+    trades.forEach(t=>{ if(!t.accountId){ t.accountId = accounts[0].id; migratedAny = true; } });
+    if(migratedAny) save();
+
+  } catch(err){
+    _idbOk = false;
+    // file:// u otro contexto sin IDB → normal, usamos localStorage sin alarma
+    const isSecurity = err && (err.name === 'SecurityError' || /invalid security context/i.test(String(err.message||err)));
+    if(isSecurity || location.protocol === 'file:'){
+      console.info('IndexedDB no disponible en este contexto (normal si abrís el archivo local). Usando localStorage.');
+    } else {
+      console.warn('IndexedDB no disponible, fallback a localStorage:', err);
+    }
+    // Fallback a localStorage si IndexedDB falla
+    try {
+      trades       = JSON.parse(_lsGet('tj_v2')        || '[]');
+      asrs         = JSON.parse(_lsGet('tj_asr')       || '[]');
+      accounts     = JSON.parse(_lsGet('tj_accounts')  || '[]');
+      movements    = JSON.parse(_lsGet('tj_movements') || '[]');
+      activeAccountId = _lsGet('tj_active_account') || '';
+    } catch(e2){
+      console.warn('No se pudo leer storage, arrancando vacío:', e2);
+      trades = []; asrs = []; accounts = []; movements = []; activeAccountId = '';
+    }
+    if(_idbOk === false && _lsOk === false){
+      console.info('Sin IndexedDB ni localStorage (contexto inseguro, ej. file://). Los datos solo viven en memoria hasta que cierres la pestaña.');
+      setTimeout(function(){
+        try {
+          if(!window._storageWarned){
+            window._storageWarned = true;
+            alert('⚠️ Este journal se abrió en un contexto sin almacenamiento (típico de abrir el HTML con doble clic).\n\nLos datos NO se van a guardar al recargar.\n\nSolución:\n1. Subilo a GitHub Pages, o\n2. Abrilo con un servidor local:\n   python3 -m http.server 8080\n   y entrá a http://localhost:8080');
+          }
+        } catch(e){}
+      }, 800);
+    }
+    // Misma red de seguridad: reconstruir cuentas si solo hay trades huérfanos
+    if(accounts.length === 0){
+      const orphanIds = [...new Set(trades.map(t=>t.accountId).filter(Boolean))];
+      if(orphanIds.length > 0){
+        accounts = orphanIds.map((id, i) => ({
+          id: id,
+          name: 'Cuenta recuperada ' + (i+1),
+          createdAt: Date.now()
+        }));
+        activeAccountId = accounts[0].id;
+      } else {
+        accounts = [{ id: 'default', name: 'Cuenta principal', createdAt: Date.now() }];
+        activeAccountId = 'default';
+      }
+    }
+    // Validar cuenta activa
+    if(activeAccountId && !accounts.find(a=>a.id===activeAccountId)){
+      activeAccountId = accounts[0].id;
+    }
+  }
+
+  // Quitar overlay
+  document.body.removeChild(overlay);
+
+  // Arrancar la app
+  loadTraderName();
+  document.getElementById('inp-fecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('asr-fecha').value = new Date().toISOString().slice(0,10);
+  refreshAccountSelectors();
+  renderVariants();
+  renderConfs();
+  renderTfSlots();
+  renderAsrList();
+  updateSidebar();
+}
+
+initApp();
+
+
+function importMT5(input){
+  const file = input.files[0];
+  if(!file){ return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      // El reporte de MT5 suele venir en UTF-16. Detectamos el BOM y decodificamos bien.
+      const buf = new Uint8Array(e.target.result);
+      let html;
+      if(buf.length>=2 && buf[0]===0xFF && buf[1]===0xFE){
+        html = new TextDecoder('utf-16le').decode(buf);
+      } else if(buf.length>=2 && buf[0]===0xFE && buf[1]===0xFF){
+        html = new TextDecoder('utf-16be').decode(buf);
+      } else {
+        html = new TextDecoder('utf-8').decode(buf);
+      }
+
+      // Helpers
+      const stripTags = s => s.replace(/<[^>]+>/g,'').replace(/&nbsp;/gi,' ')
+        .replace(/&amp;/gi,'&').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').trim();
+      const numOr = (s,def) => { const n = parseFloat(String(s).replace(/\s/g,'').replace(',','.')); return isNaN(n)?def:n; };
+
+      // 1) Detectar la cuenta del reporte (ej: "121791 (USD, Bullfy-Trade, demo, Hedge)")
+      let reportAcc = '';
+      const accMatch = html.match(/Cuenta de trading:[\s\S]{0,120}?([0-9]{4,})/i);
+      if(accMatch) reportAcc = accMatch[1];
+
+      // 2) Extraer todas las filas de tablas
+      const rawRows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
+      const rows = rawRows.map(r=>{
+        const cells = (r.match(/<t[dh][^>]*>[\s\S]*?<\/t[dh]>/gi) || []).map(stripTags);
+        return cells;
+      }).filter(c=>c.length);
+
+      // 3) Ubicar la sección "Posiciones": empieza tras la fila título y termina en "Órdenes"
+      let start=-1, end=rows.length;
+      for(let i=0;i<rows.length;i++){
+        const joined = rows[i].join(' ').toLowerCase();
+        if(start===-1 && /posiciones/.test(joined) && rows[i].length<=2){ start=i+1; continue; }
+        if(start!==-1 && /(órdenes|ordenes|transacciones)/.test(joined) && rows[i].length<=2){ end=i; break; }
+      }
+      if(start===-1){ alert('No encontré la tabla de "Posiciones" en el archivo.\n\nAsegurate de exportar desde MT5: Caja de herramientas → Historial → clic derecho → Informe (HTML).'); return; }
+
+      // 4) La primera fila de la sección son los encabezados. El resto, posiciones.
+      const dataRows = rows.slice(start, end);
+      if(dataRows.length<2){ alert('El reporte no tiene posiciones cerradas para importar.'); return; }
+      const body = dataRows.slice(1); // saltar encabezado
+
+      // 5) Resolver a qué cuenta del journal van.
+      // Orden: mapeo guardado (número MT5 → cuenta) → nombre que contiene el número → PREGUNTAR.
+      let accMap = {};
+      try { accMap = JSON.parse(localStorage.getItem('mc_mt5_accmap')||'{}'); } catch(e){}
+      let targetAcc = '';
+      if(reportAcc && accMap[reportAcc] && accounts.some(a=>a.id===accMap[reportAcc])){
+        targetAcc = accMap[reportAcc];
+      }
+      if(!targetAcc && reportAcc){
+        const found = accounts.find(a => (a.name||'').includes(reportAcc));
+        if(found) targetAcc = found.id;
+      }
+      if(!targetAcc){
+        // No se pudo deducir: que Maca elija la cuenta (y la recordamos para la próxima)
+        const list = accounts.map((a,i)=>`${i+1}. ${a.name}`).join('\n');
+        const ans = prompt(
+          `¿En qué cuenta del journal cargo las operaciones de MT5` +
+          (reportAcc?` (cuenta ${reportAcc})`:'') + `?\n\nEscribí el número y dale Aceptar:\n\n${list}`,
+          '1'
+        );
+        if(ans===null){ return; } // canceló
+        const idx = parseInt(ans,10)-1;
+        if(isNaN(idx) || idx<0 || idx>=accounts.length){ alert('Opción inválida. No se importó nada.'); return; }
+        targetAcc = accounts[idx].id;
+        if(reportAcc){ accMap[reportAcc]=targetAcc; try{ localStorage.setItem('mc_mt5_accmap',JSON.stringify(accMap)); }catch(e){} }
+      }
+
+      const mercadoDe = sym => {
+        const s=(sym||'').toUpperCase();
+        if(/XAU|XAG|XPT|XPD/.test(s)) return 'Metales';
+        if(/BTC|ETH|XRP|LTC|SOL|DOGE|ADA|BNB/.test(s)) return 'Crypto';
+        if(/^[A-Z]{6}$/.test(s)) return 'Forex';
+        if(/US30|US500|USTEC|NAS|SPX|GER|DAX|UK100|JP225|NDX/.test(s)) return 'Índices';
+        return '';
+      };
+      const fmtDur = (ms) => {
+        if(!(ms>0)) return '';
+        const m=Math.round(ms/60000);
+        if(m<60) return m+'m';
+        const h=Math.floor(m/60), rm=m%60;
+        if(h<24) return rm? (h+'h '+rm+'m') : (h+'h');
+        const d=Math.floor(h/24), rh=h%24;
+        return rh? (d+'d '+rh+'h') : (d+'d');
+      };
+      const parseDT = s => {
+        // "2026.06.12 18:11:03" -> {fecha:'2026-06-12', hora:'18:11', ts:Date}
+        const m = String(s).match(/(\d{4})\.(\d{2})\.(\d{2})\s+(\d{2}):(\d{2})/);
+        if(!m) return null;
+        return { fecha:`${m[1]}-${m[2]}-${m[3]}`, hora:`${m[4]}:${m[5]}`,
+                 ts:new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00`) };
+      };
+
+      const existingTickets = new Set(trades.map(t=>String(t.mt5Ticket||'')).filter(Boolean));
+      const existingIds = new Set(trades.map(t=>t.id));
+      // Firma por contenido (reforzada): cuenta + activo + fecha cierre + hora + PnL + lote.
+      // Así dos tickets distintos con el mismo par/día/PnL pero lote u hora distinta NO se fusionan.
+      // Ticket sigue siendo la prioridad #1 (arriba). La firma solo evita re-importar ops editadas que perdieron el ticket.
+      const _normSym = s => String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+      const _sig = t => (t.accountId||'')+'|'+_normSym(t.activo)+'|'+(t.fechaSalida||'')+'|'+(t.horaSalida||'')+'|'+(parseFloat(String(t.pnl).replace('+',''))||0).toFixed(2)+'|'+(parseFloat(t.lotaje)||0).toFixed(2);
+      const existingSigs = new Set(trades.map(_sig));
+      const imported = [];
+      let skippedDup = 0, skippedBad = 0;
+
+      body.forEach(c => {
+        // Estructura columnas Posiciones (MT5, ES):
+        // 0 FechaOpen | 1 Ticket | 2 Símbolo | 3 Tipo | 4 (vacío) | 5 Volumen
+        // 6 PrecioOpen | 7 SL | 8 TP | 9 FechaClose | 10 PrecioClose | 11 Comisión | 12 Swap | 13 Beneficio
+        const open = parseDT(c[0]);
+        const ticket = (c[1]||'').replace(/\D/g,'');
+        const symbol = (c[2]||'').trim();
+        const tipoRaw = (c[3]||'').toLowerCase();
+        if(!open || !ticket || !symbol || !/^(buy|sell)/.test(tipoRaw)){ skippedBad++; return; }
+        if(existingTickets.has(ticket)){ skippedDup++; return; }
+
+        const vol      = c[5];
+        const pOpen    = c[6];
+        const sl       = c[7];
+        const tp       = c[8];
+        const close    = parseDT(c[9]);
+        const pClose   = c[10];
+        const comision = numOr(c[11],0);
+        const swap     = numOr(c[12],0);
+        const benef    = numOr(c[13],0);
+
+        const net = benef + comision + swap; // Beneficio neto
+        // Antiduplicado por contenido reforzado (fecha+hora+lote).
+        const _candSig = targetAcc+'|'+_normSym(symbol)+'|'+(close?close.fecha:'')+'|'+(close?close.hora:'')+'|'+net.toFixed(2)+'|'+(parseFloat(vol)||0).toFixed(2);
+        if(existingSigs.has(_candSig)){ skippedDup++; return; }
+        existingSigs.add(_candSig);
+        const dir = tipoRaw.startsWith('buy') ? 'Long' : 'Short';
+        let resultado = 'Open';
+        // BE se decide por el resultado de MERCADO (sin comisión): si el precio salió
+        // plano es BE, aunque haya pagado una comisión chica.
+        if(close){ resultado = benef>0.0000001 ? 'Win' : (benef<-0.0000001 ? 'Loss' : 'BE'); }
+
+        // R:R planificado y realizado (si hay SL numérico)
+        const eN=numOr(pOpen,NaN), sN=numOr(sl,NaN), tN=numOr(tp,NaN), cN=numOr(pClose,NaN);
+        let rrPlan='', rr='';
+        const risk = (!isNaN(eN)&&!isNaN(sN)) ? Math.abs(eN-sN) : NaN;
+        if(!isNaN(risk) && risk>0){
+          if(!isNaN(tN)) rrPlan = (Math.abs(tN-eN)/risk).toFixed(2);
+          if(!isNaN(cN)){
+            const ganado = dir==='Long' ? (cN-eN) : (eN-cN);
+            rr = (ganado/risk).toFixed(2);
+          }
+        }
+
+        const id = (!isNaN(Number(ticket)) && !existingIds.has(Number(ticket))) ? Number(ticket) : (Date.now()+imported.length);
+        existingIds.add(id);
+        existingTickets.add(ticket);
+
+        imported.push({
+          id,
+          mt5Ticket: ticket,
+          accountId: targetAcc,
+          fecha: open.fecha, hora: open.hora,
+          fechaSalida: close? close.fecha : '', horaSalida: close? close.hora : '',
+          duracion: (open&&close)? fmtDur(close.ts-open.ts) : '',
+          estrategia: '', variante: '', tipo: '', dir,
+          mercado: mercadoDe(symbol), activo: symbol,
+          entrada: pOpen||'', sl: (sl&&numOr(sl,0))? sl : '', tp: (tp&&numOr(tp,0))? tp : '',
+          salida: pClose||'',
+          slTecnico:'', tpTecnico:'',
+          gestion:'',
+          rr, rrPlan,
+          capital:'', capitalFinal:'',
+          riesgoMonto:'', riesgoPct:'',
+          bpBruto: benef.toFixed(2),
+          comisiones: (comision+swap).toFixed(2),
+          pnl: net.toFixed(2),
+          lotaje: vol||'',
+          sesion:'', mode:'', orden:'', resultado,
+          fibonacci:'', confirmaciones:'', patron:'',
+          link:'', imagenes:{}, imgNotes:{},
+          notas:'Importado de MT5'
+        });
+      });
+
+      if(!imported.length){
+        alert(`No se importaron trades nuevos.\n\nPosiciones encontradas: ${body.length}\nYa estaban (duplicadas): ${skippedDup}\nSin datos válidos: ${skippedBad}`);
+        return;
+      }
+
+      const accName = (accounts.find(a=>a.id===targetAcc)||{}).name || 'cuenta activa';
+      const ok = confirm(
+        `Voy a importar ${imported.length} operación(es) de MT5` +
+        (reportAcc? ` (cuenta ${reportAcc})`:'') +
+        `\n→ se cargan en: "${accName}"` +
+        (skippedDup? `\n· ${skippedDup} ya estaban y se saltean` : '') +
+        `\n\nLas operaciones quedan SIN color de estrategia para que lo asignes vos.\n\n¿Continuar?`
+      );
+      if(!ok) return;
+
+      snapshotUndo('Importar MT5 ('+imported.length+' ops)');
+      trades = [...imported, ...trades];
+      save();
+      renderTable();
+      updateSidebar();
+      let msg = `MT5 importado · ${imported.length} operaciones cargadas`;
+      if(skippedDup) msg += ` · ${skippedDup} duplicadas omitidas`;
+      showToast(msg);
+    } catch(err){
+      alert('Error al leer el reporte de MT5: ' + err.message + '\n\nAsegurate de exportar el "Informe" en formato HTML desde la pestaña Historial.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value = '';
+}
 </script>
 </body>
 </html>
