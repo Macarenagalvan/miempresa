@@ -132,6 +132,7 @@ textarea{resize:vertical;min-height:68px;line-height:1.5}
 .p-loss.on{background:var(--red2);border-color:var(--red);color:var(--red)}
 .p-be.on{background:var(--amber2);border-color:var(--amber);color:var(--amber)}
 .p-open.on{background:var(--accent2);border-color:var(--accent);color:var(--accent)}
+.p-manual.on{background:rgba(168,130,255,.15);border-color:#a882ff;color:#a882ff}
 .p-type.on{background:var(--bg4);border-color:var(--border2);color:var(--text)}
 .p-fib.on,.p-conf.on,.p-patron.on{background:var(--purple2);border-color:var(--purple);color:var(--purple)}
 .p-session.on{background:var(--pink2);border-color:var(--pink);color:var(--pink)}
@@ -576,12 +577,14 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 
     <div class="rr-cell rr-label">Resultado</div>
     <div class="rr-cell" style="grid-column:span 2">
-      <div class="pills" style="flex-wrap:nowrap">
+      <div class="pills" style="flex-wrap:wrap">
         <div class="pill p-win" onclick="selResult(this,'Win')">TP</div>
         <div class="pill p-loss" onclick="selResult(this,'Loss')">SL</div>
         <div class="pill p-be" onclick="selResult(this,'BE')">BE</div>
         <div class="pill p-open" onclick="selResult(this,'Open')">Abierto</div>
+        <div class="pill p-manual" onclick="selResult(this,'Manual')">✋ Manual</div>
       </div>
+      <textarea id="inp-cierre-motivo" placeholder="Motivo del cierre manual (gestión, noticia, dudas, parciales…)" style="display:none;width:100%;margin-top:8px;min-height:52px;padding:8px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Outfit',sans-serif;font-size:12px;resize:vertical"></textarea>
     </div>
 
     <div class="rr-cell rr-label">Riesgo ($)</div>
@@ -1289,6 +1292,35 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       </table>
     </div>
   </div>
+
+  <!-- ===== MONTE CARLO ===== -->
+  <div class="mc-card" style="margin-top:22px;border-color:var(--accent)">
+    <div class="mc-qt" style="font-size:15px;color:var(--accent)">Simulación Monte Carlo · miles de futuros posibles</div>
+    <p class="mc-note" style="margin-bottom:14px">En vez de una sola línea promedio, genera miles de secuencias aleatorias de wins/losses con tus números. Muestra la probabilidad real de crecer, de tocar drawdowns fuertes y de ruina. No es predicción: es el rango de lo que tu sistema puede hacer.</p>
+    <div class="mc-grid2">
+      <div>
+        <label class="mc-fl">Nº de simulaciones</label>
+        <input id="mc-sims" class="mc-in" type="number" step="100" value="2000" min="200" max="10000">
+        <label class="mc-fl" style="margin-top:10px">Umbral de ruina (% de caída desde el inicio)</label>
+        <input id="mc-ruin" class="mc-in" type="number" step="5" value="30" min="5" max="99">
+        <label class="mc-fl" style="margin-top:10px">Horizonte (usa el de arriba o override)</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="mc-horizon" class="mc-in" type="number" step="1" placeholder="mismo que Potencial" style="flex:1">
+          <span class="mc-note" style="margin:0;white-space:nowrap">trades totales</span>
+        </div>
+        <button class="mc-btn" style="margin-top:14px;width:100%" onclick="mcRunMonteCarlo()">▶ Correr Monte Carlo</button>
+        <div id="mc-mc-note" class="mc-note" style="margin-top:8px"></div>
+      </div>
+      <div>
+        <div class="mc-res" id="mc-mc-res"></div>
+      </div>
+    </div>
+    <div class="mc-card" style="margin-top:14px;background:var(--bg3)">
+      <div class="mc-qt" style="font-size:13px">Distribución de capital final</div>
+      <div id="mc-mc-hist" style="height:140px;display:flex;align-items:flex-end;gap:2px;padding:8px 0"></div>
+      <div id="mc-mc-hist-labels" style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'Roboto Mono',monospace"></div>
+    </div>
+  </div>
 </div>
 
 
@@ -1302,32 +1334,77 @@ let trades = [], asrs = [], accounts = [], movements = [];
 let activeAccountId = '';
 let _db = null; // instancia de IndexedDB
 
+// IndexedDB solo funciona con origen http/https (no con file://).
+// Si falla (doble clic al HTML, iframe sandboxed, etc.) caemos a localStorage sin gritar.
+let _idbOk = null; // null=aún no probado, true/false
+let _lsOk = null;  // null=aún no probado, true/false
+function _lsGet(key){
+  if(_lsOk === false) return null;
+  try {
+    const v = localStorage.getItem(key);
+    _lsOk = true;
+    return v;
+  } catch(e){
+    _lsOk = false;
+    return null;
+  }
+}
+function _lsSet(key, value){
+  if(_lsOk === false) return false;
+  try {
+    localStorage.setItem(key, value);
+    _lsOk = true;
+    return true;
+  } catch(e){
+    // quota or security
+    if(e && (e.name === 'SecurityError' || e.name === 'QuotaExceededError')) _lsOk = false;
+    return false;
+  }
+}
+function _lsRemove(key){
+  try { localStorage.removeItem(key); } catch(e){}
+}
 function _openDB(){
   return new Promise((resolve, reject) => {
+    if(_idbOk === false){ reject(new Error('IDB disabled')); return; }
     if(_db){ resolve(_db); return; }
-    const req = indexedDB.open('TradingJournalDB', 1);
+    if(typeof indexedDB === 'undefined'){ _idbOk = false; reject(new Error('indexedDB undefined')); return; }
+    let req;
+    try {
+      req = indexedDB.open('TradingJournalDB', 1);
+    } catch(e){
+      _idbOk = false;
+      reject(e);
+      return;
+    }
     req.onupgradeneeded = e => {
       const db = e.target.result;
       if(!db.objectStoreNames.contains('appData'))
         db.createObjectStore('appData');
     };
-    req.onsuccess = e => { _db = e.target.result; resolve(_db); };
-    req.onerror   = e => reject(e.target.error);
+    req.onsuccess = e => { _db = e.target.result; _idbOk = true; resolve(_db); };
+    req.onerror   = e => { _idbOk = false; reject(e.target.error || new Error('IDB open failed')); };
   });
 }
 function _dbGet(key){
+  if(_idbOk === false) return Promise.resolve(undefined);
   return _openDB().then(db => new Promise((resolve, reject) => {
-    const req = db.transaction('appData','readonly').objectStore('appData').get(key);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror   = () => reject(req.error);
-  }));
+    try {
+      const req = db.transaction('appData','readonly').objectStore('appData').get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = () => reject(req.error);
+    } catch(e){ _idbOk = false; resolve(undefined); }
+  })).catch(()=>{ _idbOk = false; return undefined; });
 }
 function _dbSet(key, value){
+  if(_idbOk === false) return Promise.resolve();
   return _openDB().then(db => new Promise((resolve, reject) => {
-    const req = db.transaction('appData','readwrite').objectStore('appData').put(value, key);
-    req.onsuccess = () => resolve();
-    req.onerror   = () => reject(req.error);
-  }));
+    try {
+      const req = db.transaction('appData','readwrite').objectStore('appData').put(value, key);
+      req.onsuccess = () => resolve();
+      req.onerror   = () => reject(req.error);
+    } catch(e){ _idbOk = false; resolve(); }
+  })).catch(()=>{ _idbOk = false; });
 }
 
 // (Fix Claude) La cuenta por defecto se crea dentro de initApp DESPUES de cargar los datos.
@@ -1335,16 +1412,16 @@ function _dbSet(key, value){
 
 // Guardado dual: IDB + localStorage como backup (datos chicos, sin riesgo de quota)
 function saveAccounts(){
-  _dbSet('tj_accounts', accounts).catch(e=>console.error('saveAccounts IDB:',e));
-  try { localStorage.setItem('tj_accounts', JSON.stringify(accounts)); } catch(e){}
+  _dbSet('tj_accounts', accounts).catch(()=>{});
+  _lsSet('tj_accounts', JSON.stringify(accounts));
 }
 function saveMovements(){
-  _dbSet('tj_movements', movements).catch(e=>console.error('saveMovements IDB:',e));
-  try { localStorage.setItem('tj_movements', JSON.stringify(movements)); } catch(e){}
+  _dbSet('tj_movements', movements).catch(()=>{});
+  _lsSet('tj_movements', JSON.stringify(movements));
 }
 function saveActiveAccount(){
-  _dbSet('tj_active_account', activeAccountId).catch(e=>console.error('saveActiveAccount IDB:',e));
-  try { localStorage.setItem('tj_active_account', activeAccountId); } catch(e){}
+  _dbSet('tj_active_account', activeAccountId).catch(()=>{});
+  _lsSet('tj_active_account', activeAccountId || '');
 }
 
 function getActiveAccount(){
@@ -1435,31 +1512,50 @@ let editingAsrId = null;
 const variants = {Blue:['Blue A','Blue B','Blue C'],Red:[],Pink:[],White:[],Black:[],Green:[]};
 
 function save(){
-  _dbSet('tj_v2', trades)
-    .then(()=>updateSidebar())
-    .catch(e=>{
-      console.error('save error:', e);
-      alert('Error al guardar. Probá exportar el respaldo y recargar la app.');
-    });
+  _dbSet('tj_v2', trades).catch(()=>{});
+  const ok = _lsSet('tj_v2', JSON.stringify(trades));
+  if(!ok && _idbOk === false && !window._saveWarned){
+    window._saveWarned = true;
+    console.warn('Sin almacenamiento persistente');
+    alert('No se puede guardar en este contexto (sin IndexedDB ni localStorage).\n\nSubí el archivo a GitHub Pages o abrilo con:\npython3 -m http.server 8080\n→ http://localhost:8080\n\nExportá un respaldo ahora si cargaste datos.');
+  }
+  if(typeof updateSidebar === 'function') updateSidebar();
 }
 
-// --- Deshacer: guarda una foto de los trades antes de una importación/cambio grande ---
+// --- Deshacer: snapshot en IndexedDB (soporta trades con imágenes sin romper la cuota de localStorage) ---
 function snapshotUndo(label){
   try{
     const snap = { ts: Date.now(), label: label||'', trades: JSON.parse(JSON.stringify(trades)) };
-    localStorage.setItem('tj_undo', JSON.stringify(snap));
+    // Primary: IndexedDB (sin límite práctico de 5MB)
+    if(typeof _dbSet === 'function'){
+      _dbSet('tj_undo', snap).catch(e => console.warn('snapshotUndo IDB', e));
+    }
+    // Meta chica en localStorage solo para el título del botón
+    try { localStorage.setItem('tj_undo_meta', JSON.stringify({ts: snap.ts, label: snap.label, n: snap.trades.length})); } catch(e){}
     const b = document.getElementById('undo-btn');
     if(b) b.title = 'Deshacer: '+(label||'último cambio grande');
   }catch(e){ console.warn('snapshotUndo', e); }
 }
-function undoLast(){
-  let snap; try{ snap = JSON.parse(localStorage.getItem('tj_undo')||'null'); }catch(e){}
+async function undoLast(){
+  let snap = null;
+  try {
+    if(typeof _dbGet === 'function') snap = await _dbGet('tj_undo');
+  } catch(e){}
+  // Fallback al formato viejo de localStorage (por si quedó de una versión anterior)
+  if(!snap || !Array.isArray(snap.trades)){
+    try{ snap = JSON.parse(localStorage.getItem('tj_undo')||'null'); }catch(e){}
+  }
   if(!snap || !Array.isArray(snap.trades)){ alert('No hay ninguna acción grande para deshacer.'); return; }
   const cuando = new Date(snap.ts).toLocaleString();
   if(!confirm('¿Deshacer "'+(snap.label||'último cambio')+'"?\n\nVolvés al estado de:\n'+cuando+'\n('+snap.trades.length+' operaciones)\n\nSirve para revertir la última importación grande.')) return;
   const actual = JSON.parse(JSON.stringify(trades));
   trades = snap.trades;
-  localStorage.setItem('tj_undo', JSON.stringify({ ts: Date.now(), label:'rehacer (volver adelante)', trades: actual }));
+  // Guardar el "rehacer" también en IDB
+  const redo = { ts: Date.now(), label:'rehacer (volver adelante)', trades: actual };
+  if(typeof _dbSet === 'function'){
+    _dbSet('tj_undo', redo).catch(e => console.warn('undoLast IDB', e));
+  }
+  try { localStorage.setItem('tj_undo_meta', JSON.stringify({ts: redo.ts, label: redo.label, n: redo.trades.length})); } catch(e){}
   save();
   if(window.renderTable) renderTable();
   if(window.updateSidebar) updateSidebar();
@@ -1602,8 +1698,10 @@ function selDir(el, d){
 }
 
 function selResult(el, r){
-  document.querySelectorAll('.p-win,.p-loss,.p-be,.p-open').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.p-win,.p-loss,.p-be,.p-open,.p-manual').forEach(p=>p.classList.remove('on'));
   el.classList.add('on'); curResult = r;
+  const mot = document.getElementById('inp-cierre-motivo');
+  if(mot) mot.style.display = (r==='Manual') ? 'block' : 'none';
   calcRisk();
 }
 
@@ -2057,6 +2155,13 @@ function addTrade(){
     imgNotes: Object.assign({}, curImgNotes),
     notas: document.getElementById('inp-notas').value
   };
+  // Cierre manual: guarda el motivo y el B/P Neto define Win/Loss/BE (win rate honesto)
+  t.cierreManual = (curResult === 'Manual');
+  t.cierreMotivo = t.cierreManual ? (document.getElementById('inp-cierre-motivo')?.value || '') : '';
+  if(t.cierreManual){
+    const _p = parseFloat(String(t.pnl).replace(',','.').replace('+','') );
+    t.resultado = isNaN(_p) ? 'BE' : (_p>0 ? 'Win' : (_p<0 ? 'Loss' : 'BE'));
+  }
   if(editingId){
     const idx = trades.findIndex(x=>x.id===editingId);
     if(idx>=0){
@@ -2127,11 +2232,13 @@ function editTrade(id){
   if(curDir==='Long') document.querySelector('.p-long').classList.add('on');
   else if(curDir==='Short') document.querySelector('.p-short').classList.add('on');
 
-  // Resultado
-  curResult = t.resultado || '';
-  document.querySelectorAll('.p-win,.p-loss,.p-be,.p-open').forEach(p=>p.classList.remove('on'));
-  const resultMap = {Win:'.p-win',Loss:'.p-loss',BE:'.p-be',Open:'.p-open'};
-  if(resultMap[curResult]) document.querySelector(resultMap[curResult]).classList.add('on');
+  // Resultado (si fue cierre manual, mostrar el pill Manual + motivo)
+  curResult = t.cierreManual ? 'Manual' : (t.resultado || '');
+  document.querySelectorAll('.p-win,.p-loss,.p-be,.p-open,.p-manual').forEach(p=>p.classList.remove('on'));
+  const resultMap = {Win:'.p-win',Loss:'.p-loss',BE:'.p-be',Open:'.p-open',Manual:'.p-manual'};
+  if(resultMap[curResult]) document.querySelector(resultMap[curResult])?.classList.add('on');
+  const _motE = document.getElementById('inp-cierre-motivo');
+  if(_motE){ _motE.value = t.cierreMotivo||''; _motE.style.display = t.cierreManual ? 'block' : 'none'; }
 
   // Patrón
   curPatron = t.patron || '';
@@ -2238,7 +2345,9 @@ function resetForm(){
   ['inp-activo','inp-entrada','inp-sl','inp-tp','inp-salida','inp-sl-tecnico','inp-tp-tecnico','inp-rr','inp-rr-plan','inp-capital','inp-capital-final','inp-riesgo-monto','inp-bp-bruto','inp-comisiones','inp-lotaje','inp-notas','inp-link','inp-fecha-salida','inp-hora','inp-hora-salida','inp-duracion'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.value='';
   });
-  document.querySelectorAll('.p-win,.p-loss,.p-be,.p-open').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.p-win,.p-loss,.p-be,.p-open,.p-manual').forEach(p=>p.classList.remove('on'));
+  const _mot = document.getElementById('inp-cierre-motivo');
+  if(_mot){ _mot.value=''; _mot.style.display='none'; }
   document.querySelectorAll('.p-long,.p-short').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.p-mode,.p-orden,.p-check-ok,.p-check-no,.p-check-nc,.p-check-red').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('#fibPills .pill,.p-conf,#patronPills .pill,#sessionPills .pill,#gestionPills .pill').forEach(p=>p.classList.remove('on'));
@@ -2319,7 +2428,7 @@ function renderTable(){
       <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2)">${t.lotaje||'–'}</td>
       <td style="font-family:'Roboto Mono',monospace;font-weight:600">${t.rr?t.rr+'R':'–'}</td>
       <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:${t.pnl&&t.pnl.startsWith('+')?'var(--green)':(t.pnl&&t.pnl.startsWith('-')?'var(--red)':'var(--text3)')}">${t.pnl||'–'}</td>
-      <td><span class="badge ${resBC[t.resultado]||''}">${t.resultado||'–'}</span></td>
+      <td><span class="badge ${resBC[t.resultado]||''}" ${t.cierreManual?`title="Cierre manual${t.cierreMotivo?': '+String(t.cierreMotivo).replace(/"/g,'&quot;'):''}"`:''}>${t.resultado||'–'}${t.cierreManual?' ✋':''}</span></td>
       <td style="text-align:center">${asrs.some(a=>a.tradeId===t.id)
         ? '<span title="ASR realizado" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--green2);color:var(--green);border:1px solid var(--green);font-weight:700;font-size:12px">✓</span>'
         : '<span title="Sin ASR" style="color:var(--text3);font-size:14px">–</span>'
@@ -2817,7 +2926,7 @@ function renderCartera(){
         <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2)">${t.fecha}${t.hora?' '+t.hora:''}</td>
         <td style="font-weight:600">${t.activo}</td>
         <td><span style="color:${stratColors[t.estrategia]||'var(--text)'};font-weight:600;font-size:11px;font-family:'Roboto Mono',monospace">${t.estrategia}${t.variante?' '+t.variante:''}</span></td>
-        <td><span class="badge ${resBC[t.resultado]||''}">${t.resultado||'–'}</span></td>
+        <td><span class="badge ${resBC[t.resultado]||''}" ${t.cierreManual?`title="Cierre manual${t.cierreMotivo?': '+String(t.cierreMotivo).replace(/"/g,'&quot;'):''}"`:''}>${t.resultado||'–'}${t.cierreManual?' ✋':''}</span></td>
         <td style="font-family:'Roboto Mono',monospace;font-weight:600;color:${pnl>0?'var(--green)':(pnl<0?'var(--red)':'var(--text3)')}">${isNaN(pnl)?'–':((pnl>=0?'+':'')+'$ '+pnl.toFixed(2))}</td>
         <td style="font-family:'Roboto Mono',monospace;font-size:12px">$ ${info.cap.toFixed(2)}</td>
         <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:${deltaPct>0?'var(--green)':(deltaPct<0?'var(--red)':'var(--text3)')}">${deltaPct>=0?'+':''}${deltaPct.toFixed(2)} %</td>
@@ -3728,10 +3837,11 @@ function importMT5(input){
 
       const existingTickets = new Set(trades.map(t=>String(t.mt5Ticket||'')).filter(Boolean));
       const existingIds = new Set(trades.map(t=>t.id));
-      // Firma por contenido: cuenta + activo + fecha de cierre + PnL. Así, aunque una
-      // operación importada haya sido editada y perdido su ticket, NO se vuelve a duplicar.
+      // Firma por contenido (reforzada): cuenta + activo + fecha cierre + hora + PnL + lote.
+      // Así dos tickets distintos con el mismo par/día/PnL pero lote u hora distinta NO se fusionan.
+      // Ticket sigue siendo la prioridad #1 (arriba). La firma solo evita re-importar ops editadas que perdieron el ticket.
       const _normSym = s => String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-      const _sig = t => (t.accountId||'')+'|'+_normSym(t.activo)+'|'+(t.fechaSalida||'')+'|'+(parseFloat(String(t.pnl).replace('+',''))||0).toFixed(2);
+      const _sig = t => (t.accountId||'')+'|'+_normSym(t.activo)+'|'+(t.fechaSalida||'')+'|'+(t.horaSalida||'')+'|'+(parseFloat(String(t.pnl).replace('+',''))||0).toFixed(2)+'|'+(parseFloat(t.lotaje)||0).toFixed(2);
       const existingSigs = new Set(trades.map(_sig));
       const imported = [];
       let skippedDup = 0, skippedBad = 0;
@@ -3758,9 +3868,8 @@ function importMT5(input){
         const benef    = numOr(c[13],0);
 
         const net = benef + comision + swap; // Beneficio neto
-        // Antiduplicado por contenido: si ya existe una operación con misma cuenta+activo+
-        // fecha de cierre+PnL, la salteamos (aunque una editada haya perdido su ticket).
-        const _candSig = targetAcc+'|'+_normSym(symbol)+'|'+(close?close.fecha:'')+'|'+net.toFixed(2);
+        // Antiduplicado por contenido reforzado (fecha+hora+lote).
+        const _candSig = targetAcc+'|'+_normSym(symbol)+'|'+(close?close.fecha:'')+'|'+(close?close.hora:'')+'|'+net.toFixed(2)+'|'+(parseFloat(vol)||0).toFixed(2);
         if(existingSigs.has(_candSig)){ skippedDup++; return; }
         existingSigs.add(_candSig);
         const dir = tipoRaw.startsWith('buy') ? 'Long' : 'Short';
@@ -4000,11 +4109,11 @@ async function initApp(){
     // Migración automática desde localStorage (solo la primera vez)
     if(idbTrades === undefined){
       console.log('Migrando datos de localStorage a IndexedDB...');
-      const lsTrades   = localStorage.getItem('tj_v2');
-      const lsAsrs     = localStorage.getItem('tj_asr');
-      const lsAccounts = localStorage.getItem('tj_accounts');
-      const lsMovs     = localStorage.getItem('tj_movements');
-      const lsActive   = localStorage.getItem('tj_active_account');
+      const lsTrades   = _lsGet('tj_v2');
+      const lsAsrs     = _lsGet('tj_asr');
+      const lsAccounts = _lsGet('tj_accounts');
+      const lsMovs     = _lsGet('tj_movements');
+      const lsActive   = _lsGet('tj_active_account');
 
       trades       = lsTrades   ? JSON.parse(lsTrades)   : [];
       asrs         = lsAsrs     ? JSON.parse(lsAsrs)     : [];
@@ -4038,7 +4147,7 @@ async function initApp(){
     let recoveredAny = false;
 
     if(!accounts || accounts.length === 0){
-      const lsBackup = localStorage.getItem('tj_accounts');
+      const lsBackup = _lsGet('tj_accounts');
       if(lsBackup){
         try {
           const parsed = JSON.parse(lsBackup);
@@ -4052,7 +4161,7 @@ async function initApp(){
     }
 
     if(!movements || movements.length === 0){
-      const lsBackup = localStorage.getItem('tj_movements');
+      const lsBackup = _lsGet('tj_movements');
       if(lsBackup){
         try {
           const parsed = JSON.parse(lsBackup);
@@ -4066,7 +4175,7 @@ async function initApp(){
     }
 
     if(!activeAccountId){
-      const lsActive = localStorage.getItem('tj_active_account');
+      const lsActive = _lsGet('tj_active_account');
       if(lsActive){
         activeAccountId = lsActive;
         recoveredAny = true;
@@ -4110,17 +4219,35 @@ async function initApp(){
     if(migratedAny) save();
 
   } catch(err){
-    console.error('Error iniciando IndexedDB:', err);
+    _idbOk = false;
+    // file:// u otro contexto sin IDB → normal, usamos localStorage sin alarma
+    const isSecurity = err && (err.name === 'SecurityError' || /invalid security context/i.test(String(err.message||err)));
+    if(isSecurity || location.protocol === 'file:'){
+      console.info('IndexedDB no disponible en este contexto (normal si abrís el archivo local). Usando localStorage.');
+    } else {
+      console.warn('IndexedDB no disponible, fallback a localStorage:', err);
+    }
     // Fallback a localStorage si IndexedDB falla
     try {
-      trades       = JSON.parse(localStorage.getItem('tj_v2')        || '[]');
-      asrs         = JSON.parse(localStorage.getItem('tj_asr')       || '[]');
-      accounts     = JSON.parse(localStorage.getItem('tj_accounts')  || '[]');
-      movements    = JSON.parse(localStorage.getItem('tj_movements') || '[]');
-      activeAccountId = localStorage.getItem('tj_active_account') || '';
+      trades       = JSON.parse(_lsGet('tj_v2')        || '[]');
+      asrs         = JSON.parse(_lsGet('tj_asr')       || '[]');
+      accounts     = JSON.parse(_lsGet('tj_accounts')  || '[]');
+      movements    = JSON.parse(_lsGet('tj_movements') || '[]');
+      activeAccountId = _lsGet('tj_active_account') || '';
     } catch(e2){
-      console.error('Error leyendo localStorage:', e2);
+      console.warn('No se pudo leer storage, arrancando vacío:', e2);
       trades = []; asrs = []; accounts = []; movements = []; activeAccountId = '';
+    }
+    if(_idbOk === false && _lsOk === false){
+      console.info('Sin IndexedDB ni localStorage (contexto inseguro, ej. file://). Los datos solo viven en memoria hasta que cierres la pestaña.');
+      setTimeout(function(){
+        try {
+          if(!window._storageWarned){
+            window._storageWarned = true;
+            alert('⚠️ Este journal se abrió en un contexto sin almacenamiento (típico de abrir el HTML con doble clic).\n\nLos datos NO se van a guardar al recargar.\n\nSolución:\n1. Subilo a GitHub Pages, o\n2. Abrilo con un servidor local:\n   python3 -m http.server 8080\n   y entrá a http://localhost:8080');
+          }
+        } catch(e){}
+      }, 800);
     }
     // Misma red de seguridad: reconstruir cuentas si solo hay trades huérfanos
     if(accounts.length === 0){
@@ -5677,6 +5804,129 @@ function installApp(){
     }
   };
 })();
+
+/* ===== MONTE CARLO · simulación de miles de futuros ===== */
+window.mcRunMonteCarlo = function(){
+  const num = id => parseFloat(String(document.getElementById(id)?.value||'').replace(',','.'));
+  const C0 = num('pt-cap') || 0;
+  const riskPct = num('pt-risk');
+  const wr = num('pt-wr');
+  const rr = num('pt-rr');
+  const tpw = Math.max(0, Math.round(num('pt-tpw')||0));
+  const weeks = Math.max(1, Math.min(520, Math.round(num('pt-weeks')||52)));
+  let nTrades = Math.round(num('mc-horizon')||0);
+  if(!(nTrades>0)) nTrades = tpw * weeks;
+  const nSims = Math.max(200, Math.min(10000, Math.round(num('mc-sims')||2000)));
+  const ruinPct = Math.max(5, Math.min(99, num('mc-ruin')||30));
+  const resEl = document.getElementById('mc-mc-res');
+  const noteEl = document.getElementById('mc-mc-note');
+  const histEl = document.getElementById('mc-mc-hist');
+  const labEl = document.getElementById('mc-mc-hist-labels');
+  if(!resEl) return;
+
+  if(!(C0>0) || isNaN(riskPct) || isNaN(wr) || isNaN(rr) || nTrades<=0){
+    resEl.innerHTML = '<div class="mc-note">Completá primero los parámetros de Potencial (capital, riesgo, WR, R:R) y el horizonte.</div>';
+    return;
+  }
+  const f = riskPct/100;
+  const w = Math.max(0, Math.min(1, wr/100));
+  const winR = rr;           // ganás +rr R
+  const lossR = -1;          // perdés 1 R
+  const ruinLevel = C0 * (1 - ruinPct/100);
+
+  if(noteEl) noteEl.innerHTML = '<span style="color:var(--text2)">Corriendo '+nSims.toLocaleString('es-AR')+' simulaciones de '+nTrades+' trades…</span>';
+
+  // Correr en chunks para no congelar el UI
+  const finals = [];
+  const maxDDs = [];
+  let ruined = 0;
+  let i = 0;
+  const chunk = 200;
+
+  function step(){
+    const end = Math.min(i+chunk, nSims);
+    for(; i<end; i++){
+      let cap = C0;
+      let peak = C0;
+      let maxDD = 0;
+      let isRuined = false;
+      for(let t=0; t<nTrades; t++){
+        if(isRuined) break;
+        const win = Math.random() < w;
+        const rMult = win ? winR : lossR;
+        const riskAmt = cap * f;
+        cap += riskAmt * rMult;
+        if(cap <= 0){ cap = 0; isRuined = true; }
+        if(cap > peak) peak = cap;
+        const dd = peak>0 ? (peak-cap)/peak : 0;
+        if(dd > maxDD) maxDD = dd;
+        if(cap <= ruinLevel) isRuined = true;
+      }
+      finals.push(cap);
+      maxDDs.push(maxDD*100);
+      if(isRuined) ruined++;
+    }
+    if(i < nSims){
+      if(noteEl) noteEl.innerHTML = '<span style="color:var(--text2)">'+Math.round(i/nSims*100)+'% · '+i.toLocaleString('es-AR')+' / '+nSims.toLocaleString('es-AR')+'</span>';
+      requestAnimationFrame(step);
+      return;
+    }
+    // Resultados
+    finals.sort((a,b)=>a-b);
+    maxDDs.sort((a,b)=>a-b);
+    const pct = p => finals[Math.min(finals.length-1, Math.floor(p/100*finals.length))];
+    const median = pct(50);
+    const avg = finals.reduce((a,b)=>a+b,0)/finals.length;
+    const p10 = pct(10), p25 = pct(25), p75 = pct(75), p90 = pct(90);
+    const aboveStart = finals.filter(c=>c>=C0).length / nSims * 100;
+    const above50 = finals.filter(c=>c>=C0*1.5).length / nSims * 100;
+    const above100 = finals.filter(c=>c>=C0*2).length / nSims * 100;
+    const ruinProb = ruined / nSims * 100;
+    const medDD = maxDDs[Math.floor(maxDDs.length/2)];
+    const p95DD = maxDDs[Math.floor(maxDDs.length*0.95)];
+    const fmt = n => (isFinite(n)?n:0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});
+    const fmtP = n => (isFinite(n)?n:0).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    const col = v => v>=C0?'var(--green)': 'var(--red)';
+
+    let html = '';
+    html += `<div class="mc-rr"><span class="mc-rk">Capital final mediano</span><span class="mc-rv big" style="color:${col(median)}">$${fmt(median)}</span></div>`;
+    html += `<div class="mc-rr"><span class="mc-rk">Promedio (sesgado por colas)</span><span class="mc-rv">$${fmt(avg)}</span></div>`;
+    html += `<div class="mc-rr"><span class="mc-rk">Rango p10 – p90</span><span class="mc-rv">$${fmt(p10)} – $${fmt(p90)}</span></div>`;
+    html += `<div class="mc-rr"><span class="mc-rk">Prob. terminar ≥ capital inicial</span><span class="mc-rv" style="color:${aboveStart>=50?'var(--green)':'var(--amber)'}">${fmtP(aboveStart)}%</span></div>`;
+    html += `<div class="mc-rr"><span class="mc-rk">Prob. llegar a +50%</span><span class="mc-rv">${fmtP(above50)}%</span></div>`;
+    html += `<div class="mc-rr"><span class="mc-rk">Prob. llegar a +100%</span><span class="mc-rv">${fmtP(above100)}%</span></div>`;
+    html += `<div class="mc-rr"><span class="mc-rk">Riesgo de ruina (−${ruinPct}%)</span><span class="mc-rv big" style="color:${ruinProb>10?'var(--red)':ruinProb>3?'var(--amber)':'var(--green)'}">${fmtP(ruinProb)}%</span></div>`;
+    html += `<div class="mc-rr"><span class="mc-rk">Drawdown máx. mediano</span><span class="mc-rv">${fmtP(medDD)}%</span></div>`;
+    html += `<div class="mc-rr"><span class="mc-rk">Drawdown máx. p95</span><span class="mc-rv">${fmtP(p95DD)}%</span></div>`;
+    html += `<div class="mc-note" style="margin-top:10px">Con WR ${wr}% · R:R 1:${rr} · riesgo ${riskPct}% · ${nTrades} trades · ${nSims.toLocaleString('es-AR')} caminos. La mediana es más honest a que el promedio cuando hay rachas.</div>`;
+    resEl.innerHTML = html;
+
+    // Histograma simple
+    if(histEl){
+      const bins = 24;
+      const minC = finals[0], maxC = finals[finals.length-1];
+      const range = (maxC-minC)||1;
+      const counts = new Array(bins).fill(0);
+      finals.forEach(c=>{
+        let b = Math.floor((c-minC)/range*bins);
+        if(b>=bins) b=bins-1;
+        counts[b]++;
+      });
+      const maxCount = Math.max(...counts,1);
+      histEl.innerHTML = counts.map((c,i)=>{
+        const h = Math.max(2, Math.round(c/maxCount*120));
+        const isStart = (minC + (i+0.5)/bins*range) >= C0;
+        return `<div style="flex:1;height:${h}px;background:${isStart?'var(--green)':'var(--red)'};opacity:.75;border-radius:2px 2px 0 0" title="${c} sims"></div>`;
+      }).join('');
+      if(labEl){
+        labEl.innerHTML = `<span>$${fmt(minC)}</span><span>med $${fmt(median)}</span><span>$${fmt(maxC)}</span>`;
+      }
+    }
+    if(noteEl) noteEl.innerHTML = '<span style="color:var(--green)">✓ Listo · '+nSims.toLocaleString('es-AR')+' simulaciones</span>';
+  }
+  requestAnimationFrame(step);
+};
+
 </script>
 </body>
 </html>
