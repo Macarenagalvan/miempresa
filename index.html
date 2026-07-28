@@ -1309,6 +1309,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
           <span class="mc-note" style="margin:0;white-space:nowrap">trades totales</span>
         </div>
         <button class="mc-btn" style="margin-top:14px;width:100%" onclick="mcRunMonteCarlo()">▶ Correr Monte Carlo</button>
+        <button class="mc-btn ghost" style="margin-top:8px;width:100%;padding:9px 13px;font-size:12px" onclick="mcCopiarResumen()" title="Copia un texto listo para pegar y pedir lectura">📋 Copiar resumen para análisis</button>
         <div id="mc-mc-note" class="mc-note" style="margin-top:8px"></div>
       </div>
       <div>
@@ -5806,6 +5807,76 @@ function installApp(){
 })();
 
 /* ===== MONTE CARLO · simulación de miles de futuros ===== */
+window._mcLast = null; // últimos resultados Monte Carlo (números)
+window.mcCopiarResumen = function(){
+  const g = id => {
+    const el = document.getElementById(id);
+    if(!el) return '';
+    return (el.value !== undefined && el.value !== '') ? el.value : (el.textContent || '').trim();
+  };
+  const num = id => {
+    const v = parseFloat(String(g(id)).replace(',','.'));
+    return isFinite(v) ? v : null;
+  };
+  const fmt = (n,d=2) => (n==null || !isFinite(n)) ? '—' : Number(n).toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d});
+
+  let txt = '=== RESUMEN POTENCIAL / MONTE CARLO ===\n';
+  txt += 'Capital inicial: ' + fmt(num('pt-cap'), 2) + '\n';
+  txt += 'Riesgo %: ' + fmt(num('pt-risk'), 2) + '\n';
+  txt += 'Win rate %: ' + fmt(num('pt-wr'), 1) + '\n';
+  txt += 'R:R: 1 : ' + fmt(num('pt-rr'), 2) + '\n';
+  txt += 'Trades/semana: ' + fmt(num('pt-tpw'), 0) + '\n';
+  txt += 'Horizonte semanas: ' + fmt(num('pt-weeks'), 0) + '\n';
+
+  // Proyección determinista (parseo simple del bloque pt-res)
+  const ptRes = document.getElementById('pt-res');
+  if(ptRes && ptRes.innerText.trim()){
+    txt += '\n— Proyección (línea promedio) —\n';
+    txt += ptRes.innerText.trim().replace(/\s+/g, ' ').replace(/([a-záéíóúñ])([A-Z$])/g, '$1\n$2') + '\n';
+  }
+
+  const mc = window._mcLast;
+  if(mc){
+    txt += '\n— Monte Carlo (' + (mc.nSims||'?') + ' simulaciones, ' + (mc.nTrades||'?') + ' trades) —\n';
+    txt += 'Capital final mediano: $' + fmt(mc.median, 0) + '\n';
+    txt += 'Promedio: $' + fmt(mc.avg, 0) + '\n';
+    txt += 'Rango p10 – p90: $' + fmt(mc.p10, 0) + ' – $' + fmt(mc.p90, 0) + '\n';
+    txt += 'Prob. terminar ≥ capital inicial: ' + fmt(mc.aboveStart, 1) + '%\n';
+    txt += 'Prob. llegar a +50%: ' + fmt(mc.above50, 1) + '%\n';
+    txt += 'Prob. llegar a +100%: ' + fmt(mc.above100, 1) + '%\n';
+    txt += 'Riesgo de ruina (−' + (mc.ruinPct||30) + '%): ' + fmt(mc.ruinProb, 1) + '%\n';
+    txt += 'Drawdown máx. mediano: ' + fmt(mc.medDD, 1) + '%\n';
+    txt += 'Drawdown máx. p95: ' + fmt(mc.p95DD, 1) + '%\n';
+  } else {
+    txt += '\n— Monte Carlo —\n(No corriste la simulación todavía. Apretá ▶ Correr Monte Carlo y después este botón.)\n';
+  }
+  txt += '\n(Pedime una lectura breve de estos números.)\n';
+
+  function ok(){
+    const note = document.getElementById('mc-mc-note');
+    if(note) note.innerHTML = '<span style="color:var(--green)">✓ Resumen copiado. Pegalo en el chat.</span>';
+    if(typeof showToast === 'function') showToast('Resumen copiado al portapapeles');
+  }
+  function fail(){
+    // fallback: mostrar en prompt para copiar a mano
+    prompt('Copiá este texto (Ctrl+C) y pegalo en el chat:', txt);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(ok).catch(fail);
+  } else {
+    // textarea fallback
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      ok();
+    } catch(e){ fail(); }
+    document.body.removeChild(ta);
+  }
+};
 window.mcRunMonteCarlo = function(){
   const num = id => parseFloat(String(document.getElementById(id)?.value||'').replace(',','.'));
   const C0 = num('pt-cap') || 0;
@@ -5887,6 +5958,13 @@ window.mcRunMonteCarlo = function(){
     const fmt = n => (isFinite(n)?n:0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});
     const fmtP = n => (isFinite(n)?n:0).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
     const col = v => v>=C0?'var(--green)': 'var(--red)';
+
+    window._mcLast = {
+      nSims: nSims, nTrades: nTrades, ruinPct: ruinPct,
+      median: median, avg: avg, p10: p10, p90: p90,
+      aboveStart: aboveStart, above50: above50, above100: above100,
+      ruinProb: ruinProb, medDD: medDD, p95DD: p95DD, C0: C0
+    };
 
     let html = '';
     html += `<div class="mc-rr"><span class="mc-rk">Capital final mediano</span><span class="mc-rv big" style="color:${col(median)}">$${fmt(median)}</span></div>`;
