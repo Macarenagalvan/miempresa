@@ -373,12 +373,20 @@ tbody tr:hover td{background:var(--bg2)}
 .hoy-trade-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px}
 .hoy-trade-row:last-child{border-bottom:none}
 @media (max-width:700px){.hoy-cta-row{grid-template-columns:1fr}}
+
+@media (max-width:900px){
+  .rutina-two-col{grid-template-columns:1fr !important}
+  .rutina-proto{grid-template-columns:1fr 1fr !important}
+}
+@media (max-width:560px){
+  .rutina-proto{grid-template-columns:1fr !important}
+}
 </style>
 <style id="mc-theme">
 :root{ --bg:#0a1219; --bg2:#0f1c26; --bg3:#14242f; --bg4:#1b2f3b; --border:#1f3340; --border2:#2b4654; --text:#e6eef2; --text2:#8aa0ac; --text3:#566f7c; --accent:#34c5d8; --accent2:#0c3540; --green:#3ed9a4; --green2:#0c3a2c; --red:#f0606e; --red2:#3d1418; --amber:#f5b73f; --amber2:#3d2a06; --purple:#a78bfa; --purple2:#23234a; --pink:#f472b6; --pink2:#3d1030; }
 html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4ebef; --border:#dce4e9; --border2:#c5d0d7; --text:#12242d; --text2:#52656f; --text3:#8598a2; --accent:#0e93a8; --accent2:#d6eff3; --green:#0f8a62; --green2:#dcf3ea; --red:#cf4250; --red2:#fbe3e6; --amber:#b07916; --amber2:#f6ecd7; --purple:#7c5cf0; --purple2:#e9e3fb; --pink:#c43f7e; --pink2:#fbe6f0; }
 </style>
-<script>(function(){try{var m=localStorage.getItem('mc_theme')||'auto';var h=new Date().getHours();var t=(m==='auto')?((h>=7&&h<19)?'light':'dark'):m;document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+<script>(function(){try{localStorage.setItem('mc_theme','dark');document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body>
 <button class="menu-toggle" id="menu-toggle" onclick="toggleSidebar()" aria-label="Menú">
@@ -417,6 +425,10 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
       ASR
     </div>
+    <div class="nav-item" onclick="showPage('rutina',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Rutina
+    </div>
     <div class="nav-item" onclick="showPage('mc-plan',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>
       Trading Plan
@@ -447,27 +459,30 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 
 <!-- REGISTRO -->
 <div id="page-hoy" class="page active">
-  <div class="page-title">Hoy</div>
-  <div class="page-sub" id="hoy-sub">Abrí la oficina · check-in · un paso a la vez</div>
+  <div class="page-title" id="hoy-greeting">Buen día, Trader</div>
+  <div class="page-sub" id="hoy-sub">Tu escritorio de trabajo · un paso a la vez</div>
 
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px">
-    <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:6px">Cuenta activa</div>
-    <div id="hoy-acc-name" style="font-size:15px;font-weight:600;margin-bottom:4px">–</div>
-    <div class="hoy-cap" id="hoy-cap">$ –</div>
-    <div id="hoy-cap-sub" style="font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace;margin-top:4px"></div>
-  </div>
-
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px">
-    <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:10px">Check-in · ¿qué día sos?</div>
-    <div class="pills" id="hoy-version-pills">
-      <div class="pill p-err-red" data-v="emergencia" onclick="hoySelVersion(this,'emergencia')">Emergencia · cerrar</div>
-      <div class="pill p-mood-amber" data-v="media" onclick="hoySelVersion(this,'media')">Media · −50%</div>
-      <div class="pill p-mood-green" data-v="flujo" onclick="hoySelVersion(this,'flujo')">Flujo · plan</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace">Tus cuentas</div>
+      <button type="button" onclick="showPage('cartera', document.querySelector('.nav-item[onclick*=cartera]'))" style="padding:4px 10px;background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--text2);cursor:pointer;font-size:11px;font-family:'Roboto Mono',monospace">Gestionar →</button>
     </div>
-    <div id="hoy-version-hint" style="margin-top:10px;font-size:13px;color:var(--text2);line-height:1.5">Elegí antes de operar. Honestidad > motivación.</div>
+    <div id="hoy-accounts-list"></div>
+    <div id="hoy-cap-sub" style="font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace;margin-top:10px"></div>
   </div>
 
-  <div class="hoy-cta-row">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px">
+    <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:6px">Estado de hoy · decisión de riesgo</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:12px">Antes de abrir el mercado, mirá cómo estás <b style="color:var(--text)">de verdad</b>. No es un test: es elegir con qué tamaño (o si operás). Se guarda solo en este dispositivo, del día.</div>
+    <div class="pills" id="hoy-version-pills">
+      <div class="pill p-err-red" data-v="emergencia" onclick="hoySelVersion(this,'emergencia')">Mal día · no opero</div>
+      <div class="pill p-mood-amber" data-v="media" onclick="hoySelVersion(this,'media')">Regular · mitad de riesgo</div>
+      <div class="pill p-mood-green" data-v="flujo" onclick="hoySelVersion(this,'flujo')">Bien · riesgo normal</div>
+    </div>
+    <div id="hoy-version-hint" style="margin-top:10px;font-size:13px;color:var(--text2);line-height:1.5">Elegí una. Si estás mal y aun así operás, al menos lo sabés.</div>
+  </div>
+
+  <div class="hoy-cta-row" style="grid-template-columns:repeat(2,1fr)">
     <button type="button" class="hoy-cta primary" onclick="showPage('registro', document.querySelector('.nav-item[onclick*=registro]'))">
       <div class="hoy-cta-title">Registrar trade</div>
       <div class="hoy-cta-sub">Wizard 3 pasos</div>
@@ -480,6 +495,24 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <div class="hoy-cta-title">Cartera</div>
       <div class="hoy-cta-sub">Equity y cuentas</div>
     </button>
+    <button type="button" class="hoy-cta" onclick="showPage('rutina', document.querySelector('.nav-item[onclick*=rutina]'))">
+      <div class="hoy-cta-title">Rutina</div>
+      <div class="hoy-cta-sub">Proceso diario / semanal</div>
+    </button>
+  </div>
+
+  <div id="hoy-weekly" style="display:none;background:var(--bg2);border:1px solid var(--purple);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:16px">
+    <div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);font-family:'Roboto Mono',monospace;margin-bottom:6px">Review semanal</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:10px">Es domingo o lunes: 40 min de review. Una sola regla para la semana. Sin esto, la racha se vuelve suerte.</div>
+    <button type="button" onclick="showPage('asr')" style="padding:7px 12px;background:var(--purple2);border:1px solid var(--purple);color:var(--purple);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:600;font-family:'Outfit',sans-serif;margin-right:8px">Abrir ASR / Review →</button>
+    <button type="button" onclick="showPage('rutina')" style="padding:7px 12px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-size:12px;font-family:'Outfit',sans-serif">Ver rutina</button>
+  </div>
+
+  <div id="hoy-asr-pending" style="display:none;background:var(--bg2);border:1px solid var(--amber);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:16px">
+    <div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);font-family:'Roboto Mono',monospace;margin-bottom:6px">Pendiente · ASR</div>
+    <div id="hoy-asr-pending-text" style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:10px"></div>
+    <div id="hoy-asr-pending-list" style="font-size:12px;color:var(--text3);font-family:'Roboto Mono',monospace;line-height:1.7;margin-bottom:10px"></div>
+    <button type="button" onclick="showPage('asr')" style="padding:7px 12px;background:var(--amber2);border:1px solid var(--amber);color:var(--amber);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:600;font-family:'Outfit',sans-serif">Ir a ASR →</button>
   </div>
 
   <div class="section-label">Últimos trades</div>
@@ -497,6 +530,8 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <span>✎ Editando operación · los cambios reemplazarán la original</span>
     <button onclick="cancelEdit()">Cancelar edición</button>
   </div>
+
+  <div id="reg-day-banner" style="display:none;padding:12px 14px;border-radius:var(--radius);margin-bottom:14px;font-size:13px;line-height:1.5;font-family:'Outfit',sans-serif"></div>
 
   <div class="reg-steps-bar" id="reg-steps-bar">
     <div class="reg-step-tab on" data-step="1" onclick="goRegStep(1)"><div class="rst-num">Paso 1</div><div class="rst-label">Setup</div></div>
@@ -775,6 +810,13 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   <div class="filters-bar">
     <select class="filter-sel" id="f-account" onchange="renderTable()"><option value="">Todas las cuentas</option></select>
     <select class="filter-sel" id="f-strat" onchange="renderTable()"><option value="">Todas las estrategias</option><option>Blue</option><option>Red</option><option>Pink</option><option>White</option><option>Black</option><option>Green</option></select>
+    <select class="filter-sel" id="f-score" onchange="renderTable()" title="Filtro por score de checklist">
+      <option value="">Todo score</option>
+      <option value="high">Score ≥ 80%</option>
+      <option value="mid">Score 50–79%</option>
+      <option value="low">Score &lt; 50%</option>
+      <option value="none">Sin score</option>
+    </select>
     <select class="filter-sel" id="f-result" onchange="renderTable()"><option value="">Todos los resultados</option><option>Win</option><option>Loss</option><option>BE</option><option>Open</option></select>
     <select class="filter-sel" id="f-tipo" onchange="renderTable()"><option value="">Day / Swing / Scalp</option><option>Day</option><option>Swing</option><option>Scalp</option></select>
     <select class="filter-sel" id="f-dir" onchange="renderTable()"><option value="">Long / Short</option><option>Long</option><option>Short</option></select>
@@ -808,6 +850,13 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <select class="filter-sel" id="sf-mode" onchange="renderStats()"><option value="">Operado (sin backtest)</option><option value="ALL">Operado + Backtest</option><option value="Backtest">Solo backtest</option></select>
       <select class="filter-sel" id="sf-tipo" onchange="renderStats()"><option value="">Todos los estilos</option><option>Day</option><option>Swing</option><option>Scalp</option></select>
       <select class="filter-sel" id="sf-strat" onchange="renderStats()"><option value="">Todas las estrategias</option><option>Blue</option><option>Red</option><option>Pink</option><option>White</option><option>Black</option><option>Green</option></select>
+      <select class="filter-sel" id="sf-score" onchange="renderStats()" title="Filtro por score de checklist">
+        <option value="">Todo score</option>
+        <option value="high">Score ≥ 80%</option>
+        <option value="mid">Score 50–79%</option>
+        <option value="low">Score &lt; 50%</option>
+        <option value="none">Sin score</option>
+      </select>
       <select class="filter-sel" id="sf-dir" onchange="renderStats()"><option value="">Long + Short</option><option>Long</option><option>Short</option></select>
       <select class="filter-sel" id="sf-result" onchange="renderStats()"><option value="">Todos los resultados</option><option value="Win">TP</option><option value="Loss">SL</option><option value="BE">BE</option><option value="Open">Abierto</option></select>
       <select class="filter-sel" id="sf-session" onchange="renderStats()"><option value="">Todas las sesiones</option><option>Sydney</option><option>Tokio</option><option>Londres</option><option>New York</option></select>
@@ -838,6 +887,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   </div>
 
   <div class="charts-grid">
+    <div class="chart-card"><div class="chart-title">Win rate por score checklist</div><div id="chart-score"></div></div>
     <div class="chart-card"><div class="chart-title">Win rate por estrategia</div><div id="chart-strat"></div></div>
     <div class="chart-card"><div class="chart-title">Win rate por estilo</div><div id="chart-style"></div></div>
     <div class="chart-card"><div class="chart-title">Win rate por dirección · Long vs Short</div><div id="chart-dir"></div></div>
@@ -1040,6 +1090,67 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 
   <div class="section-label" style="margin-top:30px">ASRs guardados</div>
   <div id="asr-list"></div>
+</div>
+
+
+<div id="page-rutina" class="page">
+  <div class="page-title">Rutina</div>
+  <div class="page-sub">Oficina de trading · proceso escrito · no improvisar</div>
+
+  <div style="background:var(--bg2);border:1px solid var(--accent);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.55">
+    <b style="color:var(--text)">Regla de oro:</b> el trade es el 20%. El resto es checklist, registro y review. Si saltás el bloque de cierre, al día siguiente no operás hasta ponerte al día.
+  </div>
+
+  <div class="section-label">Contrato mínimo · todos los días de trading</div>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.7">
+    1. Estado del día en la home (mal / regular / bien) antes de TV<br>
+    2. Checklist del journal <b style="color:var(--text)">antes</b> de cada entrada — marcá solo lo real<br>
+    3. Registro + ASR el <b style="color:var(--text)">mismo día</b> (o queda pendiente en la home)<br>
+    4. Máx. 2 trades abiertos · 3 losses → tamaño 0,5% · 5 en la semana → stop
+  </div>
+
+  <div class="section-label">Rutina diaria</div>
+  <div class="tbl-wrap" style="margin-bottom:16px;overflow-x:auto">
+    <table>
+      <thead><tr><th>Bloque</th><th>Tiempo</th><th>Qué hacés</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:600">Apertura</td><td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)">10–15 min</td><td style="font-size:13px;color:var(--text2)">Home → estado del día · leer 3 reglas de oro del Plan</td></tr>
+        <tr><td style="font-weight:600">Prep</td><td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)">15 min</td><td style="font-size:13px;color:var(--text2)">Watchlist + niveles. Sin entradas. Lista escrita de 1–3 setups</td></tr>
+        <tr><td style="font-weight:600">Ventana</td><td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)">fija</td><td style="font-size:13px;color:var(--text2)">Solo setups de la lista + checklist antes del click</td></tr>
+        <tr><td style="font-weight:600">Cierre</td><td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)">15 min</td><td style="font-size:13px;color:var(--text2)">Registrar trades + ASR. Sin esto → mañana no hay sesión</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px" class="rutina-two-col">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;font-size:13px;color:var(--text2);line-height:1.6">
+      <div style="font-weight:700;color:var(--text);margin-bottom:8px">Semanal · 40 min</div>
+      Review en ASR → copiar resumen<br>
+      Score ≥80% ¿se cumplió?<br>
+      Error ASR #1 de la semana<br>
+      <b style="color:var(--text)">Una</b> sola regla para la semana siguiente
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;font-size:13px;color:var(--text2);line-height:1.6">
+      <div style="font-weight:700;color:var(--text);margin-bottom:8px">Mensual · 60–90 min</div>
+      Stats del mes + filtro por score<br>
+      Monte Carlo con números reales<br>
+      ¿El edge soporta +2–6%?<br>
+      Export respaldo JSON
+    </div>
+  </div>
+
+  <div class="section-label">Tras una pérdida · 5 pasos</div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px" class="rutina-proto">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--text2);line-height:1.4"><b style="color:var(--accent);font-family:'Roboto Mono',monospace">01</b><br>Manos fuera del teclado</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--text2);line-height:1.4"><b style="color:var(--accent);font-family:'Roboto Mono',monospace">02</b><br>Nombrá: «estoy frustrada»</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--text2);line-height:1.4"><b style="color:var(--accent);font-family:'Roboto Mono',monospace">03</b><br>Dato: pérdida X · stop del plan</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--text2);line-height:1.4"><b style="color:var(--accent);font-family:'Roboto Mono',monospace">04</b><br>¿Setup válido o recuperar?</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--text2);line-height:1.4"><b style="color:var(--accent);font-family:'Roboto Mono',monospace">05</b><br>Volvé solo desde el plan</div>
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;font-size:13px;color:var(--text2);line-height:1.55">
+    <b style="color:var(--text)">Frase ancla:</b> No busques el día perfecto. Evitá el peor día. La constancia viene sola.
+  </div>
 </div>
 
 <div id="page-mc-plan" class="page">
@@ -1500,24 +1611,37 @@ function hoySelVersion(el, v){
   hoySaveVersion(v);
   const hint = document.getElementById('hoy-version-hint');
   const map = {
-    emergencia: '<b style="color:var(--red)">Cerrar plataforma.</b> Hoy no operás. Elevás el suelo.',
-    media: '<b style="color:var(--amber)">Tamaño al 50%.</b> Solo setups claros. Un desliz y cerrás.',
-    flujo: '<b style="color:var(--green)">Plan completo.</b> Checklist real. Máx 2 abiertos.'
+    emergencia: '<b style="color:var(--red)">No operás hoy.</b> Cerrá TV. Proteger la cuenta es el trade del día.',
+    media: '<b style="color:var(--amber)">Riesgo a la mitad</b> (Day 0,5% · Scalp 0,25%). Solo setups claros.',
+    flujo: '<b style="color:var(--green)">Riesgo normal del plan</b> (Day 1% · Scalp 0,5%). Checklist honesta. Máx 2 abiertos.'
   };
   if(hint) hint.innerHTML = map[v] || '';
 }
 function renderHoy(){
-  const acc = (typeof getActiveAccount==='function') ? getActiveAccount() : null;
-  const nameEl = document.getElementById('hoy-acc-name');
-  const capEl = document.getElementById('hoy-cap');
+  const listEl = document.getElementById('hoy-accounts-list');
   const subEl = document.getElementById('hoy-cap-sub');
-  if(nameEl) nameEl.textContent = acc ? acc.name : 'Sin cuenta';
-  let cap = 0;
-  try {
-    if(acc && typeof getAccountCapital==='function') cap = getAccountCapital(acc.id);
-  } catch(e){}
-  if(capEl) capEl.textContent = '$ ' + (isFinite(cap) ? cap.toFixed(2) : '–');
+  if(listEl){
+    const accs = (accounts||[]).filter(a=>!a.archived);
+    if(!accs.length){
+      listEl.innerHTML = '<div style="font-size:13px;color:var(--text3)">Sin cuentas · creá una en Cartera</div>';
+    } else {
+      listEl.innerHTML = accs.map(a=>{
+        let c = 0;
+        try { if(typeof getAccountCapital==='function') c = getAccountCapital(a.id); } catch(e){}
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">'
+          + '<div style="font-weight:600;font-size:14px">'+escapeHtml(a.name)+'</div>'
+          + '<div style="font-family:Roboto Mono,monospace;font-weight:600;color:var(--accent)">$ '+(isFinite(c)?c.toFixed(2):'–')+'</div>'
+          + '</div>';
+      }).join('');
+    }
+  }
   if(subEl) subEl.textContent = (trades||[]).length + ' ops en el journal · ' + hoyTodayKey();
+  const greet = document.getElementById('hoy-greeting');
+  if(greet){
+    let nm = '';
+    try { nm = (localStorage.getItem('tj_trader_name')||'').trim(); } catch(e){}
+    greet.textContent = nm ? ('Buen día, ' + nm) : 'Buen día, Trader';
+  }
 
   const ver = hoyLoadVersion();
   document.querySelectorAll('#hoy-version-pills .pill').forEach(p=>{
@@ -1526,6 +1650,43 @@ function renderHoy(){
   if(ver){
     const el = document.querySelector('#hoy-version-pills .pill[data-v="'+ver+'"]');
     if(el) hoySelVersion(el, ver);
+  }
+
+  // Review semanal: domingo o lunes
+  const weekBox = document.getElementById('hoy-weekly');
+  if(weekBox){
+    const dow = new Date().getDay(); // 0=dom, 1=lun
+    weekBox.style.display = (dow === 0 || dow === 1) ? 'block' : 'none';
+  }
+
+  // Trades operados cerrados sin ASR (últimos 14 días)
+  const pendBox = document.getElementById('hoy-asr-pending');
+  const pendTxt = document.getElementById('hoy-asr-pending-text');
+  const pendList = document.getElementById('hoy-asr-pending-list');
+  if(pendBox){
+    const asrIds = new Set((asrs||[]).map(a=>String(a.tradeId)));
+    const desde = new Date(); desde.setDate(desde.getDate()-14);
+    const desdeStr = desde.toISOString().slice(0,10);
+    const pending = (trades||[]).filter(t=>{
+      if(t.mode === 'Backtest') return false;
+      if(!t.resultado || t.resultado === 'Open') return false;
+      if((t.fecha||'') < desdeStr) return false;
+      return !asrIds.has(String(t.id));
+    }).sort((a,b)=>((b.fecha||'')+' '+(b.hora||'')).localeCompare((a.fecha||'')+' '+(a.hora||'')));
+    if(pending.length){
+      pendBox.style.display = 'block';
+      if(pendTxt) pendTxt.textContent = pending.length === 1
+        ? 'Tenés 1 trade cerrado sin ASR. Podés hacerlo cuando quieras — no se pierde.'
+        : 'Tenés '+pending.length+' trades cerrados sin ASR (últimos 14 días). No se pierden: completá cuando puedas.';
+      if(pendList){
+        pendList.innerHTML = pending.slice(0,5).map(t=>{
+          return (t.fecha||'')+' · '+(t.activo||'?')+' · '+(t.estrategia||'')+' · '+(t.resultado||'');
+        }).join('<br>');
+        if(pending.length > 5) pendList.innerHTML += '<br>… y '+(pending.length-5)+' más';
+      }
+    } else {
+      pendBox.style.display = 'none';
+    }
   }
 
   const box = document.getElementById('hoy-last-trades');
@@ -1551,17 +1712,81 @@ function renderHoy(){
 }
 
 
+
+/* ===== Defaults al abrir Nueva operación (trade nuevo) ===== */
+
+function updateRegDayBanner(){
+  const el = document.getElementById('reg-day-banner');
+  if(!el) return;
+  let v = '';
+  try {
+    if(typeof hoyLoadVersion==='function') v = hoyLoadVersion() || '';
+  } catch(e){}
+  if(v === 'emergencia'){
+    el.style.display = 'block';
+    el.style.background = 'var(--red2)';
+    el.style.border = '1px solid var(--red)';
+    el.style.color = 'var(--red)';
+    el.innerHTML = '<b>Hoy marcaste: mal día · no opero.</b> El plan dice cerrar. Si igual cargás un trade, que sea consciente — y el ASR tiene que ser honesto.';
+  } else if(v === 'media'){
+    el.style.display = 'block';
+    el.style.background = 'var(--amber2)';
+    el.style.border = '1px solid var(--amber)';
+    el.style.color = 'var(--amber)';
+    el.innerHTML = '<b>Hoy marcaste: regular · mitad de riesgo.</b> Day 0,5% · Scalp 0,25%. Solo setups claros.';
+  } else {
+    el.style.display = 'none';
+    el.innerHTML = '';
+  }
+}
+
+function applyTradeDefaults(){
+  if(editingId) return;
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const fecha = document.getElementById('inp-fecha');
+  if(fecha && !fecha.value) fecha.value = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+  const hora = document.getElementById('inp-hora');
+  if(hora && !hora.value) hora.value = pad(now.getHours())+':'+pad(now.getMinutes());
+  // Sesión sugerida por hora local (solo si no hay ninguna marcada)
+  if(!curSession || !curSession.length){
+    const h = now.getHours();
+    let s = 'Londres';
+    if(h >= 21 || h < 7) s = 'Sydney';
+    else if(h < 9) s = 'Tokio';
+    else if(h < 14) s = 'Londres';
+    else s = 'New York';
+    document.querySelectorAll('#sessionPills .pill').forEach(p=>{
+      p.classList.toggle('on', p.textContent.trim() === s);
+    });
+    curSession = [s];
+  }
+  // Modo Operado por defecto si no eligió
+  if(!curMode){
+    document.querySelectorAll('.p-mode').forEach(p=>{
+      p.classList.toggle('on', p.textContent.trim() === 'Operado');
+    });
+    curMode = 'Operado';
+  }
+  // Capital de la cuenta elegida en el selector del form
+  if(typeof onAccountChange === 'function') onAccountChange();
+  if(typeof updateRegDayBanner === 'function') updateRegDayBanner();
+}
+
 function showPage(id, el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  el.classList.add('active');
+  const page = document.getElementById('page-'+id);
+  if(page) page.classList.add('active');
+  if(!el) el = document.querySelector('.nav-item[onclick*="\''+id+'\'"]') || document.querySelector('.nav-item[onclick*="'+id+'"]');
+  if(el) el.classList.add('active');
   if(id==='historial') renderTable();
   if(id==='estadisticas') renderStats();
   if(id==='cartera') renderCartera();
   if(id==='asr'){ refreshAsrSelect(); renderAsrList(); }
   if(id==='potencial' && typeof ptInit==='function') ptInit();
   if(id==='hoy' && typeof renderHoy==='function') renderHoy();
+  if(id==='registro'){ if(typeof applyTradeDefaults==='function') applyTradeDefaults(); if(typeof updateRegDayBanner==='function') updateRegDayBanner(); }
   // En móvil, cerrar sidebar al navegar
   if(window.innerWidth <= 900){
     const sidebar = document.getElementById('sidebar');
@@ -2234,6 +2459,21 @@ function getLastOperadoCapital(){
   return null;
 }
 
+
+function openAsrForTrade(tradeId){
+  showPage('asr');
+  if(typeof refreshAsrSelect==='function') refreshAsrSelect();
+  const sel = document.getElementById('asr-trade-link');
+  if(sel){
+    sel.value = String(tradeId);
+    if(typeof loadAsrTradePreview==='function') loadAsrTradePreview();
+  }
+  const fecha = document.getElementById('asr-fecha');
+  if(fecha && !fecha.value) fecha.value = new Date().toISOString().slice(0,10);
+  const box = document.getElementById('asr-conclusion');
+  if(box) setTimeout(()=>box.focus(), 200);
+}
+
 function addTrade(){
   const activo = document.getElementById('inp-activo').value.trim();
   if(!activo){ alert('Ingresá el activo/par'); return; }
@@ -2290,6 +2530,8 @@ function addTrade(){
     const _p = parseFloat(String(t.pnl).replace(',','.').replace('+','') );
     t.resultado = isNaN(_p) ? 'BE' : (_p>0 ? 'Win' : (_p<0 ? 'Loss' : 'BE'));
   }
+  const savedId = t.id;
+  const wasNew = !editingId;
   if(editingId){
     const idx = trades.findIndex(x=>x.id===editingId);
     if(idx>=0){
@@ -2310,6 +2552,14 @@ function addTrade(){
     checkAutoExport();
   }
   resetForm();
+  // Atajo ASR: cierra el loop el mismo día (solo trades nuevos cerrados, no backtest abierto)
+  if(wasNew && t.mode !== 'Backtest' && t.resultado && t.resultado !== 'Open'){
+    setTimeout(function(){
+      if(confirm('Trade guardado.\n\n¿Hacer ASR ahora?\n(error / estado mental / conclusión · 2 minutos)')){
+        openAsrForTrade(savedId);
+      }
+    }, 250);
+  }
 }
 
 function editTrade(id){
@@ -2488,11 +2738,14 @@ function resetForm(){
   curImgNotes = {};
   ['disp-riesgo-pct','disp-rr-final','disp-bp-neto'].forEach(id=>{ const el=document.getElementById(id); if(el){el.textContent='–';el.style.color='var(--accent)';} });
   clearImages();
-  // Resetear cuenta seleccionada a la activa
+  // Cuenta del selector: última usada o la primera de la lista (no “la única activa”)
   const accSel = document.getElementById('inp-account');
-  if(accSel) accSel.value = activeAccountId || (accounts[0]?.id||'');
-  // Auto-rellenar capital inicial con el capital actual de esa cuenta
-  onAccountChange();
+  if(accSel){
+    const prefer = activeAccountId && accounts.some(a=>a.id===activeAccountId) ? activeAccountId : (accounts[0]?.id||'');
+    if(prefer) accSel.value = prefer;
+  }
+  if(typeof applyTradeDefaults==='function') applyTradeDefaults();
+  else if(typeof onAccountChange==='function') onAccountChange();
 }
 
 const stratBC = {Blue:'b-blue',Red:'b-red',Pink:'b-pink',White:'b-white',Black:'b-black',Green:'b-green'};
@@ -2514,12 +2767,25 @@ function renderTable(){
   const fm=document.getElementById('f-mercado').value;
   const fses=document.getElementById('f-session').value;
   const fmode=document.getElementById('f-mode').value;
-  let filtered = trades.filter(t=>
-    (!fa||t.accountId===fa)&&
-    (!fs||t.estrategia===fs)&&(!fr||t.resultado===fr)&&
-    (!ft||t.tipo===ft)&&(!fd||t.dir===fd)&&(!fm||t.mercado===fm)&&
-    (!fses||(t.sesion||'').includes(fses))&&(fmode==='' ? t.mode!=='Backtest' : (fmode==='ALL' ? true : t.mode===fmode))
-  );
+  const fscore=(document.getElementById('f-score')||{}).value||'';
+  let filtered = trades.filter(t=>{
+    if(fa && t.accountId!==fa) return false;
+    if(fs && t.estrategia!==fs) return false;
+    if(fr && t.resultado!==fr) return false;
+    if(ft && t.tipo!==ft) return false;
+    if(fd && t.dir!==fd) return false;
+    if(fm && t.mercado!==fm) return false;
+    if(fses && !(t.sesion||'').includes(fses)) return false;
+    if(fmode==='' ? t.mode==='Backtest' : (fmode!=='ALL' && t.mode!==fmode)) return false;
+    if(fscore){
+      const pct = typeof getTradeScorePct==='function' ? getTradeScorePct(t) : null;
+      if(fscore==='none' && pct!==null) return false;
+      if(fscore==='high' && !(pct!==null && pct>=80)) return false;
+      if(fscore==='mid' && !(pct!==null && pct>=50 && pct<80)) return false;
+      if(fscore==='low' && !(pct!==null && pct<50)) return false;
+    }
+    return true;
+  });
   // Ordenar por fecha/hora: las últimas ejecutadas arriba, las más antiguas abajo
   filtered = filtered.slice().sort((a,b)=>{
     const ka = (a.fecha||'') + ' ' + (a.hora||'00:00');
@@ -2552,7 +2818,7 @@ function renderTable(){
       <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;color:${accColor};background:${accColor}15;border:1px solid ${accColor}40;font-family:'Roboto Mono',monospace">${escapeHtml(accName)}</span></td>
       <td style="font-size:11px;font-weight:500;color:${t.mode==='Operado'?'var(--green)':(t.mode==='Backtest'?'var(--text2)':'var(--text3)')}">${t.mode||'–'}</td>
       <td><span class="badge ${stratBC[t.estrategia]||''}">${t.estrategia}${t.variante?' · '+t.variante:''}</span></td>
-      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--accent)">${(t.checklistScore&&t.checklistScore.total)?(t.checklistScore.done+'/'+t.checklistScore.total):'–'}</td>
+      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:${(()=>{const p=typeof getTradeScorePct==='function'?getTradeScorePct(t):null;if(p===null)return'var(--text3)';return p>=80?'var(--green)':p>=50?'var(--amber)':'var(--red)';})()}">${(t.checklistScore&&t.checklistScore.total)?(t.checklistScore.done+'/'+t.checklistScore.total+(t.checklistScore.pct!=null?' · '+t.checklistScore.pct+'%':'')):'–'}</td>
       <td style="font-size:11px;color:var(--text3)">${t.tipo||''}</td>
       <td style="font-weight:600">${t.activo}</td>
       <td class="${t.dir==='Long'?'b-long':(t.dir==='Short'?'b-short':'')}" style="font-size:12px">${t.dir||'–'}</td>
@@ -2578,23 +2844,39 @@ function delTrade(id){
 
 const stratColors={Blue:'#4f9cf9',Red:'#f05252',Pink:'#f472b6',White:'#c0c9d4',Black:'#e8edf2',Green:'#3ecf8e'};
 
+function getTradeScorePct(t){
+  const sc = t && t.checklistScore;
+  if(!sc || !sc.total) return null;
+  if(typeof sc.pct === 'number' && !isNaN(sc.pct)) return sc.pct;
+  return Math.round((sc.done / sc.total) * 100);
+}
+
 function getStatsFiltered(){
   const f = id => document.getElementById(id)?.value || '';
   const fa = f('sf-account'), fm = f('sf-mode'), ft = f('sf-tipo'), fs = f('sf-strat');
   const fd = f('sf-dir'), fres = f('sf-result'), fses = f('sf-session'), fmer = f('sf-mercado');
+  const fscore = f('sf-score');
   const ffrom = f('sf-from'), fto = f('sf-to');
-  return trades.filter(t =>
-    (!fa || t.accountId===fa) &&
-    (fm==='' ? t.mode!=='Backtest' : (fm==='ALL' ? true : t.mode===fm)) &&
-    (!ft || t.tipo===ft) &&
-    (!fs || t.estrategia===fs) &&
-    (!fd || t.dir===fd) &&
-    (!fres || t.resultado===fres) &&
-    (!fses || (t.sesion||'').includes(fses)) &&
-    (!fmer || t.mercado===fmer) &&
-    (!ffrom || (t.fecha||'') >= ffrom) &&
-    (!fto || (t.fecha||'') <= fto)
-  );
+  return trades.filter(t => {
+    if(fa && t.accountId!==fa) return false;
+    if(fm==='' ? t.mode==='Backtest' : (fm!=='ALL' && t.mode!==fm)) return false;
+    if(ft && t.tipo!==ft) return false;
+    if(fs && t.estrategia!==fs) return false;
+    if(fd && t.dir!==fd) return false;
+    if(fres && t.resultado!==fres) return false;
+    if(fses && !(t.sesion||'').includes(fses)) return false;
+    if(fmer && t.mercado!==fmer) return false;
+    if(ffrom && (t.fecha||'') < ffrom) return false;
+    if(fto && (t.fecha||'') > fto) return false;
+    if(fscore){
+      const pct = getTradeScorePct(t);
+      if(fscore==='none' && pct!==null) return false;
+      if(fscore==='high' && !(pct!==null && pct>=80)) return false;
+      if(fscore==='mid' && !(pct!==null && pct>=50 && pct<80)) return false;
+      if(fscore==='low' && !(pct!==null && pct<50)) return false;
+    }
+    return true;
+  });
 }
 
 function setStatsPreset(preset){
@@ -2625,7 +2907,7 @@ function setStatsPreset(preset){
 }
 
 function resetStatsFilters(){
-  ['sf-account','sf-mode','sf-tipo','sf-strat','sf-dir','sf-result','sf-session','sf-mercado','sf-from','sf-to'].forEach(id=>{
+  ['sf-account','sf-mode','sf-tipo','sf-strat','sf-score','sf-dir','sf-result','sf-session','sf-mercado','sf-from','sf-to'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.value='';
   });
   document.querySelectorAll('.filter-preset-btn').forEach(b=>b.classList.remove('on'));
@@ -2676,6 +2958,15 @@ function renderStats(){
     <div class="kpi"><div class="kpi-label">RR promedio</div><div class="kpi-val">${rrAvg.toFixed(2)}R</div></div>
     <div class="kpi"><div class="kpi-label">Operaciones abiertas</div><div class="kpi-val">${opens}</div></div>
   `;
+  // Score promedio de los filtrados que tienen checklist
+  const scored = t.map(x=>getTradeScorePct(x)).filter(p=>p!==null);
+  const avgScore = scored.length ? Math.round(scored.reduce((a,b)=>a+b,0)/scored.length) : null;
+  // insertar KPI score si hay espacio visual: lo agregamos al grid
+  const kpiEl = document.getElementById('kpi-grid');
+  if(kpiEl && avgScore!==null){
+    kpiEl.innerHTML += `<div class="kpi"><div class="kpi-label">Score checklist prom.</div><div class="kpi-val" style="color:${avgScore>=80?'var(--green)':avgScore>=50?'var(--amber)':'var(--red)'}">${avgScore}%</div><div class="kpi-sub">${scored.length} con score</div></div>`;
+  }
+
 
   // === MÉTRICAS AVANZADAS estilo Excel ===
   // PnL bruto positivo / negativo en R (usamos rr como proxy: win=rr, loss=-1, be=0)
@@ -2716,6 +3007,36 @@ function renderStats(){
     <div class="adv-metric"><div class="adv-metric-label">Profit Factor</div><div class="adv-metric-val" style="color:${pf>=1?'var(--green)':'var(--red)'}">${pf===Infinity?'∞':pf.toFixed(3)}</div><div class="adv-metric-sub">${pf>=1?'sistema rentable':'sistema en pérdida'}</div></div>
     <div class="adv-metric" style="grid-column:span 4"><div class="adv-metric-label">BE %</div><div class="adv-metric-val" style="color:var(--amber)">${bePct.toFixed(2)}%</div><div class="adv-metric-sub">${bes} trades en break-even</div></div>
   `;
+
+  // === Win rate por score checklist ===
+  const scoreBands = [
+    { key:'high', label:'Score ≥ 80%', test: p => p!==null && p>=80, color:'#3ecf8e' },
+    { key:'mid', label:'Score 50–79%', test: p => p!==null && p>=50 && p<80, color:'#f59e0b' },
+    { key:'low', label:'Score < 50%', test: p => p!==null && p<50, color:'#f05252' },
+    { key:'none', label:'Sin score', test: p => p===null, color:'#8a97a8' }
+  ];
+  const scoreChart = document.getElementById('chart-score');
+  if(scoreChart){
+    const rows = scoreBands.map(b=>{
+      const subset = t.filter(x=>b.test(getTradeScorePct(x)));
+      const w = subset.filter(x=>x.resultado==='Win').length;
+      const l = subset.filter(x=>x.resultado==='Loss').length;
+      const closed = w+l;
+      const wrate = closed ? Math.round(w/closed*100) : 0;
+      const n = subset.length;
+      return { ...b, wrate, n, closed };
+    }).filter(x=>x.n>0);
+    if(!rows.length){
+      scoreChart.innerHTML = '<div class="no-data">// Sin datos de score todavía</div>';
+    } else {
+      scoreChart.innerHTML = rows.map(x=>`
+        <div class="bar-row">
+          <span class="bar-lbl">${x.label}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${x.closed?x.wrate:0}%;background:${x.color}">${x.closed&&x.wrate>15?x.wrate+'%':''}</div></div>
+          <span class="bar-cnt">${x.n} ops · ${x.closed?x.wrate+'% WR':'–'}</span>
+        </div>`).join('');
+    }
+  }
 
   // === Win rate por estrategia ===
   const strats = ['Blue','Red','Pink','White','Black','Green'];
