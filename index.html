@@ -2424,7 +2424,7 @@ function renderTable(){
       <td style="font-size:11px;color:var(--purple)">${t.orden||'–'}</td>
       <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2)">${t.lotaje||'–'}</td>
       <td style="font-family:'Roboto Mono',monospace;font-weight:600">${t.rr?t.rr+'R':'–'}</td>
-      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:${(String(t.pnl||'').trim().startsWith('+')||parseFloat(String(t.pnl||'').replace(',','.'))>0)?'var(--green)':(String(t.pnl||'').trim().startsWith('-')||parseFloat(String(t.pnl||'').replace(',','.'))<0)?'var(--red)':'var(--text3)')}">${t.pnl||'–'}</td>
+      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:${(function(p){var n=parseFloat(String(p||'').replace('+','').replace(',','.'));if(!isNaN(n))return n>0?'var(--green)':n<0?'var(--red)':'var(--text3)';return 'var(--text3)';})(t.pnl)}">${t.pnl||'–'}</td>
       <td><span class="badge ${resBC[t.resultado]||''}" ${t.cierreManual?`title="Cierre manual${t.cierreMotivo?': '+String(t.cierreMotivo).replace(/"/g,'&quot;'):''}"`:''}>${t.resultado||'–'}${t.cierreManual?' ✋':''}</span></td>
       <td style="text-align:center">${asrs.some(a=>String(a.tradeId)===String(t.id))
         ? '<span title="ASR realizado" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--green2);color:var(--green);border:1px solid var(--green);font-weight:700;font-size:12px">✓</span>'
