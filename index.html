@@ -333,12 +333,40 @@ tbody tr:hover td{background:var(--bg2)}
 .mc-rv{font-family:'Roboto Mono',monospace;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap}
 .mc-rv.big{font-size:18px;letter-spacing:-.5px}
 @media (max-width:900px){.mc-grid2{grid-template-columns:1fr}}
+
+/* === Wizard Nueva operación === */
+.reg-steps-bar{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+.reg-step-tab{flex:1;min-width:110px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;text-align:left}
+.reg-step-tab:hover{border-color:var(--border2)}
+.reg-step-tab.on{border-color:var(--accent);background:var(--accent2)}
+.reg-step-tab .rst-num{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+.reg-step-tab.on .rst-num{color:var(--accent)}
+.reg-step-tab .rst-label{font-size:13px;font-weight:600;color:var(--text2);margin-top:2px}
+.reg-step-tab.on .rst-label{color:var(--text)}
+.reg-step{display:none}
+.reg-step.on{display:block}
+.reg-nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.reg-nav .btn-back{padding:12px 18px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500}
+.reg-nav .btn-back:hover{color:var(--text);border-color:var(--text2)}
+.reg-nav .btn-next{padding:12px 18px;background:var(--accent);border:none;border-radius:var(--radius);color:#fff;cursor:pointer;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;margin-left:auto}
+.reg-nav .btn-next:hover{filter:brightness(1.08)}
+.reg-nav .btn-next:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.reg-gate-msg{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--amber);margin-top:10px;line-height:1.45}
+.reg-score-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius)}
+.reg-score-hero .rsh-label{font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace;text-transform:uppercase;letter-spacing:.08em}
+.reg-score-hero .rsh-val{font-size:22px;font-weight:700;font-family:'Roboto Mono',monospace;letter-spacing:-.5px}
+.reg-collapse{margin:14px 0;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg2);overflow:hidden}
+.reg-collapse > summary{padding:12px 14px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);font-family:'Roboto Mono',monospace;letter-spacing:.06em;text-transform:uppercase;user-select:none;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.reg-collapse > summary::-webkit-details-marker{display:none}
+.reg-collapse > summary::after{content:'+';color:var(--text3);font-size:14px}
+.reg-collapse[open] > summary::after{content:'−'}
+.reg-collapse-body{padding:0 14px 14px}
 </style>
 <style id="mc-theme">
 :root{ --bg:#0a1219; --bg2:#0f1c26; --bg3:#14242f; --bg4:#1b2f3b; --border:#1f3340; --border2:#2b4654; --text:#e6eef2; --text2:#8aa0ac; --text3:#566f7c; --accent:#34c5d8; --accent2:#0c3540; --green:#3ed9a4; --green2:#0c3a2c; --red:#f0606e; --red2:#3d1418; --amber:#f5b73f; --amber2:#3d2a06; --purple:#a78bfa; --purple2:#23234a; --pink:#f472b6; --pink2:#3d1030; }
 html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4ebef; --border:#dce4e9; --border2:#c5d0d7; --text:#12242d; --text2:#52656f; --text3:#8598a2; --accent:#0e93a8; --accent2:#d6eff3; --green:#0f8a62; --green2:#dcf3ea; --red:#cf4250; --red2:#fbe3e6; --amber:#b07916; --amber2:#f6ecd7; --purple:#7c5cf0; --purple2:#e9e3fb; --pink:#c43f7e; --pink2:#fbe6f0; }
 </style>
-<script>(function(){try{localStorage.setItem('mc_theme','dark');document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+<script>(function(){try{var m=localStorage.getItem('mc_theme')||'auto';var h=new Date().getHours();var t=(m==='auto')?((h>=7&&h<19)?'light':'dark'):m;document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body>
 <button class="menu-toggle" id="menu-toggle" onclick="toggleSidebar()" aria-label="Menú">
@@ -404,211 +432,211 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 <!-- REGISTRO -->
 <div id="page-registro" class="page active">
   <div class="page-title">Nueva operación</div>
-  <div class="page-sub">Registrá cada trade con todos sus parámetros</div>
+  <div class="page-sub">3 pasos · checklist primero · sin atajos</div>
 
   <div class="editing-banner" id="editing-banner">
     <span>✎ Editando operación · los cambios reemplazarán la original</span>
     <button onclick="cancelEdit()">Cancelar edición</button>
   </div>
 
-  <div class="section-label">Cuenta</div>
-  <div class="form-grid g3" style="margin-bottom:14px;align-items:end">
-    <div class="form-group">
-      <label>Cuenta de este trade</label>
-      <select id="inp-account" onchange="onAccountChange()"></select>
-    </div>
-    <div class="form-group">
-      <label style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">Capital actual de la cuenta</label>
-      <div id="account-current-capital" style="font-family:'Roboto Mono',monospace;color:var(--accent);font-weight:600;padding:8px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);font-size:13px">$ –</div>
-    </div>
-    <div class="form-group">
-      <label style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">Gestionar cuentas</label>
-      <button onclick="showPage('cartera', document.querySelectorAll('.nav-item')[3])" style="padding:8px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;text-align:left">→ Ir a Cartera</button>
-    </div>
+  <div class="reg-steps-bar" id="reg-steps-bar">
+    <div class="reg-step-tab on" data-step="1" onclick="goRegStep(1)"><div class="rst-num">Paso 1</div><div class="rst-label">Setup</div></div>
+    <div class="reg-step-tab" data-step="2" onclick="goRegStep(2)"><div class="rst-num">Paso 2</div><div class="rst-label">Entrada</div></div>
+    <div class="reg-step-tab" data-step="3" onclick="goRegStep(3)"><div class="rst-num">Paso 3</div><div class="rst-label">Cierre</div></div>
   </div>
 
-  <div class="section-label">Estrategia</div>
-  <div class="pills" id="stratPills">
-    <div class="pill p-blue on" onclick="selStrat(this,'Blue')">Blue</div>
-    <div class="pill p-red" onclick="selStrat(this,'Red')">Red</div>
-    <div class="pill p-pink" onclick="selStrat(this,'Pink')">Pink</div>
-    <div class="pill p-white" onclick="selStrat(this,'White')">White</div>
-    <div class="pill p-black" onclick="selStrat(this,'Black')">Black</div>
-    <div class="pill p-green" onclick="selStrat(this,'Green')">Green</div>
-  </div>
-  <div id="variant-row" style="margin-top:10px"><div class="pills" id="variantPills"></div></div>
-
-  <!-- CHECKLIST INTERACTIVA -->
-  <div id="strategy-checklist">
-    <div class="cl-title" id="cl-title">Must-have</div>
-    <div id="cl-items"></div>
-    <div class="cl-score" id="cl-score">0 / 0 Must-have</div>
-  </div>
-
-
-  <div class="section-label">Tipo y dirección</div>
-  <div class="form-grid g3">
-    <div class="form-group">
-      <label>Tipo de trading</label>
-      <div class="pills">
-        <div class="pill p-type on" onclick="selType(this,'Day')">Day</div>
-        <div class="pill p-type" onclick="selType(this,'Swing')">Swing</div>
-        <div class="pill p-type" onclick="selType(this,'Scalp')">Scalp</div>
+  <!-- ===== PASO 1 · SETUP ===== -->
+  <div id="reg-step-1" class="reg-step on">
+    <div class="section-label">Cuenta</div>
+    <div class="form-grid g3" style="margin-bottom:14px;align-items:end">
+      <div class="form-group">
+        <label>Cuenta de este trade</label>
+        <select id="inp-account" onchange="onAccountChange()"></select>
+      </div>
+      <div class="form-group">
+        <label style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">Capital actual de la cuenta</label>
+        <div id="account-current-capital" style="font-family:'Roboto Mono',monospace;color:var(--accent);font-weight:600;padding:8px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);font-size:13px">$ –</div>
+      </div>
+      <div class="form-group">
+        <label style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">Gestionar cuentas</label>
+        <button onclick="showPage('cartera', document.querySelector('.nav-item[onclick*=cartera]'))" style="padding:8px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;text-align:left">→ Ir a Cartera</button>
       </div>
     </div>
-    <div class="form-group">
-      <label>Dirección</label>
-      <div class="pills">
-        <div class="pill p-long" onclick="selDir(this,'Long')">Long ↑</div>
-        <div class="pill p-short" onclick="selDir(this,'Short')">Short ↓</div>
+
+    <div class="section-label">Estrategia</div>
+    <div class="pills" id="stratPills">
+      <div class="pill p-blue on" onclick="selStrat(this,'Blue')">Blue</div>
+      <div class="pill p-red" onclick="selStrat(this,'Red')">Red</div>
+      <div class="pill p-pink" onclick="selStrat(this,'Pink')">Pink</div>
+      <div class="pill p-white" onclick="selStrat(this,'White')">White</div>
+      <div class="pill p-black" onclick="selStrat(this,'Black')">Black</div>
+      <div class="pill p-green" onclick="selStrat(this,'Green')">Green</div>
+    </div>
+    <div id="variant-row" style="margin-top:10px"><div class="pills" id="variantPills"></div></div>
+
+    <div id="strategy-checklist">
+      <div class="cl-title" id="cl-title">Must-have</div>
+      <div id="cl-items"></div>
+      <div class="cl-score" id="cl-score">0 / 0 Must-have</div>
+    </div>
+    <div class="reg-score-hero" id="reg-score-hero">
+      <div>
+        <div class="rsh-label">Score checklist</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">Must-have incompleto = no entrás (modo Operado)</div>
+      </div>
+      <div class="rsh-val" id="reg-score-val" style="color:var(--text3)">–</div>
+    </div>
+
+    <div class="section-label">Tipo y dirección</div>
+    <div class="form-grid g3">
+      <div class="form-group">
+        <label>Tipo de trading</label>
+        <div class="pills">
+          <div class="pill p-type on" onclick="selType(this,'Day')">Day</div>
+          <div class="pill p-type" onclick="selType(this,'Swing')">Swing</div>
+          <div class="pill p-type" onclick="selType(this,'Scalp')">Scalp</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Dirección</label>
+        <div class="pills">
+          <div class="pill p-long" onclick="selDir(this,'Long')">Long ↑</div>
+          <div class="pill p-short" onclick="selDir(this,'Short')">Short ↓</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>¿Operado o backtest?</label>
+        <div class="pills">
+          <div class="pill p-mode" onclick="selMode(this,'Operado')">Operado</div>
+          <div class="pill p-mode" onclick="selMode(this,'Backtest')">Backtest</div>
+        </div>
       </div>
     </div>
-    <div class="form-group">
-      <label>Fecha entrada</label>
-      <input type="date" id="inp-fecha" onchange="calcDuration()">
-    </div>
-  </div>
 
-  <div class="form-grid g4" style="margin-top:14px">
-    <div class="form-group">
-      <label>Hora entrada</label>
-      <input type="time" id="inp-hora" onchange="calcDuration()">
-    </div>
-    <div class="form-group">
-      <label>Fecha salida</label>
-      <input type="date" id="inp-fecha-salida" onchange="calcDuration()">
-    </div>
-    <div class="form-group">
-      <label>Hora salida</label>
-      <input type="time" id="inp-hora-salida" onchange="calcDuration()">
-    </div>
-    <div class="form-group" style="display:none">
-      <label>Duración del trade</label>
-      <input type="text" id="inp-duracion" placeholder="auto" readonly style="background:var(--bg2);color:var(--text2);font-family:'Roboto Mono',monospace">
-    </div>
-  </div>
-
-  <div class="form-grid g3" style="margin-top:14px">
-    <div class="form-group">
-      <label>¿Operado o backtest?</label>
-      <div class="pills">
-        <div class="pill p-mode" onclick="selMode(this,'Operado')">Operado</div>
-        <div class="pill p-mode" onclick="selMode(this,'Backtest')">Backtest</div>
+    <div class="section-label">Activo</div>
+    <div class="form-grid g2">
+      <div class="form-group">
+        <label>Par / Activo</label>
+        <input type="text" id="inp-activo" placeholder="BTC/USDT, SPX500, XAUUSD…">
+      </div>
+      <div class="form-group">
+        <label>Mercado</label>
+        <select id="inp-mercado">
+          <option>Crypto</option><option>Forex</option><option>Índices</option>
+          <option>Metales</option><option>Acciones</option><option>Commodities</option>
+        </select>
       </div>
     </div>
-    <div class="form-group">
+
+    <div class="form-group" style="margin-top:14px">
+      <label>Sesión de mercado <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(podés elegir varias)</span></label>
+      <div class="pills" id="sessionPills">
+        <div class="pill p-session" onclick="selSession(this,'Sydney')">Sydney</div>
+        <div class="pill p-session" onclick="selSession(this,'Tokio')">Tokio</div>
+        <div class="pill p-session" onclick="selSession(this,'Londres')">Londres</div>
+        <div class="pill p-session" onclick="selSession(this,'New York')">New York</div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:14px">
       <label>Tipo de orden</label>
       <div class="pills">
         <div class="pill p-orden" onclick="selOrden(this,'Market')">Market</div>
         <div class="pill p-orden" onclick="selOrden(this,'Limit')">Limit</div>
       </div>
     </div>
-    <div></div>
-  </div>
 
-  <div class="section-label">Activo</div>
-  <div class="form-grid g2">
-    <div class="form-group">
-      <label>Par / Activo</label>
-      <input type="text" id="inp-activo" placeholder="BTC/USDT, SPX500, XAUUSD…">
-    </div>
-    <div class="form-group">
-      <label>Mercado</label>
-      <select id="inp-mercado">
-        <option>Crypto</option><option>Forex</option><option>Índices</option>
-        <option>Metales</option><option>Acciones</option><option>Commodities</option>
-      </select>
+    <div id="reg-gate-1" class="reg-gate-msg"></div>
+    <div class="reg-nav">
+      <span style="font-size:12px;color:var(--text3);font-family:'Roboto Mono',monospace">Setup → checklist completa</span>
+      <button type="button" class="btn-next" id="reg-next-1" onclick="goRegStep(2)">Siguiente · Entrada →</button>
     </div>
   </div>
 
-  <div class="form-group" style="margin-top:14px">
-    <label>Sesión de mercado <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(podés elegir varias si se solapan)</span></label>
-    <div class="pills" id="sessionPills">
-      <div class="pill p-session" onclick="selSession(this,'Sydney')">Sydney</div>
-      <div class="pill p-session" onclick="selSession(this,'Tokio')">Tokio</div>
-      <div class="pill p-session" onclick="selSession(this,'Londres')">Londres</div>
-      <div class="pill p-session" onclick="selSession(this,'New York')">New York</div>
+  <!-- ===== PASO 2 · ENTRADA ===== -->
+  <div id="reg-step-2" class="reg-step">
+    <div class="section-label">Precios y tiempo de entrada</div>
+    <div class="form-grid g4">
+      <div class="form-group"><label>Entrada</label><input type="text" id="inp-entrada" placeholder="0.00" inputmode="decimal"></div>
+      <div class="form-group"><label>Stop Loss</label><input type="text" id="inp-sl" placeholder="0.00" inputmode="decimal"></div>
+      <div class="form-group"><label>Take Profit</label><input type="text" id="inp-tp" placeholder="0.00" inputmode="decimal"></div>
+      <div class="form-group"><label>Lotaje</label><input type="text" id="inp-lotaje" placeholder="ej: 0.05" inputmode="decimal"></div>
     </div>
-  </div>
-
-  <div class="section-label">Gestión de la operación</div>
-  <div class="form-grid g4">
-    <div class="form-group"><label>Entrada</label><input type="text" id="inp-entrada" placeholder="0.00" inputmode="decimal"></div>
-    <div class="form-group"><label>Stop Loss</label><input type="text" id="inp-sl" placeholder="0.00" inputmode="decimal"></div>
-    <div class="form-group"><label>Take Profit</label><input type="text" id="inp-tp" placeholder="0.00" inputmode="decimal"></div>
-    <div class="form-group"><label>Salida real</label><input type="text" id="inp-salida" placeholder="0.00" inputmode="decimal"></div>
-  </div>
-  <div class="form-group" style="margin-top:14px">
-    <label>Gestión del trade <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(podés elegir varias)</span></label>
-    <div class="pills" id="gestionPills">
-      <div class="pill p-gest" onclick="togGestion(this,'Short term')">Short term</div>
-      <div class="pill p-gest" onclick="togGestion(this,'Long term')">Long term</div>
-      <div class="pill p-gest" onclick="togGestion(this,'Short term agresivo')">Short term agresivo</div>
-      <div class="pill p-gest" onclick="togGestion(this,'Price action')">Price action</div>
-      <div class="pill p-gest" onclick="togGestion(this,'Parciales')">Parciales</div>
-    </div>
-  </div>
-
-  <div class="form-group" style="margin-top:14px;margin-bottom:14px">
-    <label>Confirmaciones presentes <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(EMAs según el tipo de trading)</span></label>
-    <div class="pills" id="confPills"></div>
-  </div>
-
-  <div class="section-label">Gráficos de la operación <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(uno por temporalidad)</span></div>
-  <div id="tfImagesGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px"></div>
-  <input type="file" id="inp-imagen" accept="image/*" style="display:none" onchange="handleImageInput(this)">
-
-  <div class="form-grid g2" style="align-items:start;margin-top:14px">
+    <div class="form-grid g4" style="margin-top:14px">
       <div class="form-group">
-        <label>Link del gráfico (TradingView, etc.)</label>
-        <input type="text" id="inp-link" placeholder="https://www.tradingview.com/…" oninput="previewLink(this.value)">
-        <div id="link-preview" style="display:none;margin-top:5px">
-          <a id="link-anchor" href="#" target="_blank" style="font-size:11px;color:var(--accent);font-family:'Roboto Mono',monospace;text-decoration:none">→ Abrir gráfico</a>
+        <label>Fecha entrada</label>
+        <input type="date" id="inp-fecha" onchange="calcDuration()">
+      </div>
+      <div class="form-group">
+        <label>Hora entrada</label>
+        <input type="time" id="inp-hora" onchange="calcDuration()">
+      </div>
+      <div class="form-group">
+        <label>Capital inicial ($) <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">auto</span></label>
+        <input type="text" id="inp-capital" placeholder="ej: 25000" inputmode="decimal" oninput="calcRisk()">
+      </div>
+      <div class="form-group">
+        <label>Riesgo ($)</label>
+        <input type="text" id="inp-riesgo-monto" placeholder="ej: 240.58" inputmode="decimal" oninput="calcRisk()">
+      </div>
+    </div>
+
+    <div class="rr-grid" style="margin-top:14px">
+      <div class="rr-cell rr-header"></div>
+      <div class="rr-cell rr-header">Valor</div>
+      <div class="rr-cell rr-header">Cálculo</div>
+
+      <div class="rr-cell rr-label">RR Inicial</div>
+      <div class="rr-cell"><input type="text" id="inp-rr-plan" placeholder="ej: 2.65" inputmode="decimal" oninput="calcRisk()"></div>
+      <div class="rr-cell rr-hint">manual · objetivo ≥ 2</div>
+
+      <div class="rr-cell rr-label">Riesgo (%)</div>
+      <div class="rr-cell rr-auto" id="disp-riesgo-pct">–</div>
+      <div class="rr-cell rr-hint">= Riesgo$ ÷ Capital</div>
+    </div>
+
+    <div class="form-group" style="margin-top:14px">
+      <label>Link del gráfico (TradingView, etc.)</label>
+      <input type="text" id="inp-link" placeholder="https://www.tradingview.com/…" oninput="previewLink(this.value)">
+      <div id="link-preview" style="display:none;margin-top:5px">
+        <a id="link-anchor" href="#" target="_blank" style="font-size:11px;color:var(--accent);font-family:'Roboto Mono',monospace;text-decoration:none">→ Abrir gráfico</a>
+      </div>
+    </div>
+
+    <details class="reg-collapse">
+      <summary>Gestión · confirmaciones · gráficos (opcional)</summary>
+      <div class="reg-collapse-body">
+        <div class="form-group" style="margin-top:8px;margin-bottom:14px">
+          <label>Gestión del trade <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(varias)</span></label>
+          <div class="pills" id="gestionPills">
+            <div class="pill p-gest" onclick="togGestion(this,'Short term')">Short term</div>
+            <div class="pill p-gest" onclick="togGestion(this,'Long term')">Long term</div>
+            <div class="pill p-gest" onclick="togGestion(this,'Short term agresivo')">Short term agresivo</div>
+            <div class="pill p-gest" onclick="togGestion(this,'Price action')">Price action</div>
+            <div class="pill p-gest" onclick="togGestion(this,'Parciales')">Parciales</div>
+          </div>
         </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label>Confirmaciones presentes</label>
+          <div class="pills" id="confPills"></div>
+        </div>
+        <div class="section-label" style="margin-top:8px">Gráficos por temporalidad</div>
+        <div id="tfImagesGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:8px"></div>
+        <input type="file" id="inp-imagen" accept="image/*" style="display:none" onchange="handleImageInput(this)">
       </div>
-      <div class="form-group">
-        <label>Notas / observaciones</label>
-        <textarea id="inp-notas" placeholder="Contexto de mercado, errores, aprendizajes…" style="min-height:118px"></textarea>
-      </div>
-    </div>
+    </details>
 
-  <div class="section-label">Capital y riesgo</div>
-
-  <div class="form-grid g4" style="margin-bottom:10px">
-    <div class="form-group">
-      <label>Capital inicial ($) <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">auto del trade anterior</span></label>
-      <input type="text" id="inp-capital" placeholder="ej: 25000" inputmode="decimal" oninput="calcRisk()">
-    </div>
-    <div class="form-group">
-      <label>Capital final ($) <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">auto</span></label>
-      <input type="text" id="inp-capital-final" placeholder="auto · = inicial + B/P Neto" readonly style="background:var(--bg2);color:var(--accent);font-family:'Roboto Mono',monospace">
-    </div>
-    <div class="form-group">
-      <label>Lotaje ejecutado</label>
-      <input type="text" id="inp-lotaje" placeholder="ej: 0.05" inputmode="decimal">
-    </div>
-    <div class="form-group">
-      <label>Comisiones ($)</label>
-      <input type="text" id="inp-comisiones" placeholder="ej: 5.70" inputmode="decimal" oninput="calcRisk()">
+    <div class="reg-nav">
+      <button type="button" class="btn-back" onclick="goRegStep(1)">← Setup</button>
+      <button type="button" class="btn-next" onclick="goRegStep(3)">Siguiente · Cierre →</button>
     </div>
   </div>
 
-  <div class="rr-grid">
-
-    <div class="rr-cell rr-header"></div>
-    <div class="rr-cell rr-header">Valor</div>
-    <div class="rr-cell rr-header">Cálculo</div>
-
-    <div class="rr-cell rr-label">RR Inicial (%)</div>
-    <div class="rr-cell"><input type="text" id="inp-rr-plan" placeholder="ej: 2.65" inputmode="decimal" oninput="calcRisk()"></div>
-    <div class="rr-cell rr-hint">manual</div>
-
-    <div class="rr-cell rr-label">RR Final (%)</div>
-    <div class="rr-cell rr-auto" id="disp-rr-final">–</div>
-    <div class="rr-cell rr-hint">= B/P Bruto ÷ Riesgo$</div>
-
-    <div class="rr-cell rr-label">Resultado</div>
-    <div class="rr-cell" style="grid-column:span 2">
+  <!-- ===== PASO 3 · CIERRE ===== -->
+  <div id="reg-step-3" class="reg-step">
+    <div class="section-label">Resultado y salida</div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Resultado</label>
       <div class="pills" style="flex-wrap:wrap">
         <div class="pill p-win" onclick="selResult(this,'Win')">TP</div>
         <div class="pill p-loss" onclick="selResult(this,'Loss')">SL</div>
@@ -619,31 +647,67 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <textarea id="inp-cierre-motivo" placeholder="Motivo del cierre manual (gestión, noticia, dudas, parciales…)" style="display:none;width:100%;margin-top:8px;min-height:52px;padding:8px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Outfit',sans-serif;font-size:12px;resize:vertical"></textarea>
     </div>
 
-    <div class="rr-cell rr-label">Riesgo ($)</div>
-    <div class="rr-cell"><input type="text" id="inp-riesgo-monto" placeholder="ej: 240.58" inputmode="decimal" oninput="calcRisk()"></div>
-    <div class="rr-cell rr-hint">manual</div>
+    <div class="form-grid g4">
+      <div class="form-group"><label>Salida real</label><input type="text" id="inp-salida" placeholder="0.00" inputmode="decimal"></div>
+      <div class="form-group">
+        <label>Fecha salida</label>
+        <input type="date" id="inp-fecha-salida" onchange="calcDuration()">
+      </div>
+      <div class="form-group">
+        <label>Hora salida</label>
+        <input type="time" id="inp-hora-salida" onchange="calcDuration()">
+      </div>
+      <div class="form-group" style="display:none">
+        <label>Duración</label>
+        <input type="text" id="inp-duracion" placeholder="auto" readonly style="background:var(--bg2);color:var(--text2);font-family:'Roboto Mono',monospace">
+      </div>
+      <div class="form-group">
+        <label>Comisiones ($)</label>
+        <input type="text" id="inp-comisiones" placeholder="ej: 5.70" inputmode="decimal" oninput="calcRisk()">
+      </div>
+    </div>
 
-    <div class="rr-cell rr-label">Riesgo (%)</div>
-    <div class="rr-cell rr-auto" id="disp-riesgo-pct">–</div>
-    <div class="rr-cell rr-hint">= Riesgo$ ÷ Capital</div>
+    <div class="rr-grid" style="margin-top:14px">
+      <div class="rr-cell rr-header"></div>
+      <div class="rr-cell rr-header">Valor</div>
+      <div class="rr-cell rr-header">Cálculo</div>
 
-    <div class="rr-cell rr-label">B/P Bruto ($)</div>
-    <div class="rr-cell"><input type="text" id="inp-bp-bruto" placeholder="ej: -252.61" inputmode="decimal" oninput="calcRisk()"></div>
-    <div class="rr-cell rr-hint">manual · usá − para pérdidas</div>
+      <div class="rr-cell rr-label">B/P Bruto ($)</div>
+      <div class="rr-cell"><input type="text" id="inp-bp-bruto" placeholder="ej: -252.61" inputmode="decimal" oninput="calcRisk()"></div>
+      <div class="rr-cell rr-hint">manual · usá − para pérdidas</div>
 
-    <div class="rr-cell rr-label">B/P Neto ($)</div>
-    <div class="rr-cell rr-auto rr-auto-big" id="disp-bp-neto">–</div>
-    <div class="rr-cell rr-hint">= Bruto − Comisiones</div>
+      <div class="rr-cell rr-label">B/P Neto ($)</div>
+      <div class="rr-cell rr-auto rr-auto-big" id="disp-bp-neto">–</div>
+      <div class="rr-cell rr-hint">= Bruto − Comisiones</div>
 
+      <div class="rr-cell rr-label">RR Final</div>
+      <div class="rr-cell rr-auto" id="disp-rr-final">–</div>
+      <div class="rr-cell rr-hint">= B/P Bruto ÷ Riesgo$</div>
+
+      <div class="rr-cell rr-label">Capital final ($)</div>
+      <div class="rr-cell">
+        <input type="text" id="inp-capital-final" placeholder="auto · = inicial + B/P Neto" readonly style="background:var(--bg2);color:var(--accent);font-family:'Roboto Mono',monospace">
+      </div>
+      <div class="rr-cell rr-hint">auto</div>
+    </div>
+
+    <div class="form-group" style="margin-top:14px">
+      <label>Notas / observaciones</label>
+      <textarea id="inp-notas" placeholder="Contexto de mercado, errores, aprendizajes…" style="min-height:90px"></textarea>
+    </div>
+
+    <!-- ocultos -->
+    <input type="hidden" id="inp-rr">
+    <input type="hidden" id="inp-riesgo-pct">
+    <input type="hidden" id="inp-pnl">
+
+    <div class="reg-nav">
+      <button type="button" class="btn-back" onclick="goRegStep(2)">← Entrada</button>
+      <button class="btn-save" id="btn-save" onclick="addTrade()" style="flex:1;max-width:360px;margin-left:auto">Guardar operación →</button>
+    </div>
   </div>
-
-  <!-- campo oculto para guardar el RR final auto-calculado -->
-  <input type="hidden" id="inp-rr">
-  <input type="hidden" id="inp-riesgo-pct">
-  <input type="hidden" id="inp-pnl">
-
-  <button class="btn-save" id="btn-save" onclick="addTrade()">Guardar operación →</button>
 </div>
+
 
 <!-- HISTORIAL -->
 <div id="page-historial" class="page">
@@ -1450,11 +1514,78 @@ function updateChecklistScore(){
   const el = document.getElementById('cl-score');
   if(el) el.textContent = done + ' / ' + total + ' Must-have';
   window._checklistScore = { done, total, pct: total ? Math.round(done/total*100) : 0 };
+  const hero = document.getElementById('reg-score-val');
+  if(hero){
+    if(!total){ hero.textContent = '–'; hero.style.color = 'var(--text3)'; }
+    else {
+      const pct = window._checklistScore.pct;
+      hero.textContent = pct + '%';
+      hero.style.color = pct >= 80 ? 'var(--green)' : (pct >= 50 ? 'var(--amber)' : 'var(--red)');
+    }
+  }
+  const gate = document.getElementById('reg-gate-1');
+  if(gate && gate.classList.contains('on')){
+    const v = validateRegStep(1, 2);
+    if(v.ok){ gate.classList.remove('on'); gate.style.display='none'; gate.textContent=''; }
+    else { gate.textContent = v.msg; }
+  }
 }
 
 function getChecklistScore(){
   return window._checklistScore || { done:0, total:0, pct:0 };
 }
+
+
+/* ===== Wizard Nueva operación ===== */
+window._regStep = 1;
+function goRegStep(n, force){
+  n = parseInt(n,10);
+  if(!force && n > (window._regStep||1) && !editingId){
+    const gate = validateRegStep(window._regStep||1, n);
+    if(!gate.ok){
+      const msg = document.getElementById('reg-gate-1');
+      if(msg && (window._regStep||1)===1){
+        msg.textContent = gate.msg;
+        msg.classList.add('on');
+        msg.style.display = 'block';
+      } else {
+        alert(gate.msg);
+      }
+      return;
+    }
+  }
+  window._regStep = n;
+  document.querySelectorAll('.reg-step').forEach(el=>el.classList.remove('on'));
+  const step = document.getElementById('reg-step-'+n);
+  if(step) step.classList.add('on');
+  document.querySelectorAll('.reg-step-tab').forEach(t=>{
+    t.classList.toggle('on', String(t.dataset.step)===String(n));
+  });
+  const msg = document.getElementById('reg-gate-1');
+  if(msg && n!==1){ msg.classList.remove('on'); msg.style.display='none'; }
+  // scroll top of form
+  document.querySelector('.main')?.scrollTo({top:0,behavior:'smooth'});
+  if(typeof updateChecklistScore==='function') updateChecklistScore();
+}
+function validateRegStep(from, to){
+  if(to <= from) return {ok:true};
+  if(from === 1){
+    const activo = (document.getElementById('inp-activo')?.value||'').trim();
+    if(!activo) return {ok:false, msg:'Falta el activo / par.'};
+    if(typeof curDir==='undefined' || !curDir) return {ok:false, msg:'Elegí dirección: Long o Short.'};
+    if(typeof curStrat==='undefined' || !curStrat) return {ok:false, msg:'Elegí una estrategia.'};
+    // Gate checklist solo en Operado (o si aún no eligió modo, se asume Operado)
+    const mode = (typeof curMode!=='undefined' && curMode) ? curMode : 'Operado';
+    if(mode !== 'Backtest'){
+      const sc = (typeof getChecklistScore==='function') ? getChecklistScore() : {done:0,total:0};
+      if(sc.total > 0 && sc.done < sc.total){
+        return {ok:false, msg:'Checklist incompleta ('+sc.done+'/'+sc.total+'). Must-have incompleto = no entrás. Completala o marcá Backtest.'};
+      }
+    }
+  }
+  return {ok:true};
+}
+
 
 // mostrar checklist de la estrategia por defecto al cargar
 setTimeout(function(){ if(typeof curStrat!=='undefined') renderStrategyChecklist(); }, 300);
@@ -2177,7 +2308,8 @@ function editTrade(id){
   curImgNotes = (t.imgNotes && typeof t.imgNotes==='object') ? Object.assign({}, t.imgNotes) : {};
   renderTfSlots();
 
-  // Scroll arriba
+  // Scroll arriba + wizard al paso 1 (edición puede navegar libre)
+  if(typeof goRegStep==='function') goRegStep(1, true);
   document.querySelector('.main').scrollTop = 0;
 }
 
@@ -2194,6 +2326,7 @@ function exitEditMode(){
 }
 
 function resetForm(){
+  if(typeof goRegStep==='function') goRegStep(1, true);
   ['inp-activo','inp-entrada','inp-sl','inp-tp','inp-salida','inp-sl-tecnico','inp-tp-tecnico','inp-rr','inp-rr-plan','inp-capital','inp-capital-final','inp-riesgo-monto','inp-bp-bruto','inp-comisiones','inp-lotaje','inp-notas','inp-link','inp-fecha-salida','inp-hora','inp-hora-salida','inp-duracion'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.value='';
   });
