@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Backtesting Journal</title>
 
@@ -21,10 +24,9 @@
 <link rel="manifest" href='data:application/manifest+json;utf8,{"name":"Backtesting Journal","short_name":"Trading Journal","description":"Datos · patrones · decisiones","start_url":".","display":"standalone","orientation":"any","background_color":"%230d0f12","theme_color":"%230d0f12","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22><rect width=%22512%22 height=%22512%22 rx=%2296%22 fill=%22%230d0f12%22/><path d=%22M96 384 L96 128 L160 128 L160 384 Z%22 fill=%22%234f9cf9%22/><path d=%22M192 384 L192 192 L256 192 L256 384 Z%22 fill=%22%233ecf8e%22/><path d=%22M288 384 L288 96 L352 96 L352 384 Z%22 fill=%22%23f472b6%22/><path d=%22M384 384 L384 256 L448 256 L448 384 Z%22 fill=%22%23f59e0b%22/></svg>","sizes":"any","type":"image/svg+xml","purpose":"any"}]}'>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap');
 :root{--bg:#0d0f12;--bg2:#13161a;--bg3:#1a1e24;--bg4:#21262e;--border:#2a313b;--border2:#36404d;--text:#e8edf2;--text2:#8a97a8;--text3:#556070;--accent:#4f9cf9;--accent2:#1a3d6b;--green:#3ecf8e;--green2:#0d3d26;--red:#f05252;--red2:#3d1212;--amber:#f59e0b;--amber2:#3d2800;--purple:#a78bfa;--purple2:#2d1f5e;--pink:#f472b6;--pink2:#3d1030;--radius:8px;--radius-lg:12px}
 *{box-sizing:border-box;margin:0;padding:0}
-html{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;min-height:100vh}
+html{background:var(--bg);color:var(--text);font-family:'Outfit',system-ui,-apple-system,sans-serif;font-size:14px;min-height:100vh}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:var(--bg2)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
@@ -103,7 +105,26 @@ html{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font
   .tf-slot{min-height:auto}
   .help-toc{grid-template-columns:1fr !important}
 }
-.page{display:none}.page.active{display:block}
+
+/* Rendimiento */
+.main{content-visibility:auto;contain:layout style;}
+.page{contain:layout style paint;}
+.tbl-wrap{contain:layout style;content-visibility:auto;}
+.charts-grid,.kpi-grid{contain:layout;}
+img,svg{max-width:100%;height:auto}
+
+.page{display:none;opacity:0}
+.page.active{display:block;animation:tjPageIn .28s ease both}
+@keyframes tjPageIn{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.reg-step{display:none;opacity:0}
+.reg-step.on{display:block;animation:tjStepIn .22s ease both}
+@keyframes tjStepIn{
+  from{opacity:0;transform:translateX(8px)}
+  to{opacity:1;transform:translateX(0)}
+}
 .page-title{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
 .page-sub{font-size:13px;color:var(--text3);margin-bottom:28px;font-family:'Roboto Mono',monospace}
 .section-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
@@ -343,8 +364,7 @@ tbody tr:hover td{background:var(--bg2)}
 .reg-step-tab.on .rst-num{color:var(--accent)}
 .reg-step-tab .rst-label{font-size:13px;font-weight:600;color:var(--text2);margin-top:2px}
 .reg-step-tab.on .rst-label{color:var(--text)}
-.reg-step{display:none}
-.reg-step.on{display:block}
+/* reg-step anim: ver reglas .page arriba */
 .reg-nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
 .reg-nav .btn-back{padding:12px 18px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500}
 .reg-nav .btn-back:hover{color:var(--text);border-color:var(--text2)}
@@ -385,6 +405,48 @@ tbody tr:hover td{background:var(--bg2)}
 @media (max-width:700px){
   #hoy-week-kpis{grid-template-columns:repeat(2,1fr)!important}
 }
+
+.io-menu{position:relative;margin-top:10px}
+.io-toggle{width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:all .15s}
+.io-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.io-toggle .io-caret{font-size:10px;color:var(--text3);transition:transform .15s}
+.io-menu.open .io-caret{transform:rotate(180deg)}
+.io-panel{display:none;position:absolute;left:0;right:0;bottom:calc(100% + 6px);background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);box-shadow:0 8px 28px rgba(0,0,0,.35);padding:6px;z-index:50;opacity:0;transform:translateY(6px)}
+.io-menu.open .io-panel{display:block;animation:tjFadeUp .18s ease both}
+@keyframes tjFadeUp{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:translateY(0)}
+
+/* Transiciones generales suaves */
+.nav-item{transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease}
+.nav-item:active{transform:scale(.98)}
+.hoy-cta{transition:border-color .18s ease,background .18s ease,transform .18s ease,box-shadow .18s ease}
+.hoy-cta:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.pill{transition:background .15s ease,border-color .15s ease,color .15s ease,transform .12s ease}
+.pill:active{transform:scale(.97)}
+.kpi,.chart-card,.hoy-cta, #hoy-incomplete, #hoy-asr-pending, #hoy-weekly{
+  transition:border-color .2s ease, box-shadow .2s ease;
+}
+/* Overlay móvil */
+.sidebar-overlay{
+  transition:opacity .25s ease;
+  opacity:0;
+}
+.sidebar-overlay.active{
+  opacity:1;
+}
+@media (prefers-reduced-motion: reduce){
+  .page.active,.reg-step.on,.io-menu.open .io-panel{animation:none!important;opacity:1!important;transform:none!important}
+  .nav-item,.hoy-cta,.pill,.sidebar{transition:none!important}
+}
+
+}
+.io-item{width:100%;text-align:left;padding:9px 10px;background:transparent;border:none;border-radius:var(--radius);color:var(--text2);font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;display:block}
+.io-item:hover{background:var(--bg3);color:var(--text)}
+.io-item.accent{color:var(--accent)}
+.io-item.green{color:var(--green)}
+.io-item.danger{color:#ff8a8a}
+.io-sep{height:1px;background:var(--border);margin:4px 6px}
 </style>
 <style id="mc-theme">
 :root{ --bg:#0a1219; --bg2:#0f1c26; --bg3:#14242f; --bg4:#1b2f3b; --border:#1f3340; --border2:#2b4654; --text:#e6eef2; --text2:#8aa0ac; --text3:#566f7c; --accent:#34c5d8; --accent2:#0c3540; --green:#3ed9a4; --green2:#0c3a2c; --red:#f0606e; --red2:#3d1418; --amber:#f5b73f; --amber2:#3d2a06; --purple:#a78bfa; --purple2:#23234a; --pink:#f472b6; --pink2:#3d1030; }
@@ -449,13 +511,23 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   <div class="sidebar-bottom">
     <div class="stats-mini">Total: <span id="sb-total">0</span> ops <span style="color:var(--text3)">(todas)</span><br>Win rate: <span id="sb-wr">–</span><br><span id="sb-autoexport" style="color:var(--text3)">Auto-backup: –</span></div>
     <button class="export-btn install-btn" id="install-app-btn" onclick="installApp()" style="display:none;background:var(--accent2);color:var(--accent);border-color:var(--accent)" title="Instalar como app en tu dispositivo">📱 Instalar app</button>
-    <button class="export-btn" onclick="exportData()" title="Descargar respaldo de tus datos">↓ Exportar respaldo .json</button>
-    <button class="export-btn" onclick="exportCSV()" title="Exportar trades a CSV para Excel / Sheets" style="color:var(--green);border-color:var(--green2)">↓ Exportar trades .csv</button>
-    <button class="export-btn" onclick="document.getElementById('imp-file').click()" title="Cargar respaldo desde otra PC">↑ Importar respaldo .json</button>
+    <div class="io-menu" id="io-menu">
+      <button type="button" class="io-toggle" onclick="toggleIoMenu(event)" aria-expanded="false">
+        <span>Importar / Exportar</span>
+        <span class="io-caret">▾</span>
+      </button>
+      <div class="io-panel" id="io-panel" role="menu">
+        <button type="button" class="io-item" onclick="ioAction('export-json')">↓ Exportar respaldo · JSON</button>
+        <button type="button" class="io-item green" onclick="ioAction('export-csv')">↓ Exportar trades · CSV</button>
+        <div class="io-sep"></div>
+        <button type="button" class="io-item" onclick="ioAction('import-json')">↑ Importar respaldo · JSON</button>
+        <button type="button" class="io-item accent" onclick="ioAction('import-mt5')">↑ Importar MT5 · HTML</button>
+        <div class="io-sep"></div>
+        <button type="button" class="io-item danger" id="undo-btn" onclick="ioAction('undo')">↺ Deshacer última importación</button>
+      </div>
+    </div>
     <input type="file" id="imp-file" accept="application/json" style="display:none" onchange="importData(this)">
-    <button class="export-btn" onclick="document.getElementById('mt5-file').click()" title="Importar historial de MetaTrader 5 (Informe HTML)" style="color:var(--accent);border-color:var(--accent2)">↑ Importar MT5 (.html)</button>
     <input type="file" id="mt5-file" accept=".html,.htm,text/html" style="display:none" onchange="importMT5(this)">
-    <button class="export-btn" id="undo-btn" onclick="undoLast()" title="Deshacer la última importación o cambio grande" style="color:#ff8a8a;border-color:#ff8a8a">↺ Deshacer última importación</button>
   </div>
 </div>
 
@@ -529,6 +601,13 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:10px">Es domingo o lunes: 40 min de review. Una sola regla para la semana. Sin esto, la racha se vuelve suerte.</div>
     <button type="button" onclick="showPage('asr')" style="padding:7px 12px;background:var(--purple2);border:1px solid var(--purple);color:var(--purple);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:600;font-family:'Outfit',sans-serif;margin-right:8px">Abrir ASR / Review →</button>
     <button type="button" onclick="showPage('rutina')" style="padding:7px 12px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-size:12px;font-family:'Outfit',sans-serif">Ver rutina</button>
+  </div>
+
+  <div id="hoy-incomplete" style="display:none;background:var(--bg2);border:1px solid var(--accent);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:16px">
+    <div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-family:'Roboto Mono',monospace;margin-bottom:6px">Completar · post MT5 / registro</div>
+    <div id="hoy-incomplete-text" style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:10px"></div>
+    <div id="hoy-incomplete-list" style="font-size:12px;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:10px"></div>
+    <div style="font-size:12px;color:var(--text3);line-height:1.4">Orden: tocá el trade → asigná estrategia + checklist → guardá → ASR si falta.</div>
   </div>
 
   <div id="hoy-asr-pending" style="display:none;background:var(--bg2);border:1px solid var(--amber);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:16px">
@@ -831,21 +910,22 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   <div class="page-title">Historial</div>
   <div class="page-sub">Todas tus operaciones registradas</div>
   <div class="filters-bar">
-    <select class="filter-sel" id="f-account" onchange="renderTable()"><option value="">Todas las cuentas</option></select>
-    <select class="filter-sel" id="f-strat" onchange="renderTable()"><option value="">Todas las estrategias</option><option>Blue</option><option>Red</option><option>Pink</option><option>White</option><option>Black</option><option>Green</option></select>
-    <select class="filter-sel" id="f-score" onchange="renderTable()" title="Filtro por score de checklist">
+    <select class="filter-sel" id="f-account" onchange="renderTableSoon()"><option value="">Todas las cuentas</option></select>
+    <select class="filter-sel" id="f-strat" onchange="renderTableSoon()"><option value="">Todas las estrategias</option><option>Blue</option><option>Red</option><option>Pink</option><option>White</option><option>Black</option><option>Green</option></select>
+    <select class="filter-sel" id="f-score" onchange="renderTableSoon()" title="Filtro por score de checklist">
       <option value="">Todo score</option>
       <option value="high">Score ≥ 80%</option>
       <option value="mid">Score 50–79%</option>
       <option value="low">Score &lt; 50%</option>
       <option value="none">Sin score</option>
+      <option value="incomplete">Incompletos (MT5)</option>
     </select>
-    <select class="filter-sel" id="f-result" onchange="renderTable()"><option value="">Todos los resultados</option><option>Win</option><option>Loss</option><option>BE</option><option>Open</option></select>
-    <select class="filter-sel" id="f-tipo" onchange="renderTable()"><option value="">Day / Swing / Scalp</option><option>Day</option><option>Swing</option><option>Scalp</option></select>
-    <select class="filter-sel" id="f-dir" onchange="renderTable()"><option value="">Long / Short</option><option>Long</option><option>Short</option></select>
-    <select class="filter-sel" id="f-mercado" onchange="renderTable()"><option value="">Todos los mercados</option><option>Crypto</option><option>Forex</option><option>Índices</option><option>Metales</option><option>Acciones</option><option>Commodities</option></select>
-    <select class="filter-sel" id="f-session" onchange="renderTable()"><option value="">Todas las sesiones</option><option>Sydney</option><option>Tokio</option><option>Londres</option><option>New York</option></select>
-    <select class="filter-sel" id="f-mode" onchange="renderTable()"><option value="ALL">Todas (Operado + Backtest)</option><option value="">Solo Operado</option><option value="Backtest">Solo backtest</option></select>
+    <select class="filter-sel" id="f-result" onchange="renderTableSoon()"><option value="">Todos los resultados</option><option>Win</option><option>Loss</option><option>BE</option><option>Open</option></select>
+    <select class="filter-sel" id="f-tipo" onchange="renderTableSoon()"><option value="">Day / Swing / Scalp</option><option>Day</option><option>Swing</option><option>Scalp</option></select>
+    <select class="filter-sel" id="f-dir" onchange="renderTableSoon()"><option value="">Long / Short</option><option>Long</option><option>Short</option></select>
+    <select class="filter-sel" id="f-mercado" onchange="renderTableSoon()"><option value="">Todos los mercados</option><option>Crypto</option><option>Forex</option><option>Índices</option><option>Metales</option><option>Acciones</option><option>Commodities</option></select>
+    <select class="filter-sel" id="f-session" onchange="renderTableSoon()"><option value="">Todas las sesiones</option><option>Sydney</option><option>Tokio</option><option>Londres</option><option>New York</option></select>
+    <select class="filter-sel" id="f-mode" onchange="renderTableSoon()"><option value="ALL">Todas (Operado + Backtest)</option><option value="">Solo Operado</option><option value="Backtest">Solo backtest</option></select>
   </div>
   <div class="tbl-wrap" style="overflow-x:auto">
     <table>
@@ -869,28 +949,28 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:18px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <span style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace">Filtros</span>
-      <select class="filter-sel" id="sf-account" onchange="renderStats()"><option value="">Todas las cuentas</option></select>
-      <select class="filter-sel" id="sf-mode" onchange="renderStats()"><option value="">Operado (sin backtest)</option><option value="ALL">Operado + Backtest</option><option value="Backtest">Solo backtest</option></select>
-      <select class="filter-sel" id="sf-tipo" onchange="renderStats()"><option value="">Todos los estilos</option><option>Day</option><option>Swing</option><option>Scalp</option></select>
-      <select class="filter-sel" id="sf-strat" onchange="renderStats()"><option value="">Todas las estrategias</option><option>Blue</option><option>Red</option><option>Pink</option><option>White</option><option>Black</option><option>Green</option></select>
-      <select class="filter-sel" id="sf-score" onchange="renderStats()" title="Filtro por score de checklist">
+      <select class="filter-sel" id="sf-account" onchange="renderStatsSoon()"><option value="">Todas las cuentas</option></select>
+      <select class="filter-sel" id="sf-mode" onchange="renderStatsSoon()"><option value="">Operado (sin backtest)</option><option value="ALL">Operado + Backtest</option><option value="Backtest">Solo backtest</option></select>
+      <select class="filter-sel" id="sf-tipo" onchange="renderStatsSoon()"><option value="">Todos los estilos</option><option>Day</option><option>Swing</option><option>Scalp</option></select>
+      <select class="filter-sel" id="sf-strat" onchange="renderStatsSoon()"><option value="">Todas las estrategias</option><option>Blue</option><option>Red</option><option>Pink</option><option>White</option><option>Black</option><option>Green</option></select>
+      <select class="filter-sel" id="sf-score" onchange="renderStatsSoon()" title="Filtro por score de checklist">
         <option value="">Todo score</option>
         <option value="high">Score ≥ 80%</option>
         <option value="mid">Score 50–79%</option>
         <option value="low">Score &lt; 50%</option>
         <option value="none">Sin score</option>
       </select>
-      <select class="filter-sel" id="sf-dir" onchange="renderStats()"><option value="">Long + Short</option><option>Long</option><option>Short</option></select>
-      <select class="filter-sel" id="sf-result" onchange="renderStats()"><option value="">Todos los resultados</option><option value="Win">TP</option><option value="Loss">SL</option><option value="BE">BE</option><option value="Open">Abierto</option></select>
-      <select class="filter-sel" id="sf-session" onchange="renderStats()"><option value="">Todas las sesiones</option><option>Sydney</option><option>Tokio</option><option>Londres</option><option>New York</option></select>
-      <select class="filter-sel" id="sf-mercado" onchange="renderStats()"><option value="">Todos los mercados</option><option>Crypto</option><option>Forex</option><option>Índices</option><option>Metales</option><option>Acciones</option><option>Commodities</option></select>
+      <select class="filter-sel" id="sf-dir" onchange="renderStatsSoon()"><option value="">Long + Short</option><option>Long</option><option>Short</option></select>
+      <select class="filter-sel" id="sf-result" onchange="renderStatsSoon()"><option value="">Todos los resultados</option><option value="Win">TP</option><option value="Loss">SL</option><option value="BE">BE</option><option value="Open">Abierto</option></select>
+      <select class="filter-sel" id="sf-session" onchange="renderStatsSoon()"><option value="">Todas las sesiones</option><option>Sydney</option><option>Tokio</option><option>Londres</option><option>New York</option></select>
+      <select class="filter-sel" id="sf-mercado" onchange="renderStatsSoon()"><option value="">Todos los mercados</option><option>Crypto</option><option>Forex</option><option>Índices</option><option>Metales</option><option>Acciones</option><option>Commodities</option></select>
       <button onclick="resetStatsFilters()" style="padding:6px 12px;background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:var(--radius);cursor:pointer;font-family:'Roboto Mono',monospace;font-size:10px">↻ limpiar</button>
     </div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
       <span style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace">Período</span>
-      <input type="date" id="sf-from" onchange="renderStats()" class="filter-sel" title="Desde">
+      <input type="date" id="sf-from" onchange="renderStatsSoon()" class="filter-sel" title="Desde">
       <span style="color:var(--text3);font-size:11px">→</span>
-      <input type="date" id="sf-to" onchange="renderStats()" class="filter-sel" title="Hasta">
+      <input type="date" id="sf-to" onchange="renderStatsSoon()" class="filter-sel" title="Hasta">
       <button onclick="setStatsPreset('thisMonth')" class="filter-preset-btn">Este mes</button>
       <button onclick="setStatsPreset('lastMonth')" class="filter-preset-btn">Mes pasado</button>
       <button onclick="setStatsPreset('last30')" class="filter-preset-btn">Últimos 30d</button>
@@ -1744,6 +1824,31 @@ function renderHoy(){
     if(el) hoySelVersion(el, ver);
   }
 
+  // Incompletos (sin estrategia o sin checklist) — típico post-MT5
+  const incBox = document.getElementById('hoy-incomplete');
+  const incTxt = document.getElementById('hoy-incomplete-text');
+  const incList = document.getElementById('hoy-incomplete-list');
+  if(incBox){
+    const incs = typeof getIncompleteTrades==='function' ? getIncompleteTrades(8) : [];
+    if(incs.length){
+      incBox.style.display = 'block';
+      if(incTxt) incTxt.textContent = incs.length + (incs.length===1
+        ? ' trade sin estrategia o checklist. Completalo desde acá.'
+        : ' trades sin estrategia o checklist (puede haber más).');
+      if(incList){
+        incList.innerHTML = incs.map(t=>{
+          const miss = [];
+          if(!t.estrategia) miss.push('estrategia');
+          if(!(t.checklistScore&&t.checklistScore.total)) miss.push('checklist');
+          const label = (t.fecha||'')+' · '+(t.activo||'?')+' · '+(t.resultado||'–')+' · falta: '+miss.join('+');
+          return '<div style="cursor:pointer;padding:6px 0;border-bottom:1px solid var(--border)" onclick="editTrade('+JSON.stringify(t.id)+')" title="Completar">'+label+' <span style="color:var(--accent)">→ editar</span></div>';
+        }).join('');
+      }
+    } else {
+      incBox.style.display = 'none';
+    }
+  }
+
   // Review semanal: domingo o lunes
   const weekBox = document.getElementById('hoy-weekly');
   if(weekBox){
@@ -1810,6 +1915,19 @@ function renderHoy(){
 /* ===== Defaults al abrir Nueva operación (trade nuevo) ===== */
 
 /* --- Banner si el check-in del día fue mal/regular --- */
+
+function getLossStreak(){
+  const closed = (trades||[]).filter(t => t.mode !== 'Backtest' && (t.resultado==='Win' || t.resultado==='Loss'))
+    .slice().sort((a,b)=>((b.fecha||'')+' '+(b.hora||'')).localeCompare((a.fecha||'')+' '+(a.hora||'')));
+  if(!closed.length || closed[0].resultado !== 'Loss') return 0;
+  let n = 0;
+  for(const t of closed){
+    if(t.resultado !== 'Loss') break;
+    n++;
+  }
+  return n;
+}
+
 function updateRegDayBanner(){
   const el = document.getElementById('reg-day-banner');
   if(!el) return;
@@ -1817,22 +1935,29 @@ function updateRegDayBanner(){
   try {
     if(typeof hoyLoadVersion==='function') v = hoyLoadVersion() || '';
   } catch(e){}
+  const streak = typeof getLossStreak==='function' ? getLossStreak() : 0;
+  const parts = [];
   if(v === 'emergencia'){
-    el.style.display = 'block';
-    el.style.background = 'var(--red2)';
-    el.style.border = '1px solid var(--red)';
-    el.style.color = 'var(--red)';
-    el.innerHTML = '<b>Hoy marcaste: mal día · no opero.</b> El plan dice cerrar. Si igual cargás un trade, que sea consciente — y el ASR tiene que ser honesto.';
+    parts.push('<b>Hoy marcaste: mal día · no opero.</b> El plan dice cerrar. Si igual cargás un trade, que sea consciente.');
   } else if(v === 'media'){
-    el.style.display = 'block';
-    el.style.background = 'var(--amber2)';
-    el.style.border = '1px solid var(--amber)';
-    el.style.color = 'var(--amber)';
-    el.innerHTML = '<b>Hoy marcaste: regular · mitad de riesgo.</b> Day 0,5% · Scalp 0,25%. Solo setups claros.';
-  } else {
+    parts.push('<b>Hoy marcaste: regular · mitad de riesgo.</b> Day 0,5% · Scalp 0,25%. Solo setups claros.');
+  }
+  if(streak >= 5){
+    parts.push('<b>Racha: '+streak+' losses seguidos.</b> Dato para la próxima sesión (regla rutina: review antes de seguir). Registrar igual está bien.');
+  } else if(streak >= 3){
+    parts.push('<b>Racha: '+streak+' losses seguidos.</b> Recordatorio de plan: tamaño 0,5% en la próxima. Registrar no se bloquea.');
+  }
+  if(!parts.length){
     el.style.display = 'none';
     el.innerHTML = '';
+    return;
   }
+  const hard = (v === 'emergencia' || streak >= 5);
+  el.style.display = 'block';
+  el.style.background = hard ? 'var(--red2)' : 'var(--amber2)';
+  el.style.border = hard ? '1px solid var(--red)' : '1px solid var(--amber)';
+  el.style.color = hard ? 'var(--red)' : 'var(--amber)';
+  el.innerHTML = parts.join('<br>');
 }
 
 function applyTradeDefaults(){
@@ -1869,6 +1994,21 @@ function applyTradeDefaults(){
 }
 
 /* --- Navegación entre páginas del journal --- */
+
+/* --- Rendimiento: diferir renders pesados --- */
+function scheduleRender(fn, key, wait){
+  if(typeof fn !== 'function') return;
+  key = key || fn.name || 'r';
+  wait = wait == null ? 40 : wait;
+  if(!window._schedRenders) window._schedRenders = {};
+  clearTimeout(window._schedRenders[key]);
+  window._schedRenders[key] = setTimeout(function(){
+    try { fn(); } catch(e){ console.warn('scheduleRender', key, e); }
+  }, wait);
+}
+function renderTableSoon(){ scheduleRender(renderTable, 'table', 50); }
+function renderStatsSoon(){ scheduleRender(renderStats, 'stats', 60); }
+
 function showPage(id, el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1876,12 +2016,12 @@ function showPage(id, el){
   if(page) page.classList.add('active');
   if(!el) el = document.querySelector('.nav-item[onclick*="\''+id+'\'"]') || document.querySelector('.nav-item[onclick*="'+id+'"]');
   if(el) el.classList.add('active');
-  if(id==='historial') renderTable();
-  if(id==='estadisticas') renderStats();
-  if(id==='cartera') renderCartera();
-  if(id==='asr'){ refreshAsrSelect(); renderAsrList(); }
-  if(id==='potencial' && typeof ptInit==='function') ptInit();
-  if(id==='hoy' && typeof renderHoy==='function') renderHoy();
+  if(id==='historial') scheduleRender(renderTable, 'table', 16);
+  if(id==='estadisticas') scheduleRender(renderStats, 'stats', 16);
+  if(id==='cartera') scheduleRender(renderCartera, 'cartera', 16);
+  if(id==='asr'){ scheduleRender(function(){ refreshAsrSelect(); renderAsrList(); }, 'asr', 16); }
+  if(id==='potencial' && typeof ptInit==='function') scheduleRender(ptInit, 'potencial', 16);
+  if(id==='hoy' && typeof renderHoy==='function') scheduleRender(renderHoy, 'hoy', 16);
   if(id==='registro'){ if(typeof applyTradeDefaults==='function') applyTradeDefaults(); if(typeof updateRegDayBanner==='function') updateRegDayBanner(); }
   // En móvil, cerrar sidebar al navegar
   if(window.innerWidth <= 900){
@@ -2590,6 +2730,24 @@ function getLastOperadoCapital(){
 
 
 /* --- Alta / edición de trades + atajo ASR post-guardar --- */
+
+/* --- Trades incompletos (típico post-MT5): sin estrategia o sin checklist --- */
+function isTradeIncomplete(t){
+  if(!t) return false;
+  if(t.mode === 'Backtest') return false;
+  const noStrat = !t.estrategia || !String(t.estrategia).trim();
+  const noScore = !(t.checklistScore && t.checklistScore.total > 0);
+  return noStrat || noScore;
+}
+function countIncompleteTrades(){
+  return (trades||[]).filter(isTradeIncomplete).length;
+}
+function getIncompleteTrades(limit){
+  const list = (trades||[]).filter(isTradeIncomplete)
+    .slice().sort((a,b)=>((b.fecha||'')+' '+(b.hora||'')).localeCompare((a.fecha||'')+' '+(a.hora||'')));
+  return typeof limit==='number' ? list.slice(0, limit) : list;
+}
+
 function openAsrForTrade(tradeId){
   showPage('asr');
   if(typeof refreshAsrSelect==='function') refreshAsrSelect();
@@ -2690,11 +2848,38 @@ function addTrade(){
         openAsrForTrade(savedId);
       }
     }, 250);
+  } else if(!wasNew && t.mode !== 'Backtest'){
+    // Flujo post-MT5: tras completar uno, ofrecer el siguiente incompleto o ASR
+    setTimeout(function(){
+      const stillIncomplete = typeof isTradeIncomplete==='function' && isTradeIncomplete(
+        (trades||[]).find(x=>String(x.id)===String(savedId))
+      );
+      const nextList = typeof getIncompleteTrades==='function' ? getIncompleteTrades(1) : [];
+      const next = nextList[0];
+      if(stillIncomplete){
+        // Guardó pero sigue incompleto (falta estrategia o checklist)
+        if(typeof showToast==='function') showToast('Guardado · aún falta estrategia o checklist', 2800);
+        return;
+      }
+      // Completo: ¿ASR de este? ¿o siguiente incompleto?
+      if(t.resultado && t.resultado !== 'Open'){
+        const hasAsr = (asrs||[]).some(a=>String(a.tradeId)===String(savedId));
+        if(!hasAsr && confirm('Trade completado.\n\n¿Hacer ASR de este trade ahora?')){
+          openAsrForTrade(savedId);
+          return;
+        }
+      }
+      if(next && confirm('¿Completar el siguiente incompleto?\n'+(next.fecha||'')+' · '+(next.activo||'?'))){
+        editTrade(next.id);
+      } else if(typeof renderHoy==='function'){
+        showPage('hoy');
+      }
+    }, 300);
   }
 }
 
 function editTrade(id){
-  const t = trades.find(x=>x.id===id);
+  const t = trades.find(x=>String(x.id)===String(id));
   if(!t) return;
 
   // Switch to registro page (no usar índice: Hoy es el [0])
@@ -2916,11 +3101,15 @@ function renderTable(){
     if(fses && !(t.sesion||'').includes(fses)) return false;
     if(fmode==='' ? t.mode==='Backtest' : (fmode!=='ALL' && t.mode!==fmode)) return false;
     if(fscore){
-      const pct = typeof getTradeScorePct==='function' ? getTradeScorePct(t) : null;
-      if(fscore==='none' && pct!==null) return false;
-      if(fscore==='high' && !(pct!==null && pct>=80)) return false;
-      if(fscore==='mid' && !(pct!==null && pct>=50 && pct<80)) return false;
-      if(fscore==='low' && !(pct!==null && pct<50)) return false;
+      if(fscore==='incomplete'){
+        if(typeof isTradeIncomplete==='function' ? !isTradeIncomplete(t) : false) return false;
+      } else {
+        const pct = typeof getTradeScorePct==='function' ? getTradeScorePct(t) : null;
+        if(fscore==='none' && pct!==null) return false;
+        if(fscore==='high' && !(pct!==null && pct>=80)) return false;
+        if(fscore==='mid' && !(pct!==null && pct>=50 && pct<80)) return false;
+        if(fscore==='low' && !(pct!==null && pct<50)) return false;
+      }
     }
     return true;
   });
@@ -4213,6 +4402,33 @@ function tjStamp(){
 }
 
 /* --- Export / import JSON, CSV, MT5, auto-backup --- */
+
+function toggleIoMenu(ev){
+  if(ev) ev.stopPropagation();
+  const m = document.getElementById('io-menu');
+  if(!m) return;
+  m.classList.toggle('open');
+  const btn = m.querySelector('.io-toggle');
+  if(btn) btn.setAttribute('aria-expanded', m.classList.contains('open') ? 'true' : 'false');
+}
+function closeIoMenu(){
+  const m = document.getElementById('io-menu');
+  if(m) m.classList.remove('open');
+}
+function ioAction(kind){
+  closeIoMenu();
+  if(kind==='export-json') exportData();
+  else if(kind==='export-csv') exportCSV();
+  else if(kind==='import-json') document.getElementById('imp-file')?.click();
+  else if(kind==='import-mt5') document.getElementById('mt5-file')?.click();
+  else if(kind==='undo') undoLast();
+}
+document.addEventListener('click', function(e){
+  const m = document.getElementById('io-menu');
+  if(!m || !m.classList.contains('open')) return;
+  if(!m.contains(e.target)) closeIoMenu();
+});
+
 function exportData(){
   if(trades.length === 0 && asrs.length === 0 && accounts.length <= 1 && movements.length === 0){
     alert('No hay datos para exportar todavía.');
@@ -4648,7 +4864,7 @@ function importMT5(input){
           comisiones: (comision+swap).toFixed(2),
           pnl: net.toFixed(2),
           lotaje: vol||'',
-          sesion:'', mode:'', orden:'', resultado,
+          sesion:'', mode:'Operado', orden:'', resultado,
           fibonacci:'', confirmaciones:'', patron:'',
           link:'', imagenes:{}, imgNotes:{},
           notas:'Importado de MT5'
@@ -4675,9 +4891,19 @@ function importMT5(input){
       save();
       renderTable();
       updateSidebar();
+      if(typeof renderHoy==='function') renderHoy();
       let msg = `MT5 importado · ${imported.length} operaciones cargadas`;
       if(skippedDup) msg += ` · ${skippedDup} duplicadas omitidas`;
-      showToast(msg);
+      showToast(msg, 3500);
+      // Flujo real: completar estrategia + checklist + ASR
+      setTimeout(function(){
+        const n = typeof countIncompleteTrades==='function' ? countIncompleteTrades() : imported.length;
+        const go = confirm(
+          msg + '\n\nQuedan sin completar (estrategia / checklist): ' + n +
+          '\n\n¿Ir a la home a completarlas una por una?\n(Editar → estrategia + checklist → guardar → ASR)'
+        );
+        if(go) showPage('hoy');
+      }, 400);
     } catch(err){
       alert('Error al leer el reporte de MT5: ' + err.message + '\n\nAsegurate de exportar el "Informe" en formato HTML desde la pestaña Historial.');
     }
@@ -5015,12 +5241,19 @@ async function initApp(){
   const asrFecha = document.getElementById('asr-fecha');
   if(asrFecha) asrFecha.value = new Date().toISOString().slice(0,10);
   refreshAccountSelectors();
-  renderVariants();
-  renderConfs();
-  renderTfSlots();
-  renderAsrList();
   updateSidebar();
-  if(typeof renderHoy==='function') renderHoy();
+  // UI secundaria diferida: first paint más rápido
+  requestAnimationFrame(function(){
+    try {
+      renderVariants();
+      renderConfs();
+      renderTfSlots();
+    } catch(e){ console.warn(e); }
+    scheduleRender(function(){
+      if(typeof renderAsrList==='function') renderAsrList();
+      if(typeof renderHoy==='function') renderHoy();
+    }, 'boot', 0);
+  });
 }
 
 initApp();
