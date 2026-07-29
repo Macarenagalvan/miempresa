@@ -381,6 +381,10 @@ tbody tr:hover td{background:var(--bg2)}
 @media (max-width:560px){
   .rutina-proto{grid-template-columns:1fr !important}
 }
+
+@media (max-width:700px){
+  #hoy-week-kpis{grid-template-columns:repeat(2,1fr)!important}
+}
 </style>
 <style id="mc-theme">
 :root{ --bg:#0a1219; --bg2:#0f1c26; --bg3:#14242f; --bg4:#1b2f3b; --border:#1f3340; --border2:#2b4654; --text:#e6eef2; --text2:#8aa0ac; --text3:#566f7c; --accent:#34c5d8; --accent2:#0c3540; --green:#3ed9a4; --green2:#0c3a2c; --red:#f0606e; --red2:#3d1418; --amber:#f5b73f; --amber2:#3d2a06; --purple:#a78bfa; --purple2:#23234a; --pink:#f472b6; --pink2:#3d1030; }
@@ -461,6 +465,25 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 <div id="page-hoy" class="page active">
   <div class="page-title" id="hoy-greeting">Buen día, Trader</div>
   <div class="page-sub" id="hoy-sub">Tu escritorio de trabajo · un paso a la vez</div>
+
+  <div id="hoy-week-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+      <div style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:'Roboto Mono',monospace">7 días · ops</div>
+      <div id="hoy-k-ops" style="font-size:22px;font-weight:700;margin-top:4px;font-family:'Roboto Mono',monospace">0</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+      <div style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:'Roboto Mono',monospace">7 días · WR</div>
+      <div id="hoy-k-wr" style="font-size:22px;font-weight:700;margin-top:4px;font-family:'Roboto Mono',monospace">–</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+      <div style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:'Roboto Mono',monospace">7 días · PnL</div>
+      <div id="hoy-k-pnl" style="font-size:22px;font-weight:700;margin-top:4px;font-family:'Roboto Mono',monospace">–</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+      <div style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:'Roboto Mono',monospace">Racha</div>
+      <div id="hoy-k-streak" style="font-size:18px;font-weight:700;margin-top:4px;font-family:'Roboto Mono',monospace">–</div>
+    </div>
+  </div>
 
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
@@ -1308,6 +1331,18 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 </div>
 
 <script>
+/* =============================================================================
+   JOURNALY · mapa del JavaScript (solo orientación, no cambia comportamiento)
+   1. Persistencia (IndexedDB + localStorage)
+   2. Cuentas / capital / movimientos
+   3. Navegación y home (Hoy)
+   4. Nueva operación (wizard, checklist, defaults, addTrade)
+   5. Historial y filtros
+   6. Estadísticas (incl. score)
+   7. ASR y review semanal
+   8. Cartera, export/import, Monte Carlo / potencial
+   ============================================================================= */
+
 // === IndexedDB · almacenamiento sin límite de 5MB ===
 let trades = [], asrs = [], accounts = [], movements = [];
 let activeAccountId = '';
@@ -1403,6 +1438,7 @@ function saveActiveAccount(){
   _lsSet('tj_active_account', activeAccountId || '');
 }
 
+/* --- Cuentas: activa (default del form), capital, movimientos --- */
 function getActiveAccount(){
   return accounts.find(a=>a.id===activeAccountId) || accounts[0];
 }
@@ -1589,6 +1625,7 @@ function toggleSidebar(){
 }
 
 
+/* --- Home (Hoy): saludo, KPIs 7d, racha, cuentas, check-in, ASR pendientes --- */
 /* ===== HOY · home de apertura ===== */
 function hoyTodayKey(){
   return new Date().toISOString().slice(0,10);
@@ -1642,6 +1679,61 @@ function renderHoy(){
     try { nm = (localStorage.getItem('tj_trader_name')||'').trim(); } catch(e){}
     greet.textContent = nm ? ('Buen día, ' + nm) : 'Buen día, Trader';
   }
+  // KPIs últimos 7 días (solo Operado)
+  try {
+    const desde = new Date(); desde.setDate(desde.getDate()-7);
+    const desdeStr = desde.toISOString().slice(0,10);
+    const week = (trades||[]).filter(t => t.mode !== 'Backtest' && (t.fecha||'') >= desdeStr);
+    const wins = week.filter(t=>t.resultado==='Win').length;
+    const losses = week.filter(t=>t.resultado==='Loss').length;
+    const closed = wins + losses;
+    const wr = closed ? Math.round(wins/closed*100) : null;
+    let pnl = 0; let hasPnl = false;
+    week.forEach(t=>{
+      const n = parseFloat(String(t.pnl||'').replace('+','').replace(',','.'));
+      if(!isNaN(n)){ pnl += n; hasPnl = true; }
+    });
+    const o = document.getElementById('hoy-k-ops');
+    const w = document.getElementById('hoy-k-wr');
+    const p = document.getElementById('hoy-k-pnl');
+    if(o) o.textContent = String(week.length);
+    if(w){
+      w.textContent = wr===null ? '–' : (wr + '%');
+      w.style.color = wr===null ? 'var(--text3)' : (wr>=50 ? 'var(--green)' : 'var(--red)');
+    }
+    if(p){
+      if(!hasPnl){ p.textContent = '–'; p.style.color = 'var(--text3)'; }
+      else {
+        p.textContent = (pnl>=0?'+':'') + '$ ' + pnl.toFixed(2);
+        p.style.color = pnl>0 ? 'var(--green)' : (pnl<0 ? 'var(--red)' : 'var(--text3)');
+      }
+    }
+    // Racha actual (operados cerrados Win/Loss, más recientes primero)
+    const stEl = document.getElementById('hoy-k-streak');
+    if(stEl){
+      const closed = (trades||[]).filter(t => t.mode !== 'Backtest' && (t.resultado==='Win' || t.resultado==='Loss'))
+        .slice().sort((a,b)=>((b.fecha||'')+' '+(b.hora||'')).localeCompare((a.fecha||'')+' '+(a.hora||'')));
+      if(!closed.length){ stEl.textContent = '–'; stEl.style.color = 'var(--text3)'; }
+      else {
+        const first = closed[0].resultado;
+        let n = 0;
+        for(const t of closed){
+          if(t.resultado !== first) break;
+          n++;
+        }
+        if(first==='Win'){
+          stEl.textContent = n + ' W';
+          stEl.style.color = 'var(--green)';
+        } else {
+          stEl.textContent = n + ' L';
+          stEl.style.color = n >= 3 ? 'var(--red)' : 'var(--amber)';
+          if(n >= 5) stEl.textContent = n + ' L · STOP';
+          else if(n >= 3) stEl.textContent = n + ' L · 0,5%';
+        }
+      }
+    }
+  } catch(e){}
+
 
   const ver = hoyLoadVersion();
   document.querySelectorAll('#hoy-version-pills .pill').forEach(p=>{
@@ -1680,9 +1772,10 @@ function renderHoy(){
         : 'Tenés '+pending.length+' trades cerrados sin ASR (últimos 14 días). No se pierden: completá cuando puedas.';
       if(pendList){
         pendList.innerHTML = pending.slice(0,5).map(t=>{
-          return (t.fecha||'')+' · '+(t.activo||'?')+' · '+(t.estrategia||'')+' · '+(t.resultado||'');
-        }).join('<br>');
-        if(pending.length > 5) pendList.innerHTML += '<br>… y '+(pending.length-5)+' más';
+          const label = (t.fecha||'')+' · '+(t.activo||'?')+' · '+(t.estrategia||'')+' · '+(t.resultado||'');
+          return '<div style="cursor:pointer;padding:4px 0;border-bottom:1px solid var(--border)" onclick="openAsrForTrade(\''+String(t.id)+'\')" title="Hacer ASR de este trade">'+label+' <span style="color:var(--amber)">→ ASR</span></div>';
+        }).join('');
+        if(pending.length > 5) pendList.innerHTML += '<div style="padding-top:6px;color:var(--text3)">… y '+(pending.length-5)+' más (en ASR elegís el trade)</div>';
       }
     } else {
       pendBox.style.display = 'none';
@@ -1713,8 +1806,10 @@ function renderHoy(){
 
 
 
+/* --- Nueva operación: defaults de fecha/hora/sesión/modo/capital --- */
 /* ===== Defaults al abrir Nueva operación (trade nuevo) ===== */
 
+/* --- Banner si el check-in del día fue mal/regular --- */
 function updateRegDayBanner(){
   const el = document.getElementById('reg-day-banner');
   if(!el) return;
@@ -1773,6 +1868,7 @@ function applyTradeDefaults(){
   if(typeof updateRegDayBanner === 'function') updateRegDayBanner();
 }
 
+/* --- Navegación entre páginas del journal --- */
 function showPage(id, el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1802,6 +1898,7 @@ function showPage(id, el){
 }
 
 
+/* --- Checklists por estrategia + score --- */
 const STRATEGY_CHECKLISTS = {
   Blue: [
     "Zona soporte/resistencia + desaceleración",
@@ -1903,12 +2000,44 @@ function updateChecklistScore(){
 }
 
 function getChecklistScore(){
-  return window._checklistScore || { done:0, total:0, pct:0 };
+  const sc = window._checklistScore || { done:0, total:0, pct:0 };
+  if(sc.total > 0 && (sc.pct==null || isNaN(sc.pct))){
+    sc.pct = Math.round((sc.done/sc.total)*100);
+  }
+  return sc;
 }
+function getChecklistDetail(){
+  const checks = document.querySelectorAll('#cl-items input[type=checkbox]');
+  const items = [];
+  checks.forEach((c,i)=>{
+    const span = document.querySelector('#cl-item-'+i+' span');
+    items.push({ text: span ? span.textContent : '', checked: !!c.checked });
+  });
+  return items;
+}
+function restoreChecklistDetail(detail){
+  if(!Array.isArray(detail) || !detail.length) return;
+  const checks = document.querySelectorAll('#cl-items input[type=checkbox]');
+  checks.forEach((c,i)=>{
+    // Match by index first; fallback by text
+    let on = detail[i] ? !!detail[i].checked : false;
+    if(detail[i] && detail[i].text){
+      const span = document.querySelector('#cl-item-'+i+' span');
+      if(span && span.textContent !== detail[i].text){
+        const found = detail.find(d => d.text === (span ? span.textContent : ''));
+        on = found ? !!found.checked : on;
+      }
+    }
+    c.checked = on;
+  });
+  if(typeof updateChecklistScore==='function') updateChecklistScore();
+}
+
 
 
 /* ===== Wizard Nueva operación ===== */
 window._regStep = 1;
+/* --- Wizard 3 pasos (Setup → Entrada → Cierre) --- */
 function goRegStep(n, force){
   n = parseInt(n,10);
   if(!force && n > (window._regStep||1) && !editingId){
@@ -2460,6 +2589,7 @@ function getLastOperadoCapital(){
 }
 
 
+/* --- Alta / edición de trades + atajo ASR post-guardar --- */
 function openAsrForTrade(tradeId){
   showPage('asr');
   if(typeof refreshAsrSelect==='function') refreshAsrSelect();
@@ -2492,7 +2622,8 @@ function addTrade(){
     horaSalida: document.getElementById('inp-hora-salida').value,
     duracion: document.getElementById('inp-duracion').value,
     estrategia: curStrat, variante: curVariant, tipo: curType, dir: curDir,
-    checklistScore: (typeof getChecklistScore==='function'?getChecklistScore():null),
+    checklistScore: (function(){ const s=typeof getChecklistScore==='function'?getChecklistScore():{done:0,total:0,pct:0}; if(s&&s.total){ s.pct=Math.round((s.done/s.total)*100);} return s; })(),
+    checklistItems: (typeof getChecklistDetail==='function'?getChecklistDetail():[]),
     mercado: document.getElementById('inp-mercado').value, activo,
     entrada: document.getElementById('inp-entrada').value,
     sl: document.getElementById('inp-sl').value,
@@ -2589,6 +2720,12 @@ function editTrade(id){
   const stratPill = Array.from(document.querySelectorAll('#stratPills .pill')).find(p=>p.textContent===curStrat);
   if(stratPill) stratPill.classList.add('on');
   renderVariants();
+  // Restaurar checklist del trade (items marcados + score)
+  if(typeof restoreChecklistDetail==='function' && Array.isArray(t.checklistItems)){
+    setTimeout(function(){ restoreChecklistDetail(t.checklistItems); }, 0);
+  } else if(t.checklistScore && typeof updateChecklistScore==='function'){
+    setTimeout(function(){ updateChecklistScore(); }, 0);
+  }
 
   // Variante
   curVariant = t.variante || '';
@@ -2751,6 +2888,7 @@ function resetForm(){
 const stratBC = {Blue:'b-blue',Red:'b-red',Pink:'b-pink',White:'b-white',Black:'b-black',Green:'b-green'};
 const resBC = {Win:'b-win',Loss:'b-loss',BE:'b-be',Open:'b-open'};
 
+/* --- Historial: tabla, filtros (incl. score), columna ASR --- */
 function renderTable(){
   // Refrescar opciones del filtro de cuenta
   const accSel = document.getElementById('f-account');
@@ -2829,7 +2967,9 @@ function renderTable(){
       <td><span class="badge ${resBC[t.resultado]||''}" ${t.cierreManual?`title="Cierre manual${t.cierreMotivo?': '+String(t.cierreMotivo).replace(/"/g,'&quot;'):''}"`:''}>${t.resultado||'–'}${t.cierreManual?' ✋':''}</span></td>
       <td style="text-align:center">${asrs.some(a=>String(a.tradeId)===String(t.id))
         ? '<span title="ASR realizado" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--green2);color:var(--green);border:1px solid var(--green);font-weight:700;font-size:12px">✓</span>'
-        : '<span title="Sin ASR" style="color:var(--text3);font-size:14px">–</span>'
+        : (t.mode!=='Backtest' && t.resultado && t.resultado!=='Open'
+            ? '<button type="button" title="Hacer ASR" onclick="event.stopPropagation();openAsrForTrade(\''+t.id+'\')" style="cursor:pointer;padding:2px 8px;font-size:11px;font-family:Roboto Mono,monospace;background:var(--amber2);border:1px solid var(--amber);color:var(--amber);border-radius:4px">ASR</button>'
+            : '<span title="Sin ASR" style="color:var(--text3);font-size:14px">–</span>')
       }</td>
       <td>${grafCol||'–'}</td>
       <td><button class="edit-btn" onclick="editTrade(${t.id})">✎</button><button class="del-btn" onclick="delTrade(${t.id})">✕</button></td>
@@ -2844,6 +2984,7 @@ function delTrade(id){
 
 const stratColors={Blue:'#4f9cf9',Red:'#f05252',Pink:'#f472b6',White:'#c0c9d4',Black:'#e8edf2',Green:'#3ecf8e'};
 
+/* --- Estadísticas: filtros, KPIs, charts, WR por score --- */
 function getTradeScorePct(t){
   const sc = t && t.checklistScore;
   if(!sc || !sc.total) return null;
@@ -3235,6 +3376,7 @@ function renderStats(){
 }
 
 // ===== Cartera / Equity =====
+/* --- Cartera: equity, cuentas, movimientos --- */
 function renderCartera(){
   // Sincroniza el selector
   const sel = document.getElementById('cartera-account-select');
@@ -3626,6 +3768,7 @@ function _wrTradesInRange(){
   );
 }
 
+/* --- Review semanal (texto + score vs WR) --- */
 function runWeeklyReview(){
   const list = _wrTradesInRange();
   const box = document.getElementById('wr-result');
@@ -3768,6 +3911,7 @@ function loadAsrTradePreview(){
   prev.innerHTML = `<b>${t.estrategia||''}</b> · ${t.activo||''} · ${t.dir||''} · ${t.resultado||'?'} · Score: <span style="color:var(--accent)">${score}</span>`;
 }
 
+/* --- ASR: guardar, pendientes, volver a home --- */
 function saveAsrSimple(){
   const tradeId = document.getElementById('asr-trade-link')?.value;
   if(!tradeId){ alert('Elegí un trade'); return; }
@@ -3797,8 +3941,29 @@ function saveAsrSimple(){
   const prev = document.getElementById('asr-trade-preview'); if(prev) prev.style.display='none';
   renderAsrList();
   if(typeof renderTable==='function') renderTable(); // refrescar la columna ASR del historial
-  if(typeof showToast==='function') showToast('ASR guardado');
-  else alert('ASR guardado');
+  // Cuántos operados cerrados sin ASR (14 días)
+  let pending = 0;
+  try {
+    const asrIds = new Set((asrs||[]).map(x=>String(x.tradeId)));
+    const desde = new Date(); desde.setDate(desde.getDate()-14);
+    const desdeStr = desde.toISOString().slice(0,10);
+    pending = (trades||[]).filter(tr=>{
+      if(tr.mode==='Backtest') return false;
+      if(!tr.resultado || tr.resultado==='Open') return false;
+      if((tr.fecha||'') < desdeStr) return false;
+      return !asrIds.has(String(tr.id));
+    }).length;
+  } catch(e){}
+  const msg = pending > 0
+    ? ('ASR guardado · quedan '+pending+' sin ASR')
+    : 'ASR guardado · al día con los ASR';
+  if(typeof showToast==='function') showToast(msg, 3200);
+  else alert(msg);
+  setTimeout(function(){
+    if(confirm(msg + '\n\n¿Volver a la home?')){
+      showPage('hoy');
+    }
+  }, 300);
 }
 
 function delAsr(id){
@@ -4047,6 +4212,7 @@ function tjStamp(){
   return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"_"+p(d.getHours())+"-"+p(d.getMinutes())+"-"+p(d.getSeconds());
 }
 
+/* --- Export / import JSON, CSV, MT5, auto-backup --- */
 function exportData(){
   if(trades.length === 0 && asrs.length === 0 && accounts.length <= 1 && movements.length === 0){
     alert('No hay datos para exportar todavía.');
@@ -4650,6 +4816,7 @@ function loadTraderName(){
 }
 
 // === Inicialización asíncrona (espera a IndexedDB) ===
+/* --- Arranque: cargar datos, defaults de fecha, render inicial --- */
 async function initApp(){
   // Mostrar overlay de carga
   const overlay = document.createElement('div');
@@ -4859,6 +5026,7 @@ async function initApp(){
 initApp();
 
 
+/* --- Potencial / proyección y (más abajo) Monte Carlo --- */
 /* ================= POTENCIAL · proyección por interés compuesto =================
    Estas funciones faltaban por completo: la página existía en el HTML pero
    ptInit / ptAccChange / ptCalc / ptFromStats no estaban definidas, así que
