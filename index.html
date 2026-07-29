@@ -333,26 +333,12 @@ tbody tr:hover td{background:var(--bg2)}
 .mc-rv{font-family:'Roboto Mono',monospace;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap}
 .mc-rv.big{font-size:18px;letter-spacing:-.5px}
 @media (max-width:900px){.mc-grid2{grid-template-columns:1fr}}
-
-/* === Rutina === */
-.rutina-check{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;user-select:none;font-size:13px;color:var(--text2);line-height:1.4}
-.rutina-check:hover{border-color:var(--border2)}
-.rutina-check input{margin-top:2px;accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;cursor:pointer}
-.rutina-check:has(input:checked){border-color:var(--green);background:var(--green2);color:var(--text)}
-.rutina-check:has(input:checked) span{color:var(--text)}
-@media (max-width:900px){
-  .rutina-proto-grid{grid-template-columns:1fr 1fr !important}
-  .rutina-two-col{grid-template-columns:1fr !important}
-}
-@media (max-width:560px){
-  .rutina-proto-grid{grid-template-columns:1fr !important}
-}
 </style>
 <style id="mc-theme">
 :root{ --bg:#0a1219; --bg2:#0f1c26; --bg3:#14242f; --bg4:#1b2f3b; --border:#1f3340; --border2:#2b4654; --text:#e6eef2; --text2:#8aa0ac; --text3:#566f7c; --accent:#34c5d8; --accent2:#0c3540; --green:#3ed9a4; --green2:#0c3a2c; --red:#f0606e; --red2:#3d1418; --amber:#f5b73f; --amber2:#3d2a06; --purple:#a78bfa; --purple2:#23234a; --pink:#f472b6; --pink2:#3d1030; }
 html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4ebef; --border:#dce4e9; --border2:#c5d0d7; --text:#12242d; --text2:#52656f; --text3:#8598a2; --accent:#0e93a8; --accent2:#d6eff3; --green:#0f8a62; --green2:#dcf3ea; --red:#cf4250; --red2:#fbe3e6; --amber:#b07916; --amber2:#f6ecd7; --purple:#7c5cf0; --purple2:#e9e3fb; --pink:#c43f7e; --pink2:#fbe6f0; }
 </style>
-<script>(function(){try{var m=localStorage.getItem('mc_theme')||'auto';var h=new Date().getHours();var t=(m==='auto')?((h>=7&&h<19)?'light':'dark'):m;document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+<script>(function(){try{localStorage.setItem('mc_theme','dark');document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body>
 <button class="menu-toggle" id="menu-toggle" onclick="toggleSidebar()" aria-label="Menú">
@@ -386,10 +372,6 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <div class="nav-item" onclick="showPage('asr',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
       ASR
-    </div>
-    <div class="nav-item" onclick="showPage('rutina',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      Rutina
     </div>
     <div class="nav-item" onclick="showPage('mc-plan',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>
@@ -1087,174 +1069,6 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 </div>
 
 
-<!-- RUTINA · proceso + psicología operativa -->
-<div id="page-rutina" class="page">
-  <div class="page-title">Rutina</div>
-  <div class="page-sub">Oficina de trading · elevá el suelo, no el techo</div>
-
-  <!-- Contrato mínimo -->
-  <div style="background:var(--bg2);border:1px solid var(--accent);border-radius:var(--radius-lg);padding:16px;margin-bottom:18px">
-    <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-family:'Roboto Mono',monospace;margin-bottom:10px">Contrato mínimo · 4 puntos no negociables</div>
-    <div style="font-size:13px;color:var(--text2);line-height:1.55;margin-bottom:12px">Si saltás alguno, ese día no operás (o solo paper). La consecuencia convierte el hábito.</div>
-    <div id="rutina-contract" style="display:flex;flex-direction:column;gap:8px">
-      <label class="rutina-check"><input type="checkbox" data-k="plan" onchange="rutinaSaveDay()"><span>1. Leí las 3 reglas de oro del Trading Plan antes de operar</span></label>
-      <label class="rutina-check"><input type="checkbox" data-k="checklist" onchange="rutinaSaveDay()"><span>2. Checklist del journal <b>antes</b> de cada entrada</span></label>
-      <label class="rutina-check"><input type="checkbox" data-k="registro" onchange="rutinaSaveDay()"><span>3. Registro + ASR el <b>mismo día</b> (bloque de cierre)</span></label>
-      <label class="rutina-check"><input type="checkbox" data-k="regla" onchange="rutinaSaveDay()"><span>4. Domingos: review semanal + <b>una</b> sola regla para la semana</span></label>
-    </div>
-    <div id="rutina-contract-meta" style="margin-top:10px;font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)"></div>
-  </div>
-
-  <!-- Check-in 2 min -->
-  <div class="section-label">Check-in · 2 minutos antes de la sesión</div>
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:18px">
-    <div style="font-size:13px;color:var(--text2);line-height:1.55;margin-bottom:14px">
-      Inchworm (Tendler): no busques el día perfecto. Evitá el día malo. <b style="color:var(--text)">Trabajá el suelo, no el techo.</b>
-    </div>
-    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:8px">¿En cuál de mis tres versiones estoy ahora?</div>
-    <div class="pills" id="rutina-version-pills" style="margin-bottom:14px">
-      <div class="pill p-err-red" data-v="emergencia" onclick="rutinaSelVersion(this,'emergencia')">Emergencia · cerrar</div>
-      <div class="pill p-mood-amber" data-v="media" onclick="rutinaSelVersion(this,'media')">Media · −50% tamaño</div>
-      <div class="pill p-mood-green" data-v="flujo" onclick="rutinaSelVersion(this,'flujo')">Flujo · plan completo</div>
-    </div>
-    <div id="rutina-version-hint" style="font-size:13px;color:var(--text2);line-height:1.5;min-height:40px;margin-bottom:12px">Elegí una versión. La decisión de riesgo es automática.</div>
-    <div style="overflow-x:auto">
-      <table class="matrix-tbl" style="min-width:560px">
-        <thead>
-          <tr>
-            <th class="row-head">Señal</th>
-            <th>Emergencia</th>
-            <th>Media</th>
-            <th>Flujo</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td class="row-head">P&L entre trades</td><td>Cada 3–5 min · dirige</td><td>Alguna vez</td><td>Solo al cierre</td></tr>
-          <tr><td class="row-head">Tras una pérdida</td><td>Trade inmediato sin setup</td><td>Espera con impaciencia</td><td>Pausa + protocolo</td></tr>
-          <tr><td class="row-head">Tamaño</td><td>Aumenta tras perder</td><td>Estable, con tentación</td><td>El mismo siempre</td></tr>
-          <tr><td class="row-head">Narrativa</td><td>«El mercado está roto»</td><td>«Mala suerte»</td><td>«Trade malo ≠ trader malo»</td></tr>
-          <tr><td class="row-head">Cuerpo</td><td>Tensión · urgencia</td><td>Neutral / inquieto</td><td>Calma · foco</td></tr>
-          <tr><td class="row-head">Decisión</td><td style="color:var(--red);font-weight:600">Cerrar plataforma</td><td style="color:var(--amber);font-weight:600">Reducir 50%</td><td style="color:var(--green);font-weight:600">Operar el plan</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Protocolo de pérdida -->
-  <div class="section-label">Protocolo de pérdida · 5 pasos (Best Loser Wins)</div>
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px" class="rutina-proto-grid">
-    <div class="asr-card" style="margin:0;padding:12px">
-      <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:6px">01 · Stop físico</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.45">Manos fuera del teclado. Silla hacia atrás. El cuerpo primero.</div>
-    </div>
-    <div class="asr-card" style="margin:0;padding:12px">
-      <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:6px">02 · Nombrá</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.45">«Estoy frustrada.» «Quiero recuperar.» En voz alta, no en la cabeza.</div>
-    </div>
-    <div class="asr-card" style="margin:0;padding:12px">
-      <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:6px">03 · Dato</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.45">«Pérdida de X €. Stop según plan.» Un dato, no un juicio.</div>
-    </div>
-    <div class="asr-card" style="margin:0;padding:12px">
-      <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:6px">04 · Control</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.45">¿Setup válido ahora, o quiero abrir porque perdí? Si es la 2ª → no.</div>
-    </div>
-    <div class="asr-card" style="margin:0;padding:12px">
-      <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:6px">05 · Plan</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.45">El mercado no sabe que perdiste. El próximo trade no te debe nada.</div>
-    </div>
-  </div>
-
-  <!-- Diaria -->
-  <div class="section-label">Rutina diaria · días de trading</div>
-  <div class="tbl-wrap" style="margin-bottom:18px;overflow-x:auto">
-    <table>
-      <thead><tr><th>Bloque</th><th>Tiempo</th><th>Qué hacés</th><th>Criterio «cumplido»</th></tr></thead>
-      <tbody>
-        <tr>
-          <td style="font-weight:600">1. Apertura</td>
-          <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)">15 min</td>
-          <td style="font-size:12px;color:var(--text2)">Journal → Trading Plan (3 reglas de oro) → ¿puedo operar hoy? (sueño, humor, noticias)</td>
-          <td style="font-size:12px;color:var(--text2)">Plan leído. Mood malo → no operás</td>
-        </tr>
-        <tr>
-          <td style="font-weight:600">2. Prep</td>
-          <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)">15–20 min</td>
-          <td style="font-size:12px;color:var(--text2)">TV: solo watchlist + niveles. <b>No entradas.</b> Anotá 1–3 setups posibles</td>
-          <td style="font-size:12px;color:var(--text2)">Lista escrita. Si no estaba escrito, no existe</td>
-        </tr>
-        <tr>
-          <td style="font-weight:600">3. Ventana</td>
-          <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)">horas fijas</td>
-          <td style="font-size:12px;color:var(--text2)">Solo setups de la lista + checklist completa <b>antes</b> del click</td>
-          <td style="font-size:12px;color:var(--text2)">Score cargado antes de entrar · máx 2 abiertos</td>
-        </tr>
-        <tr>
-          <td style="font-weight:600">4. Cierre</td>
-          <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)">15–20 min</td>
-          <td style="font-size:12px;color:var(--text2)">Registrar trades del día + ASR de cada cerrado</td>
-          <td style="font-size:12px;color:var(--text2)">Historial al día. Sin esto → mañana no hay sesión</td>
-        </tr>
-        <tr>
-          <td style="font-weight:600">5. Cierre oficina</td>
-          <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text3)">2 min</td>
-          <td style="font-size:12px;color:var(--text2)">Cerrar TV. Punto.</td>
-          <td style="font-size:12px;color:var(--text2)">No «un trade más»</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <div style="background:var(--bg2);border-left:3px solid var(--amber);padding:12px 16px;margin-bottom:18px;border-radius:var(--radius);font-size:13px;color:var(--text2);line-height:1.5">
-    <b style="color:var(--amber)">Tope duro del plan:</b> 3 losses → solo Score completo + 0,5%. 5 losses en la semana → stop hasta review. No negociable.
-  </div>
-
-  <!-- Semanal / Mensual -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px" class="rutina-two-col">
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px">
-      <div style="font-weight:700;color:var(--text);margin-bottom:10px;font-size:14px">Semanal · 40–50 min</div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.6">
-        1. Review semanal en ASR → Generar review<br>
-        2. Copiá el resumen<br>
-        3. Tres líneas: ¿Score ≥80%? · Error ASR #1 · <b>una</b> regla para la semana<br>
-        4. Trading Plan 5 min (regla nueva + reglas de oro)<br>
-        5. Definí horarios fijos de la semana
-      </div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px">
-      <div style="font-weight:700;color:var(--text);margin-bottom:10px;font-size:14px">Mensual · 60–90 min</div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.6">
-        1. Estadísticas del mes (Operado)<br>
-        2. Monte Carlo con tus números reales<br>
-        3. ¿El edge soporta +2–6%? ¿Qué destruye expectancy?<br>
-        4. Actualizá <b>una</b> cosa del plan (nunca reescribir todo)<br>
-        5. Export respaldo JSON (cierre contable)
-      </div>
-    </div>
-  </div>
-
-  <!-- Anti-caos -->
-  <div class="section-label">Anti-caos · para tu perfil</div>
-  <div class="tbl-wrap" style="margin-bottom:18px;overflow-x:auto">
-    <table>
-      <thead><tr><th>Problema</th><th>Antídoto</th></tr></thead>
-      <tbody>
-        <tr><td style="font-weight:600">Operás lo que ves</td><td style="color:var(--text2);font-size:13px">Solo lista del bloque 2. Si no estaba escrito, no existe</td></tr>
-        <tr><td style="font-weight:600">No hacés checklist</td><td style="color:var(--text2);font-size:13px">Trade con Score 0 = inválido en la review</td></tr>
-        <tr><td style="font-weight:600">Registrás «después»</td><td style="color:var(--text2);font-size:13px">Bloque 4 es jornada laboral. Sin él, al día siguiente no hay sesión</td></tr>
-        <tr><td style="font-weight:600">No leés el plan</td><td style="color:var(--text2);font-size:13px">Bloque 1: solo 3 reglas de oro, 2 minutos</td></tr>
-        <tr><td style="font-weight:600">Desorden general</td><td style="color:var(--text2);font-size:13px">Misma hora de apertura/cierre. El reloj ordena más que la voluntad</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:8px;font-size:13px;color:var(--text2);line-height:1.55">
-    <b style="color:var(--text)">Frase ancla:</b> «No busques el día perfecto. Evitá el peor día. La constancia viene sola.»
-    <div style="margin-top:8px;font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace">Inchworm · Tendler · Best Loser Wins · Hougaard · AcademyLab VLC</div>
-  </div>
-</div>
-
-
-
 
 </div>
 </div>
@@ -1550,7 +1364,6 @@ function showPage(id, el){
   if(id==='cartera') renderCartera();
   if(id==='asr'){ refreshAsrSelect(); renderAsrList(); }
   if(id==='potencial' && typeof ptInit==='function') ptInit();
-  if(id==='rutina' && typeof rutinaInit==='function') rutinaInit();
   // En móvil, cerrar sidebar al navegar
   if(window.innerWidth <= 900){
     const sidebar = document.getElementById('sidebar');
@@ -4237,72 +4050,6 @@ function loadTraderName(){
 }
 
 // === Inicialización asíncrona (espera a IndexedDB) ===
-
-/* ===== RUTINA · check-in diario + contrato ===== */
-function rutinaTodayKey(){
-  return new Date().toISOString().slice(0,10);
-}
-function rutinaLoadDay(){
-  try {
-    return JSON.parse(localStorage.getItem('tj_rutina_'+rutinaTodayKey()) || '{}');
-  } catch(e){ return {}; }
-}
-function rutinaSaveDay(){
-  const data = rutinaLoadDay();
-  document.querySelectorAll('#rutina-contract input[data-k]').forEach(inp=>{
-    data[inp.dataset.k] = !!inp.checked;
-  });
-  if(window._rutinaVersion) data.version = window._rutinaVersion;
-  try { localStorage.setItem('tj_rutina_'+rutinaTodayKey(), JSON.stringify(data)); } catch(e){}
-  rutinaUpdateMeta(data);
-}
-function rutinaUpdateMeta(data){
-  const el = document.getElementById('rutina-contract-meta');
-  if(!el) return;
-  const keys = ['plan','checklist','registro','regla'];
-  const done = keys.filter(k=>data[k]).length;
-  const ver = data.version ? ' · versión: '+data.version : '';
-  el.textContent = rutinaTodayKey() + ' · contrato ' + done + '/4' + ver;
-  el.style.color = done===4 ? 'var(--green)' : 'var(--text3)';
-}
-function rutinaSelVersion(el, v){
-  document.querySelectorAll('#rutina-version-pills .pill').forEach(p=>p.classList.remove('on'));
-  el.classList.add('on');
-  window._rutinaVersion = v;
-  const hint = document.getElementById('rutina-version-hint');
-  const map = {
-    emergencia: '<b style="color:var(--red)">Decisión: CERRAR la plataforma.</b> Hoy no es día de operar. Elevás el suelo: el peor día es no destruir la cuenta.',
-    media: '<b style="color:var(--amber)">Decisión: reducir tamaño al 50%</b> (Day 0,5% · Scalp 0,25%). Solo setups A+ con Score completo. Un desliz y cerrás.',
-    flujo: '<b style="color:var(--green)">Decisión: operar según el plan.</b> Riesgo normal (Day 1% · Scalp 0,5%). Checklist antes de cada entrada. Máx 2 abiertos.'
-  };
-  if(hint) hint.innerHTML = map[v] || '';
-  rutinaSaveDay();
-}
-function rutinaInit(){
-  const data = rutinaLoadDay();
-  document.querySelectorAll('#rutina-contract input[data-k]').forEach(inp=>{
-    inp.checked = !!data[inp.dataset.k];
-  });
-  window._rutinaVersion = data.version || '';
-  document.querySelectorAll('#rutina-version-pills .pill').forEach(p=>{
-    p.classList.toggle('on', p.dataset.v === data.version);
-  });
-  if(data.version){
-    const fake = document.querySelector('#rutina-version-pills .pill[data-v="'+data.version+'"]');
-    if(fake){
-      const hint = document.getElementById('rutina-version-hint');
-      const map = {
-        emergencia: '<b style="color:var(--red)">Decisión: CERRAR la plataforma.</b> Hoy no es día de operar. Elevás el suelo: el peor día es no destruir la cuenta.',
-        media: '<b style="color:var(--amber)">Decisión: reducir tamaño al 50%</b> (Day 0,5% · Scalp 0,25%). Solo setups A+ con Score completo. Un desliz y cerrás.',
-        flujo: '<b style="color:var(--green)">Decisión: operar según el plan.</b> Riesgo normal (Day 1% · Scalp 0,5%). Checklist antes de cada entrada. Máx 2 abiertos.'
-      };
-      if(hint) hint.innerHTML = map[data.version] || '';
-    }
-  }
-  rutinaUpdateMeta(data);
-}
-
-
 async function initApp(){
   // Mostrar overlay de carga
   const overlay = document.createElement('div');
