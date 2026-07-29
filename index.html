@@ -361,6 +361,18 @@ tbody tr:hover td{background:var(--bg2)}
 .reg-collapse > summary::after{content:'+';color:var(--text3);font-size:14px}
 .reg-collapse[open] > summary::after{content:'−'}
 .reg-collapse-body{padding:0 14px 14px}
+
+/* === Hoy === */
+.hoy-cta-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+.hoy-cta{display:block;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;text-align:left;transition:all .15s;color:var(--text);font-family:'Outfit',sans-serif}
+.hoy-cta:hover{border-color:var(--accent);background:var(--bg3)}
+.hoy-cta.primary{border-color:var(--accent);background:var(--accent2)}
+.hoy-cta .hoy-cta-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.hoy-cta .hoy-cta-sub{font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace}
+.hoy-cap{font-family:'Roboto Mono',monospace;font-size:28px;font-weight:700;letter-spacing:-1px;color:var(--accent)}
+.hoy-trade-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px}
+.hoy-trade-row:last-child{border-bottom:none}
+@media (max-width:700px){.hoy-cta-row{grid-template-columns:1fr}}
 </style>
 <style id="mc-theme">
 :root{ --bg:#0a1219; --bg2:#0f1c26; --bg3:#14242f; --bg4:#1b2f3b; --border:#1f3340; --border2:#2b4654; --text:#e6eef2; --text2:#8aa0ac; --text3:#566f7c; --accent:#34c5d8; --accent2:#0c3540; --green:#3ed9a4; --green2:#0c3a2c; --red:#f0606e; --red2:#3d1418; --amber:#f5b73f; --amber2:#3d2a06; --purple:#a78bfa; --purple2:#23234a; --pink:#f472b6; --pink2:#3d1030; }
@@ -381,7 +393,11 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <div class="logo-sub">// Trader's Journal</div>
   </div>
   <nav class="nav">
-    <div class="nav-item active" onclick="showPage('registro',this)">
+    <div class="nav-item active" onclick="showPage('hoy',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7"/><path d="M9 22V12h6v10"/><path d="M21 22H3"/></svg>
+      Hoy
+    </div>
+    <div class="nav-item" onclick="showPage('registro',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
       Nueva operación
     </div>
@@ -430,7 +446,50 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 <div class="main">
 
 <!-- REGISTRO -->
-<div id="page-registro" class="page active">
+<div id="page-hoy" class="page active">
+  <div class="page-title">Hoy</div>
+  <div class="page-sub" id="hoy-sub">Abrí la oficina · check-in · un paso a la vez</div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px">
+    <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:6px">Cuenta activa</div>
+    <div id="hoy-acc-name" style="font-size:15px;font-weight:600;margin-bottom:4px">–</div>
+    <div class="hoy-cap" id="hoy-cap">$ –</div>
+    <div id="hoy-cap-sub" style="font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace;margin-top:4px"></div>
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px">
+    <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:10px">Check-in · ¿qué día sos?</div>
+    <div class="pills" id="hoy-version-pills">
+      <div class="pill p-err-red" data-v="emergencia" onclick="hoySelVersion(this,'emergencia')">Emergencia · cerrar</div>
+      <div class="pill p-mood-amber" data-v="media" onclick="hoySelVersion(this,'media')">Media · −50%</div>
+      <div class="pill p-mood-green" data-v="flujo" onclick="hoySelVersion(this,'flujo')">Flujo · plan</div>
+    </div>
+    <div id="hoy-version-hint" style="margin-top:10px;font-size:13px;color:var(--text2);line-height:1.5">Elegí antes de operar. Honestidad > motivación.</div>
+  </div>
+
+  <div class="hoy-cta-row">
+    <button type="button" class="hoy-cta primary" onclick="showPage('registro', document.querySelector('.nav-item[onclick*=registro]'))">
+      <div class="hoy-cta-title">Registrar trade</div>
+      <div class="hoy-cta-sub">Wizard 3 pasos</div>
+    </button>
+    <button type="button" class="hoy-cta" onclick="showPage('asr', document.querySelector('.nav-item[onclick*=asr]'))">
+      <div class="hoy-cta-title">ASR / Review</div>
+      <div class="hoy-cta-sub">Cierre mental</div>
+    </button>
+    <button type="button" class="hoy-cta" onclick="showPage('cartera', document.querySelector('.nav-item[onclick*=cartera]'))">
+      <div class="hoy-cta-title">Cartera</div>
+      <div class="hoy-cta-sub">Equity y cuentas</div>
+    </button>
+  </div>
+
+  <div class="section-label">Últimos trades</div>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:12px" id="hoy-last-trades">
+    <div class="empty" style="padding:1.5rem">// Sin trades todavía</div>
+  </div>
+  <button type="button" onclick="showPage('historial', document.querySelector('.nav-item[onclick*=historial]'))" style="padding:8px 12px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);cursor:pointer;font-size:12px;font-family:'Roboto Mono',monospace">Ver historial completo →</button>
+</div>
+
+<div id="page-registro" class="page">
   <div class="page-title">Nueva operación</div>
   <div class="page-sub">3 pasos · checklist primero · sin atajos</div>
 
@@ -1418,6 +1477,80 @@ function toggleSidebar(){
   if(overlay) overlay.classList.toggle('active');
 }
 
+
+/* ===== HOY · home de apertura ===== */
+function hoyTodayKey(){
+  return new Date().toISOString().slice(0,10);
+}
+function hoyLoadVersion(){
+  try {
+    const d = JSON.parse(localStorage.getItem('tj_rutina_'+hoyTodayKey()) || '{}');
+    return d.version || '';
+  } catch(e){ return ''; }
+}
+function hoySaveVersion(v){
+  let d = {};
+  try { d = JSON.parse(localStorage.getItem('tj_rutina_'+hoyTodayKey()) || '{}'); } catch(e){}
+  d.version = v;
+  try { localStorage.setItem('tj_rutina_'+hoyTodayKey(), JSON.stringify(d)); } catch(e){}
+}
+function hoySelVersion(el, v){
+  document.querySelectorAll('#hoy-version-pills .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  hoySaveVersion(v);
+  const hint = document.getElementById('hoy-version-hint');
+  const map = {
+    emergencia: '<b style="color:var(--red)">Cerrar plataforma.</b> Hoy no operás. Elevás el suelo.',
+    media: '<b style="color:var(--amber)">Tamaño al 50%.</b> Solo setups claros. Un desliz y cerrás.',
+    flujo: '<b style="color:var(--green)">Plan completo.</b> Checklist real. Máx 2 abiertos.'
+  };
+  if(hint) hint.innerHTML = map[v] || '';
+}
+function renderHoy(){
+  const acc = (typeof getActiveAccount==='function') ? getActiveAccount() : null;
+  const nameEl = document.getElementById('hoy-acc-name');
+  const capEl = document.getElementById('hoy-cap');
+  const subEl = document.getElementById('hoy-cap-sub');
+  if(nameEl) nameEl.textContent = acc ? acc.name : 'Sin cuenta';
+  let cap = 0;
+  try {
+    if(acc && typeof getAccountCapital==='function') cap = getAccountCapital(acc.id);
+  } catch(e){}
+  if(capEl) capEl.textContent = '$ ' + (isFinite(cap) ? cap.toFixed(2) : '–');
+  if(subEl) subEl.textContent = (trades||[]).length + ' ops en el journal · ' + hoyTodayKey();
+
+  const ver = hoyLoadVersion();
+  document.querySelectorAll('#hoy-version-pills .pill').forEach(p=>{
+    p.classList.toggle('on', p.dataset.v === ver);
+  });
+  if(ver){
+    const el = document.querySelector('#hoy-version-pills .pill[data-v="'+ver+'"]');
+    if(el) hoySelVersion(el, ver);
+  }
+
+  const box = document.getElementById('hoy-last-trades');
+  if(!box) return;
+  const list = (trades||[]).slice().sort((a,b)=>{
+    const da = (a.fecha||'')+' '+(a.hora||'');
+    const db = (b.fecha||'')+' '+(b.hora||'');
+    return db.localeCompare(da);
+  }).slice(0,5);
+  if(!list.length){
+    box.innerHTML = '<div class="empty" style="padding:1.5rem">// Sin trades todavía</div>';
+    return;
+  }
+  const rc = {Win:'var(--green)',Loss:'var(--red)',BE:'var(--amber)',Open:'var(--accent)'};
+  box.innerHTML = list.map(t=>{
+    const col = rc[t.resultado] || 'var(--text3)';
+    const pnl = t.pnl != null && t.pnl !== '' ? String(t.pnl) : '–';
+    return '<div class="hoy-trade-row">'
+      + '<div><span style="font-family:Roboto Mono,monospace;font-size:11px;color:var(--text3)">'+(t.fecha||'')+'</span> · <b>'+(t.activo||'?')+'</b> · '+(t.estrategia||'')+'</div>'
+      + '<div style="font-family:Roboto Mono,monospace;font-size:12px;color:'+col+'">'+(t.resultado||'–')+' · '+pnl+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+
 function showPage(id, el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1428,6 +1561,7 @@ function showPage(id, el){
   if(id==='cartera') renderCartera();
   if(id==='asr'){ refreshAsrSelect(); renderAsrList(); }
   if(id==='potencial' && typeof ptInit==='function') ptInit();
+  if(id==='hoy' && typeof renderHoy==='function') renderHoy();
   // En móvil, cerrar sidebar al navegar
   if(window.innerWidth <= 900){
     const sidebar = document.getElementById('sidebar');
@@ -2182,11 +2316,12 @@ function editTrade(id){
   const t = trades.find(x=>x.id===id);
   if(!t) return;
 
-  // Switch to registro page
+  // Switch to registro page (no usar índice: Hoy es el [0])
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-registro').classList.add('active');
-  document.querySelectorAll('.nav-item')[0].classList.add('active');
+  const navReg = document.querySelector('.nav-item[onclick*=registro]');
+  if(navReg) navReg.classList.add('active');
 
   editingId = id;
   // Cuenta del trade
@@ -4387,14 +4522,17 @@ async function initApp(){
 
   // Arrancar la app
   loadTraderName();
-  document.getElementById('inp-fecha').value = new Date().toISOString().slice(0,10);
-  document.getElementById('asr-fecha').value = new Date().toISOString().slice(0,10);
+  const fechaEl = document.getElementById('inp-fecha');
+  if(fechaEl) fechaEl.value = new Date().toISOString().slice(0,10);
+  const asrFecha = document.getElementById('asr-fecha');
+  if(asrFecha) asrFecha.value = new Date().toISOString().slice(0,10);
   refreshAccountSelectors();
   renderVariants();
   renderConfs();
   renderTfSlots();
   renderAsrList();
   updateSidebar();
+  if(typeof renderHoy==='function') renderHoy();
 }
 
 initApp();
