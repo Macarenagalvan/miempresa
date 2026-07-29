@@ -415,7 +415,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     </div>
   </nav>
   <div class="sidebar-bottom">
-    <div class="stats-mini">Total: <span id="sb-total">0</span> ops<br>Win rate: <span id="sb-wr">–</span><br><span id="sb-autoexport" style="color:var(--text3)">Auto-backup: –</span></div>
+    <div class="stats-mini">Total: <span id="sb-total">0</span> ops <span style="color:var(--text3)">(todas)</span><br>Win rate: <span id="sb-wr">–</span><br><span id="sb-autoexport" style="color:var(--text3)">Auto-backup: –</span></div>
     <button class="export-btn install-btn" id="install-app-btn" onclick="installApp()" style="display:none;background:var(--accent2);color:var(--accent);border-color:var(--accent)" title="Instalar como app en tu dispositivo">📱 Instalar app</button>
     <button class="export-btn" onclick="exportData()" title="Descargar respaldo de tus datos">↓ Exportar respaldo .json</button>
     <button class="export-btn" onclick="exportCSV()" title="Exportar trades a CSV para Excel / Sheets" style="color:var(--green);border-color:var(--green2)">↓ Exportar trades .csv</button>
@@ -482,7 +482,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <div class="reg-score-hero" id="reg-score-hero">
       <div>
         <div class="rsh-label">Score checklist</div>
-        <div style="font-size:12px;color:var(--text3);margin-top:2px">Must-have incompleto = no entrás (modo Operado)</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">Marcá solo lo que cumpliste de verdad · el score queda en el historial</div>
       </div>
       <div class="rsh-val" id="reg-score-val" style="color:var(--text3)">–</div>
     </div>
@@ -548,7 +548,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 
     <div id="reg-gate-1" class="reg-gate-msg"></div>
     <div class="reg-nav">
-      <span style="font-size:12px;color:var(--text3);font-family:'Roboto Mono',monospace">Setup → checklist completa</span>
+      <span style="font-size:12px;color:var(--text3);font-family:'Roboto Mono',monospace">Marcá solo lo real · el score viaja al historial</span>
       <button type="button" class="btn-next" id="reg-next-1" onclick="goRegStep(2)">Siguiente · Entrada →</button>
     </div>
   </div>
@@ -721,7 +721,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     <select class="filter-sel" id="f-dir" onchange="renderTable()"><option value="">Long / Short</option><option>Long</option><option>Short</option></select>
     <select class="filter-sel" id="f-mercado" onchange="renderTable()"><option value="">Todos los mercados</option><option>Crypto</option><option>Forex</option><option>Índices</option><option>Metales</option><option>Acciones</option><option>Commodities</option></select>
     <select class="filter-sel" id="f-session" onchange="renderTable()"><option value="">Todas las sesiones</option><option>Sydney</option><option>Tokio</option><option>Londres</option><option>New York</option></select>
-    <select class="filter-sel" id="f-mode" onchange="renderTable()"><option value="">Operado (sin backtest)</option><option value="ALL">Operado + Backtest</option><option value="Backtest">Solo backtest</option></select>
+    <select class="filter-sel" id="f-mode" onchange="renderTable()"><option value="ALL">Todas (Operado + Backtest)</option><option value="">Solo Operado</option><option value="Backtest">Solo backtest</option></select>
   </div>
   <div class="tbl-wrap" style="overflow-x:auto">
     <table>
@@ -1523,11 +1523,23 @@ function updateChecklistScore(){
       hero.style.color = pct >= 80 ? 'var(--green)' : (pct >= 50 ? 'var(--amber)' : 'var(--red)');
     }
   }
+  // Aviso honesto: incompleto se puede guardar; marcar todo de mentira falsea el edge
   const gate = document.getElementById('reg-gate-1');
-  if(gate && gate.classList.contains('on')){
-    const v = validateRegStep(1, 2);
-    if(v.ok){ gate.classList.remove('on'); gate.style.display='none'; gate.textContent=''; }
-    else { gate.textContent = v.msg; }
+  if(gate){
+    const mode = (typeof curMode!=='undefined' && curMode) ? curMode : 'Operado';
+    const sc = window._checklistScore;
+    if(mode !== 'Backtest' && sc.total > 0 && sc.done < sc.total){
+      gate.style.display = 'block';
+      gate.style.color = 'var(--amber)';
+      gate.textContent = 'Score '+sc.done+'/'+sc.total+' ('+sc.pct+'%). Podés seguir: se guarda así. En stats vas a ver que entraste incompleto — eso es dato, no trampa.';
+    } else if(sc.total > 0 && sc.done === sc.total){
+      gate.style.display = 'block';
+      gate.style.color = 'var(--green)';
+      gate.textContent = 'Checklist completa · '+sc.pct+'%.';
+    } else {
+      gate.style.display = 'none';
+      gate.textContent = '';
+    }
   }
 }
 
@@ -1574,14 +1586,7 @@ function validateRegStep(from, to){
     if(!activo) return {ok:false, msg:'Falta el activo / par.'};
     if(typeof curDir==='undefined' || !curDir) return {ok:false, msg:'Elegí dirección: Long o Short.'};
     if(typeof curStrat==='undefined' || !curStrat) return {ok:false, msg:'Elegí una estrategia.'};
-    // Gate checklist solo en Operado (o si aún no eligió modo, se asume Operado)
-    const mode = (typeof curMode!=='undefined' && curMode) ? curMode : 'Operado';
-    if(mode !== 'Backtest'){
-      const sc = (typeof getChecklistScore==='function') ? getChecklistScore() : {done:0,total:0};
-      if(sc.total > 0 && sc.done < sc.total){
-        return {ok:false, msg:'Checklist incompleta ('+sc.done+'/'+sc.total+'). Must-have incompleto = no entrás. Completala o marcá Backtest.'};
-      }
-    }
+    // Checklist incompleta NO bloquea. El score real se guarda: así medís cuándo rompés el plan.
   }
   return {ok:true};
 }
@@ -2098,6 +2103,12 @@ function getLastOperadoCapital(){
 function addTrade(){
   const activo = document.getElementById('inp-activo').value.trim();
   if(!activo){ alert('Ingresá el activo/par'); return; }
+  if(typeof curDir==='undefined' || !curDir){ alert('Elegí dirección Long o Short'); return; }
+  const _mode = (typeof curMode!=='undefined' && curMode) ? curMode : 'Operado';
+  const _sc = (typeof getChecklistScore==='function') ? getChecklistScore() : {done:0,total:0,pct:0};
+  if(!editingId && _mode !== 'Backtest' && _sc.total > 0 && _sc.done < _sc.total){
+    if(!confirm('Checklist incompleta: '+_sc.done+'/'+_sc.total+' ('+_sc.pct+'%).\n\nSe guardará con ese score — correcto si operaste incompleto.\nMarcar todo solo para “pasar” falsea tus estadísticas.\n\n¿Guardar con este score?')) return;
+  }
   const t = {
     id: editingId || Date.now(),
     accountId: document.getElementById('inp-account').value || activeAccountId,
@@ -2413,7 +2424,7 @@ function renderTable(){
       <td style="font-size:11px;color:var(--purple)">${t.orden||'–'}</td>
       <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2)">${t.lotaje||'–'}</td>
       <td style="font-family:'Roboto Mono',monospace;font-weight:600">${t.rr?t.rr+'R':'–'}</td>
-      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:${t.pnl&&t.pnl.startsWith('+')?'var(--green)':(t.pnl&&t.pnl.startsWith('-')?'var(--red)':'var(--text3)')}">${t.pnl||'–'}</td>
+      <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:${(String(t.pnl||'').trim().startsWith('+')||parseFloat(String(t.pnl||'').replace(',','.'))>0)?'var(--green)':(String(t.pnl||'').trim().startsWith('-')||parseFloat(String(t.pnl||'').replace(',','.'))<0)?'var(--red)':'var(--text3)')}">${t.pnl||'–'}</td>
       <td><span class="badge ${resBC[t.resultado]||''}" ${t.cierreManual?`title="Cierre manual${t.cierreMotivo?': '+String(t.cierreMotivo).replace(/"/g,'&quot;'):''}"`:''}>${t.resultado||'–'}${t.cierreManual?' ✋':''}</span></td>
       <td style="text-align:center">${asrs.some(a=>String(a.tradeId)===String(t.id))
         ? '<span title="ASR realizado" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--green2);color:var(--green);border:1px solid var(--green);font-weight:700;font-size:12px">✓</span>'
