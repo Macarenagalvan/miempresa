@@ -1527,15 +1527,32 @@ const _dbWriteQueue = new Map();
 let _dbFlushTimer = null;
 let _dbFlushChain = Promise.resolve();
 const DB_FLUSH_MS = 60;
+// Todas las promesas que esperan el próximo flush. Antes solo se guardaba la
+// última (cada _dbSet pisaba el timer anterior), así que si se llamaba varias
+// veces seguidas las promesas previas no resolvían nunca y el
+// `await Promise.all([...])` de initApp quedaba colgado para siempre.
+let _dbFlushWaiters = [];
+
+function _dbSettleWaiters(err){
+  const waiters = _dbFlushWaiters;
+  _dbFlushWaiters = [];
+  for(let i = 0; i < waiters.length; i++){
+    if(err) waiters[i].reject(err);
+    else waiters[i].resolve();
+  }
+}
 
 function _dbSet(key, value){
   if(_idbOk === false) return Promise.resolve();
   _dbWriteQueue.set(key, value);
   return new Promise((resolve, reject) => {
+    _dbFlushWaiters.push({ resolve, reject });
     if(_dbFlushTimer) clearTimeout(_dbFlushTimer);
     _dbFlushTimer = setTimeout(function(){
       _dbFlushTimer = null;
-      _dbFlushChain = _dbFlushChain.then(function(){ return _dbFlushNow(); }).then(resolve, reject);
+      _dbFlushChain = _dbFlushChain
+        .then(function(){ return _dbFlushNow(); })
+        .then(function(){ _dbSettleWaiters(null); }, function(err){ _dbSettleWaiters(err || new Error('IDB flush')); });
     }, DB_FLUSH_MS);
   });
 }
@@ -1558,8 +1575,11 @@ function _dbFlushNow(){
   }).catch(function(){ _idbOk = false; });
 }
 function _dbFlushSyncBestEffort(){
+  // Cancela el timer pendiente, así que también hay que resolver a los que esperaban.
   if(_dbFlushTimer){ clearTimeout(_dbFlushTimer); _dbFlushTimer = null; }
-  return _dbFlushNow();
+  const p = _dbFlushNow();
+  p.then(function(){ _dbSettleWaiters(null); }, function(err){ _dbSettleWaiters(err || new Error('IDB flush')); });
+  return p;
 }
 try {
   window.addEventListener('visibilitychange', function(){
@@ -4751,11 +4771,11 @@ function gdriveGetClientId(){
 function gdriveConfigure(){
   const cur = gdriveGetClientId();
   const v = prompt(
-    'Google Cloud → OAuth Client ID (tipo aplicación web).\\n\\n' +
-    '1) console.cloud.google.com → crear proyecto\\n' +
-    '2) APIs → habilitar Google Drive API\\n' +
-    '3) Credenciales → ID de cliente OAuth 2.0 (Web)\\n' +
-    '4) Orígenes JS autorizados: la URL donde abrís el journal\\n   (ej. http://localhost:8080 o tu GitHub Pages)\\n\\n' +
+    'Google Cloud → OAuth Client ID (tipo aplicación web).\n\n' +
+    '1) console.cloud.google.com → crear proyecto\n' +
+    '2) APIs → habilitar Google Drive API\n' +
+    '3) Credenciales → ID de cliente OAuth 2.0 (Web)\n' +
+    '4) Orígenes JS autorizados: la URL donde abrís el journal\n   (ej. http://localhost:8080 o tu GitHub Pages)\n\n' +
     'Pegá el Client ID:',
     cur || ''
   );
@@ -4869,18 +4889,18 @@ async function gdriveBackup(){
     showToast('Backup en Google Drive · ' + GDRIVE_FILE_NAME, 3500);
   } catch(e){
     console.warn('gdriveBackup', e);
-    alert('No se pudo hacer backup a Drive.\\n\\n' + (e && e.message ? e.message : e) +
-      '\\n\\nRevisá: Client ID, origen JS autorizado, Drive API habilitada, internet.');
+    alert('No se pudo hacer backup a Drive.\n\n' + (e && e.message ? e.message : e) +
+      '\n\nRevisá: Client ID, origen JS autorizado, Drive API habilitada, internet.');
   }
 }
 async function gdriveRestore(){
   try {
-    if(!confirm('Esto puede reemplazar o fusionar datos del journal con el backup de Drive.\\n\\n¿Continuar?')) return;
+    if(!confirm('Esto puede reemplazar o fusionar datos del journal con el backup de Drive.\n\n¿Continuar?')) return;
     showToast('Buscando backup en Drive…', 2000);
     const token = await gdriveRequestToken(true);
     const existing = await gdriveFindBackupFile(token);
     if(!existing){
-      alert('No encontré "' + GDRIVE_FILE_NAME + '" en tu Drive.\\nHacé primero un Backup a Google Drive.');
+      alert('No encontré "' + GDRIVE_FILE_NAME + '" en tu Drive.\nHacé primero un Backup a Google Drive.');
       return;
     }
     const res = await fetch('https://www.googleapis.com/drive/v3/files/' + existing.id + '?alt=media', {
@@ -4894,9 +4914,9 @@ async function gdriveRestore(){
     }
     const action = confirm(
       'Backup Drive · ' + (existing.modifiedTime || '') +
-      '\\nTrades: ' + ((data.trades||[]).length) +
-      '\\nASRs: ' + ((data.asrs||[]).length) +
-      '\\n\\nAceptar = REEMPLAZAR todo\\nCancelar = no hacer nada'
+      '\nTrades: ' + ((data.trades||[]).length) +
+      '\nASRs: ' + ((data.asrs||[]).length) +
+      '\n\nAceptar = REEMPLAZAR todo\nCancelar = no hacer nada'
     );
     if(!action) return;
     if(typeof snapshotUndo==='function') snapshotUndo('Restaurar Google Drive');
@@ -4920,7 +4940,7 @@ async function gdriveRestore(){
     showToast('Restaurado desde Google Drive', 3500);
   } catch(e){
     console.warn('gdriveRestore', e);
-    alert('No se pudo restaurar desde Drive.\\n\\n' + (e && e.message ? e.message : e));
+    alert('No se pudo restaurar desde Drive.\n\n' + (e && e.message ? e.message : e));
   }
 }
 
