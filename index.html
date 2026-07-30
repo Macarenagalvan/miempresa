@@ -1527,32 +1527,26 @@ const _dbWriteQueue = new Map();
 let _dbFlushTimer = null;
 let _dbFlushChain = Promise.resolve();
 const DB_FLUSH_MS = 60;
-// Todas las promesas que esperan el próximo flush. Antes solo se guardaba la
-// última (cada _dbSet pisaba el timer anterior), así que si se llamaba varias
-// veces seguidas las promesas previas no resolvían nunca y el
-// `await Promise.all([...])` de initApp quedaba colgado para siempre.
+/** Esperas pendientes del próximo flush (todas deben resolverse juntas) */
 let _dbFlushWaiters = [];
-
-function _dbSettleWaiters(err){
-  const waiters = _dbFlushWaiters;
-  _dbFlushWaiters = [];
-  for(let i = 0; i < waiters.length; i++){
-    if(err) waiters[i].reject(err);
-    else waiters[i].resolve();
-  }
-}
 
 function _dbSet(key, value){
   if(_idbOk === false) return Promise.resolve();
   _dbWriteQueue.set(key, value);
-  return new Promise((resolve, reject) => {
-    _dbFlushWaiters.push({ resolve, reject });
+  return new Promise(function(resolve, reject){
+    _dbFlushWaiters.push({ resolve: resolve, reject: reject });
     if(_dbFlushTimer) clearTimeout(_dbFlushTimer);
     _dbFlushTimer = setTimeout(function(){
       _dbFlushTimer = null;
-      _dbFlushChain = _dbFlushChain
-        .then(function(){ return _dbFlushNow(); })
-        .then(function(){ _dbSettleWaiters(null); }, function(err){ _dbSettleWaiters(err || new Error('IDB flush')); });
+      const waiters = _dbFlushWaiters.slice();
+      _dbFlushWaiters = [];
+      _dbFlushChain = _dbFlushChain.then(function(){
+        return _dbFlushNow();
+      }).then(function(){
+        waiters.forEach(function(w){ try { w.resolve(); } catch(e){} });
+      }, function(err){
+        waiters.forEach(function(w){ try { w.reject(err); } catch(e){} });
+      });
     }, DB_FLUSH_MS);
   });
 }
@@ -1575,12 +1569,17 @@ function _dbFlushNow(){
   }).catch(function(){ _idbOk = false; });
 }
 function _dbFlushSyncBestEffort(){
-  // Cancela el timer pendiente, así que también hay que resolver a los que esperaban.
   if(_dbFlushTimer){ clearTimeout(_dbFlushTimer); _dbFlushTimer = null; }
-  const p = _dbFlushNow();
-  p.then(function(){ _dbSettleWaiters(null); }, function(err){ _dbSettleWaiters(err || new Error('IDB flush')); });
-  return p;
+  // Resolver waiters del timer cancelado vía el mismo flush
+  const waiters = _dbFlushWaiters.slice();
+  _dbFlushWaiters = [];
+  return _dbFlushNow().then(function(){
+    waiters.forEach(function(w){ try { w.resolve(); } catch(e){} });
+  }, function(err){
+    waiters.forEach(function(w){ try { w.reject(err); } catch(e){} });
+  });
 }
+
 try {
   window.addEventListener('visibilitychange', function(){
     if(document.visibilityState === 'hidden') _dbFlushSyncBestEffort();
@@ -1778,7 +1777,13 @@ function getBackupEveryDays(){
   } catch(e){ return 7; }
 }
 function getLastExportAt(){
-  try { return localStorage.getItem('tj_last_export_at') || ''; } catch(e){ return ''; }
+  try {
+    const a = localStorage.getItem('tj_last_export_at') || '';
+    const b = localStorage.getItem('tj_gdrive_last_backup') || '';
+    if(!a) return b;
+    if(!b) return a;
+    return (new Date(b).getTime() > new Date(a).getTime()) ? b : a;
+  } catch(e){ return ''; }
 }
 function daysSinceLastExport(){
   const iso = getLastExportAt();
@@ -2063,7 +2068,7 @@ function renderHoy(){
           if(!t.estrategia) miss.push('estrategia');
           if(!(t.checklistScore&&t.checklistScore.total)) miss.push('checklist');
           const label = (t.fecha||'')+' · '+(t.activo||'?')+' · '+(t.resultado||'–')+' · falta: '+miss.join('+');
-          return '<div style="cursor:pointer;padding:6px 0;border-bottom:1px solid var(--border)" onclick="editTrade('+JSON.stringify(t.id)+')" title="Completar">'+label+' <span style="color:var(--accent)">→ editar</span></div>';
+          return '<div style="cursor:pointer;padding:6px 0;border-bottom:1px solid var(--border)" onclick="editTrade('+idArg(t.id)+')" title="Completar">'+label+' <span style="color:var(--accent)">→ editar</span></div>';
         }).join('');
       }
     } else {
@@ -2111,7 +2116,7 @@ function renderHoy(){
 
   const box = document.getElementById('hoy-last-trades');
   if(!box) return;
-  const list = (trades||[]).slice().sort((a,b)=>{
+  const list = (trades||[]).filter(t => t.mode !== 'Backtest').slice().sort((a,b)=>{
     const da = (a.fecha||'')+' '+(a.hora||'');
     const db = (b.fecha||'')+' '+(b.hora||'');
     return db.localeCompare(da);
@@ -2984,6 +2989,30 @@ function openAsrForTrade(tradeId){
   if(box) setTimeout(()=>box.focus(), 200);
 }
 
+
+/* Pasar un id como argumento dentro de un atributo HTML con comillas dobles.
+   JSON.stringify servía mientras los ids eran números (devuelve 123, sin comillas),
+   pero con ids string devuelve "abc" y esas comillas dobles CORTAN el atributo:
+   onclick="editTrade("abc")" queda partido y el botón no hace nada.
+   Emitimos &quot;…&quot;, que el navegador decodifica antes de evaluar el JS. */
+function idArg(v){
+  return '&quot;' + String(v)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;') + '&quot;';
+}
+
+/* Ids únicos: Date.now() solo puede chocar en el mismo ms (tests/import masivo) */
+function newId(){
+  try {
+    if(typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'){
+      return crypto.randomUUID();
+    }
+  } catch(e){}
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
+
 function addTrade(){
   const activo = document.getElementById('inp-activo').value.trim();
   if(!activo){ alert('Ingresá el activo/par'); return; }
@@ -2994,7 +3023,7 @@ function addTrade(){
     if(!confirm('Checklist incompleta: '+_sc.done+'/'+_sc.total+' ('+_sc.pct+'%).\n\nSe guardará con ese score — correcto si operaste incompleto.\nMarcar todo solo para “pasar” falsea tus estadísticas.\n\n¿Guardar con este score?')) return;
   }
   const t = {
-    id: editingId || Date.now(),
+    id: editingId || newId(),
     accountId: document.getElementById('inp-account').value || activeAccountId,
     fecha: document.getElementById('inp-fecha').value || new Date().toISOString().slice(0,10),
     hora: document.getElementById('inp-hora').value,
@@ -3440,14 +3469,14 @@ function renderTable(){
       else if(typeof t.imagenes === 'object') imgList = Object.values(t.imagenes);
     } else if(t.imagen){ imgList = [t.imagen]; }
     const imgCount = imgList.length;
-    const grafCol = (imgCount ? `<img class="img-thumb" src="${imgList[0]}" onclick="showImgModal(${t.id})" title="Ver gráfico${imgCount>1?'s ('+imgCount+')':''}">${imgCount>1?'<span style="font-size:10px;color:var(--text3);margin-left:3px">+'+(imgCount-1)+'</span>':''}` : '') +
+    const grafCol = (imgCount ? `<img class="img-thumb" src="${imgList[0]}" onclick="showImgModal(${idArg(t.id)})" title="Ver gráfico${imgCount>1?'s ('+imgCount+')':''}">${imgCount>1?'<span style="font-size:10px;color:var(--text3);margin-left:3px">+'+(imgCount-1)+'</span>':''}` : '') +
                     (t.link ? `<a href="${t.link}" target="_blank" class="link-cell">link</a>` : '') ||
                     '–';
     const acc = accounts.find(a=>a.id===t.accountId);
     const accName = acc ? acc.name : '–';
     const accColor = acc ? accColorMap[acc.id] : 'var(--text3)';
     const _inc = (typeof isTradeIncomplete==='function' && isTradeIncomplete(t));
-    return `<tr style="cursor:pointer;${_inc?'box-shadow:inset 3px 0 0 var(--accent);background:rgba(79,156,249,.04)':''}" ondblclick="editTrade(${JSON.stringify(t.id)})" title="Doble clic para editar">
+    return `<tr style="cursor:pointer;${_inc?'box-shadow:inset 3px 0 0 var(--accent);background:rgba(79,156,249,.04)':''}" ondblclick="editTrade(${idArg(t.id)})" title="Doble clic para editar">
       <td style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2)">${t.fecha}${t.hora?' <span style="color:var(--text3)">'+t.hora+'</span>':''}${_inc?' <span style="color:var(--accent);font-size:9px">· incompleto</span>':''}</td>
       <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;color:${accColor};background:${accColor}15;border:1px solid ${accColor}40;font-family:'Roboto Mono',monospace">${escapeHtml(accName)}</span></td>
       <td style="font-size:11px;font-weight:500;color:${t.mode==='Operado'?'var(--green)':(t.mode==='Backtest'?'var(--text2)':'var(--text3)')}">${t.mode||'–'}</td>
@@ -3468,14 +3497,14 @@ function renderTable(){
             : '<span title="Sin ASR" style="color:var(--text3);font-size:14px">–</span>')
       }</td>
       <td>${grafCol||'–'}</td>
-      <td><button class="edit-btn" onclick="editTrade(${t.id})">✎</button><button class="del-btn" onclick="delTrade(${t.id})">✕</button></td>
+      <td><button class="edit-btn" onclick="editTrade(${idArg(t.id)})">✎</button><button class="del-btn" onclick="delTrade(${idArg(t.id)})">✕</button></td>
     </tr>`;
   }).join('');
 }
 
 function delTrade(id){
   if(!confirm('¿Eliminar esta operación?')) return;
-  trades = trades.filter(t=>t.id!==id); save(); renderTable();
+  trades = trades.filter(t=>String(t.id)!==String(id)); save(); renderTable();
 }
 
 const stratColors={Blue:'#4f9cf9',Red:'#f05252',Pink:'#f472b6',White:'#c0c9d4',Black:'#e8edf2',Green:'#3ecf8e'};
@@ -4064,7 +4093,7 @@ function renderCartera(){
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <div style="font-family:'Roboto Mono',monospace;font-weight:600;color:${color}">${sign}$ ${amt.toFixed(2)}</div>
-          <button onclick="deleteMovement(${m.id})" class="del-btn" title="Eliminar">✕</button>
+          <button onclick="deleteMovement(${idArg(m.id)})" class="del-btn" title="Eliminar">✕</button>
         </div>
       </div>`;
     }).join('');
@@ -4135,7 +4164,7 @@ function saveAccountModal(){
     const initialAmt = document.getElementById('account-initial-input').value.trim();
     if(initialAmt){
       movements.push({
-        id: Date.now(),
+        id: newId(),
         accountId: id,
         type: 'Capital inicial',
         amount: initialAmt,
@@ -4241,7 +4270,7 @@ function saveMovementModal(){
     movements = movements.filter(m => !(m.accountId===accId && m.type==='Capital inicial'));
   }
   movements.push({
-    id: Date.now(),
+    id: newId(),
     accountId: accId,
     type: pendingMovType,
     amount: amt,
@@ -4256,7 +4285,7 @@ function saveMovementModal(){
 
 function deleteMovement(id){
   if(!confirm('¿Eliminar este movimiento?')) return;
-  movements = movements.filter(m=>m.id!==id);
+  movements = movements.filter(m=>String(m.id)!==String(id));
   saveMovements();
   renderCartera();
   refreshAccountSelectors();
@@ -4432,7 +4461,7 @@ function saveAsrSimple(){
   if(!tradeId){ alert('Elegí un trade'); return; }
   const t = (trades||[]).find(x=>String(x.id)===String(tradeId));
   const a = {
-    id: Date.now(),
+    id: newId(),
     // Guardamos el id REAL del trade (número), no el string del <select>,
     // así el historial y las estadísticas encuentran el ASR.
     tradeId: t ? t.id : tradeId,
@@ -4483,7 +4512,7 @@ function saveAsrSimple(){
 
 function delAsr(id){
   if(!confirm('¿Eliminar este ASR?')) return;
-  asrs = asrs.filter(a=>a.id!==id);
+  asrs = asrs.filter(a=>String(a.id)!==String(id));
   saveAsrs();
   renderAsrList();
   if(typeof renderTable==='function') renderTable();
@@ -4513,7 +4542,7 @@ function renderAsrList(){
         ${a.error?`<span style="font-size:11px;color:var(--red)">${a.error}</span>`:''}
         ${a.mood?`<span style="font-size:11px;color:var(--text2)">${a.mood}</span>`:''}
         ${a.again?`<span style="font-size:11px;color:var(--text3)">¿Igual?: ${a.again}</span>`:''}
-        <button class="del-btn" style="margin-left:auto" onclick="delAsr(${a.id})">✕</button>
+        <button class="del-btn" style="margin-left:auto" onclick="delAsr(${idArg(a.id)})">✕</button>
       </div>
       ${concl?`<div style="font-size:13px;color:var(--text2);line-height:1.45">${escapeHtml(concl)}</div>`:''}
     </div>`;
@@ -4809,23 +4838,58 @@ function gdriveEnsureTokenClient(){
   }
   return _gdriveTokenClient;
 }
-function gdriveRequestToken(interactive){
+function gdriveRequestToken(interactive, forzarNuevo){
   return new Promise(function(resolve, reject){
     const client = gdriveEnsureTokenClient();
     if(!client){ reject(new Error('sin client')); return; }
+    // Un solo reintento. Sin este flag, cerrar la ventana de Google devuelve
+    // "popup_closed", el callback lo toma como "hace falta interacción" y la
+    // vuelve a abrir para siempre: no se puede cancelar el backup.
+    let yaReintento = false;
     client.callback = function(resp){
-      if(resp && resp.error){ reject(new Error(resp.error)); return; }
+      if(resp && resp.error){
+        const err = String(resp.error);
+        const necesitaVentana = (err.indexOf('interaction') >= 0) || (err.indexOf('immediate_failed') >= 0);
+        if(!interactive && necesitaVentana && !yaReintento){
+          yaReintento = true;
+          try {
+            client.requestAccessToken({ prompt: 'consent' });
+            return;
+          } catch(e2){ reject(e2); return; }
+        }
+        // popup_closed / access_denied = Maca canceló a propósito. No insistir.
+        reject(new Error(err));
+        return;
+      }
       _gdriveToken = resp.access_token;
       resolve(_gdriveToken);
     };
     try {
-      if(_gdriveToken && !interactive){
+      if(_gdriveToken && !forzarNuevo){
         resolve(_gdriveToken);
         return;
       }
+      if(forzarNuevo) _gdriveToken = null;
+      // Primero sin prompt; si hace falta permiso, el callback reintenta una vez con consent
       client.requestAccessToken({ prompt: interactive ? 'consent' : '' });
     } catch(e){ reject(e); }
   });
+}
+/* Los tokens de Google duran ~1 hora. Si el journal quedó abierto más que eso,
+   el token cacheado da 401. Pedimos uno nuevo y reintentamos una sola vez. */
+async function gdriveFetch(url, opts){
+  let token = await gdriveRequestToken(false);
+  const armar = t => {
+    const o = Object.assign({}, opts || {});
+    o.headers = Object.assign({}, (opts && opts.headers) || {}, { Authorization: 'Bearer ' + t });
+    return o;
+  };
+  let res = await fetch(url, armar(token));
+  if(res.status === 401){
+    token = await gdriveRequestToken(false, true); // forzar token nuevo
+    res = await fetch(url, armar(token));
+  }
+  return res;
 }
 function gdriveBuildPayload(){
   return {
@@ -4841,9 +4905,7 @@ function gdriveBuildPayload(){
 }
 async function gdriveFindBackupFile(token){
   const q = encodeURIComponent("name='" + GDRIVE_FILE_NAME + "' and trashed=false");
-  const res = await fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&spaces=drive&fields=files(id,name,modifiedTime)', {
-    headers: { Authorization: 'Bearer ' + token }
-  });
+  const res = await gdriveFetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&spaces=drive&fields=files(id,name,modifiedTime)');
   if(!res.ok) throw new Error('Listar Drive: HTTP ' + res.status);
   const data = await res.json();
   const files = data.files || [];
@@ -4852,7 +4914,7 @@ async function gdriveFindBackupFile(token){
 async function gdriveBackup(){
   try {
     showToast('Conectando con Google Drive…', 2000);
-    const token = await gdriveRequestToken(true);
+    const token = await gdriveRequestToken(false);
     const payload = JSON.stringify(gdriveBuildPayload(), null, 2);
     const existing = await gdriveFindBackupFile(token);
     const meta = { name: GDRIVE_FILE_NAME, mimeType: 'application/json' };
@@ -4873,19 +4935,20 @@ async function gdriveBackup(){
       url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
       method = 'POST';
     }
-    const up = await fetch(url, {
+    const up = await gdriveFetch(url, {
       method: method,
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'Content-Type': 'multipart/related; boundary=' + boundary
-      },
+      headers: { 'Content-Type': 'multipart/related; boundary=' + boundary },
       body: body
     });
     if(!up.ok){
       const errTxt = await up.text();
       throw new Error('Subida HTTP ' + up.status + ' · ' + errTxt.slice(0,180));
     }
-    try { localStorage.setItem('tj_gdrive_last_backup', new Date().toISOString()); } catch(e){}
+    try {
+      const _now = new Date().toISOString();
+      localStorage.setItem('tj_gdrive_last_backup', _now);
+      localStorage.setItem('tj_last_export_at', _now); // cuenta como respaldo para el banner de la home
+    } catch(e){}
     showToast('Backup en Google Drive · ' + GDRIVE_FILE_NAME, 3500);
   } catch(e){
     console.warn('gdriveBackup', e);
@@ -4897,15 +4960,13 @@ async function gdriveRestore(){
   try {
     if(!confirm('Esto puede reemplazar o fusionar datos del journal con el backup de Drive.\n\n¿Continuar?')) return;
     showToast('Buscando backup en Drive…', 2000);
-    const token = await gdriveRequestToken(true);
+    const token = await gdriveRequestToken(false);
     const existing = await gdriveFindBackupFile(token);
     if(!existing){
       alert('No encontré "' + GDRIVE_FILE_NAME + '" en tu Drive.\nHacé primero un Backup a Google Drive.');
       return;
     }
-    const res = await fetch('https://www.googleapis.com/drive/v3/files/' + existing.id + '?alt=media', {
-      headers: { Authorization: 'Bearer ' + token }
-    });
+    const res = await gdriveFetch('https://www.googleapis.com/drive/v3/files/' + existing.id + '?alt=media');
     if(!res.ok) throw new Error('Descarga HTTP ' + res.status);
     const data = await res.json();
     if(!data || (!data.trades && !data.accounts)){
@@ -5190,7 +5251,7 @@ function importCSV(input){
       for(let i = 1; i < lines.length; i++){
         const vals = parseCSVLine(lines[i], SEP);
         if(!vals.length || vals.every(v=>!v)) continue;
-        const obj = { id: Date.now() + i, accountId: activeAccountId };
+        const obj = { id: newId(), accountId: activeAccountId };
         let cuentaNombre = '';
         headers.forEach((h, idx) => {
           const field = colMap[h];
@@ -5449,7 +5510,7 @@ function importMT5(input){
           }
         }
 
-        const id = (!isNaN(Number(ticket)) && !existingIds.has(Number(ticket))) ? Number(ticket) : (Date.now()+imported.length);
+        const id = (!isNaN(Number(ticket)) && !existingIds.has(Number(ticket))) ? Number(ticket) : (newId());
         existingIds.add(id);
         existingTickets.add(ticket);
 
