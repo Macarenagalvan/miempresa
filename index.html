@@ -1133,6 +1133,112 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   </div>
 </div>
 
+<!-- Modal BTC spot -->
+<div id="btc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;width:480px;max-width:92vw;max-height:90vh;overflow-y:auto">
+    <div id="btc-modal-title" style="font-size:16px;font-weight:600;margin-bottom:16px"></div>
+    <input type="hidden" id="btc-f-type">
+    <input type="hidden" id="btc-f-id">
+
+    <div class="form-grid g2" style="margin-bottom:12px">
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" class="mc-in" id="btc-f-date">
+      </div>
+      <div class="form-group" id="btc-grp-exchange">
+        <label>Exchange / wallet</label>
+        <input type="text" class="mc-in" id="btc-f-exchange" placeholder="ej: Kraken">
+      </div>
+    </div>
+
+    <!-- COMPRA -->
+    <div id="btc-blk-compra" style="display:none">
+      <div class="form-grid g3" style="margin-bottom:12px">
+        <div class="form-group">
+          <label>Importe (EUR)</label>
+          <input type="text" class="mc-in" id="btc-f-eur" inputmode="decimal" placeholder="200" oninput="btcCalc()">
+        </div>
+        <div class="form-group">
+          <label>Precio BTC (EUR)</label>
+          <input type="text" class="mc-in" id="btc-f-price" inputmode="decimal" placeholder="38500" oninput="btcCalc()">
+        </div>
+        <div class="form-group">
+          <label>Comisión (EUR)</label>
+          <input type="text" class="mc-in" id="btc-f-fee" inputmode="decimal" placeholder="0" oninput="btcCalc()">
+        </div>
+      </div>
+    </div>
+
+    <!-- VENTA -->
+    <div id="btc-blk-venta" style="display:none">
+      <div class="form-grid g3" style="margin-bottom:12px">
+        <div class="form-group">
+          <label>BTC vendidos</label>
+          <input type="text" class="mc-in" id="btc-f-btcsell" inputmode="decimal" placeholder="0.005" oninput="btcCalc()">
+        </div>
+        <div class="form-group">
+          <label>Precio BTC (EUR)</label>
+          <input type="text" class="mc-in" id="btc-f-price2" inputmode="decimal" placeholder="48000" oninput="btcCalc()">
+        </div>
+        <div class="form-group">
+          <label>Comisión (EUR)</label>
+          <input type="text" class="mc-in" id="btc-f-fee2" inputmode="decimal" placeholder="0" oninput="btcCalc()">
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSFERENCIA -->
+    <div id="btc-blk-transf" style="display:none">
+      <div class="form-grid g3" style="margin-bottom:12px">
+        <div class="form-group">
+          <label>BTC movidos</label>
+          <input type="text" class="mc-in" id="btc-f-btcmove" inputmode="decimal" placeholder="0.01" oninput="btcCalc()">
+        </div>
+        <div class="form-group">
+          <label>Desde</label>
+          <input type="text" class="mc-in" id="btc-f-from" placeholder="Kraken">
+        </div>
+        <div class="form-group">
+          <label>Hacia</label>
+          <input type="text" class="mc-in" id="btc-f-to" placeholder="Cold wallet">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Comisión de red (BTC)</label>
+        <input type="text" class="mc-in" id="btc-f-netfee" inputmode="decimal" placeholder="0.00002" oninput="btcCalc()">
+      </div>
+    </div>
+
+    <div id="btc-calc-box" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:12px;font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text2)"></div>
+
+    <div class="form-grid g2" style="margin-bottom:12px">
+      <div class="form-group" id="btc-grp-zone">
+        <label>Zona del plan</label>
+        <select class="mc-in" id="btc-f-zone">
+          <option value="auto">Automática según precio</option>
+          <option>Prioridad alta · 35–40k</option>
+          <option>Media · 42–45k</option>
+          <option>Observación · 45–48k</option>
+          <option>Alerta · desde 48k</option>
+          <option>Fuera de zona</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nota (opcional)</label>
+        <input type="text" class="mc-in" id="btc-f-note" placeholder="ej: DCA mensual">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
+      <button id="btc-del-btn" onclick="btcDeleteFromModal()" style="display:none;padding:8px 14px;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px">Eliminar</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button onclick="closeBtcModal()" style="padding:8px 16px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px">Cancelar</button>
+        <button onclick="saveBtcModal()" style="padding:8px 16px;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ASR · Auto Self Review (por trade) -->
 <div id="page-asr" class="page">
   <div class="page-title">ASR · Auto Self Review</div>
@@ -1366,6 +1472,67 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
     Capital de day trading / scalping con riesgo 1% / 0,5%. Estrategias Blue · Red · Pink · White · Black. Green aparcada.
   </div>
 
+  <!-- ================= BTC SPOT · REGISTRO ================= -->
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;justify-content:space-between;margin:26px 0 14px">
+    <div>
+      <div style="font-size:15px;font-weight:700;color:var(--text)">Registro BTC spot</div>
+      <div style="font-size:12px;color:var(--text3)">Compras, ventas y transferencias · se carga en EUR, se muestra el valor en USD al lado</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="mc-btn" onclick="openBtcModal('Compra')">+ Compra</button>
+      <button class="mc-btn" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text2)" onclick="openBtcModal('Venta')">− Venta</button>
+      <button class="mc-btn" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text2)" onclick="openBtcModal('Transferencia')">⇄ Transferencia</button>
+    </div>
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end">
+    <div class="form-group" style="min-width:150px">
+      <label>Precio BTC actual (EUR)</label>
+      <input type="text" class="mc-in" id="btc-price-eur" inputmode="decimal" placeholder="ej: 38500" oninput="btcSavePrice()">
+    </div>
+    <div class="form-group" style="min-width:150px">
+      <label>Precio BTC actual (USD)</label>
+      <input type="text" class="mc-in" id="btc-price-usd" inputmode="decimal" placeholder="ej: 41800" oninput="btcSavePrice()">
+    </div>
+    <button class="mc-btn" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text2)" onclick="btcFetchPrice()">↻ Traer precio</button>
+    <div id="btc-price-meta" style="font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace;padding-bottom:9px"></div>
+  </div>
+
+  <div class="kpi-grid" id="btc-kpis" style="margin-bottom:16px"></div>
+
+  <div class="mc-grid2" style="margin-bottom:16px">
+    <div class="mc-card">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Aporte del mes · objetivo 200 €</div>
+      <div id="btc-month"></div>
+    </div>
+    <div class="mc-card">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Compras por zona del plan</div>
+      <div id="btc-zones"></div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <thead>
+        <tr style="background:var(--bg3);color:var(--text3);font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase">
+          <th style="padding:10px;text-align:left">Fecha</th>
+          <th style="padding:10px;text-align:left">Tipo</th>
+          <th style="padding:10px;text-align:right">BTC</th>
+          <th style="padding:10px;text-align:right">Precio €</th>
+          <th style="padding:10px;text-align:right">EUR</th>
+          <th style="padding:10px;text-align:left">Zona</th>
+          <th style="padding:10px;text-align:left">Dónde</th>
+          <th style="padding:10px;text-align:left">Nota</th>
+          <th style="padding:10px;text-align:right"></th>
+        </tr>
+      </thead>
+      <tbody id="btc-tbody"></tbody>
+    </table>
+  </div>
+  <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">
+    Este registro es independiente de las cuentas de trading: no entra en la curva de equity, ni en el win rate, ni consume el 1 % de riesgo.
+  </div>
+
   <div id="mc-diversif-body"></div>
 </div>
 
@@ -1455,6 +1622,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 
 // === IndexedDB · almacenamiento sin límite de 5MB ===
 let trades = [], asrs = [], accounts = [], movements = [];
+let btcOps = [];
 let activeAccountId = '';
 let _db = null; // instancia de IndexedDB
 
@@ -1598,6 +1766,10 @@ function saveAccounts(){
 function saveMovements(){
   _dbSet('tj_movements', movements).catch(()=>{});
   _lsSet('tj_movements', JSON.stringify(movements));
+}
+function saveBtcOps(){
+  _dbSet('tj_btc', btcOps).catch(()=>{});
+  _lsSet('tj_btc', JSON.stringify(btcOps));
 }
 function saveActiveAccount(){
   _dbSet('tj_active_account', activeAccountId).catch(()=>{});
@@ -2248,6 +2420,7 @@ function showPage(id, el){
   if(id==='cartera') scheduleRender(renderCartera, 'cartera', 16);
   if(id==='asr'){ scheduleRender(function(){ refreshAsrSelect(); renderAsrList(); }, 'asr', 16); }
   if(id==='potencial' && typeof ptInit==='function') scheduleRender(ptInit, 'potencial', 16);
+  if(id==='mc-diversif' && typeof renderBtc==='function') scheduleRender(renderBtc, 'btcspot', 16);
   if(id==='hoy' && typeof renderHoy==='function') scheduleRender(renderHoy, 'hoy', 16);
   if(id==='registro'){ if(typeof applyTradeDefaults==='function') applyTradeDefaults(); if(typeof updateRegDayBanner==='function') updateRegDayBanner(); }
   // En móvil, cerrar sidebar al navegar
@@ -4899,6 +5072,7 @@ function gdriveBuildPayload(){
     asrs: asrs,
     accounts: accounts,
     movements: movements,
+    btcOps: btcOps,
     activeAccountId: activeAccountId,
     traderName: (function(){ try { return localStorage.getItem('tj_trader_name')||''; } catch(e){ return ''; } })()
   };
@@ -5017,6 +5191,7 @@ function exportData(){
     asrs,
     accounts,
     movements,
+    btcOps,
     activeAccountId,
     traderName: localStorage.getItem('tj_trader_name') || ''
   };
@@ -5619,7 +5794,8 @@ function importData(input){
     try {
       const data = JSON.parse(e.target.result);
       // Estructura del import
-      let impTrades = [], impAsrs = [], impAccounts = [], impMovs = [], impActiveAcc = '', impName = '';
+      let impTrades = [], impAsrs = [], impAccounts = [], impMovs = [], impActiveAcc = '', impName = '', impBtc = [];
+      let impHasBtc = false;
       if(Array.isArray(data)){
         // v1: array directo de trades
         impTrades = data;
@@ -5628,6 +5804,8 @@ function importData(input){
         impAsrs = Array.isArray(data.asrs) ? data.asrs : [];
         impAccounts = Array.isArray(data.accounts) ? data.accounts : [];
         impMovs = Array.isArray(data.movements) ? data.movements : [];
+        impHasBtc = Array.isArray(data.btcOps);
+        impBtc = impHasBtc ? data.btcOps : [];
         impActiveAcc = data.activeAccountId || '';
         impName = data.traderName || '';
       } else {
@@ -5674,6 +5852,9 @@ function importData(input){
         asrs = impAsrs;
         accounts = impAccounts;
         movements = impMovs;
+        // Respaldo viejo (anterior al modulo BTC spot): no tiene la clave btcOps.
+        // En ese caso conservamos el registro BTC actual en vez de borrarlo.
+        if(impHasBtc) btcOps = impBtc;
         activeAccountId = impActiveAcc;
         if(impName){
           try { localStorage.setItem('tj_trader_name', impName); } catch(e){}
@@ -5701,12 +5882,15 @@ function importData(input){
         // Sumar movimientos sin duplicar por id
         const existingMovIds = new Set(movements.map(m=>m.id));
         movements = [...impMovs.filter(m=>!existingMovIds.has(m.id)), ...movements];
+        const existingBtcIds = new Set(btcOps.map(b=>b.id));
+        btcOps = [...impBtc.filter(b=>!existingBtcIds.has(b.id)), ...btcOps];
       }
 
       save();
       saveAsrs();
       saveAccounts();
       saveMovements();
+      saveBtcOps();
       saveActiveAccount();
       refreshAccountSelectors();
       renderTable();
@@ -5715,7 +5899,8 @@ function importData(input){
       // Si estamos en cartera, refrescar
       if(document.getElementById('page-cartera').classList.contains('active')) renderCartera();
       if(document.getElementById('page-estadisticas').classList.contains('active')) renderStats();
-      showToast('Respaldo importado · ' + trades.length + ' ops · ' + asrs.length + ' ASRs · ' + accounts.length + ' cuentas · ' + movements.length + ' mov.');
+      if(typeof renderBtc==='function' && document.getElementById('page-mc-diversif')?.classList.contains('active')) renderBtc();
+      showToast('Respaldo importado · ' + trades.length + ' ops · ' + asrs.length + ' ASRs · ' + accounts.length + ' cuentas · ' + movements.length + ' mov.' + (impHasBtc ? ' · ' + btcOps.length + ' BTC' : ' · BTC spot conservado'));
     } catch(err){ alert('Archivo inválido: ' + err.message); }
   };
   reader.readAsText(file);
@@ -5761,9 +5946,9 @@ async function initApp(){
     await _openDB();
 
     // Cargar cada clave desde IndexedDB
-    const [idbTrades, idbAsrs, idbAccounts, idbMovements, idbActiveAcc] = await Promise.all([
+    const [idbTrades, idbAsrs, idbAccounts, idbMovements, idbActiveAcc, idbBtc] = await Promise.all([
       _dbGet('tj_v2'), _dbGet('tj_asr'), _dbGet('tj_accounts'),
-      _dbGet('tj_movements'), _dbGet('tj_active_account')
+      _dbGet('tj_movements'), _dbGet('tj_active_account'), _dbGet('tj_btc')
     ]);
 
     // Migración automática desde localStorage (solo la primera vez)
@@ -5774,18 +5959,20 @@ async function initApp(){
       const lsAccounts = _lsGet('tj_accounts');
       const lsMovs     = _lsGet('tj_movements');
       const lsActive   = _lsGet('tj_active_account');
+      const lsBtc      = _lsGet('tj_btc');
 
       trades       = lsTrades   ? JSON.parse(lsTrades)   : [];
       asrs         = lsAsrs     ? JSON.parse(lsAsrs)     : [];
       accounts     = lsAccounts ? JSON.parse(lsAccounts) : [];
       movements    = lsMovs     ? JSON.parse(lsMovs)     : [];
       activeAccountId = lsActive || '';
+      try { btcOps = lsBtc ? JSON.parse(lsBtc) : []; } catch(e){ btcOps = []; }
 
       // Guardar en IndexedDB
       await Promise.all([
         _dbSet('tj_v2', trades), _dbSet('tj_asr', asrs),
         _dbSet('tj_accounts', accounts), _dbSet('tj_movements', movements),
-        _dbSet('tj_active_account', activeAccountId)
+        _dbSet('tj_active_account', activeAccountId), _dbSet('tj_btc', btcOps)
       ]);
 
       // IMPORTANTE: NO limpiamos localStorage. Lo mantenemos como backup
@@ -5800,6 +5987,8 @@ async function initApp(){
       accounts     = idbAccounts  || [];
       movements    = idbMovements || [];
       activeAccountId = idbActiveAcc || '';
+      if(Array.isArray(idbBtc)) btcOps = idbBtc;
+      else { try { btcOps = JSON.parse(_lsGet('tj_btc') || '[]'); } catch(e){ btcOps = []; } }
     }
 
     // === RECOVERY · si IDB perdió datos chicos, intentar recuperar de localStorage ===
@@ -5894,9 +6083,10 @@ async function initApp(){
       accounts     = JSON.parse(_lsGet('tj_accounts')  || '[]');
       movements    = JSON.parse(_lsGet('tj_movements') || '[]');
       activeAccountId = _lsGet('tj_active_account') || '';
+      btcOps       = JSON.parse(_lsGet('tj_btc')       || '[]');
     } catch(e2){
       console.warn('No se pudo leer storage, arrancando vacío:', e2);
-      trades = []; asrs = []; accounts = []; movements = []; activeAccountId = '';
+      trades = []; asrs = []; accounts = []; movements = []; activeAccountId = ''; btcOps = [];
     }
     if(_idbOk === false && _lsOk === false){
       console.info('Sin IndexedDB ni localStorage (contexto inseguro, ej. file://). Los datos solo viven en memoria hasta que cierres la pestaña.');
@@ -5954,6 +6144,341 @@ async function initApp(){
     }, 'boot', 0);
   });
 }
+
+/* ================= BTC SPOT · acumulacion (independiente del trading) ================= */
+function btcNum(v){
+  if(v === null || v === undefined) return NaN;
+  const n = parseFloat(String(v).replace(/\s/g,'').replace(',','.'));
+  return isFinite(n) ? n : NaN;
+}
+function btcVal(id){ const el = document.getElementById(id); return el ? btcNum(el.value) : NaN; }
+function btcEsc(t){ return String(t==null?'':t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function btcFmtB(n){ return (isFinite(n)?n:0).toFixed(8).replace(/0+$/,'').replace(/\.$/,'') || '0'; }
+function btcFmtE(n){ return (isFinite(n)?n:0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function btcZoneFor(priceEur){
+  const p = btcNum(priceEur);
+  if(!isFinite(p)) return 'Fuera de zona';
+  if(p < 35000) return 'Bajo 35k';
+  if(p < 40000) return 'Prioridad alta · 35–40k';
+  if(p < 42000) return 'Fuera de zona';
+  if(p < 45000) return 'Media · 42–45k';
+  if(p < 48000) return 'Observación · 45–48k';
+  return 'Alerta · desde 48k';
+}
+
+/* --- precio actual --- */
+function btcGetPrice(){
+  try { return JSON.parse(localStorage.getItem('tj_btc_price') || '{}'); } catch(e){ return {}; }
+}
+function btcSavePrice(){
+  const eur = btcVal('btc-price-eur'), usd = btcVal('btc-price-usd');
+  const prev = btcGetPrice();
+  const obj = { eur: isFinite(eur)?eur:prev.eur, usd: isFinite(usd)?usd:prev.usd, at: Date.now(), manual: true };
+  try { localStorage.setItem('tj_btc_price', JSON.stringify(obj)); } catch(e){}
+  btcRenderKpis();
+}
+async function btcFetchPrice(){
+  const meta = document.getElementById('btc-price-meta');
+  if(meta) meta.textContent = 'buscando...';
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur,usd');
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    const eur = j && j.bitcoin && j.bitcoin.eur, usd = j && j.bitcoin && j.bitcoin.usd;
+    if(!eur) throw new Error('sin datos');
+    try { localStorage.setItem('tj_btc_price', JSON.stringify({eur:eur, usd:usd, at:Date.now(), manual:false})); } catch(e){}
+    const a = document.getElementById('btc-price-eur'); if(a) a.value = eur;
+    const b = document.getElementById('btc-price-usd'); if(b) b.value = usd;
+    btcRenderKpis();
+    if(typeof showToast === 'function') showToast('Precio actualizado · ' + btcFmtE(eur) + ' €');
+  } catch(err){
+    if(meta) meta.textContent = 'sin conexión · cargalo a mano';
+    if(typeof showToast === 'function') showToast('No se pudo traer el precio. Cargalo a mano.', 2600);
+  }
+}
+
+/* --- metricas --- */
+function btcStats(){
+  let btcTotal = 0, eurCompras = 0, btcComprado = 0, eurVentas = 0, btcVendido = 0, feeRed = 0;
+  const zones = {};
+  (btcOps||[]).forEach(function(o){
+    if(o.type === 'Compra'){
+      btcTotal += btcNum(o.btc)||0;
+      btcComprado += btcNum(o.btc)||0;
+      eurCompras += btcNum(o.eur)||0;
+      const z = o.zone || 'Fuera de zona';
+      if(!zones[z]) zones[z] = {eur:0, btc:0, n:0};
+      zones[z].eur += btcNum(o.eur)||0;
+      zones[z].btc += btcNum(o.btc)||0;
+      zones[z].n++;
+    } else if(o.type === 'Venta'){
+      btcTotal -= btcNum(o.btc)||0;
+      btcVendido += btcNum(o.btc)||0;
+      eurVentas += btcNum(o.eur)||0;
+    } else if(o.type === 'Transferencia'){
+      feeRed += btcNum(o.netFee)||0;
+      btcTotal -= btcNum(o.netFee)||0;
+    }
+  });
+  const precioMedio = btcComprado > 0 ? (eurCompras / btcComprado) : 0;
+  const p = btcGetPrice();
+  const priceEur = btcNum(p.eur), priceUsd = btcNum(p.usd);
+  const valorEur = isFinite(priceEur) ? btcTotal * priceEur : NaN;
+  const fx = (isFinite(priceUsd) && isFinite(priceEur) && priceEur > 0) ? (priceUsd / priceEur) : NaN;
+  const valorUsd = (isFinite(valorEur) && isFinite(fx)) ? valorEur * fx : NaN;
+  const costeRestante = btcTotal * precioMedio;
+  const pnlEur = isFinite(valorEur) ? (valorEur - costeRestante) : NaN;
+  const pnlPct = (isFinite(pnlEur) && costeRestante > 0) ? (pnlEur / costeRestante * 100) : NaN;
+  const pnlReal = eurVentas - (btcVendido * precioMedio);
+  return {btcTotal, eurCompras, btcComprado, eurVentas, btcVendido, feeRed, precioMedio,
+          priceEur, priceUsd, valorEur, valorUsd, pnlEur, pnlPct, pnlReal,
+          invertidoNeto: eurCompras - eurVentas, zones};
+}
+
+function btcRenderKpis(){
+  const st = btcStats();
+  const k = document.getElementById('btc-kpis');
+  if(k){
+    const pnlCol = !isFinite(st.pnlEur) ? 'var(--text3)' : (st.pnlEur >= 0 ? 'var(--green)' : 'var(--red)');
+    k.innerHTML =
+      '<div class="kpi"><div class="kpi-label">BTC acumulado</div><div class="kpi-val" style="font-size:20px;font-family:\'Roboto Mono\',monospace">' + btcFmtB(st.btcTotal) + '</div><div class="kpi-sub">' + (btcOps||[]).length + ' movimientos</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Invertido neto</div><div class="kpi-val" style="font-size:20px">' + btcFmtE(st.invertidoNeto) + ' €</div><div class="kpi-sub">compras ' + btcFmtE(st.eurCompras) + ' € · ventas ' + btcFmtE(st.eurVentas) + ' €</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Precio medio</div><div class="kpi-val" style="font-size:20px">' + btcFmtE(st.precioMedio) + ' €</div><div class="kpi-sub">coste medio de compra</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Valor actual</div><div class="kpi-val" style="font-size:20px">' + (isFinite(st.valorEur) ? btcFmtE(st.valorEur) + ' €' : '–') + '</div><div class="kpi-sub">' + (isFinite(st.valorUsd) ? '$' + btcFmtE(st.valorUsd) : 'cargá el precio') + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">P&L no realizado</div><div class="kpi-val" style="font-size:20px;color:' + pnlCol + '">' + (isFinite(st.pnlPct) ? (st.pnlPct >= 0 ? '+' : '') + st.pnlPct.toFixed(1) + '%' : '–') + '</div><div class="kpi-sub">' + (isFinite(st.pnlEur) ? (st.pnlEur >= 0 ? '+' : '') + btcFmtE(st.pnlEur) + ' €' : '–') + (st.pnlReal ? ' · realizado ' + btcFmtE(st.pnlReal) + ' €' : '') + '</div></div>';
+  }
+  const meta = document.getElementById('btc-price-meta');
+  const p = btcGetPrice();
+  if(meta && p.at){
+    const d = new Date(p.at);
+    meta.textContent = (p.manual ? 'manual' : 'CoinGecko') + ' · ' + d.toLocaleDateString('es-ES') + ' ' + d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  }
+  btcRenderMonth(st);
+  btcRenderZones(st);
+}
+
+function btcRenderMonth(st){
+  const box = document.getElementById('btc-month');
+  if(!box) return;
+  const now = new Date();
+  const ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  let mesEur = 0, mesBtc = 0, n = 0;
+  (btcOps||[]).forEach(function(o){
+    if(o.type === 'Compra' && String(o.date||'').slice(0,7) === ym){
+      mesEur += btcNum(o.eur)||0; mesBtc += btcNum(o.btc)||0; n++;
+    }
+  });
+  const pct = Math.min(100, mesEur / 200 * 100);
+  const col = mesEur >= 200 ? 'var(--green)' : 'var(--accent)';
+  box.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">' +
+      '<div style="font-size:24px;font-weight:700;color:' + col + '">' + btcFmtE(mesEur) + ' €</div>' +
+      '<div style="font-size:11px;color:var(--text3);font-family:\'Roboto Mono\',monospace">de 200 € · ' + n + ' compra' + (n===1?'':'s') + '</div>' +
+    '</div>' +
+    '<div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:8px"><div style="height:100%;width:' + pct.toFixed(0) + '%;background:' + col + '"></div></div>' +
+    '<div style="font-size:11px;color:var(--text3);font-family:\'Roboto Mono\',monospace">' + btcFmtB(mesBtc) + ' BTC este mes · faltan ' + btcFmtE(Math.max(0, 200 - mesEur)) + ' €</div>';
+}
+
+function btcRenderZones(st){
+  const box = document.getElementById('btc-zones');
+  if(!box) return;
+  const ks = Object.keys(st.zones);
+  if(!ks.length){ box.innerHTML = '<div style="font-size:12px;color:var(--text3)">Todavía no cargaste compras.</div>'; return; }
+  const max = Math.max.apply(null, ks.map(z => st.zones[z].eur));
+  box.innerHTML = ks.sort((a,b)=>st.zones[b].eur-st.zones[a].eur).map(function(z){
+    const d = st.zones[z];
+    const w = max > 0 ? (d.eur / max * 100) : 0;
+    const col = z.indexOf('Prioridad') === 0 ? 'var(--green)' : (z.indexOf('Media') === 0 ? 'var(--accent)' : (z.indexOf('Alerta') === 0 ? 'var(--red)' : 'var(--text3)'));
+    return '<div style="margin-bottom:9px">' +
+      '<div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px"><span style="color:var(--text2)">' + btcEsc(z) + '</span>' +
+      '<span style="font-family:\'Roboto Mono\',monospace;color:var(--text3)">' + btcFmtE(d.eur) + ' € · ' + btcFmtB(d.btc) + ' BTC</span></div>' +
+      '<div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:' + w.toFixed(0) + '%;background:' + col + '"></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+function btcRenderTable(){
+  const tb = document.getElementById('btc-tbody');
+  if(!tb) return;
+  if(!(btcOps||[]).length){
+    tb.innerHTML = '<tr><td colspan="9" class="empty">// Sin movimientos de BTC spot todavía</td></tr>';
+    return;
+  }
+  const rows = btcOps.slice().sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')) || (b.createdAt||0) - (a.createdAt||0); });
+  tb.innerHTML = rows.map(function(o){
+    const isC = o.type === 'Compra', isV = o.type === 'Venta';
+    const col = isC ? 'var(--green)' : (isV ? 'var(--red)' : 'var(--text2)');
+    const bg  = isC ? 'var(--green2)' : (isV ? 'var(--red2)' : 'var(--bg3)');
+    const sign = isC ? '+' : (isV ? '−' : '⇄');
+    const donde = o.type === 'Transferencia'
+      ? (btcEsc(o.from||'') + ' → ' + btcEsc(o.to||''))
+      : btcEsc(o.exchange||'');
+    const btcShown = o.type === 'Transferencia' ? (btcNum(o.btcMove)||0) : (btcNum(o.btc)||0);
+    return '<tr style="border-top:1px solid var(--border)">' +
+      '<td style="padding:9px 10px;font-family:\'Roboto Mono\',monospace;color:var(--text2)">' + btcEsc(o.date||'') + '</td>' +
+      '<td style="padding:9px 10px"><span class="badge" style="background:' + bg + ';color:' + col + '">' + sign + ' ' + btcEsc(o.type) + '</span></td>' +
+      '<td style="padding:9px 10px;text-align:right;font-family:\'Roboto Mono\',monospace">' + btcFmtB(btcShown) + '</td>' +
+      '<td style="padding:9px 10px;text-align:right;font-family:\'Roboto Mono\',monospace;color:var(--text2)">' + (o.price ? btcFmtE(btcNum(o.price)) : '–') + '</td>' +
+      '<td style="padding:9px 10px;text-align:right;font-family:\'Roboto Mono\',monospace;color:' + col + '">' + (o.eur ? btcFmtE(btcNum(o.eur)) : '–') + '</td>' +
+      '<td style="padding:9px 10px;color:var(--text3);font-size:11.5px">' + btcEsc(o.zone||'') + '</td>' +
+      '<td style="padding:9px 10px;color:var(--text3);font-size:11.5px">' + donde + '</td>' +
+      '<td style="padding:9px 10px;color:var(--text3);font-size:11.5px">' + btcEsc(o.note||'') + '</td>' +
+      '<td style="padding:9px 10px;text-align:right"><button class="edit-btn" onclick="openBtcModal(null,\'' + btcEsc(o.id) + '\')" style="background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px">✎</button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function renderBtc(){
+  const p = btcGetPrice();
+  const a = document.getElementById('btc-price-eur');
+  const b = document.getElementById('btc-price-usd');
+  if(a && !a.value && isFinite(btcNum(p.eur))) a.value = p.eur;
+  if(b && !b.value && isFinite(btcNum(p.usd))) b.value = p.usd;
+  btcRenderKpis();
+  btcRenderTable();
+}
+
+/* --- modal --- */
+function btcShowBlocks(type){
+  const map = {'Compra':'btc-blk-compra','Venta':'btc-blk-venta','Transferencia':'btc-blk-transf'};
+  Object.keys(map).forEach(function(t){
+    const el = document.getElementById(map[t]);
+    if(el) el.style.display = (t === type) ? 'block' : 'none';
+  });
+  const zg = document.getElementById('btc-grp-zone');
+  if(zg) zg.style.display = (type === 'Compra') ? 'flex' : 'none';
+  const eg = document.getElementById('btc-grp-exchange');
+  if(eg) eg.style.display = (type === 'Transferencia') ? 'none' : 'flex';
+}
+
+function btcCalc(){
+  const type = (document.getElementById('btc-f-type')||{}).value;
+  const box = document.getElementById('btc-calc-box');
+  if(!box) return;
+  if(type === 'Compra'){
+    const eur = btcVal('btc-f-eur'), price = btcVal('btc-f-price'), fee = btcVal('btc-f-fee') || 0;
+    if(isFinite(eur) && isFinite(price) && price > 0){
+      const btc = (eur - fee) / price;
+      box.innerHTML = 'Recibís <b style="color:var(--green)">' + btcFmtB(btc) + ' BTC</b> · zona detectada: <b style="color:var(--text)">' + btcZoneFor(price) + '</b>';
+    } else box.textContent = 'Completá importe y precio para ver los BTC.';
+  } else if(type === 'Venta'){
+    const btc = btcVal('btc-f-btcsell'), price = btcVal('btc-f-price2'), fee = btcVal('btc-f-fee2') || 0;
+    if(isFinite(btc) && isFinite(price)){
+      box.innerHTML = 'Recibís <b style="color:var(--red)">' + btcFmtE(btc * price - fee) + ' €</b>';
+    } else box.textContent = 'Completá BTC y precio para ver los euros.';
+  } else {
+    const mv = btcVal('btc-f-btcmove') || 0, nf = btcVal('btc-f-netfee') || 0;
+    box.innerHTML = 'Movés <b>' + btcFmtB(mv) + ' BTC</b> · el saldo baja sólo la comisión de red: <b style="color:var(--amber)">' + btcFmtB(nf) + ' BTC</b>';
+  }
+}
+
+function openBtcModal(type, id){
+  const m = document.getElementById('btc-modal');
+  if(!m) return;
+  ['btc-f-eur','btc-f-price','btc-f-fee','btc-f-btcsell','btc-f-price2','btc-f-fee2',
+   'btc-f-btcmove','btc-f-netfee','btc-f-from','btc-f-to','btc-f-exchange','btc-f-note']
+    .forEach(function(k){ const el = document.getElementById(k); if(el) el.value = ''; });
+  const zsel = document.getElementById('btc-f-zone'); if(zsel) zsel.value = 'auto';
+  const delBtn = document.getElementById('btc-del-btn');
+
+  let op = null;
+  if(id){ op = (btcOps||[]).find(function(x){ return x.id === id; }); }
+  const t = op ? op.type : type;
+
+  document.getElementById('btc-f-type').value = t;
+  document.getElementById('btc-f-id').value = op ? op.id : '';
+  document.getElementById('btc-modal-title').textContent = (op ? 'Editar ' : 'Nueva ') + t.toLowerCase() + ' · BTC spot';
+  if(delBtn) delBtn.style.display = op ? 'inline-block' : 'none';
+
+  const dEl = document.getElementById('btc-f-date');
+  if(dEl) dEl.value = op ? (op.date || '') : new Date().toISOString().slice(0,10);
+
+  if(op){
+    const set = function(k, v){ const el = document.getElementById(k); if(el && v !== undefined && v !== null) el.value = v; };
+    set('btc-f-exchange', op.exchange); set('btc-f-note', op.note);
+    if(t === 'Compra'){ set('btc-f-eur', op.eur); set('btc-f-price', op.price); set('btc-f-fee', op.fee); if(zsel && op.zone) zsel.value = op.zone; }
+    if(t === 'Venta'){ set('btc-f-btcsell', op.btc); set('btc-f-price2', op.price); set('btc-f-fee2', op.fee); }
+    if(t === 'Transferencia'){ set('btc-f-btcmove', op.btcMove); set('btc-f-from', op.from); set('btc-f-to', op.to); set('btc-f-netfee', op.netFee); }
+  } else if(t === 'Compra'){
+    const p = btcGetPrice();
+    if(isFinite(btcNum(p.eur))) document.getElementById('btc-f-price').value = p.eur;
+    document.getElementById('btc-f-eur').value = '200';
+  }
+
+  btcShowBlocks(t);
+  btcCalc();
+  m.style.display = 'flex';
+}
+
+function closeBtcModal(){
+  const m = document.getElementById('btc-modal');
+  if(m) m.style.display = 'none';
+}
+
+function saveBtcModal(){
+  const type = document.getElementById('btc-f-type').value;
+  const id = document.getElementById('btc-f-id').value;
+  const date = (document.getElementById('btc-f-date')||{}).value || new Date().toISOString().slice(0,10);
+  const note = (document.getElementById('btc-f-note')||{}).value || '';
+  const exchange = (document.getElementById('btc-f-exchange')||{}).value || '';
+
+  let op = { id: id || ('btc_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)),
+             type: type, date: date, note: note, exchange: exchange,
+             createdAt: Date.now() };
+
+  if(type === 'Compra'){
+    const eur = btcVal('btc-f-eur'), price = btcVal('btc-f-price'), fee = btcVal('btc-f-fee') || 0;
+    if(!isFinite(eur) || !isFinite(price) || price <= 0){ alert('Completá importe en EUR y precio del BTC.'); return; }
+    op.eur = eur; op.price = price; op.fee = fee; op.btc = (eur - fee) / price;
+    const zsel = document.getElementById('btc-f-zone');
+    op.zone = (zsel && zsel.value !== 'auto') ? zsel.value : btcZoneFor(price);
+  } else if(type === 'Venta'){
+    const btc = btcVal('btc-f-btcsell'), price = btcVal('btc-f-price2'), fee = btcVal('btc-f-fee2') || 0;
+    if(!isFinite(btc) || !isFinite(price)){ alert('Completá BTC vendidos y precio.'); return; }
+    op.btc = btc; op.price = price; op.fee = fee; op.eur = btc * price - fee; op.zone = '';
+  } else {
+    const mv = btcVal('btc-f-btcmove');
+    if(!isFinite(mv)){ alert('Completá cuántos BTC movés.'); return; }
+    op.btcMove = mv;
+    op.netFee = btcVal('btc-f-netfee') || 0;
+    op.from = (document.getElementById('btc-f-from')||{}).value || '';
+    op.to = (document.getElementById('btc-f-to')||{}).value || '';
+    op.zone = '';
+  }
+
+  if(id){
+    const i = btcOps.findIndex(function(x){ return x.id === id; });
+    if(i >= 0){ op.createdAt = btcOps[i].createdAt || op.createdAt; btcOps[i] = op; }
+    else btcOps.push(op);
+  } else {
+    btcOps.push(op);
+  }
+
+  saveBtcOps();
+  closeBtcModal();
+  renderBtc();
+  if(typeof showToast === 'function') showToast(type + ' guardada · ' + btcFmtB(btcStats().btcTotal) + ' BTC en cartera');
+}
+
+function btcDeleteFromModal(){
+  const id = document.getElementById('btc-f-id').value;
+  if(!id) return;
+  if(!confirm('¿Eliminar este movimiento del registro BTC spot?')) return;
+  btcOps = btcOps.filter(function(x){ return x.id !== id; });
+  saveBtcOps();
+  closeBtcModal();
+  renderBtc();
+  if(typeof showToast === 'function') showToast('Movimiento eliminado');
+}
+
+try {
+  document.addEventListener('click', function(e){
+    const m = document.getElementById('btc-modal');
+    if(m && e.target === m) closeBtcModal();
+  });
+} catch(e){}
+/* ================= fin BTC SPOT ================= */
 
 initApp();
 
