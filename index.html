@@ -1179,18 +1179,38 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 
     <!-- COMPRA -->
     <div id="btc-blk-compra" style="display:none">
-      <div class="form-grid g3" style="margin-bottom:12px">
+      <div style="font-size:11.5px;color:var(--text3);margin-bottom:9px;line-height:1.45">Completá <b style="color:var(--text2)">dos</b> de los tres primeros campos y el tercero se calcula solo.</div>
+      <div class="form-grid g2" style="margin-bottom:12px">
         <div class="form-group">
           <label>Importe (EUR)</label>
-          <input type="text" class="mc-in" id="btc-f-eur" inputmode="decimal" placeholder="200" oninput="btcCalc()">
+          <input type="text" class="mc-in" id="btc-f-eur" inputmode="decimal" placeholder="200" oninput="btcCalc('eur')">
+        </div>
+        <div class="form-group">
+          <label>BTC recibidos</label>
+          <input type="text" class="mc-in" id="btc-f-btc" inputmode="decimal" placeholder="0.005" oninput="btcCalc('btc')">
         </div>
         <div class="form-group">
           <label>Precio BTC (EUR)</label>
-          <input type="text" class="mc-in" id="btc-f-price" inputmode="decimal" placeholder="38500" oninput="btcCalc()">
+          <input type="text" class="mc-in" id="btc-f-price" inputmode="decimal" placeholder="38500" oninput="btcCalc('price')">
         </div>
         <div class="form-group">
           <label>Comisión (EUR)</label>
-          <input type="text" class="mc-in" id="btc-f-fee" inputmode="decimal" placeholder="0" oninput="btcCalc()">
+          <input type="text" class="mc-in" id="btc-f-fee" inputmode="decimal" placeholder="0" oninput="btcCalc('fee')">
+        </div>
+      </div>
+    </div>
+
+    <!-- SALDO INICIAL -->
+    <div id="btc-blk-saldo" style="display:none">
+      <div style="font-size:11.5px;color:var(--text3);margin-bottom:9px;line-height:1.45">Para cargar los BTC que ya tenías antes de empezar a usar el journal. Si sabés a qué precio medio los compraste, ponelo: sin eso no se puede calcular tu P&amp;L.</div>
+      <div class="form-grid g2" style="margin-bottom:12px">
+        <div class="form-group">
+          <label>BTC que tenés</label>
+          <input type="text" class="mc-in" id="btc-f-btcinit" inputmode="decimal" placeholder="0.015" oninput="btcCalc('init')">
+        </div>
+        <div class="form-group">
+          <label>Precio medio pagado (EUR) · opcional</label>
+          <input type="text" class="mc-in" id="btc-f-priceinit" inputmode="decimal" placeholder="36000" oninput="btcCalc('init')">
         </div>
       </div>
     </div>
@@ -1505,6 +1525,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <div style="font-size:12px;color:var(--text3)">Compras, ventas y transferencias · se carga en EUR, se muestra el valor en USD al lado</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="mc-btn" onclick="openBtcModal('Saldo inicial')">≡ Saldo que ya tengo</button>
       <button class="mc-btn" onclick="openBtcModal('Compra')">+ Compra</button>
       <button class="mc-btn" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text2)" onclick="openBtcModal('Venta')">− Venta</button>
       <button class="mc-btn" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text2)" onclick="openBtcModal('Transferencia')">⇄ Transferencia</button>
@@ -4310,20 +4331,35 @@ function renderCartera(){
   }).join('');
 }
 
+/* FIX: sincronizar tambien el selector del formulario de trade. Sin esto,
+   refreshAccountSelectors() llama a onAccountChange(), que lee #inp-account
+   (todavia en la cuenta anterior) y revierte activeAccountId. */
+function _syncInpAccount(id){
+  const inp = document.getElementById('inp-account');
+  if(inp && [...inp.options].some(o => o.value === id)) inp.value = id;
+}
 function changeActiveAccount(){
   const sel = document.getElementById('cartera-account-select');
+  if(!sel) return;
   activeAccountId = sel.value;
   saveActiveAccount();
+  _syncInpAccount(activeAccountId);
   renderCartera();
   refreshAccountSelectors();
+  _syncInpAccount(activeAccountId);
 }
 
 function setActiveAccountById(id){
   activeAccountId = id;
   saveActiveAccount();
-  document.getElementById('cartera-account-select').value = id;
+  const sel = document.getElementById('cartera-account-select');
+  if(sel) sel.value = id;
+  _syncInpAccount(id);
   renderCartera();
   refreshAccountSelectors();
+  _syncInpAccount(id);
+  activeAccountId = id;
+  saveActiveAccount();
 }
 
 let pendingAccountAction = null;
@@ -6486,10 +6522,15 @@ async function btcFetchPrice(){
 
 /* --- metricas --- */
 function btcStats(){
-  let btcTotal = 0, eurCompras = 0, btcComprado = 0, eurVentas = 0, btcVendido = 0, feeRed = 0;
+  let btcTotal = 0, eurCompras = 0, btcComprado = 0, eurVentas = 0, btcVendido = 0, feeRed = 0, btcSinCoste = 0;
   const zones = {};
   (btcOps||[]).forEach(function(o){
-    if(o.type === 'Compra'){
+    if(o.type === 'Saldo inicial'){
+      const b = btcNum(o.btc)||0;
+      btcTotal += b;
+      if(o.sinCoste){ btcSinCoste += b; }
+      else { btcComprado += b; eurCompras += btcNum(o.eur)||0; }
+    } else if(o.type === 'Compra'){
       btcTotal += btcNum(o.btc)||0;
       btcComprado += btcNum(o.btc)||0;
       eurCompras += btcNum(o.eur)||0;
@@ -6513,12 +6554,14 @@ function btcStats(){
   const valorEur = isFinite(priceEur) ? btcTotal * priceEur : NaN;
   const fx = (isFinite(priceUsd) && isFinite(priceEur) && priceEur > 0) ? (priceUsd / priceEur) : NaN;
   const valorUsd = (isFinite(valorEur) && isFinite(fx)) ? valorEur * fx : NaN;
-  const costeRestante = btcTotal * precioMedio;
-  const pnlEur = isFinite(valorEur) ? (valorEur - costeRestante) : NaN;
+  // el P&L sólo se calcula sobre los BTC que tienen coste conocido
+  const btcConCoste = Math.max(0, btcTotal - btcSinCoste);
+  const costeRestante = btcConCoste * precioMedio;
+  const pnlEur = (isFinite(priceEur) && costeRestante > 0) ? (btcConCoste * priceEur - costeRestante) : NaN;
   const pnlPct = (isFinite(pnlEur) && costeRestante > 0) ? (pnlEur / costeRestante * 100) : NaN;
   const pnlReal = eurVentas - (btcVendido * precioMedio);
   return {btcTotal, eurCompras, btcComprado, eurVentas, btcVendido, feeRed, precioMedio,
-          priceEur, priceUsd, valorEur, valorUsd, pnlEur, pnlPct, pnlReal,
+          priceEur, priceUsd, valorEur, valorUsd, pnlEur, pnlPct, pnlReal, btcSinCoste, btcConCoste,
           invertidoNeto: eurCompras - eurVentas, zones};
 }
 
@@ -6530,7 +6573,7 @@ function btcRenderKpis(){
     k.innerHTML =
       '<div class="kpi"><div class="kpi-label">BTC acumulado</div><div class="kpi-val" style="font-size:20px;font-family:\'Roboto Mono\',monospace">' + btcFmtB(st.btcTotal) + '</div><div class="kpi-sub">' + (btcOps||[]).length + ' movimientos</div></div>' +
       '<div class="kpi"><div class="kpi-label">Invertido neto</div><div class="kpi-val" style="font-size:20px">' + btcFmtE(st.invertidoNeto) + ' €</div><div class="kpi-sub">compras ' + btcFmtE(st.eurCompras) + ' € · ventas ' + btcFmtE(st.eurVentas) + ' €</div></div>' +
-      '<div class="kpi"><div class="kpi-label">Precio medio</div><div class="kpi-val" style="font-size:20px">' + btcFmtE(st.precioMedio) + ' €</div><div class="kpi-sub">coste medio de compra</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Precio medio</div><div class="kpi-val" style="font-size:20px">' + btcFmtE(st.precioMedio) + ' €</div><div class="kpi-sub">' + (st.btcSinCoste > 0 ? '<span style="color:var(--amber)">' + btcFmtB(st.btcSinCoste) + ' BTC sin coste cargado</span>' : 'coste medio de compra') + '</div></div>' +
       '<div class="kpi"><div class="kpi-label">Valor actual</div><div class="kpi-val" style="font-size:20px">' + (isFinite(st.valorEur) ? btcFmtE(st.valorEur) + ' €' : '–') + '</div><div class="kpi-sub">' + (isFinite(st.valorUsd) ? '$' + btcFmtE(st.valorUsd) : 'cargá el precio') + '</div></div>' +
       '<div class="kpi"><div class="kpi-label">P&L no realizado</div><div class="kpi-val" style="font-size:20px;color:' + pnlCol + '">' + (isFinite(st.pnlPct) ? (st.pnlPct >= 0 ? '+' : '') + st.pnlPct.toFixed(1) + '%' : '–') + '</div><div class="kpi-sub">' + (isFinite(st.pnlEur) ? (st.pnlEur >= 0 ? '+' : '') + btcFmtE(st.pnlEur) + ' €' : '–') + (st.pnlReal ? ' · realizado ' + btcFmtE(st.pnlReal) + ' €' : '') + '</div></div>';
   }
@@ -6593,10 +6636,10 @@ function btcRenderTable(){
   }
   const rows = btcOps.slice().sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')) || (b.createdAt||0) - (a.createdAt||0); });
   tb.innerHTML = rows.map(function(o){
-    const isC = o.type === 'Compra', isV = o.type === 'Venta';
-    const col = isC ? 'var(--green)' : (isV ? 'var(--red)' : 'var(--text2)');
-    const bg  = isC ? 'var(--green2)' : (isV ? 'var(--red2)' : 'var(--bg3)');
-    const sign = isC ? '+' : (isV ? '−' : '⇄');
+    const isC = o.type === 'Compra', isV = o.type === 'Venta', isS = o.type === 'Saldo inicial';
+    const col = (isC || isS) ? 'var(--green)' : (isV ? 'var(--red)' : 'var(--text2)');
+    const bg  = (isC || isS) ? 'var(--green2)' : (isV ? 'var(--red2)' : 'var(--bg3)');
+    const sign = isS ? '≡' : (isC ? '+' : (isV ? '−' : '⇄'));
     const donde = o.type === 'Transferencia'
       ? (btcEsc(o.from||'') + ' → ' + btcEsc(o.to||''))
       : btcEsc(o.exchange||'');
@@ -6627,7 +6670,7 @@ function renderBtc(){
 
 /* --- modal --- */
 function btcShowBlocks(type){
-  const map = {'Compra':'btc-blk-compra','Venta':'btc-blk-venta','Transferencia':'btc-blk-transf'};
+  const map = {'Compra':'btc-blk-compra','Venta':'btc-blk-venta','Transferencia':'btc-blk-transf','Saldo inicial':'btc-blk-saldo'};
   Object.keys(map).forEach(function(t){
     const el = document.getElementById(map[t]);
     if(el) el.style.display = (t === type) ? 'block' : 'none';
@@ -6638,33 +6681,76 @@ function btcShowBlocks(type){
   if(eg) eg.style.display = (type === 'Transferencia') ? 'none' : 'flex';
 }
 
-function btcCalc(){
+function btcCalc(src){
   const type = (document.getElementById('btc-f-type')||{}).value;
   const box = document.getElementById('btc-calc-box');
   if(!box) return;
+
+  if(type === 'Saldo inicial'){
+    const btc = btcVal('btc-f-btcinit'), price = btcVal('btc-f-priceinit');
+    if(!isFinite(btc) || btc <= 0){ box.textContent = 'Poné cuántos BTC tenés.'; return; }
+    if(isFinite(price) && price > 0){
+      box.innerHTML = '<b style="color:var(--green)">' + btcFmtB(btc) + ' BTC</b> con un coste de <b>' + btcFmtE(btc * price) + ' €</b>';
+    } else {
+      box.innerHTML = '<b style="color:var(--green)">' + btcFmtB(btc) + ' BTC</b> · <span style="color:var(--amber)">sin coste cargado: van a contar en el saldo pero quedan fuera del precio medio y del P&L</span>';
+    }
+    return;
+  }
+
   if(type === 'Compra'){
-    const eur = btcVal('btc-f-eur'), price = btcVal('btc-f-price'), fee = btcVal('btc-f-fee') || 0;
-    if(isFinite(eur) && isFinite(price) && price > 0){
-      const btc = (eur - fee) / price;
-      box.innerHTML = 'Recibís <b style="color:var(--green)">' + btcFmtB(btc) + ' BTC</b> · zona detectada: <b style="color:var(--text)">' + btcZoneFor(price) + '</b>';
-    } else box.textContent = 'Completá importe y precio para ver los BTC.';
-  } else if(type === 'Venta'){
+    const eEl = document.getElementById('btc-f-eur');
+    const bEl = document.getElementById('btc-f-btc');
+    const pEl = document.getElementById('btc-f-price');
+    if(!eEl || !bEl || !pEl) return;
+    // el campo que la usuaria acaba de tocar deja de ser "calculado"
+    if(src === 'eur') eEl.dataset.auto = '';
+    if(src === 'btc') bEl.dataset.auto = '';
+    if(src === 'price') pEl.dataset.auto = '';
+
+    const libre = function(el){ return el.value === '' || el.dataset.auto === '1'; };
+    const fee = btcVal('btc-f-fee') || 0;
+    let eur = btcVal('btc-f-eur'), btc = btcVal('btc-f-btc'), price = btcVal('btc-f-price');
+    const okE = isFinite(eur) && !libre(eEl), okB = isFinite(btc) && btc > 0 && !libre(bEl), okP = isFinite(price) && price > 0 && !libre(pEl);
+
+    if(okE && okP && libre(bEl)){
+      btc = (eur - fee) / price;
+      bEl.value = btc.toFixed(8); bEl.dataset.auto = '1';
+    } else if(okB && okP && libre(eEl)){
+      eur = btc * price + fee;
+      eEl.value = eur.toFixed(2); eEl.dataset.auto = '1';
+    } else if(okB && okE && libre(pEl)){
+      price = (eur - fee) / btc;
+      pEl.value = price.toFixed(2); pEl.dataset.auto = '1';
+    }
+
+    eur = btcVal('btc-f-eur'); btc = btcVal('btc-f-btc'); price = btcVal('btc-f-price');
+    if(isFinite(btc) && btc > 0 && isFinite(price) && price > 0){
+      box.innerHTML = '<b style="color:var(--green)">' + btcFmtB(btc) + ' BTC</b> a ' + btcFmtE(price) + ' € · zona: <b style="color:var(--text)">' + btcZoneFor(price) + '</b>';
+    } else {
+      box.textContent = 'Completá dos de los tres campos (importe, BTC, precio).';
+    }
+    return;
+  }
+
+  if(type === 'Venta'){
     const btc = btcVal('btc-f-btcsell'), price = btcVal('btc-f-price2'), fee = btcVal('btc-f-fee2') || 0;
     if(isFinite(btc) && isFinite(price)){
       box.innerHTML = 'Recibís <b style="color:var(--red)">' + btcFmtE(btc * price - fee) + ' €</b>';
     } else box.textContent = 'Completá BTC y precio para ver los euros.';
-  } else {
-    const mv = btcVal('btc-f-btcmove') || 0, nf = btcVal('btc-f-netfee') || 0;
-    box.innerHTML = 'Movés <b>' + btcFmtB(mv) + ' BTC</b> · el saldo baja sólo la comisión de red: <b style="color:var(--amber)">' + btcFmtB(nf) + ' BTC</b>';
+    return;
   }
+
+  const mv = btcVal('btc-f-btcmove') || 0, nf = btcVal('btc-f-netfee') || 0;
+  box.innerHTML = 'Movés <b>' + btcFmtB(mv) + ' BTC</b> · el saldo baja sólo la comisión de red: <b style="color:var(--amber)">' + btcFmtB(nf) + ' BTC</b>';
 }
 
 function openBtcModal(type, id){
   const m = document.getElementById('btc-modal');
   if(!m) return;
-  ['btc-f-eur','btc-f-price','btc-f-fee','btc-f-btcsell','btc-f-price2','btc-f-fee2',
-   'btc-f-btcmove','btc-f-netfee','btc-f-from','btc-f-to','btc-f-exchange','btc-f-note']
-    .forEach(function(k){ const el = document.getElementById(k); if(el) el.value = ''; });
+  ['btc-f-eur','btc-f-btc','btc-f-price','btc-f-fee','btc-f-btcsell','btc-f-price2','btc-f-fee2',
+   'btc-f-btcmove','btc-f-netfee','btc-f-from','btc-f-to','btc-f-exchange','btc-f-note',
+   'btc-f-btcinit','btc-f-priceinit']
+    .forEach(function(k){ const el = document.getElementById(k); if(el){ el.value = ''; el.dataset.auto = ''; } });
   const zsel = document.getElementById('btc-f-zone'); if(zsel) zsel.value = 'auto';
   const delBtn = document.getElementById('btc-del-btn');
 
@@ -6683,13 +6769,16 @@ function openBtcModal(type, id){
   if(op){
     const set = function(k, v){ const el = document.getElementById(k); if(el && v !== undefined && v !== null) el.value = v; };
     set('btc-f-exchange', op.exchange); set('btc-f-note', op.note);
-    if(t === 'Compra'){ set('btc-f-eur', op.eur); set('btc-f-price', op.price); set('btc-f-fee', op.fee); if(zsel && op.zone) zsel.value = op.zone; }
+    if(t === 'Compra'){ set('btc-f-eur', op.eur); set('btc-f-btc', op.btc); set('btc-f-price', op.price); set('btc-f-fee', op.fee); if(zsel && op.zone) zsel.value = op.zone; }
+    if(t === 'Saldo inicial'){ set('btc-f-btcinit', op.btc); if(!op.sinCoste) set('btc-f-priceinit', op.price); }
     if(t === 'Venta'){ set('btc-f-btcsell', op.btc); set('btc-f-price2', op.price); set('btc-f-fee2', op.fee); }
     if(t === 'Transferencia'){ set('btc-f-btcmove', op.btcMove); set('btc-f-from', op.from); set('btc-f-to', op.to); set('btc-f-netfee', op.netFee); }
   } else if(t === 'Compra'){
     const p = btcGetPrice();
-    if(isFinite(btcNum(p.eur))) document.getElementById('btc-f-price').value = p.eur;
-    document.getElementById('btc-f-eur').value = '200';
+    const pEl = document.getElementById('btc-f-price');
+    if(pEl && isFinite(btcNum(p.eur))){ pEl.value = p.eur; }
+    const eEl = document.getElementById('btc-f-eur');
+    if(eEl) eEl.value = '200';
   }
 
   btcShowBlocks(t);
@@ -6713,10 +6802,27 @@ function saveBtcModal(){
              type: type, date: date, note: note, exchange: exchange,
              createdAt: Date.now() };
 
-  if(type === 'Compra'){
-    const eur = btcVal('btc-f-eur'), price = btcVal('btc-f-price'), fee = btcVal('btc-f-fee') || 0;
-    if(!isFinite(eur) || !isFinite(price) || price <= 0){ alert('Completá importe en EUR y precio del BTC.'); return; }
-    op.eur = eur; op.price = price; op.fee = fee; op.btc = (eur - fee) / price;
+  if(type === 'Saldo inicial'){
+    const btc = btcVal('btc-f-btcinit'), price = btcVal('btc-f-priceinit');
+    if(!isFinite(btc) || btc <= 0){ alert('Poné cuántos BTC tenés.'); return; }
+    op.btc = btc;
+    if(isFinite(price) && price > 0){ op.price = price; op.eur = btc * price; op.sinCoste = false; }
+    else {
+      if(!confirm('Sin precio medio, esos BTC van a contar en tu saldo pero quedan fuera del precio medio y del P&L.\n\n¿Guardar igual?')) return;
+      op.price = 0; op.eur = 0; op.sinCoste = true;
+    }
+    op.fee = 0; op.zone = '';
+  } else if(type === 'Compra'){
+    let eur = btcVal('btc-f-eur'), btc = btcVal('btc-f-btc'), price = btcVal('btc-f-price');
+    const fee = btcVal('btc-f-fee') || 0;
+    // completar el que falte con los otros dos
+    if(!isFinite(btc) && isFinite(eur) && isFinite(price) && price > 0) btc = (eur - fee) / price;
+    else if(!isFinite(eur) && isFinite(btc) && isFinite(price)) eur = btc * price + fee;
+    else if(!isFinite(price) && isFinite(eur) && isFinite(btc) && btc > 0) price = (eur - fee) / btc;
+    if(!isFinite(btc) || btc <= 0 || !isFinite(price) || price <= 0 || !isFinite(eur)){
+      alert('Completá al menos dos de estos tres: importe en EUR, BTC recibidos y precio del BTC.'); return;
+    }
+    op.eur = eur; op.price = price; op.fee = fee; op.btc = btc; op.sinCoste = false;
     const zsel = document.getElementById('btc-f-zone');
     op.zone = (zsel && zsel.value !== 'auto') ? zsel.value : btcZoneFor(price);
   } else if(type === 'Venta'){
