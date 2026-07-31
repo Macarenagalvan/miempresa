@@ -506,6 +506,10 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15.5A9 9 0 1 1 8.5 3"/><path d="M21 12A9 9 0 0 0 12 3v9z"/></svg>
       Diversificación
     </div>
+    <div class="nav-item" onclick="showPage('fondeo',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Fondeo
+    </div>
     <div class="nav-item" onclick="showPage('potencial',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>
       Potencial
@@ -1159,6 +1163,139 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   </div>
 </div>
 
+<!-- Modal challenge -->
+<div id="ch-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;width:520px;max-width:92vw;max-height:90vh;overflow-y:auto">
+    <div id="ch-modal-title" style="font-size:16px;font-weight:600;margin-bottom:16px"></div>
+    <input type="hidden" id="ch-f-id">
+
+    <div class="form-grid g2" style="margin-bottom:12px">
+      <div class="form-group">
+        <label>Firma</label>
+        <input type="text" class="mc-in" id="ch-f-firma" placeholder="ej: FTMO" list="ch-firmas-list">
+        <datalist id="ch-firmas-list"></datalist>
+      </div>
+      <div class="form-group">
+        <label>Fecha de compra</label>
+        <input type="date" class="mc-in" id="ch-f-fecha">
+      </div>
+    </div>
+
+    <div class="form-grid g3" style="margin-bottom:12px">
+      <div class="form-group">
+        <label>Tamaño de cuenta</label>
+        <input type="text" class="mc-in" id="ch-f-size" inputmode="decimal" placeholder="100000">
+      </div>
+      <div class="form-group">
+        <label>Costo pagado</label>
+        <input type="text" class="mc-in" id="ch-f-costo" inputmode="decimal" placeholder="500" oninput="chCalc()">
+      </div>
+      <div class="form-group">
+        <label>Moneda</label>
+        <select class="mc-in" id="ch-f-moneda">
+          <option>EUR</option>
+          <option>USD</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-grid g2" style="margin-bottom:12px">
+      <div class="form-group">
+        <label>Formato</label>
+        <select class="mc-in" id="ch-f-formato" onchange="chRenderEstados()">
+          <option value="2">2 fases + fondeada</option>
+          <option value="1">1 fase + fondeada</option>
+          <option value="0">Fondeo instantáneo</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Estado actual</label>
+        <select class="mc-in" id="ch-f-estado" onchange="chCalc()"></select>
+      </div>
+    </div>
+
+    <div id="ch-grp-causa" style="display:none">
+      <div class="form-grid g2" style="margin-bottom:12px">
+        <div class="form-group">
+          <label>Causa de la pérdida</label>
+          <select class="mc-in" id="ch-f-causa">
+            <option value="">— elegí una —</option>
+            <option>Drawdown diario</option>
+            <option>Drawdown total</option>
+            <option>Límite de tiempo</option>
+            <option>Regla violada</option>
+            <option>Abandonada</option>
+            <option>Otra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha de la pérdida</label>
+          <input type="date" class="mc-in" id="ch-f-fecha-fin">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Nota (opcional)</label>
+      <input type="text" class="mc-in" id="ch-f-nota" placeholder="ej: me pasé del DD diario operando en noticias">
+    </div>
+
+    <div id="ch-calc-box" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text2)"></div>
+
+    <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
+      <button id="ch-del-btn" onclick="chDelete()" style="display:none;padding:8px 14px;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px">Eliminar</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button onclick="closeChModal()" style="padding:8px 16px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px">Cancelar</button>
+        <button onclick="saveChModal()" style="padding:8px 16px;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal payout -->
+<div id="pay-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;width:460px;max-width:92vw;max-height:90vh;overflow-y:auto">
+    <div id="pay-modal-title" style="font-size:16px;font-weight:600;margin-bottom:16px"></div>
+    <input type="hidden" id="pay-f-id">
+
+    <div class="form-group" style="margin-bottom:12px">
+      <label>¿De qué challenge?</label>
+      <select class="mc-in" id="pay-f-ch"></select>
+    </div>
+
+    <div class="form-grid g2" style="margin-bottom:12px">
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" class="mc-in" id="pay-f-fecha">
+      </div>
+      <div class="form-group">
+        <label>Monto cobrado</label>
+        <input type="text" class="mc-in" id="pay-f-monto" inputmode="decimal" placeholder="1200">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="pay-f-refund" style="width:16px;height:16px;accent-color:var(--green)">
+        <span>Incluye el reembolso del costo del challenge</span>
+      </label>
+    </div>
+
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Nota (opcional)</label>
+      <input type="text" class="mc-in" id="pay-f-nota" placeholder="ej: primer payout">
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
+      <button id="pay-del-btn" onclick="payDelete()" style="display:none;padding:8px 14px;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px">Eliminar</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button onclick="closePayModal()" style="padding:8px 16px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px">Cancelar</button>
+        <button onclick="savePayModal()" style="padding:8px 16px;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal BTC spot -->
 <div id="btc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;align-items:center;justify-content:center">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;width:480px;max-width:92vw;max-height:90vh;overflow-y:auto">
@@ -1651,6 +1788,74 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 
 
 
+<div id="page-fondeo" class="page">
+  <div class="page-title">Fondeo</div>
+  <div class="page-sub">Challenges de prop firms · costos, tasa de éxito y retorno real</div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">
+    <button class="mc-btn" onclick="openChModal()">+ Nuevo challenge</button>
+    <button class="mc-btn" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text2)" onclick="openPayModal()">+ Registrar payout</button>
+  </div>
+
+  <div class="kpi-grid" id="ch-kpis" style="margin-bottom:16px"></div>
+
+  <div class="mc-grid2" style="margin-bottom:16px">
+    <div class="mc-card">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Embudo · dónde se caen</div>
+      <div id="ch-funnel"></div>
+    </div>
+    <div class="mc-card">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Causas de fallo</div>
+      <div id="ch-causas"></div>
+    </div>
+  </div>
+
+  <div class="mc-card" style="margin-bottom:16px">
+    <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Por firma</div>
+    <div id="ch-firmas"></div>
+  </div>
+
+  <div style="font-size:13px;font-weight:700;color:var(--text);margin:20px 0 8px">Challenges</div>
+  <div class="tbl-wrap" style="margin-bottom:18px">
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <thead>
+        <tr style="background:var(--bg3);color:var(--text3);font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase">
+          <th style="padding:10px;text-align:left">Compra</th>
+          <th style="padding:10px;text-align:left">Firma</th>
+          <th style="padding:10px;text-align:right">Tamaño</th>
+          <th style="padding:10px;text-align:right">Costo</th>
+          <th style="padding:10px;text-align:left">Formato</th>
+          <th style="padding:10px;text-align:left">Estado</th>
+          <th style="padding:10px;text-align:left">Causa / nota</th>
+          <th style="padding:10px;text-align:right"></th>
+        </tr>
+      </thead>
+      <tbody id="ch-tbody"></tbody>
+    </table>
+  </div>
+
+  <div style="font-size:13px;font-weight:700;color:var(--text);margin:20px 0 8px">Payouts cobrados</div>
+  <div class="tbl-wrap">
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <thead>
+        <tr style="background:var(--bg3);color:var(--text3);font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase">
+          <th style="padding:10px;text-align:left">Fecha</th>
+          <th style="padding:10px;text-align:left">Challenge</th>
+          <th style="padding:10px;text-align:right">Monto</th>
+          <th style="padding:10px;text-align:right">Reembolso fee</th>
+          <th style="padding:10px;text-align:left">Nota</th>
+          <th style="padding:10px;text-align:right"></th>
+        </tr>
+      </thead>
+      <tbody id="pay-tbody"></tbody>
+    </table>
+  </div>
+
+  <div style="font-size:11px;color:var(--text3);margin-top:12px;line-height:1.5">
+    Este registro es independiente de las cuentas de trading: no entra en la curva de equity ni en el win rate. Es la contabilidad del negocio de fondeo.
+  </div>
+</div>
+
 </div>
 </div>
 
@@ -1670,6 +1875,7 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
 // === IndexedDB · almacenamiento sin límite de 5MB ===
 let trades = [], asrs = [], accounts = [], movements = [];
 let btcOps = [];
+let challenges = [], payouts = [];
 let activeAccountId = '';
 let _db = null; // instancia de IndexedDB
 
@@ -1813,6 +2019,14 @@ function saveAccounts(){
 function saveMovements(){
   _dbSet('tj_movements', movements).catch(()=>{});
   _lsSet('tj_movements', JSON.stringify(movements));
+}
+function saveChallenges(){
+  _dbSet('tj_challenges', challenges).catch(()=>{});
+  _lsSet('tj_challenges', JSON.stringify(challenges));
+}
+function savePayouts(){
+  _dbSet('tj_payouts', payouts).catch(()=>{});
+  _lsSet('tj_payouts', JSON.stringify(payouts));
 }
 function saveBtcOps(){
   _dbSet('tj_btc', btcOps).catch(()=>{});
@@ -2468,6 +2682,7 @@ function showPage(id, el){
   if(id==='asr'){ scheduleRender(function(){ refreshAsrSelect(); renderAsrList(); }, 'asr', 16); }
   if(id==='potencial' && typeof ptInit==='function') scheduleRender(ptInit, 'potencial', 16);
   if(id==='mc-diversif' && typeof renderBtc==='function') scheduleRender(renderBtc, 'btcspot', 16);
+  if(id==='fondeo' && typeof renderFondeo==='function') scheduleRender(renderFondeo, 'fondeo', 16);
   if(id==='hoy' && typeof renderHoy==='function') scheduleRender(renderHoy, 'hoy', 16);
   if(id==='hoy' && typeof renderPlanDia==='function') scheduleRender(renderPlanDia, 'plandia', 16);
   if(id==='registro'){ if(typeof applyTradeDefaults==='function') applyTradeDefaults(); if(typeof updateRegDayBanner==='function') updateRegDayBanner(); }
@@ -5136,6 +5351,8 @@ function gdriveBuildPayload(){
     accounts: accounts,
     movements: movements,
     btcOps: btcOps,
+    challenges: challenges,
+    payouts: payouts,
     activeAccountId: activeAccountId,
     traderName: (function(){ try { return localStorage.getItem('tj_trader_name')||''; } catch(e){ return ''; } })()
   };
@@ -5255,6 +5472,8 @@ function exportData(){
     accounts,
     movements,
     btcOps,
+    challenges,
+    payouts,
     activeAccountId,
     traderName: localStorage.getItem('tj_trader_name') || ''
   };
@@ -5858,7 +6077,7 @@ function importData(input){
       const data = JSON.parse(e.target.result);
       // Estructura del import
       let impTrades = [], impAsrs = [], impAccounts = [], impMovs = [], impActiveAcc = '', impName = '', impBtc = [];
-      let impHasBtc = false;
+      let impHasBtc = false, impCh = [], impPay = [], impHasCh = false, impHasPay = false;
       if(Array.isArray(data)){
         // v1: array directo de trades
         impTrades = data;
@@ -5869,6 +6088,8 @@ function importData(input){
         impMovs = Array.isArray(data.movements) ? data.movements : [];
         impHasBtc = Array.isArray(data.btcOps);
         impBtc = impHasBtc ? data.btcOps : [];
+        impHasCh = Array.isArray(data.challenges);   impCh = impHasCh ? data.challenges : [];
+        impHasPay = Array.isArray(data.payouts);     impPay = impHasPay ? data.payouts : [];
         impActiveAcc = data.activeAccountId || '';
         impName = data.traderName || '';
       } else {
@@ -5918,6 +6139,8 @@ function importData(input){
         // Respaldo viejo (anterior al modulo BTC spot): no tiene la clave btcOps.
         // En ese caso conservamos el registro BTC actual en vez de borrarlo.
         if(impHasBtc) btcOps = impBtc;
+        if(impHasCh) challenges = impCh;
+        if(impHasPay) payouts = impPay;
         activeAccountId = impActiveAcc;
         if(impName){
           try { localStorage.setItem('tj_trader_name', impName); } catch(e){}
@@ -5947,6 +6170,10 @@ function importData(input){
         movements = [...impMovs.filter(m=>!existingMovIds.has(m.id)), ...movements];
         const existingBtcIds = new Set(btcOps.map(b=>b.id));
         btcOps = [...impBtc.filter(b=>!existingBtcIds.has(b.id)), ...btcOps];
+        const existingChIds = new Set(challenges.map(c=>c.id));
+        challenges = [...impCh.filter(c=>!existingChIds.has(c.id)), ...challenges];
+        const existingPayIds = new Set(payouts.map(p=>p.id));
+        payouts = [...impPay.filter(p=>!existingPayIds.has(p.id)), ...payouts];
       }
 
       save();
@@ -5954,6 +6181,8 @@ function importData(input){
       saveAccounts();
       saveMovements();
       saveBtcOps();
+      saveChallenges();
+      savePayouts();
       saveActiveAccount();
       refreshAccountSelectors();
       renderTable();
@@ -5963,6 +6192,7 @@ function importData(input){
       if(document.getElementById('page-cartera').classList.contains('active')) renderCartera();
       if(document.getElementById('page-estadisticas').classList.contains('active')) renderStats();
       if(typeof renderBtc==='function' && document.getElementById('page-mc-diversif')?.classList.contains('active')) renderBtc();
+      if(typeof renderFondeo==='function' && document.getElementById('page-fondeo')?.classList.contains('active')) renderFondeo();
       showToast('Respaldo importado · ' + trades.length + ' ops · ' + asrs.length + ' ASRs · ' + accounts.length + ' cuentas · ' + movements.length + ' mov.' + (impHasBtc ? ' · ' + btcOps.length + ' BTC' : ' · BTC spot conservado'));
     } catch(err){ alert('Archivo inválido: ' + err.message); }
   };
@@ -6009,9 +6239,10 @@ async function initApp(){
     await _openDB();
 
     // Cargar cada clave desde IndexedDB
-    const [idbTrades, idbAsrs, idbAccounts, idbMovements, idbActiveAcc, idbBtc] = await Promise.all([
+    const [idbTrades, idbAsrs, idbAccounts, idbMovements, idbActiveAcc, idbBtc, idbCh, idbPay] = await Promise.all([
       _dbGet('tj_v2'), _dbGet('tj_asr'), _dbGet('tj_accounts'),
-      _dbGet('tj_movements'), _dbGet('tj_active_account'), _dbGet('tj_btc')
+      _dbGet('tj_movements'), _dbGet('tj_active_account'), _dbGet('tj_btc'),
+      _dbGet('tj_challenges'), _dbGet('tj_payouts')
     ]);
 
     // Migración automática desde localStorage (solo la primera vez)
@@ -6023,6 +6254,8 @@ async function initApp(){
       const lsMovs     = _lsGet('tj_movements');
       const lsActive   = _lsGet('tj_active_account');
       const lsBtc      = _lsGet('tj_btc');
+      const lsCh       = _lsGet('tj_challenges');
+      const lsPay      = _lsGet('tj_payouts');
 
       trades       = lsTrades   ? JSON.parse(lsTrades)   : [];
       asrs         = lsAsrs     ? JSON.parse(lsAsrs)     : [];
@@ -6030,12 +6263,15 @@ async function initApp(){
       movements    = lsMovs     ? JSON.parse(lsMovs)     : [];
       activeAccountId = lsActive || '';
       try { btcOps = lsBtc ? JSON.parse(lsBtc) : []; } catch(e){ btcOps = []; }
+      try { challenges = lsCh ? JSON.parse(lsCh) : []; } catch(e){ challenges = []; }
+      try { payouts = lsPay ? JSON.parse(lsPay) : []; } catch(e){ payouts = []; }
 
       // Guardar en IndexedDB
       await Promise.all([
         _dbSet('tj_v2', trades), _dbSet('tj_asr', asrs),
         _dbSet('tj_accounts', accounts), _dbSet('tj_movements', movements),
-        _dbSet('tj_active_account', activeAccountId), _dbSet('tj_btc', btcOps)
+        _dbSet('tj_active_account', activeAccountId), _dbSet('tj_btc', btcOps),
+        _dbSet('tj_challenges', challenges), _dbSet('tj_payouts', payouts)
       ]);
 
       // IMPORTANTE: NO limpiamos localStorage. Lo mantenemos como backup
@@ -6052,6 +6288,10 @@ async function initApp(){
       activeAccountId = idbActiveAcc || '';
       if(Array.isArray(idbBtc)) btcOps = idbBtc;
       else { try { btcOps = JSON.parse(_lsGet('tj_btc') || '[]'); } catch(e){ btcOps = []; } }
+      if(Array.isArray(idbCh)) challenges = idbCh;
+      else { try { challenges = JSON.parse(_lsGet('tj_challenges') || '[]'); } catch(e){ challenges = []; } }
+      if(Array.isArray(idbPay)) payouts = idbPay;
+      else { try { payouts = JSON.parse(_lsGet('tj_payouts') || '[]'); } catch(e){ payouts = []; } }
     }
 
     // === RECOVERY · si IDB perdió datos chicos, intentar recuperar de localStorage ===
@@ -6147,9 +6387,11 @@ async function initApp(){
       movements    = JSON.parse(_lsGet('tj_movements') || '[]');
       activeAccountId = _lsGet('tj_active_account') || '';
       btcOps       = JSON.parse(_lsGet('tj_btc')       || '[]');
+      challenges   = JSON.parse(_lsGet('tj_challenges')|| '[]');
+      payouts      = JSON.parse(_lsGet('tj_payouts')   || '[]');
     } catch(e2){
       console.warn('No se pudo leer storage, arrancando vacío:', e2);
-      trades = []; asrs = []; accounts = []; movements = []; activeAccountId = ''; btcOps = [];
+      trades = []; asrs = []; accounts = []; movements = []; activeAccountId = ''; btcOps = []; challenges = []; payouts = [];
     }
     if(_idbOk === false && _lsOk === false){
       console.info('Sin IndexedDB ni localStorage (contexto inseguro, ej. file://). Los datos solo viven en memoria hasta que cierres la pestaña.');
@@ -6208,6 +6450,375 @@ async function initApp(){
     }, 'boot', 0);
   });
 }
+
+/* ================= FONDEO · challenges de prop firms ================= */
+const CH_ESTADOS = {
+  '2': ['En curso · fase 1','Fase 1 pasada · en fase 2','Fondeada','Perdida'],
+  '1': ['En curso · fase 1','Fondeada','Perdida'],
+  '0': ['Fondeada','Perdida']
+};
+function chNum(v){ const n = parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(',','.')); return isFinite(n) ? n : NaN; }
+function chVal(id){ const el = document.getElementById(id); return el ? chNum(el.value) : NaN; }
+function chStr(id){ const el = document.getElementById(id); return el ? String(el.value||'').trim() : ''; }
+function chEsc(t){ return String(t==null?'':t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function chFmt(n){ return (isFinite(n)?n:0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function chHoy(){ return new Date().toISOString().slice(0,10); }
+function chPerdida(e){ return e === 'Perdida'; }
+function chFondeada(e){ return e === 'Fondeada'; }
+
+/* --- metricas --- */
+function chStats(){
+  const chs = challenges || [], pays = payouts || [];
+  const total = chs.length;
+  const gastado = chs.reduce((a,c)=> a + (chNum(c.costo)||0), 0);
+  const fondeadas = chs.filter(c=>chFondeada(c.estado)).length;
+  const perdidas  = chs.filter(c=>chPerdida(c.estado)).length;
+  const enCurso   = total - fondeadas - perdidas;
+
+  // embudo: cuantas superaron cada etapa
+  let pasoF1 = 0, pasoF2 = 0;
+  chs.forEach(function(c){
+    const f = String(c.formato);
+    if(f === '0'){ if(chFondeada(c.estado)) { pasoF1++; pasoF2++; } return; }
+    if(chFondeada(c.estado)){ pasoF1++; if(f === '2') pasoF2++; return; }
+    if(c.estado === 'Fase 1 pasada · en fase 2') pasoF1++;
+    if(c.maxEtapa === 2) { pasoF1++; pasoF2++; }
+    else if(c.maxEtapa === 1) pasoF1++;
+  });
+
+  const cobrado = pays.reduce((a,p)=> a + (chNum(p.monto)||0), 0);
+  const reembolsos = pays.filter(p=>p.refund).length;
+  const neto = cobrado - gastado;
+  const roi = gastado > 0 ? (neto / gastado * 100) : NaN;
+  const decididas = fondeadas + perdidas;
+  const tasa = decididas > 0 ? (fondeadas / decididas * 100) : NaN;
+  const costePorFondeada = fondeadas > 0 ? (gastado / fondeadas) : NaN;
+
+  const causas = {};
+  chs.forEach(function(c){
+    if(chPerdida(c.estado)){
+      const k = c.causa || 'Sin causa cargada';
+      causas[k] = (causas[k]||0) + 1;
+    }
+  });
+
+  const firmas = {};
+  chs.forEach(function(c){
+    const k = c.firma || 'Sin firma';
+    if(!firmas[k]) firmas[k] = {n:0, gastado:0, fondeadas:0, perdidas:0, cobrado:0};
+    firmas[k].n++;
+    firmas[k].gastado += chNum(c.costo)||0;
+    if(chFondeada(c.estado)) firmas[k].fondeadas++;
+    if(chPerdida(c.estado)) firmas[k].perdidas++;
+  });
+  pays.forEach(function(p){
+    const c = chs.find(x=>x.id === p.challengeId);
+    const k = c ? (c.firma || 'Sin firma') : 'Sin firma';
+    if(firmas[k]) firmas[k].cobrado += chNum(p.monto)||0;
+  });
+
+  return {total, gastado, fondeadas, perdidas, enCurso, pasoF1, pasoF2,
+          cobrado, reembolsos, neto, roi, tasa, costePorFondeada, causas, firmas};
+}
+
+/* --- KPIs --- */
+function chRenderKpis(){
+  const st = chStats();
+  const el = document.getElementById('ch-kpis');
+  if(!el) return;
+  const netoCol = st.neto >= 0 ? 'var(--green)' : 'var(--red)';
+  el.innerHTML =
+    '<div class="kpi"><div class="kpi-label">Challenges</div><div class="kpi-val" style="font-size:22px">' + st.total + '</div><div class="kpi-sub">' + st.enCurso + ' en curso</div></div>' +
+    '<div class="kpi"><div class="kpi-label">Invertido</div><div class="kpi-val" style="font-size:20px">' + chFmt(st.gastado) + '</div><div class="kpi-sub">costo de los challenges</div></div>' +
+    '<div class="kpi"><div class="kpi-label">Fondeadas</div><div class="kpi-val" style="font-size:22px;color:' + (st.fondeadas>0?'var(--green)':'var(--text)') + '">' + st.fondeadas + '</div><div class="kpi-sub">' + (isFinite(st.tasa) ? st.tasa.toFixed(0) + '% de las decididas' : 'sin datos aún') + '</div></div>' +
+    '<div class="kpi"><div class="kpi-label">Cobrado</div><div class="kpi-val" style="font-size:20px">' + chFmt(st.cobrado) + '</div><div class="kpi-sub">' + payouts.length + ' payout' + (payouts.length===1?'':'s') + (st.reembolsos ? ' · ' + st.reembolsos + ' con reembolso' : '') + '</div></div>' +
+    '<div class="kpi"><div class="kpi-label">Resultado neto</div><div class="kpi-val" style="font-size:20px;color:' + netoCol + '">' + (st.neto>=0?'+':'') + chFmt(st.neto) + '</div><div class="kpi-sub">' + (isFinite(st.roi) ? 'ROI ' + (st.roi>=0?'+':'') + st.roi.toFixed(0) + '%' : '–') + (isFinite(st.costePorFondeada) ? ' · ' + chFmt(st.costePorFondeada) + ' por fondeada' : '') + '</div></div>';
+}
+
+/* --- embudo --- */
+function chRenderFunnel(){
+  const st = chStats();
+  const box = document.getElementById('ch-funnel');
+  if(!box) return;
+  if(!st.total){ box.innerHTML = '<div style="font-size:12px;color:var(--text3)">Todavía no cargaste challenges.</div>'; return; }
+  const pasos = [
+    {t:'Compradas', n:st.total, c:'var(--text2)'},
+    {t:'Pasaron fase 1', n:st.pasoF1, c:'var(--accent)'},
+    {t:'Pasaron fase 2', n:st.pasoF2, c:'var(--purple)'},
+    {t:'Fondeadas', n:st.fondeadas, c:'var(--green)'}
+  ];
+  box.innerHTML = pasos.map(function(p){
+    const w = st.total > 0 ? (p.n / st.total * 100) : 0;
+    return '<div style="margin-bottom:9px">' +
+      '<div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px">' +
+        '<span style="color:var(--text2)">' + p.t + '</span>' +
+        '<span style="font-family:\'Roboto Mono\',monospace;color:var(--text3)">' + p.n + ' · ' + w.toFixed(0) + '%</span></div>' +
+      '<div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + w.toFixed(0) + '%;background:' + p.c + '"></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+/* --- causas --- */
+function chRenderCausas(){
+  const st = chStats();
+  const box = document.getElementById('ch-causas');
+  if(!box) return;
+  const ks = Object.keys(st.causas);
+  if(!ks.length){ box.innerHTML = '<div style="font-size:12px;color:var(--text3)">Ninguna perdida todavía. Que siga así.</div>'; return; }
+  const max = Math.max.apply(null, ks.map(k=>st.causas[k]));
+  box.innerHTML = ks.sort((a,b)=>st.causas[b]-st.causas[a]).map(function(k){
+    const n = st.causas[k];
+    const w = max>0 ? (n/max*100) : 0;
+    return '<div style="margin-bottom:9px">' +
+      '<div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px">' +
+        '<span style="color:var(--text2)">' + chEsc(k) + '</span>' +
+        '<span style="font-family:\'Roboto Mono\',monospace;color:var(--text3)">' + n + '</span></div>' +
+      '<div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:' + w.toFixed(0) + '%;background:var(--red)"></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+/* --- por firma --- */
+function chRenderFirmas(){
+  const st = chStats();
+  const box = document.getElementById('ch-firmas');
+  if(!box) return;
+  const ks = Object.keys(st.firmas);
+  if(!ks.length){ box.innerHTML = '<div style="font-size:12px;color:var(--text3)">Sin datos.</div>'; return; }
+  box.innerHTML = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">' +
+    '<tr style="color:var(--text3);font-family:\'Roboto Mono\',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em">' +
+      '<th style="text-align:left;padding:6px 8px">Firma</th><th style="text-align:right;padding:6px 8px">Compradas</th>' +
+      '<th style="text-align:right;padding:6px 8px">Fondeadas</th><th style="text-align:right;padding:6px 8px">Gastado</th>' +
+      '<th style="text-align:right;padding:6px 8px">Cobrado</th><th style="text-align:right;padding:6px 8px">Neto</th></tr>' +
+    ks.sort((a,b)=>st.firmas[b].n-st.firmas[a].n).map(function(k){
+      const f = st.firmas[k];
+      const neto = f.cobrado - f.gastado;
+      return '<tr style="border-top:1px solid var(--border)">' +
+        '<td style="padding:7px 8px;color:var(--text)">' + chEsc(k) + '</td>' +
+        '<td style="padding:7px 8px;text-align:right;font-family:\'Roboto Mono\',monospace">' + f.n + '</td>' +
+        '<td style="padding:7px 8px;text-align:right;font-family:\'Roboto Mono\',monospace;color:' + (f.fondeadas?'var(--green)':'var(--text3)') + '">' + f.fondeadas + '</td>' +
+        '<td style="padding:7px 8px;text-align:right;font-family:\'Roboto Mono\',monospace;color:var(--text2)">' + chFmt(f.gastado) + '</td>' +
+        '<td style="padding:7px 8px;text-align:right;font-family:\'Roboto Mono\',monospace;color:var(--text2)">' + chFmt(f.cobrado) + '</td>' +
+        '<td style="padding:7px 8px;text-align:right;font-family:\'Roboto Mono\',monospace;color:' + (neto>=0?'var(--green)':'var(--red)') + '">' + (neto>=0?'+':'') + chFmt(neto) + '</td>' +
+      '</tr>';
+    }).join('') + '</table></div>';
+}
+
+/* --- tablas --- */
+function chRenderTabla(){
+  const tb = document.getElementById('ch-tbody');
+  if(!tb) return;
+  if(!(challenges||[]).length){
+    tb.innerHTML = '<tr><td colspan="8" class="empty">// Sin challenges cargados todavía</td></tr>'; return;
+  }
+  const fmtLbl = {'2':'2 fases','1':'1 fase','0':'Instantáneo'};
+  const rows = challenges.slice().sort((a,b)=> String(b.fecha||'').localeCompare(String(a.fecha||'')) || (b.createdAt||0)-(a.createdAt||0));
+  tb.innerHTML = rows.map(function(c){
+    let col = 'var(--text2)', bg = 'var(--bg3)';
+    if(chFondeada(c.estado)){ col = 'var(--green)'; bg = 'var(--green2)'; }
+    else if(chPerdida(c.estado)){ col = 'var(--red)'; bg = 'var(--red2)'; }
+    else { col = 'var(--amber)'; bg = 'var(--amber2)'; }
+    const detalle = chPerdida(c.estado) ? (c.causa || '—') : (c.nota || '');
+    return '<tr style="border-top:1px solid var(--border)">' +
+      '<td style="padding:9px 10px;font-family:\'Roboto Mono\',monospace;color:var(--text2)">' + chEsc(c.fecha||'') + '</td>' +
+      '<td style="padding:9px 10px;color:var(--text)">' + chEsc(c.firma||'') + '</td>' +
+      '<td style="padding:9px 10px;text-align:right;font-family:\'Roboto Mono\',monospace;color:var(--text2)">' + (c.size ? chFmt(chNum(c.size)) : '–') + '</td>' +
+      '<td style="padding:9px 10px;text-align:right;font-family:\'Roboto Mono\',monospace">' + chFmt(chNum(c.costo)) + ' ' + chEsc(c.moneda||'') + '</td>' +
+      '<td style="padding:9px 10px;color:var(--text3);font-size:11.5px">' + (fmtLbl[String(c.formato)]||'') + '</td>' +
+      '<td style="padding:9px 10px"><span class="badge" style="background:' + bg + ';color:' + col + '">' + chEsc(c.estado||'') + '</span></td>' +
+      '<td style="padding:9px 10px;color:var(--text3);font-size:11.5px">' + chEsc(detalle) + '</td>' +
+      '<td style="padding:9px 10px;text-align:right"><button onclick="openChModal(\'' + chEsc(c.id) + '\')" style="background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px">✎</button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function payRenderTabla(){
+  const tb = document.getElementById('pay-tbody');
+  if(!tb) return;
+  if(!(payouts||[]).length){
+    tb.innerHTML = '<tr><td colspan="6" class="empty">// Sin payouts registrados todavía</td></tr>'; return;
+  }
+  const rows = payouts.slice().sort((a,b)=> String(b.fecha||'').localeCompare(String(a.fecha||'')));
+  tb.innerHTML = rows.map(function(p){
+    const c = (challenges||[]).find(x=>x.id === p.challengeId);
+    const lbl = c ? (chEsc(c.firma||'') + ' · ' + chFmt(chNum(c.size)) ) : '<span style="color:var(--text3)">— sin vincular —</span>';
+    return '<tr style="border-top:1px solid var(--border)">' +
+      '<td style="padding:9px 10px;font-family:\'Roboto Mono\',monospace;color:var(--text2)">' + chEsc(p.fecha||'') + '</td>' +
+      '<td style="padding:9px 10px;color:var(--text)">' + lbl + '</td>' +
+      '<td style="padding:9px 10px;text-align:right;font-family:\'Roboto Mono\',monospace;color:var(--green)">+' + chFmt(chNum(p.monto)) + '</td>' +
+      '<td style="padding:9px 10px;text-align:right;font-size:11.5px;color:' + (p.refund?'var(--green)':'var(--text3)') + '">' + (p.refund ? 'sí' : '–') + '</td>' +
+      '<td style="padding:9px 10px;color:var(--text3);font-size:11.5px">' + chEsc(p.nota||'') + '</td>' +
+      '<td style="padding:9px 10px;text-align:right"><button onclick="openPayModal(\'' + chEsc(p.id) + '\')" style="background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px">✎</button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function renderFondeo(){
+  chRenderKpis(); chRenderFunnel(); chRenderCausas(); chRenderFirmas();
+  chRenderTabla(); payRenderTabla();
+  const dl = document.getElementById('ch-firmas-list');
+  if(dl){
+    const set = [...new Set((challenges||[]).map(c=>c.firma).filter(Boolean))];
+    dl.innerHTML = set.map(f=>'<option value="' + chEsc(f) + '">').join('');
+  }
+}
+
+/* --- modal challenge --- */
+function chRenderEstados(){
+  const f = chStr('ch-f-formato') || '2';
+  const sel = document.getElementById('ch-f-estado');
+  if(!sel) return;
+  const prev = sel.value;
+  const opts = CH_ESTADOS[f] || CH_ESTADOS['2'];
+  sel.innerHTML = opts.map(o=>'<option>' + o + '</option>').join('');
+  if(opts.indexOf(prev) >= 0) sel.value = prev;
+  chCalc();
+}
+function chCalc(){
+  const est = chStr('ch-f-estado');
+  const grp = document.getElementById('ch-grp-causa');
+  if(grp) grp.style.display = chPerdida(est) ? 'block' : 'none';
+  const box = document.getElementById('ch-calc-box');
+  if(!box) return;
+  const costo = chVal('ch-f-costo');
+  if(chFondeada(est)) box.innerHTML = '<span style="color:var(--green)">Fondeada.</span> Registrá los payouts con el botón de arriba para ver el retorno real.';
+  else if(chPerdida(est)) box.innerHTML = '<span style="color:var(--red)">Perdida.</span> ' + (isFinite(costo) ? chFmt(costo) + ' a costo hundido. ' : '') + 'Elegí la causa: es el dato que después te muestra qué te mata más seguido.';
+  else box.textContent = 'En curso. Actualizá el estado cuando pase de fase o se caiga.';
+}
+function openChModal(id){
+  const m = document.getElementById('ch-modal');
+  if(!m) return;
+  ['ch-f-firma','ch-f-size','ch-f-costo','ch-f-nota','ch-f-fecha-fin'].forEach(function(k){
+    const el = document.getElementById(k); if(el) el.value = '';
+  });
+  const c = id ? (challenges||[]).find(x=>x.id===id) : null;
+  document.getElementById('ch-f-id').value = c ? c.id : '';
+  document.getElementById('ch-modal-title').textContent = c ? 'Editar challenge' : 'Nuevo challenge';
+  const del = document.getElementById('ch-del-btn'); if(del) del.style.display = c ? 'inline-block' : 'none';
+  document.getElementById('ch-f-fecha').value = c ? (c.fecha||'') : chHoy();
+  document.getElementById('ch-f-formato').value = c ? String(c.formato) : '2';
+  chRenderEstados();
+  if(c){
+    const set = (k,v)=>{ const el=document.getElementById(k); if(el && v!=null) el.value = v; };
+    set('ch-f-firma', c.firma); set('ch-f-size', c.size); set('ch-f-costo', c.costo);
+    set('ch-f-moneda', c.moneda); set('ch-f-estado', c.estado); set('ch-f-causa', c.causa);
+    set('ch-f-nota', c.nota); set('ch-f-fecha-fin', c.fechaFin);
+  }
+  chCalc();
+  m.style.display = 'flex';
+}
+function closeChModal(){ const m = document.getElementById('ch-modal'); if(m) m.style.display = 'none'; }
+function saveChModal(){
+  const id = chStr('ch-f-id');
+  const firma = chStr('ch-f-firma');
+  const costo = chVal('ch-f-costo');
+  if(!firma){ alert('Poné el nombre de la firma.'); return; }
+  if(!isFinite(costo)){ alert('Poné cuánto pagaste por el challenge.'); return; }
+  const estado = chStr('ch-f-estado');
+  const prev = id ? (challenges||[]).find(x=>x.id===id) : null;
+  const op = {
+    id: id || ('ch_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)),
+    firma: firma,
+    fecha: chStr('ch-f-fecha') || chHoy(),
+    size: chVal('ch-f-size'),
+    costo: costo,
+    moneda: chStr('ch-f-moneda') || 'EUR',
+    formato: chStr('ch-f-formato') || '2',
+    estado: estado,
+    causa: chPerdida(estado) ? chStr('ch-f-causa') : '',
+    fechaFin: chPerdida(estado) ? chStr('ch-f-fecha-fin') : '',
+    nota: chStr('ch-f-nota'),
+    createdAt: prev ? (prev.createdAt || Date.now()) : Date.now()
+  };
+  // maxEtapa: hasta dónde llegó, para que el embudo sea honesto aunque después se pierda
+  let maxEtapa = prev ? (prev.maxEtapa || 0) : 0;
+  if(estado === 'Fase 1 pasada · en fase 2') maxEtapa = Math.max(maxEtapa, 1);
+  if(chFondeada(estado)) maxEtapa = Math.max(maxEtapa, op.formato === '2' ? 2 : 1);
+  op.maxEtapa = maxEtapa;
+
+  if(id){
+    const i = challenges.findIndex(x=>x.id===id);
+    if(i>=0) challenges[i] = op; else challenges.push(op);
+  } else challenges.push(op);
+  saveChallenges(); closeChModal(); renderFondeo();
+  if(typeof showToast==='function') showToast('Challenge guardado · ' + chStats().total + ' en total');
+}
+function chDelete(){
+  const id = chStr('ch-f-id');
+  if(!id) return;
+  const tienePayouts = (payouts||[]).some(p=>p.challengeId===id);
+  const msg = tienePayouts
+    ? '¿Eliminar este challenge?\n\nTiene payouts asociados: van a quedar sin vincular, pero se siguen contando en el total cobrado.'
+    : '¿Eliminar este challenge?';
+  if(!confirm(msg)) return;
+  challenges = challenges.filter(x=>x.id!==id);
+  saveChallenges(); closeChModal(); renderFondeo();
+  if(typeof showToast==='function') showToast('Challenge eliminado');
+}
+
+/* --- modal payout --- */
+function openPayModal(id){
+  const m = document.getElementById('pay-modal');
+  if(!m) return;
+  const p = id ? (payouts||[]).find(x=>x.id===id) : null;
+  const sel = document.getElementById('pay-f-ch');
+  if(sel){
+    const elegibles = (challenges||[]).filter(c=>chFondeada(c.estado));
+    if(!elegibles.length && !p){
+      alert('Primero marcá algún challenge como Fondeada. Los payouts se registran sobre una cuenta fondeada.');
+      return;
+    }
+    sel.innerHTML = elegibles.map(c=>'<option value="' + chEsc(c.id) + '">' + chEsc(c.firma) + ' · ' + chFmt(chNum(c.size)) + ' · ' + chEsc(c.fecha) + '</option>').join('');
+  }
+  document.getElementById('pay-f-id').value = p ? p.id : '';
+  document.getElementById('pay-modal-title').textContent = p ? 'Editar payout' : 'Nuevo payout';
+  document.getElementById('pay-f-fecha').value = p ? (p.fecha||'') : chHoy();
+  document.getElementById('pay-f-monto').value = p ? (p.monto!=null?p.monto:'') : '';
+  document.getElementById('pay-f-nota').value = p ? (p.nota||'') : '';
+  document.getElementById('pay-f-refund').checked = p ? !!p.refund : false;
+  if(p && sel) sel.value = p.challengeId || '';
+  const del = document.getElementById('pay-del-btn'); if(del) del.style.display = p ? 'inline-block' : 'none';
+  m.style.display = 'flex';
+}
+function closePayModal(){ const m = document.getElementById('pay-modal'); if(m) m.style.display = 'none'; }
+function savePayModal(){
+  const monto = chVal('pay-f-monto');
+  if(!isFinite(monto) || monto <= 0){ alert('Poné cuánto cobraste.'); return; }
+  const id = chStr('pay-f-id');
+  const prev = id ? (payouts||[]).find(x=>x.id===id) : null;
+  const op = {
+    id: id || ('pay_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)),
+    challengeId: chStr('pay-f-ch'),
+    fecha: chStr('pay-f-fecha') || chHoy(),
+    monto: monto,
+    refund: !!(document.getElementById('pay-f-refund')||{}).checked,
+    nota: chStr('pay-f-nota'),
+    createdAt: prev ? (prev.createdAt || Date.now()) : Date.now()
+  };
+  if(id){
+    const i = payouts.findIndex(x=>x.id===id);
+    if(i>=0) payouts[i] = op; else payouts.push(op);
+  } else payouts.push(op);
+  savePayouts(); closePayModal(); renderFondeo();
+  if(typeof showToast==='function') showToast('Payout guardado · ' + chFmt(chStats().cobrado) + ' cobrado en total');
+}
+function payDelete(){
+  const id = chStr('pay-f-id');
+  if(!id) return;
+  if(!confirm('¿Eliminar este payout?')) return;
+  payouts = payouts.filter(x=>x.id!==id);
+  savePayouts(); closePayModal(); renderFondeo();
+  if(typeof showToast==='function') showToast('Payout eliminado');
+}
+
+try {
+  document.addEventListener('click', function(e){
+    const a = document.getElementById('ch-modal'), b = document.getElementById('pay-modal');
+    if(a && e.target === a) closeChModal();
+    if(b && e.target === b) closePayModal();
+  });
+} catch(e){}
+/* ================= /FONDEO ================= */
 
 /* ================= PLAN DEL DIA · oficina de trading ================= */
 const PLAN_BLOQUES = [
