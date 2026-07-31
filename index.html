@@ -6243,36 +6243,72 @@ function planMin(hhmm){
   return parseInt(p[0],10) * 60 + parseInt(p[1],10);
 }
 
-function planGetStart(){ try { return localStorage.getItem('tj_plan_start') || ''; } catch(e){ return ''; } }
+const PLAN_INICIO_DEFAULT = '2026-08-03'; // lunes · arranque del plan de backtest
+function planGetStart(){
+  try { return localStorage.getItem('tj_plan_start') || PLAN_INICIO_DEFAULT; }
+  catch(e){ return PLAN_INICIO_DEFAULT; }
+}
+function planNormFecha(v){
+  const t = String(v || '').trim();
+  if(/^\d{4}-\d{1,2}-\d{1,2}$/.test(t)){
+    const p = t.split('-');
+    return p[0] + '-' + String(p[1]).padStart(2,'0') + '-' + String(p[2]).padStart(2,'0');
+  }
+  // dd/mm/aaaa o dd-mm-aaaa
+  const m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if(m) return m[3] + '-' + String(m[2]).padStart(2,'0') + '-' + String(m[1]).padStart(2,'0');
+  return null;
+}
 function planSetStart(){
-  const v = prompt('Fecha en la que arrancaste el plan de backtest (AAAA-MM-DD):', planGetStart() || planTodayKey());
+  const v = prompt('¿Qué día arrancaste (o arrancás) el plan de backtest?\n\nAAAA-MM-DD  ·  o  ·  DD/MM/AAAA', planGetStart() || planTodayKey());
   if(v === null) return;
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(v).trim())){ alert('Formato inválido. Usá AAAA-MM-DD, por ejemplo 2026-08-03.'); return; }
-  try { localStorage.setItem('tj_plan_start', String(v).trim()); } catch(e){}
+  const norm = planNormFecha(v);
+  if(!norm){ alert('No entendí esa fecha.\n\nEscribila así: 2026-08-03  o  03/08/2026'); return; }
+  const d = new Date(norm + 'T00:00:00');
+  if(isNaN(d.getTime())){ alert('Esa fecha no existe. Revisá el día y el mes.'); return; }
+  try { localStorage.setItem('tj_plan_start', norm); } catch(e){}
+  renderPlanDia();
+  if(typeof showToast === 'function') showToast('Plan de backtest · inicio ' + norm);
+}
+function planBorrarStart(){
+  if(!confirm('¿Borrar la fecha de inicio del plan?')) return;
+  try { localStorage.removeItem('tj_plan_start'); } catch(e){}
   renderPlanDia();
 }
-function planSemana(){
+function planDiasDesdeInicio(){
   const st = planGetStart();
   if(!st) return null;
   const d0 = new Date(st + 'T00:00:00');
   if(isNaN(d0.getTime())) return null;
   const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const dias = Math.floor((hoy - d0) / 86400000);
-  if(dias < 0) return null;
+  return Math.floor((hoy - d0) / 86400000);
+}
+function planSemana(){
+  const dias = planDiasDesdeInicio();
+  if(dias === null || dias < 0) return null;
   return Math.floor(dias / 7) + 1;
 }
+function planFechaLinda(iso){
+  const d = new Date(iso + 'T00:00:00');
+  if(isNaN(d.getTime())) return iso;
+  const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return dias[d.getDay()] + ' ' + d.getDate() + ' de ' + meses[d.getMonth()];
+}
 function planQueToca(){
+  const dias = planDiasDesdeInicio();
+  if(dias === null) return {estado:'sin-fecha'};
+  if(dias < 0) return {estado:'futuro', faltan: -dias, fecha: planGetStart()};
   const sem = planSemana();
-  if(sem === null) return null;
   if(sem <= 2){
-    return {fase:'Fase 1 · Calibración', txt:'<b>EURUSD</b>, últimos 12 meses, las seis estrategias a la vez. Meta de la fase: 25–30 setups.'};
+    return {estado:'ok', fase:'Fase 1 · Calibración', txt:'<b>EURUSD</b>, últimos 12 meses, las seis estrategias a la vez. Meta de la fase: 25–30 setups.'};
   }
   const f2 = PLAN_FASE2.find(function(x){ return x.sem === sem; });
   if(f2){
-    return {fase:'Fase 2 · Semana de ' + f2.color, txt:'Esta semana mirás <b>sólo ' + f2.color + '</b> · ' + f2.activos + '<br><span style="color:var(--text2)">' + f2.nota + '</span>'};
+    return {estado:'ok', fase:'Fase 2 · Semana de ' + f2.color, txt:'Esta semana mirás <b>sólo ' + f2.color + '</b> · ' + f2.activos + '<br><span style="color:var(--text2)">' + f2.nota + '</span>'};
   }
   if(sem === 9 || sem === 10){
-    return {fase:'Fase 2b · Completar muestra', txt:'Volvé sobre los colores que no llegaron a 30 backtests. Miralo en Estadísticas → win rate por estrategia.'};
+    return {estado:'ok', fase:'Fase 2b · Completar muestra', txt:'Volvé sobre los colores que no llegaron a 30 backtests. Miralo en Estadísticas → win rate por estrategia.'};
   }
   const st = new Date(planGetStart() + 'T00:00:00');
   const hoy = new Date(); hoy.setHours(0,0,0,0);
@@ -6283,7 +6319,7 @@ function planQueToca(){
     if(w !== 0 && w !== 6) habiles++;
   }
   const act = PLAN_ROTACION[Math.max(0, habiles - 1) % PLAN_ROTACION.length];
-  return {fase:'Fase 3 · Integración · semana ' + sem, txt:'Activo de hoy: <b>' + act + '</b> · las seis lentes juntas, como en real.'};
+  return {estado:'ok', fase:'Fase 3 · Integración · semana ' + sem, txt:'Activo de hoy: <b>' + act + '</b> · las seis lentes juntas, como en real.'};
 }
 
 function renderPlanDia(){
@@ -6309,16 +6345,25 @@ function renderPlanDia(){
       tocaEl.innerHTML = (dow === 0)
         ? '<b>Domingo.</b> Si no hiciste la review semanal, son 40 minutos en la pestaña ASR: win rate por color, error principal de la semana y <b>una sola</b> regla para la que viene.'
         : '<b>Sábado.</b> Día libre. El mercado no está y vos tampoco tenés que estar.';
-    } else if(toca){
+    } else if(toca.estado === 'ok'){
       tocaEl.innerHTML = toca.txt;
+    } else if(toca.estado === 'futuro'){
+      tocaEl.innerHTML = 'El plan de backtest arranca el <b>' + planFechaLinda(toca.fecha) + '</b> · falta' + (toca.faltan === 1 ? '' : 'n') + ' <b>' + toca.faltan + '</b> día' + (toca.faltan === 1 ? '' : 's') + '.<br><span style="color:var(--text2)">Hasta entonces, los bloques de oficina corren igual.</span>';
     } else {
       tocaEl.innerHTML = 'Todavía no definiste cuándo arrancaste el plan de backtest. <button type="button" onclick="planSetStart()" style="margin-left:6px;padding:3px 9px;background:var(--accent);border:none;color:#fff;border-radius:4px;cursor:pointer;font-size:11px;font-family:\'Outfit\',sans-serif">Definir fecha</button>';
     }
   }
   if(faseEl){
-    if(finde) faseEl.textContent = 'Fin de semana';
-    else if(toca) faseEl.textContent = toca.fase;
-    else faseEl.textContent = 'Sin fase definida';
+    const editar = ' <span onclick="planSetStart()" style="cursor:pointer;color:var(--text3);text-decoration:underline;font-size:11px" title="Cambiar la fecha de inicio del plan">cambiar</span>';
+    if(finde){
+      faseEl.innerHTML = 'Fin de semana' + (toca.estado === 'ok' ? ' · ' + toca.fase + editar : '');
+    } else if(toca.estado === 'ok'){
+      faseEl.innerHTML = toca.fase + editar;
+    } else if(toca.estado === 'futuro'){
+      faseEl.innerHTML = 'El plan todavía no arrancó' + editar;
+    } else {
+      faseEl.textContent = 'Sin fase definida';
+    }
   }
 
   const cEl = document.getElementById('plan-contrato-items');
