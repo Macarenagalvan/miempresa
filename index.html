@@ -3509,7 +3509,7 @@ function addTrade(){
   const savedId = t.id;
   const wasNew = !editingId;
   if(editingId){
-    const idx = trades.findIndex(x=>x.id===editingId);
+    const idx = trades.findIndex(x=>String(x.id)===String(editingId));
     if(idx>=0){
       const prev = trades[idx];
       // Conservar datos que el formulario no maneja (ej: número de MT5) para que
