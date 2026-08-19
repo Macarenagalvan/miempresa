@@ -549,32 +549,6 @@ html[data-theme="light"]{ --bg:#f3f6f8; --bg2:#ffffff; --bg3:#eef3f6; --bg4:#e4e
   <div class="page-title" id="hoy-greeting">Buen día, Trader</div>
   <div class="page-sub" id="hoy-sub">Tu escritorio de trabajo · un paso a la vez</div>
 
-  <!-- ================= PLAN DEL DIA ================= -->
-  <div id="plan-dia-wrap" style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:18px;margin-bottom:18px">
-    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
-      <div>
-        <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-family:'Roboto Mono',monospace">Plan del día</div>
-        <div id="plan-fecha" style="font-size:17px;font-weight:700;color:var(--text);margin-top:3px"></div>
-        <div id="plan-fase" style="font-size:12px;color:var(--text2);margin-top:3px"></div>
-      </div>
-      <div style="text-align:right">
-        <div id="plan-progress-txt" style="font-size:11px;color:var(--text3);font-family:'Roboto Mono',monospace;margin-bottom:5px"></div>
-        <div style="width:130px;height:7px;background:var(--bg3);border-radius:4px;overflow:hidden"><div id="plan-progress-bar" style="height:100%;width:0%;background:var(--accent);transition:width .2s"></div></div>
-        <button type="button" onclick="planReset()" style="margin-top:7px;padding:4px 9px;background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:4px;cursor:pointer;font-size:10px;font-family:'Roboto Mono',monospace">Reiniciar día</button>
-      </div>
-    </div>
-
-    <div id="plan-hoy-toca" style="display:none;background:var(--accent2);border:1px solid var(--accent);border-radius:var(--radius);padding:11px 13px;margin-bottom:14px;font-size:13px;color:var(--text);line-height:1.5"></div>
-
-    <div id="plan-contrato" style="border:1px solid var(--amber);background:var(--amber2);border-radius:var(--radius);padding:12px 13px;margin-bottom:14px">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);font-family:'Roboto Mono',monospace;margin-bottom:9px">Contrato mínimo · innegociable · 25 min</div>
-      <div id="plan-contrato-items"></div>
-    </div>
-
-    <div id="plan-bloques"></div>
-  </div>
-  <!-- ================= /PLAN DEL DIA ================= -->
-
   <div id="hoy-week-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
       <div style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:'Roboto Mono',monospace">7 días · ops</div>
@@ -2684,7 +2658,6 @@ function showPage(id, el){
   if(id==='mc-diversif' && typeof renderBtc==='function') scheduleRender(renderBtc, 'btcspot', 16);
   if(id==='fondeo' && typeof renderFondeo==='function') scheduleRender(renderFondeo, 'fondeo', 16);
   if(id==='hoy' && typeof renderHoy==='function') scheduleRender(renderHoy, 'hoy', 16);
-  if(id==='hoy' && typeof renderPlanDia==='function') scheduleRender(renderPlanDia, 'plandia', 16);
   if(id==='registro'){ if(typeof applyTradeDefaults==='function') applyTradeDefaults(); if(typeof updateRegDayBanner==='function') updateRegDayBanner(); }
   // En móvil, cerrar sidebar al navegar
   if(window.innerWidth <= 900){
@@ -3509,7 +3482,7 @@ function addTrade(){
   const savedId = t.id;
   const wasNew = !editingId;
   if(editingId){
-    const idx = trades.findIndex(x=>String(x.id)===String(editingId));
+    const idx = trades.findIndex(x=>x.id===editingId);
     if(idx>=0){
       const prev = trades[idx];
       // Conservar datos que el formulario no maneja (ej: número de MT5) para que
@@ -6446,7 +6419,6 @@ async function initApp(){
     scheduleRender(function(){
       if(typeof renderAsrList==='function') renderAsrList();
       if(typeof renderHoy==='function') renderHoy();
-      if(typeof renderPlanDia==='function') renderPlanDia();
     }, 'boot', 0);
   });
 }
@@ -6819,264 +6791,6 @@ try {
   });
 } catch(e){}
 /* ================= /FONDEO ================= */
-
-/* ================= PLAN DEL DIA · oficina de trading ================= */
-const PLAN_BLOQUES = [
-  {id:'arranque',  t:'08:45', t2:'09:00', name:'Arranque',                 desc:'Calendario económico del día · marcar las noticias rojas'},
-  {id:'revision',  t:'09:00', t2:'09:45', name:'Revisión + gestión',       desc:'Recorrer las listas de TV · dejar 3–5 candidatos con el nivel de disparo escrito · revisar abiertas (SL/TP/BE)'},
-  {id:'londres',   t:'09:45', t2:'11:30', name:'Ventana Londres',          desc:'Sólo se ejecuta lo pre-marcado a las 09:00. Si no hay nada, backtest con las alarmas puestas'},
-  {id:'journalam', t:'11:30', t2:'12:30', name:'Journal de la mañana',     desc:'Registrar lo operado · gestión de posiciones abiertas'},
-  {id:'almuerzo',  t:'12:30', t2:'13:30', name:'Almuerzo',                 desc:'Fuera de las pantallas, de verdad'},
-  {id:'aleman',    t:'13:30', t2:'14:30', name:'Alemán',                   desc:'1 hora fija. Sin excepciones salvo trade abierto de alto impacto'},
-  {id:'backtest',  t:'14:30', t2:'15:20', name:'Backtesting profundo',     desc:'Meta del día: 6 setups registrados'},
-  {id:'premark',   t:'15:20', t2:'15:30', name:'Pre-marcado NY',           desc:'Índices, oro, cripto y pares USD para la ventana de la tarde'},
-  {id:'ny',        t:'15:30', t2:'17:15', name:'Ventana NY',               desc:'Overlap Londres–NY, la mejor del día. Sólo lo pre-marcado'},
-  {id:'cierre',    t:'17:15', t2:'18:15', name:'Journal + ASR + cierre',   desc:'Cargar reales y backtests · ASR de cada operación · estado del día · backup JSON · una línea con el plan de mañana'}
-];
-
-const PLAN_CONTRATO = [
-  {id:'c1', txt:'Revisión de posiciones abiertas (SL/TP/BE correctos)'},
-  {id:'c2', txt:'3 backtests registrados en el journal'},
-  {id:'c3', txt:'Journal cerrado con el estado del día'}
-];
-
-const PLAN_FASE2 = [
-  {sem:3, color:'Red',   activos:'EURUSD · GBPUSD · USDJPY',  nota:'La más estructural: fija el ojo para RCC y ruptura de EMA 4H'},
-  {sem:4, color:'Blue',  activos:'EURUSD · GBPUSD · AUDUSD',  nota:'Misma lógica un timeframe abajo'},
-  {sem:5, color:'Pink',  activos:'GBPJPY · EURJPY · USDCAD',  nota:'Exige tendencia clara + pullback A-B-C'},
-  {sem:6, color:'White', activos:'GBPJPY · EURJPY · USDCAD',  nota:'Depende de haber visto muchas Pink'},
-  {sem:7, color:'Black', activos:'XAUUSD · BTCUSD · EURUSD',  nota:'La más discrecional: patrón + divergencia + EMA lejana'},
-  {sem:8, color:'Green', activos:'SPX · ETHUSD · large caps', nota:'15min · sólo backtest, sigue aparcada en real'}
-];
-
-const PLAN_ROTACION = ['EURUSD','GBPUSD','USDJPY','XAUUSD','BTCUSD','SPX','GBPJPY','ETHUSD'];
-
-function planTodayKey(){
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
-function planGetChecks(){
-  try { return JSON.parse(_lsGet('tj_plan_' + planTodayKey()) || '[]'); } catch(e){ return []; }
-}
-function planSetChecks(arr){
-  _lsSet('tj_plan_' + planTodayKey(), JSON.stringify(arr));
-  planCleanup();
-}
-function planCleanup(){
-  try {
-    const keys = [];
-    for(let i = 0; i < localStorage.length; i++){
-      const k = localStorage.key(i);
-      if(k && k.indexOf('tj_plan_') === 0 && k.length === 18) keys.push(k);
-    }
-    keys.sort();
-    while(keys.length > 40){ localStorage.removeItem(keys.shift()); }
-  } catch(e){}
-}
-function planToggle(id){
-  const arr = planGetChecks();
-  const i = arr.indexOf(id);
-  if(i >= 0) arr.splice(i, 1); else arr.push(id);
-  planSetChecks(arr);
-  renderPlanDia();
-}
-function planReset(){
-  if(!confirm('¿Destildar todo el plan de hoy?')) return;
-  planSetChecks([]);
-  renderPlanDia();
-}
-function planMin(hhmm){
-  const p = String(hhmm).split(':');
-  return parseInt(p[0],10) * 60 + parseInt(p[1],10);
-}
-
-const PLAN_INICIO_DEFAULT = '2026-08-03'; // lunes · arranque del plan de backtest
-function planGetStart(){
-  try { return localStorage.getItem('tj_plan_start') || PLAN_INICIO_DEFAULT; }
-  catch(e){ return PLAN_INICIO_DEFAULT; }
-}
-function planNormFecha(v){
-  const t = String(v || '').trim();
-  if(/^\d{4}-\d{1,2}-\d{1,2}$/.test(t)){
-    const p = t.split('-');
-    return p[0] + '-' + String(p[1]).padStart(2,'0') + '-' + String(p[2]).padStart(2,'0');
-  }
-  // dd/mm/aaaa o dd-mm-aaaa
-  const m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
-  if(m) return m[3] + '-' + String(m[2]).padStart(2,'0') + '-' + String(m[1]).padStart(2,'0');
-  return null;
-}
-function planSetStart(){
-  const v = prompt('¿Qué día arrancaste (o arrancás) el plan de backtest?\n\nAAAA-MM-DD  ·  o  ·  DD/MM/AAAA', planGetStart() || planTodayKey());
-  if(v === null) return;
-  const norm = planNormFecha(v);
-  if(!norm){ alert('No entendí esa fecha.\n\nEscribila así: 2026-08-03  o  03/08/2026'); return; }
-  const d = new Date(norm + 'T00:00:00');
-  if(isNaN(d.getTime())){ alert('Esa fecha no existe. Revisá el día y el mes.'); return; }
-  try { localStorage.setItem('tj_plan_start', norm); } catch(e){}
-  renderPlanDia();
-  if(typeof showToast === 'function') showToast('Plan de backtest · inicio ' + norm);
-}
-function planBorrarStart(){
-  if(!confirm('¿Borrar la fecha de inicio del plan?')) return;
-  try { localStorage.removeItem('tj_plan_start'); } catch(e){}
-  renderPlanDia();
-}
-function planDiasDesdeInicio(){
-  const st = planGetStart();
-  if(!st) return null;
-  const d0 = new Date(st + 'T00:00:00');
-  if(isNaN(d0.getTime())) return null;
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  return Math.floor((hoy - d0) / 86400000);
-}
-function planSemana(){
-  const dias = planDiasDesdeInicio();
-  if(dias === null || dias < 0) return null;
-  return Math.floor(dias / 7) + 1;
-}
-function planFechaLinda(iso){
-  const d = new Date(iso + 'T00:00:00');
-  if(isNaN(d.getTime())) return iso;
-  const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  return dias[d.getDay()] + ' ' + d.getDate() + ' de ' + meses[d.getMonth()];
-}
-function planQueToca(){
-  const dias = planDiasDesdeInicio();
-  if(dias === null) return {estado:'sin-fecha'};
-  if(dias < 0) return {estado:'futuro', faltan: -dias, fecha: planGetStart()};
-  const sem = planSemana();
-  if(sem <= 2){
-    return {estado:'ok', fase:'Fase 1 · Calibración', txt:'<b>EURUSD</b>, últimos 12 meses, las seis estrategias a la vez. Meta de la fase: 25–30 setups.'};
-  }
-  const f2 = PLAN_FASE2.find(function(x){ return x.sem === sem; });
-  if(f2){
-    return {estado:'ok', fase:'Fase 2 · Semana de ' + f2.color, txt:'Esta semana mirás <b>sólo ' + f2.color + '</b> · ' + f2.activos + '<br><span style="color:var(--text2)">' + f2.nota + '</span>'};
-  }
-  if(sem === 9 || sem === 10){
-    return {estado:'ok', fase:'Fase 2b · Completar muestra', txt:'Volvé sobre los colores que no llegaron a 30 backtests. Miralo en Estadísticas → win rate por estrategia.'};
-  }
-  const st = new Date(planGetStart() + 'T00:00:00');
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const inicioF3 = new Date(st.getTime() + 70 * 86400000);
-  let habiles = 0;
-  for(let d = new Date(inicioF3); d <= hoy; d.setDate(d.getDate() + 1)){
-    const w = d.getDay();
-    if(w !== 0 && w !== 6) habiles++;
-  }
-  const act = PLAN_ROTACION[Math.max(0, habiles - 1) % PLAN_ROTACION.length];
-  return {estado:'ok', fase:'Fase 3 · Integración · semana ' + sem, txt:'Activo de hoy: <b>' + act + '</b> · las seis lentes juntas, como en real.'};
-}
-
-function renderPlanDia(){
-  const wrap = document.getElementById('plan-dia-wrap');
-  if(!wrap) return;
-  const now = new Date();
-  const dow = now.getDay();
-  const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  const fEl = document.getElementById('plan-fecha');
-  if(fEl) fEl.textContent = dias[dow].charAt(0).toUpperCase() + dias[dow].slice(1) + ' ' + now.getDate() + ' de ' + meses[now.getMonth()];
-
-  const finde = (dow === 0 || dow === 6);
-  const checks = planGetChecks();
-  const ahora = now.getHours() * 60 + now.getMinutes();
-
-  const toca = planQueToca();
-  const tocaEl = document.getElementById('plan-hoy-toca');
-  const faseEl = document.getElementById('plan-fase');
-  if(tocaEl){
-    tocaEl.style.display = 'block';
-    if(finde){
-      tocaEl.innerHTML = (dow === 0)
-        ? '<b>Domingo.</b> Si no hiciste la review semanal, son 40 minutos en la pestaña ASR: win rate por color, error principal de la semana y <b>una sola</b> regla para la que viene.'
-        : '<b>Sábado.</b> Día libre. El mercado no está y vos tampoco tenés que estar.';
-    } else if(toca.estado === 'ok'){
-      tocaEl.innerHTML = toca.txt;
-    } else if(toca.estado === 'futuro'){
-      tocaEl.innerHTML = 'El plan de backtest arranca el <b>' + planFechaLinda(toca.fecha) + '</b> · falta' + (toca.faltan === 1 ? '' : 'n') + ' <b>' + toca.faltan + '</b> día' + (toca.faltan === 1 ? '' : 's') + '.<br><span style="color:var(--text2)">Hasta entonces, los bloques de oficina corren igual.</span>';
-    } else {
-      tocaEl.innerHTML = 'Todavía no definiste cuándo arrancaste el plan de backtest. <button type="button" onclick="planSetStart()" style="margin-left:6px;padding:3px 9px;background:var(--accent);border:none;color:#fff;border-radius:4px;cursor:pointer;font-size:11px;font-family:\'Outfit\',sans-serif">Definir fecha</button>';
-    }
-  }
-  if(faseEl){
-    const editar = ' <span onclick="planSetStart()" style="cursor:pointer;color:var(--text3);text-decoration:underline;font-size:11px" title="Cambiar la fecha de inicio del plan">cambiar</span>';
-    if(finde){
-      faseEl.innerHTML = 'Fin de semana' + (toca.estado === 'ok' ? ' · ' + toca.fase + editar : '');
-    } else if(toca.estado === 'ok'){
-      faseEl.innerHTML = toca.fase + editar;
-    } else if(toca.estado === 'futuro'){
-      faseEl.innerHTML = 'El plan todavía no arrancó' + editar;
-    } else {
-      faseEl.textContent = 'Sin fase definida';
-    }
-  }
-
-  const cEl = document.getElementById('plan-contrato-items');
-  const cWrap = document.getElementById('plan-contrato');
-  if(cWrap) cWrap.style.display = finde ? 'none' : 'block';
-  if(cEl && !finde){
-    cEl.innerHTML = PLAN_CONTRATO.map(function(c){
-      const on = checks.indexOf(c.id) >= 0;
-      return '<div onclick="planToggle(\'' + c.id + '\')" style="display:flex;align-items:flex-start;gap:9px;padding:5px 0;cursor:pointer">' +
-        '<div style="width:16px;height:16px;flex-shrink:0;margin-top:1px;border-radius:4px;border:1.5px solid ' + (on?'var(--amber)':'var(--border2)') + ';background:' + (on?'var(--amber)':'transparent') + ';display:flex;align-items:center;justify-content:center;font-size:11px;color:#000;font-weight:700">' + (on?'✓':'') + '</div>' +
-        '<div style="font-size:12.5px;line-height:1.45;color:' + (on?'var(--text3)':'var(--text)') + ';text-decoration:' + (on?'line-through':'none') + '">' + c.txt + '</div>' +
-      '</div>';
-    }).join('');
-  }
-
-  const bEl = document.getElementById('plan-bloques');
-  if(bEl){
-    if(finde){
-      bEl.innerHTML = '<div style="font-size:12.5px;color:var(--text3);line-height:1.55;padding:6px 0">Los bloques de oficina corren de lunes a viernes. Descansá: la constancia se sostiene con días libres, no sin ellos.</div>';
-    } else {
-      bEl.innerHTML = PLAN_BLOQUES.map(function(b){
-        const on = checks.indexOf(b.id) >= 0;
-        const ini = planMin(b.t), fin = planMin(b.t2);
-        const activo = (ahora >= ini && ahora < fin);
-        const pasado = (ahora >= fin);
-        let name = b.name, desc = b.desc;
-        if(b.id === 'cierre' && dow === 5){
-          name = 'Review semanal + cierre';
-          desc = '40 min de review en la pestaña ASR en vez del journal normal · una sola regla para la semana que viene · backup JSON';
-        }
-        const borde = activo ? 'var(--accent)' : 'var(--border)';
-        const fondo = activo ? 'var(--bg3)' : 'transparent';
-        return '<div onclick="planToggle(\'' + b.id + '\')" style="display:flex;align-items:flex-start;gap:11px;padding:10px 11px;margin-bottom:6px;border:1px solid ' + borde + ';background:' + fondo + ';border-radius:var(--radius);cursor:pointer;transition:all .15s;opacity:' + (pasado && !on ? '.72' : '1') + '">' +
-          '<div style="width:17px;height:17px;flex-shrink:0;margin-top:2px;border-radius:4px;border:1.5px solid ' + (on?'var(--green)':'var(--border2)') + ';background:' + (on?'var(--green)':'transparent') + ';display:flex;align-items:center;justify-content:center;font-size:12px;color:#0d0f12;font-weight:700">' + (on?'✓':'') + '</div>' +
-          '<div style="min-width:66px;flex-shrink:0;font-family:\'Roboto Mono\',monospace;font-size:11px;color:' + (activo?'var(--accent)':'var(--text3)') + ';padding-top:1px">' + b.t + '<br><span style="opacity:.6">' + b.t2 + '</span></div>' +
-          '<div style="flex:1;min-width:0">' +
-            '<div style="font-size:13px;font-weight:600;color:' + (on?'var(--text3)':'var(--text)') + ';text-decoration:' + (on?'line-through':'none') + '">' + name +
-              (activo ? ' <span style="font-size:9.5px;font-weight:700;letter-spacing:.1em;color:var(--accent);font-family:\'Roboto Mono\',monospace;margin-left:5px">← AHORA</span>' : '') + '</div>' +
-            '<div style="font-size:11.5px;color:var(--text3);line-height:1.45;margin-top:2px">' + desc + '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-    }
-  }
-
-  const total = finde ? 0 : (PLAN_BLOQUES.length + PLAN_CONTRATO.length);
-  const hechos = finde ? 0 : checks.filter(function(k){
-    return PLAN_BLOQUES.some(function(b){ return b.id === k; }) || PLAN_CONTRATO.some(function(c){ return c.id === k; });
-  }).length;
-  const pTxt = document.getElementById('plan-progress-txt');
-  const pBar = document.getElementById('plan-progress-bar');
-  const contratoOk = PLAN_CONTRATO.every(function(c){ return checks.indexOf(c.id) >= 0; });
-  if(pTxt) pTxt.textContent = finde ? 'fin de semana' : (hechos + ' / ' + total + (contratoOk ? ' · contrato ✓' : ''));
-  if(pBar){
-    pBar.style.width = (total ? (hechos/total*100) : 0).toFixed(0) + '%';
-    pBar.style.background = contratoOk ? 'var(--green)' : 'var(--accent)';
-  }
-}
-
-try {
-  setInterval(function(){
-    const p = document.getElementById('page-hoy');
-    if(p && p.classList.contains('active') && typeof renderPlanDia === 'function') renderPlanDia();
-  }, 60000);
-} catch(e){}
-/* ================= /PLAN DEL DIA ================= */
 
 /* ================= BTC SPOT · acumulacion (independiente del trading) ================= */
 function btcNum(v){
