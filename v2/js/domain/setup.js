@@ -142,3 +142,17 @@ export async function listSetupsForObservation(observationId) {
   const all = await listSetups();
   return all.filter((s) => s.observationId === observationId);
 }
+
+export async function lockSetupOnTrade(setupId) {
+  const current = await getSetup(setupId);
+  if (!current) throw new Error("setup no existe");
+  if (current.validationLockedAt) return current;
+  const next = derive({
+    ...current,
+    validationLockedAt: nowIso(),
+    updatedAt: nowIso(),
+  });
+  assertSetup(next);
+  await putSetup(next);
+  return next;
+}

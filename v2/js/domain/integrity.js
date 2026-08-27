@@ -10,6 +10,10 @@ import {
   ValidationMethod,
   Verdict,
   SetupQuality,
+  Lifecycle,
+  Result,
+  CloseType,
+  VoidReason,
 } from "./enums.js";
 
 export function assertMeta(meta) {
@@ -107,4 +111,66 @@ export function assertSetup(setup) {
 
 export function assertUnlocked(setup) {
   if (setup.validationLockedAt) throw new Error("setup congelado: snapshot no se reescribe");
+}
+
+export function deriveResult(closeType, netPnl, declaredBe) {
+  if (declaredBe || closeType === CloseType.BE) return Result.BE;
+  const pnl = Number(netPnl);
+  if (!Number.isFinite(pnl)) throw new Error("netPnl requerido para cerrar");
+  if (pnl > 0) return Result.WIN;
+  if (pnl < 0) return Result.LOSS;
+  return Result.BE;
+}
+
+function finiteNum(v) {
+  if (v === "" || v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function computeRrRealized(trade) {
+  if (!trade || trade.lifecycle !== Lifecycle.CLOSED) return null;
+  const entry = finiteNum(trade.entry);
+  const sl = finiteNum(trade.initialSL);
+  const exit = finiteNum(trade.exit);
+  if (entry == null || sl == null || exit == null) return null;
+  if (entry === sl) return null;
+  const risk = Math.abs(entry - sl);
+  if (risk === 0) return null;
+  const move = trade.direction === Direction.LONG ? exit - entry : entry - exit;
+  return move / risk;
+}
+
+export function incompleteForR(trade) {
+  const entry = finiteNum(trade.entry);
+  const sl = finiteNum(trade.initialSL);
+  return entry == null || sl == null || entry === sl;
+}
+
+export function assertTrade(trade) {
+  if (!trade || !trade.id) throw new Error("trade.id requerido");
+  if (!trade.stageId) throw new Error("trade.stageId requerido");
+  if (!normalizeAsset(trade.asset)) throw new Error("asset requerido");
+  if (!CONTEXTS.includes(trade.context)) throw new Error("context requerido");
+  if (!DIRECTIONS.includes(trade.direction)) throw new Error("direction requerido");
+  if (!Number.isFinite(Number(trade.entry))) throw new Error("entry requerido");
+  if (!Object.values(Lifecycle).includes(trade.lifecycle)) throw new Error("lifecycle inválido");
+  if (trade.context === Context.BACKTEST) {
+    if (trade.accountId != null) throw new Error("BACKTEST no usa accountId");
+  } else if (!trade.accountId) {
+    throw new Error("accountId requerido fuera de BACKTEST");
+  }
+  if (trade.lifecycle === Lifecycle.OPEN) {
+    if (trade.result != null || trade.closedAt != null) throw new Error("OPEN no lleva result/closedAt");
+  }
+  if (trade.lifecycle === Lifecycle.CLOSED) {
+    if (!Number.isFinite(Number(trade.exit))) throw new Error("exit requerido");
+    if (!trade.closedAt) throw new Error("closedAt requerido");
+    if (!Number.isFinite(Number(trade.netPnl))) throw new Error("netPnl requerido");
+    if (!Object.values(Result).includes(trade.result)) throw new Error("result inválido");
+  }
+  if (trade.lifecycle === Lifecycle.VOID) {
+    if (!trade.voidedAt || !trade.voidReason) throw new Error("VOID requiere voidedAt y voidReason");
+    if (!Object.values(VoidReason).includes(trade.voidReason)) throw new Error("voidReason inválido");
+  }
 }
