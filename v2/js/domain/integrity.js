@@ -14,6 +14,8 @@ import {
   Result,
   CloseType,
   VoidReason,
+  WouldDoSame,
+  ErrorTag,
 } from "./enums.js";
 
 export function assertMeta(meta) {
@@ -178,4 +180,18 @@ export function assertTrade(trade) {
     if (!trade.voidedAt || !trade.voidReason) throw new Error("VOID requiere voidedAt y voidReason");
     if (!Object.values(VoidReason).includes(trade.voidReason)) throw new Error("voidReason inválido");
   }
+}
+
+export function assertAsr(asr) {
+  if (!asr || !asr.id) throw new Error("asr.id requerido");
+  if (!asr.stageId) throw new Error("asr.stageId requerido");
+  if (!asr.tradeId) throw new Error("asr.tradeId requerido");
+  if (!asr.wouldDoSame || !Object.values(WouldDoSame).includes(asr.wouldDoSame)) {
+    throw new Error("wouldDoSame requerido");
+  }
+  if (!asr.conclusion || !String(asr.conclusion).trim()) throw new Error("conclusion requerida");
+  if (asr.errorTag != null && asr.errorTag !== "" && !Object.values(ErrorTag).includes(asr.errorTag)) {
+    throw new Error("errorTag inválido");
+  }
+  if (asr.date && !/^\d{4}-\d{2}-\d{2}$/.test(asr.date)) throw new Error("date inválida");
 }

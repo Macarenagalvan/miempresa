@@ -98,3 +98,17 @@ export const ExecutionQuality = Object.freeze({
   B: "B",
   C: "C",
 });
+
+export const WouldDoSame = Object.freeze({
+  YES: "YES",
+  NO: "NO",
+  PARTLY: "PARTLY",
+});
+
+export const ErrorTag = Object.freeze({
+  NO_ERROR: "NO_ERROR",
+  PROCESS: "PROCESS",
+  EXECUTION: "EXECUTION",
+  RISK: "RISK",
+  PSYCHOLOGY: "PSYCHOLOGY",
+});
