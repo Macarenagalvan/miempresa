@@ -24,8 +24,10 @@ export async function boot() {
   const ctx = await ensureJournalSeed();
   const stageLabel = document.getElementById("stage-label");
   if (stageLabel) stageLabel.textContent = ctx.stage.name;
-  paint(ctx);
-  window.addEventListener("hashchange", () => paint(ctx));
+  await paint(ctx);
+  window.addEventListener("hashchange", () => {
+    paint(ctx).catch((err) => console.error(err));
+  });
   const exportBtn = document.getElementById("export-backup");
   if (exportBtn) {
     exportBtn.addEventListener("click", async () => {
