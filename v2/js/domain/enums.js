@@ -6,8 +6,33 @@ export const StageStatus = Object.freeze({
 export const Context = Object.freeze({
   BACKTEST: "BACKTEST",
   LIVE: "LIVE",
+  DEMO: "DEMO",
   PROP_CHALLENGE: "PROP_CHALLENGE",
   FUNDED: "FUNDED",
+});
+
+export const AccountContext = Object.freeze({
+  DEMO: "DEMO",
+  LIVE: "LIVE",
+  PROP_CHALLENGE: "PROP_CHALLENGE",
+  FUNDED: "FUNDED",
+});
+
+export const Currency = Object.freeze({
+  EUR: "EUR",
+  USD: "USD",
+});
+
+export const AccountStatus = Object.freeze({
+  ACTIVE: "ACTIVE",
+  ARCHIVED: "ARCHIVED",
+});
+
+export const MovementType = Object.freeze({
+  DEPOSIT: "DEPOSIT",
+  WITHDRAWAL: "WITHDRAWAL",
+  FEE_EXTERNAL: "FEE_EXTERNAL",
+  ADJUSTMENT: "ADJUSTMENT",
 });
 
 export const Direction = Object.freeze({
