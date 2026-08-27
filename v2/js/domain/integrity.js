@@ -16,6 +16,10 @@ import {
   VoidReason,
   WouldDoSame,
   ErrorTag,
+  AccountContext,
+  AccountStatus,
+  Currency,
+  MovementType,
 } from "./enums.js";
 
 export function assertMeta(meta) {
@@ -194,4 +198,71 @@ export function assertAsr(asr) {
     throw new Error("errorTag inválido");
   }
   if (asr.date && !/^\d{4}-\d{2}-\d{2}$/.test(asr.date)) throw new Error("date inválida");
+}
+
+export function normalizeAccountContext(raw) {
+  if (raw === "PROP") return AccountContext.PROP_CHALLENGE;
+  return raw;
+}
+
+export function normalizeMovementType(raw) {
+  if (raw === "FEE") return MovementType.FEE_EXTERNAL;
+  return raw;
+}
+
+export function signedMovementAmount(type, rawAmount) {
+  const kind = normalizeMovementType(type);
+  const n = Number(rawAmount);
+  if (!Number.isFinite(n)) throw new Error("amount inválido");
+  if (kind === MovementType.DEPOSIT) {
+    if (n <= 0) throw new Error("DEPOSIT exige monto positivo");
+    return n;
+  }
+  if (kind === MovementType.WITHDRAWAL || kind === MovementType.FEE_EXTERNAL) {
+    if (n <= 0) throw new Error((kind === MovementType.FEE_EXTERNAL ? "FEE" : "WITHDRAWAL") + " exige monto positivo");
+    return -n;
+  }
+  if (kind === MovementType.ADJUSTMENT) {
+    if (n === 0) throw new Error("ADJUSTMENT no puede ser 0");
+    return n;
+  }
+  throw new Error("type de movement inválido");
+}
+
+export function isMovementLive(mov) {
+  return Boolean(mov && mov.lifecycle !== Lifecycle.VOID && !mov.voidedAt);
+}
+
+export function accountBalance(account, movements) {
+  const initial = Number(account && account.initialAmount);
+  if (!account || !Number.isFinite(initial)) return null;
+  const extra = (movements || [])
+    .filter((m) => m.accountId === account.id && isMovementLive(m))
+    .reduce((sum, m) => sum + Number(m.amount || 0), 0);
+  return initial + extra;
+}
+
+export function assertAccount(account) {
+  if (!account || !account.id) throw new Error("account.id requerido");
+  if (!account.stageId) throw new Error("account.stageId requerido");
+  if (!account.name || !String(account.name).trim()) throw new Error("name requerido");
+  if (!Object.values(Currency).includes(account.currency)) throw new Error("currency requerida");
+  const ctx = normalizeAccountContext(account.context);
+  if (!Object.values(AccountContext).includes(ctx)) throw new Error("context de cuenta inválido");
+  if (!Object.values(AccountStatus).includes(account.status)) throw new Error("account.status inválido");
+  if (!Number.isFinite(Number(account.initialAmount))) throw new Error("initialAmount inválido");
+}
+
+export function assertMovement(mov) {
+  if (!mov || !mov.id) throw new Error("movement.id requerido");
+  if (!mov.stageId) throw new Error("movement.stageId requerido");
+  if (!mov.accountId) throw new Error("movement.accountId requerido");
+  const type = normalizeMovementType(mov.type);
+  if (!Object.values(MovementType).includes(type)) throw new Error("movement.type inválido");
+  if (!Number.isFinite(Number(mov.amount))) throw new Error("amount inválido");
+  if (!mov.date || !/^\d{4}-\d{2}-\d{2}$/.test(mov.date)) throw new Error("date inválida");
+  if (mov.lifecycle === Lifecycle.VOID) {
+    if (!mov.voidedAt || !mov.voidReason) throw new Error("VOID requiere voidedAt y voidReason");
+    if (!Object.values(VoidReason).includes(mov.voidReason)) throw new Error("voidReason inválido");
+  }
 }
