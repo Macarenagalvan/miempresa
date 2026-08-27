@@ -7,11 +7,25 @@ import { renderObservationDetail } from "./screens/observation-detail.js";
 import { renderSetupDetail } from "./screens/setup-detail.js";
 import { renderHistorial } from "./screens/historial.js";
 import { renderTradeDetail } from "./screens/trade-detail.js";
+import { renderNumeros } from "./screens/numeros.js";
 
 export function parseHash() {
   const raw = (location.hash || "#/hoy").replace(/^#\/?/, "");
-  const [name, ...restParts] = raw.split("/");
-  return { name: name || "hoy", rest: restParts.join("/") };
+  const qIndex = raw.indexOf("?");
+  const path = qIndex >= 0 ? raw.slice(0, qIndex) : raw;
+  const search = qIndex >= 0 ? raw.slice(qIndex + 1) : "";
+  const [name, ...restParts] = path.split("/");
+  const query = {};
+  if (search) {
+    for (const part of search.split("&")) {
+      if (!part) continue;
+      const eq = part.indexOf("=");
+      const key = decodeURIComponent(eq >= 0 ? part.slice(0, eq) : part);
+      const value = decodeURIComponent(eq >= 0 ? part.slice(eq + 1) : "");
+      if (key) query[key] = value;
+    }
+  }
+  return { name: name || "hoy", rest: restParts.join("/"), query };
 }
 
 export function go(path) {
@@ -68,7 +82,7 @@ export async function paint(ctx) {
     nodes = await renderHistorial(viewCtx);
   } else if (parsed.name === "numeros") {
     title = "Números";
-    nodes = renderPlaceholder("Números");
+    nodes = await renderNumeros(viewCtx);
   } else if (parsed.name === "senales") {
     title = "Señales";
     nodes = renderPlaceholder("Señales");

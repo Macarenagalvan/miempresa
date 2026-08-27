@@ -72,3 +72,19 @@ h2 { font-size: 16px; margin: 20px 0 8px; }
   grid-template-columns: 90px 80px 1fr 80px 50px 60px 70px;
 }
 .check { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.filters { margin: 12px 0; }
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.metric {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.metric strong { font-size: 22px; }
