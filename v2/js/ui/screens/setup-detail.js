@@ -1,6 +1,7 @@
 import { el } from "../render.js";
 import { getSetup } from "../../storage/repos/setups.js";
 import { evaluateSetup, closeSetupStatus } from "../../domain/setup.js";
+import { listStageTrades } from "../../domain/trade.js";
 import { evaluateFields } from "../forms/setup.js";
 import { go } from "../router.js";
 import { SetupStatus } from "../../domain/enums.js";
@@ -17,7 +18,9 @@ export async function renderSetupDetail(ctx) {
 
   const locked = Boolean(setup.validationLockedAt);
   const err = el("p", { className: "err", text: "" });
-  const actions = [];
+  const actions = [
+    el("button", { type: "button", text: "Registrar operación", onclick: () => go("nuevo/trade/" + setup.id) }),
+  ];
   if (!locked) {
     actions.push(el("button", { type: "button", text: "Evaluar setup", onclick: () => go("setup/" + setup.id + "/evaluar") }));
     actions.push(el("button", { type: "button", className: "ghost", text: "Descartar", onclick: async () => {
@@ -34,6 +37,19 @@ export async function renderSetupDetail(ctx) {
     ? el("button", { type: "button", className: "ghost", text: "Ver Observation origen", onclick: () => go("observacion/" + setup.observationId) })
     : el("p", { className: "meta", text: "Sin Observation origen." });
 
+  const trades = await listStageTrades(ctx.stage.id, { setupId: setup.id, includeVoid: true });
+  const tradeList = trades.length
+    ? trades.map((t) => {
+      const row = el("button", { type: "button", className: "row" }, [
+        el("strong", { text: t.lifecycle }),
+        el("span", { text: String(t.entry) }),
+        el("span", { className: "clip", text: t.result || "OPEN" }),
+      ]);
+      row.addEventListener("click", () => go("trade/" + t.id));
+      return row;
+    })
+    : [el("p", { className: "meta", text: "Sin trades todavía." })];
+
   return [
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: setup.status }),
@@ -45,6 +61,8 @@ export async function renderSetupDetail(ctx) {
       origin,
       err,
       el("div", { className: "row-actions" }, actions),
+      el("h2", { text: "Trades de este Setup" }),
+      el("div", { className: "list" }, tradeList),
     ]),
   ];
 }
@@ -66,7 +84,7 @@ function renderEvaluate(setup) {
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: "Evaluar setup" }),
       el("h1", { text: setup.asset }),
-      el("p", { className: "hint", text: "Checklist fixture Slice 2. No es el Validator." }),
+      el("p", { className: "hint", text: "Checklist DEMO / test only. No es el Trading System ni el Validator." }),
       ...form.nodes,
       err,
       save,
