@@ -1,5 +1,6 @@
 import { el } from "../render.js";
 import { listStageTrades } from "../../domain/trade.js";
+import { asrStatusLabel, isAsrPending, listStageAsrs } from "../../domain/asr.js";
 import { filterTrades, realizedR } from "../../domain/stats.js";
 import { Context, Strategy, Direction, Lifecycle, BlueVariant } from "../../domain/enums.js";
 import { ROADMAP_ASSETS, SESSIONS } from "../../config.js";
@@ -35,6 +36,11 @@ export async function renderHistorial(ctx) {
     lifecycle: q.lifecycle || "",
   };
   const rows = filterTrades(raw, filters);
+  const asrByTrade = {};
+  for (const row of await listStageAsrs(ctx.stage.id)) {
+    asrByTrade[row.tradeId] = row;
+  }
+  const pendingCount = rows.filter((t) => isAsrPending(t, asrByTrade[t.id])).length;
   const asset = select(filters.asset, [["", "asset"], ...ROADMAP_ASSETS.map((a) => [a.id, a.label])]);
   const strategy = select(filters.strategy, [["", "strategy"], ...Object.values(Strategy).map((s) => [s, s])]);
   const variant = select(filters.variant, [["", "variant"], ...Object.values(BlueVariant).map((v) => [v, v])]);
@@ -69,6 +75,7 @@ export async function renderHistorial(ctx) {
         el("span", { text: t.result || "—" }),
         el("span", { text: t.netPnl == null ? "—" : String(t.netPnl) }),
         el("span", { text: r }),
+        el("span", { text: asrStatusLabel(t, asrByTrade[t.id]) || "—" }),
       ]);
       item.addEventListener("click", () => go("trade/" + t.id));
       return item;
@@ -79,7 +86,7 @@ export async function renderHistorial(ctx) {
       el("h1", { text: "Historial" }),
       el("p", { className: "meta", text: "BACKTEST · stage activa. VOID fuera." }),
       el("div", { className: "chips filters" }, [asset, strategy, variant, direction, session, lifecycle, from, to]),
-      el("p", { className: "meta", text: `${rows.length} filas` }),
+      el("p", { className: "meta", text: `${rows.length} filas · ${pendingCount} ASR pendiente` }),
       el("div", { className: "list" }, list),
     ]),
   ];
