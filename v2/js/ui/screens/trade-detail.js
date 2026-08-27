@@ -6,6 +6,15 @@ import { updateOpenTrade, closeTrade, voidTrade } from "../../domain/trade.js";
 import { CloseType, VoidReason, Lifecycle } from "../../domain/enums.js";
 import { go } from "../router.js";
 
+function partialsSelect(current) {
+  const node = el("select", { className: "input" }, [
+    el("option", { value: "false", text: "No" }),
+    el("option", { value: "true", text: "Sí" }),
+  ]);
+  node.value = current === true ? "true" : "false";
+  return node;
+}
+
 export async function renderTradeDetail(ctx) {
   const closeMode = ctx.route.rest.includes("/cerrar");
   const voidMode = ctx.route.rest.includes("/void");
@@ -25,6 +34,7 @@ function renderCard(trade, setup) {
   const sl = el("input", { className: "input", value: trade.currentSL ?? "" });
   const mgmt = el("textarea", { className: "input", rows: "3" });
   mgmt.value = trade.management || "";
+  const partials = partialsSelect(trade.hasPartials);
   const actions = [];
 
   if (trade.lifecycle === Lifecycle.OPEN) {
@@ -34,7 +44,7 @@ function renderCard(trade, setup) {
         await updateOpenTrade(trade.id, {
           currentSL: sl.value,
           management: mgmt.value,
-          hasPartials: /parcial/i.test(mgmt.value) || trade.hasPartials === true,
+          hasPartials: partials.value === "true",
         });
         go("trade/" + trade.id);
       } catch (e) { err.textContent = e.message; }
@@ -70,7 +80,10 @@ function renderCard(trade, setup) {
       el("p", { className: "meta", text: rLabel }),
       trade.result ? el("p", { className: "meta", text: `${trade.result} · netPnl ${trade.netPnl}` }) : null,
       trade.lifecycle === Lifecycle.OPEN ? field("currentSL", sl) : null,
-      trade.lifecycle === Lifecycle.OPEN ? field("Gestión / parciales (mismo Trade)", mgmt) : el("p", { className: "meta", text: trade.management || "" }),
+      trade.lifecycle === Lifecycle.OPEN
+        ? field("Hubo cierres parciales", partials)
+        : el("p", { className: "meta", text: `Hubo cierres parciales: ${trade.hasPartials === true ? "Sí" : "No"}` }),
+      trade.lifecycle === Lifecycle.OPEN ? field("Gestión (nota)", mgmt) : el("p", { className: "meta", text: trade.management || "" }),
       trade.voidReason ? el("p", { className: "hint", text: `VOID ${trade.voidReason} ${trade.voidedAt}` }) : null,
       err,
       el("div", { className: "row-actions" }, actions),
@@ -88,6 +101,7 @@ function renderClose(trade) {
   closeType.value = CloseType.MANUAL;
   const mgmt = el("textarea", { className: "input", rows: "2" });
   mgmt.value = trade.management || "";
+  const partials = partialsSelect(trade.hasPartials);
   const err = el("p", { className: "err", text: "" });
   const save = el("button", { type: "button", text: "Cerrar" });
   save.addEventListener("click", async () => {
@@ -102,6 +116,7 @@ function renderClose(trade) {
         closeType: closeType.value,
         declaredBe: closeType.value === CloseType.BE,
         management: mgmt.value,
+        hasPartials: partials.value === "true",
       });
       go("trade/" + trade.id);
     } catch (e) { err.textContent = e.message; }
@@ -115,7 +130,8 @@ function renderClose(trade) {
       field("comisión", comm),
       field("swap", swap),
       field("motivo de cierre", closeType),
-      field("gestión", mgmt),
+      field("Hubo cierres parciales", partials),
+      field("gestión (nota)", mgmt),
       el("p", { className: "hint", text: "WIN/LOSS salen del signo de netPnl. BE solo si closeType=BE o netPnl exacto 0." }),
       err,
       save,
