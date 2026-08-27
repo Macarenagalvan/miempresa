@@ -5,6 +5,8 @@ import { renderNuevo } from "./screens/nuevo.js";
 import { renderEstudio } from "./screens/estudio.js";
 import { renderObservationDetail } from "./screens/observation-detail.js";
 import { renderSetupDetail } from "./screens/setup-detail.js";
+import { renderHistorial } from "./screens/historial.js";
+import { renderTradeDetail } from "./screens/trade-detail.js";
 
 export function parseHash() {
   const raw = (location.hash || "#/hoy").replace(/^#\/?/, "");
@@ -57,9 +59,13 @@ export async function paint(ctx) {
   } else if (parsed.name === "hoy") {
     title = "Hoy";
     nodes = renderHoy(viewCtx);
+  } else if (parsed.name === "trade") {
+    title = "Trade";
+    nav = "historial";
+    nodes = await renderTradeDetail(viewCtx);
   } else if (parsed.name === "historial") {
     title = "Historial";
-    nodes = renderPlaceholder("Historial");
+    nodes = await renderHistorial(viewCtx);
   } else if (parsed.name === "numeros") {
     title = "Números";
     nodes = renderPlaceholder("Números");
