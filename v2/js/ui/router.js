@@ -8,6 +8,8 @@ import { renderSetupDetail } from "./screens/setup-detail.js";
 import { renderHistorial } from "./screens/historial.js";
 import { renderTradeDetail } from "./screens/trade-detail.js";
 import { renderNumeros } from "./screens/numeros.js";
+import { renderCuentas } from "./screens/cuentas.js";
+import { renderCuentaDetail } from "./screens/cuenta-detail.js";
 
 export function parseHash() {
   const raw = (location.hash || "#/hoy").replace(/^#\/?/, "");
@@ -88,7 +90,11 @@ export async function paint(ctx) {
     nodes = renderPlaceholder("Señales");
   } else if (parsed.name === "cuentas") {
     title = "Cuentas";
-    nodes = renderPlaceholder("Cuentas");
+    nodes = await renderCuentas(viewCtx);
+  } else if (parsed.name === "cuenta") {
+    title = "Cuenta";
+    nav = "cuentas";
+    nodes = await renderCuentaDetail(viewCtx);
   } else if (parsed.name === "fondeo") {
     title = "Fondeo";
     nodes = renderPlaceholder("Fondeo");
