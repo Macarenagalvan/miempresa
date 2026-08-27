@@ -63,3 +63,38 @@ export const SetupQuality = Object.freeze({
   B: "B",
   C: "C",
 });
+
+export const Lifecycle = Object.freeze({
+  DRAFT: "DRAFT",
+  OPEN: "OPEN",
+  CLOSED: "CLOSED",
+  VOID: "VOID",
+});
+
+export const Result = Object.freeze({
+  WIN: "WIN",
+  LOSS: "LOSS",
+  BE: "BE",
+});
+
+export const CloseType = Object.freeze({
+  TP: "TP",
+  SL: "SL",
+  MANUAL: "MANUAL",
+  BE: "BE",
+  UNKNOWN: "UNKNOWN",
+});
+
+export const VoidReason = Object.freeze({
+  DUPLICATE: "DUPLICATE",
+  PHANTOM_IMPORT: "PHANTOM_IMPORT",
+  TEST: "TEST",
+  ACCIDENT: "ACCIDENT",
+  INVALID: "INVALID",
+});
+
+export const ExecutionQuality = Object.freeze({
+  A: "A",
+  B: "B",
+  C: "C",
+});

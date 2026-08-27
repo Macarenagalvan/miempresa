@@ -1,4 +1,4 @@
-// Fixture de prueba Slice 2. NO es el Trading System ni el Validator.
+// DEMO / TEST ONLY. No es el Trading System ni el Validator oficial.
 export const CHECKLIST_FIXTURE_ID = "slice2-generic-v1";
 
 export const CHECKLIST_FIXTURE_ITEMS = [
