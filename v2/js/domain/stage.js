@@ -42,6 +42,7 @@ export async function ensureJournalSeed() {
     traderName: "",
     createdAt: now,
     lastBackupAt: null,
+    activeAccountId: null,
   };
   assertMeta(meta);
   await putMeta(meta);
