@@ -129,9 +129,7 @@ function finiteNum(v) {
 }
 
 export function hasPartialsRecorded(trade) {
-  if (!trade) return false;
-  if (trade.hasPartials === true) return true;
-  return /parcial/i.test(String(trade.management || ""));
+  return Boolean(trade && trade.hasPartials === true);
 }
 
 export function computeRrRealized(trade) {

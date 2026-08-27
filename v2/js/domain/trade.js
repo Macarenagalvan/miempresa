@@ -6,7 +6,6 @@ import {
   deriveResult,
   computeRrRealized,
   incompleteForR,
-  hasPartialsRecorded,
 } from "./integrity.js";
 import { getTrade, putTrade, listTrades } from "../storage/repos/trades.js";
 import { getSetup } from "../storage/repos/setups.js";
@@ -30,7 +29,7 @@ function snapshotFromSetup(setup) {
 }
 
 function deriveTrade(trade) {
-  trade.hasPartials = hasPartialsRecorded(trade);
+  trade.hasPartials = trade.hasPartials === true;
   trade.incompleteForR = incompleteForR(trade);
   trade.rrRealized = computeRrRealized(trade);
   trade.costComplete = trade.commission != null && trade.swap != null;
@@ -114,8 +113,9 @@ export async function updateOpenTrade(id, patch) {
     initialSL: current.initialSL,
     currentSL: patch.currentSL != null ? numOrNull(patch.currentSL) : current.currentSL,
     management: patch.management != null ? patch.management : current.management,
+    hasPartials: patch.hasPartials != null ? patch.hasPartials === true : current.hasPartials === true,
     note: patch.note != null ? patch.note : current.note,
-    tp: patch.tp != null ? numOrNull(patch.tp) : current.tp,
+    tp: patch.tp != null ? numOrNull(patch.tp) : current.lots,
     lots: patch.lots != null ? numOrNull(patch.lots) : current.lots,
     createdAt: current.createdAt,
     updatedAt: nowIso(),
@@ -147,6 +147,7 @@ export async function closeTrade(id, input) {
     closeType: input.closeType || "UNKNOWN",
     result,
     management: input.management != null ? input.management : current.management,
+    hasPartials: input.hasPartials != null ? input.hasPartials === true : current.hasPartials === true,
     executionQuality: input.executionQuality || current.executionQuality,
     updatedAt: nowIso(),
   });
