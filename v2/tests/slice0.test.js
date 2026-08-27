@@ -83,7 +83,4 @@ async function run() {
   if (failed.length) throw new Error(`${failed.length} tests fallaron`);
 }
 
-run().catch((err) => {
-  document.getElementById("out").className = "fail";
-  document.getElementById("out").textContent += `\nERROR ${err.message}`;
-});
+export { run };

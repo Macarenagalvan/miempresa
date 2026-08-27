@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Journal V2 · tests Slice 0</title>
+  <title>Journal V2 · tests</title>
   <link rel="stylesheet" href="../css/tokens.css">
   <style>
     body { font-family: var(--font); background: var(--bg); color: var(--text); padding: 20px; }
@@ -15,6 +15,17 @@
 <body>
   <p id="proto"></p>
   <pre id="out">corriendo…</pre>
-  <script type="module" src="./slice0.test.js"></script>
+  <script type="module">
+    import { run as run0 } from "./slice0.test.js";
+    import { run as run1 } from "./slice1.test.js";
+    const out = document.getElementById("out");
+    Promise.resolve()
+      .then(() => run0())
+      .then(() => run1())
+      .catch((err) => {
+        out.className = "fail";
+        out.textContent += "\nERROR " + err.message;
+      });
+  </script>
 </body>
 </html>
