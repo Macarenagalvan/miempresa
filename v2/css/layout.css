@@ -67,4 +67,5 @@ h2 { font-size: 16px; margin: 20px 0 8px; }
   width: 100%;
 }
 .clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-weight: 400; }
-.row-actions { display: flex; gap: 8px; margin-top: 12px; }
+.row-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 14px; }

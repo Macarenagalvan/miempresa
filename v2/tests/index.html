@@ -18,10 +18,12 @@
   <script type="module">
     import { run as run0 } from "./slice0.test.js";
     import { run as run1 } from "./slice1.test.js";
+    import { run as run2 } from "./slice2.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
       .then(() => run1())
+      .then(() => run2())
       .catch((err) => {
         out.className = "fail";
         out.textContent += "\nERROR " + err.message;
