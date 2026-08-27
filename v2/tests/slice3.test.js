@@ -86,13 +86,22 @@ async function run() {
 
   const closed = await closeTrade(t1.id, { exit: 1.13, netPnl: 30, closeType: "TP" });
   assert("cierre WIN", closed.result === "WIN" && closed.lifecycle === "CLOSED");
-  assert("parciales no inventan R", closed.hasPartials === true && closed.rrRealized == null);
+  assert("texto management no marca parciales", closed.hasPartials === false);
+  assert("texto parcial no anula R", Math.abs(closed.rrRealized - ((1.13 - 1.105) / (1.105 - 1.09))) < 1e-9);
 
   const cleanR = await createTrade({
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.105, initialSL: 1.09,
   }, stage.id);
   const closedClean = await closeTrade(cleanR.id, { exit: 1.13, netPnl: 25, closeType: "TP" });
   assert("R por precio sin parciales", Math.abs(closedClean.rrRealized - ((1.13 - 1.105) / (1.105 - 1.09))) < 1e-9);
+  assert("hasPartials default false", closedClean.hasPartials === false);
+
+  const flagOnly = await createTrade({
+    asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.105, initialSL: 1.09,
+    hasPartials: true, management: "gestion simple",
+  }, stage.id);
+  const closedFlag = await closeTrade(flagOnly.id, { exit: 1.13, netPnl: 25, closeType: "TP" });
+  assert("hasPartials true anula R", closedFlag.hasPartials === true && closedFlag.rrRealized == null);
 
   const lossT = await createTrade({
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1, initialSL: 1.09, setupId: setup.id,
@@ -131,6 +140,9 @@ async function run() {
 
   const payload = await buildExportPayload();
   assert("export contiene trades", payload.trades.some((t) => t.id === t1.id && t.setupId === setup.id));
+  assert("export conserva hasPartials",
+    payload.trades.some((t) => t.id === closedFlag.id && t.hasPartials === true)
+    && payload.trades.some((t) => t.id === t1.id && t.hasPartials === false));
 
   if (indexedDB.databases) {
     const dbs = await indexedDB.databases();
