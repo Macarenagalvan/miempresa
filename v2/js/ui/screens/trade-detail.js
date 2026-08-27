@@ -3,7 +3,9 @@ import { field } from "../forms/observation.js";
 import { getTrade } from "../../storage/repos/trades.js";
 import { getSetup } from "../../storage/repos/setups.js";
 import { updateOpenTrade, closeTrade, voidTrade } from "../../domain/trade.js";
+import { asrForTrade, asrStatusLabel, createAsr, updateAsr } from "../../domain/asr.js";
 import { CloseType, VoidReason, Lifecycle } from "../../domain/enums.js";
+import { asrFields } from "../forms/asr.js";
 import { go } from "../router.js";
 
 function partialsSelect(current) {
@@ -18,24 +20,28 @@ function partialsSelect(current) {
 export async function renderTradeDetail(ctx) {
   const closeMode = ctx.route.rest.includes("/cerrar");
   const voidMode = ctx.route.rest.includes("/void");
-  const id = ctx.route.rest.replace(/\/(cerrar|void)$/, "");
+  const asrMode = ctx.route.rest.includes("/asr");
+  const id = ctx.route.rest.replace(/\/(cerrar|void|asr)$/, "");
   const trade = id ? await getTrade(id) : null;
   if (!trade) {
     return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Trade no encontrado." })])];
   }
   const setup = trade.setupId ? await getSetup(trade.setupId) : null;
+  const asr = await asrForTrade(trade.id);
   if (closeMode) return renderClose(trade);
   if (voidMode) return renderVoid(trade);
-  return renderCard(trade, setup);
+  if (asrMode) return renderAsr(trade, asr);
+  return renderCard(trade, setup, asr);
 }
 
-function renderCard(trade, setup) {
+function renderCard(trade, setup, asr) {
   const err = el("p", { className: "err", text: "" });
   const sl = el("input", { className: "input", value: trade.currentSL ?? "" });
   const mgmt = el("textarea", { className: "input", rows: "3" });
   mgmt.value = trade.management || "";
   const partials = partialsSelect(trade.hasPartials);
   const actions = [];
+  const asrLabel = asrStatusLabel(trade, asr);
 
   if (trade.lifecycle === Lifecycle.OPEN) {
     const save = el("button", { type: "button", text: "Guardar gestión" });
@@ -54,6 +60,13 @@ function renderCard(trade, setup) {
   }
   if (trade.lifecycle !== Lifecycle.VOID) {
     actions.push(el("button", { type: "button", className: "ghost", text: "VOID", onclick: () => go("trade/" + trade.id + "/void") }));
+  }
+  if (trade.lifecycle === Lifecycle.CLOSED) {
+    actions.push(el("button", {
+      type: "button",
+      text: asr ? "Ver / editar ASR" : "Hacer ASR",
+      onclick: () => go("trade/" + trade.id + "/asr"),
+    }));
   }
   if (setup) {
     actions.push(el("button", { type: "button", className: "ghost", text: "Ver Setup", onclick: () => go("setup/" + setup.id) }));
@@ -79,6 +92,7 @@ function renderCard(trade, setup) {
       el("p", { className: "meta", text: `initialSL ${trade.initialSL ?? "—"} · currentSL ${trade.currentSL ?? "—"}` }),
       el("p", { className: "meta", text: rLabel }),
       trade.result ? el("p", { className: "meta", text: `${trade.result} · netPnl ${trade.netPnl}` }) : null,
+      asrLabel ? el("p", { className: "meta", text: asrLabel }) : null,
       trade.lifecycle === Lifecycle.OPEN ? field("currentSL", sl) : null,
       trade.lifecycle === Lifecycle.OPEN
         ? field("Hubo cierres parciales", partials)
@@ -135,6 +149,34 @@ function renderClose(trade) {
       el("p", { className: "hint", text: "WIN/LOSS salen del signo de netPnl. BE solo si closeType=BE o netPnl exacto 0." }),
       err,
       save,
+    ]),
+  ];
+}
+
+function renderAsr(trade, asr) {
+  const form = asrFields(asr);
+  const err = el("p", { className: "err", text: "" });
+  const save = el("button", { type: "button", text: "Guardar ASR" });
+  save.addEventListener("click", async () => {
+    err.textContent = "";
+    try {
+      const input = form.read();
+      if (asr) await updateAsr(asr.id, input);
+      else await createAsr({ ...input, tradeId: trade.id }, trade.stageId);
+      go("trade/" + trade.id);
+    } catch (e) { err.textContent = e.message; }
+  });
+  return [
+    el("section", { className: "panel" }, [
+      el("p", { className: "kicker", text: asr ? "Ver / editar ASR" : "Hacer ASR" }),
+      el("h1", { text: `${trade.asset} ${trade.direction}` }),
+      el("p", { className: "hint", text: "wouldDoSame + conclusion. El resto es opcional." }),
+      ...form.nodes,
+      err,
+      el("div", { className: "row-actions" }, [
+        save,
+        el("button", { type: "button", className: "ghost", text: "Volver al Trade", onclick: () => go("trade/" + trade.id) }),
+      ]),
     ]),
   ];
 }
