@@ -115,7 +115,7 @@ export async function updateOpenTrade(id, patch) {
     management: patch.management != null ? patch.management : current.management,
     hasPartials: patch.hasPartials != null ? patch.hasPartials === true : current.hasPartials === true,
     note: patch.note != null ? patch.note : current.note,
-    tp: patch.tp != null ? numOrNull(patch.tp) : current.lots,
+    tp: patch.tp != null ? numOrNull(patch.tp) : current.tp,
     lots: patch.lots != null ? numOrNull(patch.lots) : current.lots,
     createdAt: current.createdAt,
     updatedAt: nowIso(),
