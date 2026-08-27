@@ -60,6 +60,12 @@ async function run() {
   assert("parciales detectados", hasPartialsRecorded(partial) === true);
   assert("R n/a con parciales", computeRrRealized(partial) == null && realizedR(partial) == null);
   assert("parciales fuera de U_R", back.nR === EXPECTED_ALL.nR);
+  const baseR = SLICE5_TRADES.find((t) => t.id === "t1");
+  const textOnly = { ...baseR, id: "tx", management: "parcial TP1, mismo trade", hasPartials: false };
+  assert("texto no marca parciales", hasPartialsRecorded(textOnly) === false);
+  assert("texto no anula R", computeRrRealized(textOnly) === 2 && realizedR(textOnly) === 2);
+  const flagOnly = { ...baseR, id: "ty", management: "gestion simple", hasPartials: true };
+  assert("flag sin palabra anula R", hasPartialsRecorded(flagOnly) === true && computeRrRealized(flagOnly) == null && realizedR(flagOnly) == null);
   const empty = compute([], base);
   assert("vacío WR n/a", empty.winRate == null && empty.expectancyR == null && empty.profitFactorUsd == null);
   const onlyWins = compute(SLICE5_TRADES.filter((t) => t.id === "t1"), base);

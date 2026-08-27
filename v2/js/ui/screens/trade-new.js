@@ -21,6 +21,7 @@ export async function renderNuevoTrade(ctx) {
   const openedAt = el("input", { className: "input", value: new Date().toISOString().slice(0, 16) });
   const entry = el("input", { className: "input", value: "" });
   const sl = el("input", { className: "input", value: "" });
+  const partials = select([["false", "No"], ["true", "Sí"]], "false");
   const err = el("p", { className: "err", text: "" });
 
   const save = el("button", { type: "button", text: "Guardar OPEN" });
@@ -35,6 +36,7 @@ export async function renderNuevoTrade(ctx) {
         entry: entry.value,
         initialSL: sl.value,
         setupId: setup ? setup.id : null,
+        hasPartials: partials.value === "true",
       }, ctx.stage.id);
       go("trade/" + trade.id);
     } catch (e) {
@@ -59,7 +61,8 @@ export async function renderNuevoTrade(ctx) {
       field("openedAt", openedAt),
       field("entry (confirmar)", entry),
       field("initialSL (opcional)", sl),
-      el("p", { className: "hint", text: "Sin SL = incompleto para R. accountId = null en BACKTEST." }),
+      field("Hubo cierres parciales", partials),
+      el("p", { className: "hint", text: "Sin SL = incompleto para R. accountId = null en BACKTEST. Parciales = flag, no se leen de la nota." }),
       err,
       save,
     ]),
