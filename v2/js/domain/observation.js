@@ -43,7 +43,6 @@ export async function createObservation(input, stageId) {
     date: input.date || todayIsoDate(),
     note: String(input.note || "").trim(),
     ...emptyOptionals(),
-    promotedSetupId: null,
     archived: false,
     archivedAt: null,
     createdAt: now,
@@ -64,7 +63,6 @@ export async function updateObservation(id, patch) {
     stageId: current.stageId,
     recordSource: current.recordSource,
     context: current.context,
-    promotedSetupId: current.promotedSetupId,
     createdAt: current.createdAt,
     updatedAt: nowIso(),
   };

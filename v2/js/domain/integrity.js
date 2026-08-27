@@ -1,5 +1,16 @@
 import { META_ID, JOURNAL_EDITION, SCHEMA_VERSION } from "../config.js";
-import { StageStatus } from "./enums.js";
+import {
+  StageStatus,
+  Context,
+  Direction,
+  Strategy,
+  SetupStatus,
+  BlueVariant,
+  Style,
+  ValidationMethod,
+  Verdict,
+  SetupQuality,
+} from "./enums.js";
 
 export function assertMeta(meta) {
   if (!meta || meta.id !== META_ID) throw new Error("meta.id debe ser singleton");
@@ -38,4 +49,62 @@ export function assertObservation(obs) {
   if (obs.session && !["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"].includes(obs.session)) {
     throw new Error("session inválida");
   }
+}
+
+export function computePlannedRr(direction, entry, sl, tp) {
+  const e = Number(entry);
+  const s = Number(sl);
+  const t = Number(tp);
+  if (![e, s, t].every(Number.isFinite)) return null;
+  if (direction === Direction.LONG) {
+    const risk = e - s;
+    if (risk <= 0) return null;
+    return (t - e) / risk;
+  }
+  if (direction === Direction.SHORT) {
+    const risk = s - e;
+    if (risk <= 0) return null;
+    return (e - t) / risk;
+  }
+  return null;
+}
+
+export function checklistScore(items) {
+  const list = Array.isArray(items) ? items : [];
+  const total = list.length;
+  const done = list.filter((i) => i && i.done).length;
+  return { done, total, pct: total ? done / total : 0 };
+}
+
+const CONTEXTS = Object.values(Context);
+const DIRECTIONS = Object.values(Direction);
+const STRATEGIES = Object.values(Strategy);
+const STATUSES = Object.values(SetupStatus);
+
+export function assertSetup(setup) {
+  if (!setup || !setup.id) throw new Error("setup.id requerido");
+  if (!setup.stageId) throw new Error("setup.stageId requerido");
+  if (!normalizeAsset(setup.asset)) throw new Error("asset requerido");
+  if (!CONTEXTS.includes(setup.context)) throw new Error("context requerido");
+  if (!DIRECTIONS.includes(setup.direction)) throw new Error("direction requerido");
+  if (!STRATEGIES.includes(setup.strategy)) throw new Error("strategy inválida");
+  if (!STATUSES.includes(setup.status)) throw new Error("status inválido");
+  if (setup.variant && !Object.values(BlueVariant).includes(setup.variant)) {
+    throw new Error("variant inválida");
+  }
+  if (setup.variant && setup.strategy !== Strategy.BLUE) {
+    throw new Error("variant solo si strategy=BLUE");
+  }
+  if (setup.style && !Object.values(Style).includes(setup.style)) throw new Error("style inválido");
+  if (setup.validationMethod && !Object.values(ValidationMethod).includes(setup.validationMethod)) {
+    throw new Error("validationMethod inválido");
+  }
+  if (setup.verdict && !Object.values(Verdict).includes(setup.verdict)) throw new Error("verdict inválido");
+  if (setup.setupQuality && !Object.values(SetupQuality).includes(setup.setupQuality)) {
+    throw new Error("setupQuality inválido");
+  }
+}
+
+export function assertUnlocked(setup) {
+  if (setup.validationLockedAt) throw new Error("setup congelado: snapshot no se reescribe");
 }
