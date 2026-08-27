@@ -1,0 +1,10 @@
+:root {
+  --bg: #11140f;
+  --panel: #1a1f18;
+  --line: #2c3328;
+  --text: #e8eadf;
+  --muted: #9aa392;
+  --accent: #c4d39a;
+  --danger: #d4786a;
+  --font: "Segoe UI", system-ui, sans-serif;
+}

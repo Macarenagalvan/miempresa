@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Journal V2</title>
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/layout.css">
+</head>
+<body>
+  <div class="shell">
+    <div id="file-warning" class="warn" hidden>
+      Journal V2 necesita un servidor local (http://localhost). No usar file://.
+    </div>
+    <header class="top">
+      <div>
+        <div class="brand">Journal V2</div>
+        <div id="stage-label" class="stage-label"></div>
+      </div>
+      <div class="top-actions">
+        <button id="export-backup" type="button">Exportar backup</button>
+      </div>
+    </header>
+    <nav class="nav" aria-label="Primaria">
+      <a href="#/hoy" data-route="hoy">Hoy</a>
+      <a href="#/nuevo" data-route="nuevo">Nuevo</a>
+      <a href="#/historial" data-route="historial">Historial</a>
+      <a href="#/numeros" data-route="numeros">Números</a>
+    </nav>
+    <nav class="nav secondary" aria-label="Secundaria">
+      <a href="#/estudio" data-route="estudio">Estudio</a>
+      <a href="#/senales" data-route="senales">Señales</a>
+      <a href="#/cuentas" data-route="cuentas">Cuentas</a>
+      <a href="#/fondeo" data-route="fondeo">Fondeo</a>
+    </nav>
+    <main id="app"></main>
+  </div>
+  <script type="module" src="./js/boot.js"></script>
+</body>
+</html>
