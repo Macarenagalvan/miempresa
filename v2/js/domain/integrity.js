@@ -20,3 +20,22 @@ export function assertSingleActive(stages) {
   const active = stages.filter((s) => s.status === StageStatus.ACTIVE);
   if (active.length !== 1) throw new Error("debe existir exactamente una Stage ACTIVE");
 }
+
+export function normalizeAsset(raw) {
+  if (raw == null) return "";
+  const value = String(raw).trim().toUpperCase().replace(/\s+/g, "");
+  if (value === "S&P500" || value === "SPX" || value === "US500") return "SP500";
+  return value;
+}
+
+export function assertObservation(obs) {
+  if (!obs || !obs.id) throw new Error("observation.id requerido");
+  if (!obs.stageId) throw new Error("observation.stageId requerido");
+  const asset = normalizeAsset(obs.asset);
+  if (!asset) throw new Error("asset requerido");
+  if (!obs.note || !String(obs.note).trim()) throw new Error("note requerido");
+  if (!obs.date || !/^\d{4}-\d{2}-\d{2}$/.test(obs.date)) throw new Error("date inválida");
+  if (obs.session && !["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"].includes(obs.session)) {
+    throw new Error("session inválida");
+  }
+}

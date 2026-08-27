@@ -6,6 +6,24 @@ export const V1_DB_NAME = "TradingJournalDB";
 export const META_ID = "singleton";
 export const INITIAL_STAGE_NAME = "V2 · inicio";
 
+export const ROADMAP_ASSETS = [
+  { id: "EURUSD", label: "EURUSD" },
+  { id: "NZDUSD", label: "NZDUSD" },
+  { id: "XAUUSD", label: "XAUUSD" },
+  { id: "SP500", label: "S&P 500" },
+];
+
+export const SESSIONS = ["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"];
+
+export const OBSERVATION_TAG_SUGGESTIONS = [
+  "false-break",
+  "wick",
+  "news",
+  "cash-open",
+  "slow-pb",
+  "impulsive",
+];
+
 export const STORES = {
   meta: "meta",
   stages: "stages",
