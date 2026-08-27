@@ -86,7 +86,13 @@ async function run() {
 
   const closed = await closeTrade(t1.id, { exit: 1.13, netPnl: 30, closeType: "TP" });
   assert("cierre WIN", closed.result === "WIN" && closed.lifecycle === "CLOSED");
-  assert("R derivado", Math.abs(closed.rrRealized - ((1.13 - 1.105) / (1.105 - 1.09))) < 1e-9);
+  assert("parciales no inventan R", closed.hasPartials === true && closed.rrRealized == null);
+
+  const cleanR = await createTrade({
+    asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.105, initialSL: 1.09,
+  }, stage.id);
+  const closedClean = await closeTrade(cleanR.id, { exit: 1.13, netPnl: 25, closeType: "TP" });
+  assert("R por precio sin parciales", Math.abs(closedClean.rrRealized - ((1.13 - 1.105) / (1.105 - 1.09))) < 1e-9);
 
   const lossT = await createTrade({
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1, initialSL: 1.09, setupId: setup.id,

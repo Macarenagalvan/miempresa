@@ -31,7 +31,11 @@ function renderCard(trade, setup) {
     const save = el("button", { type: "button", text: "Guardar gestión" });
     save.addEventListener("click", async () => {
       try {
-        await updateOpenTrade(trade.id, { currentSL: sl.value, management: mgmt.value });
+        await updateOpenTrade(trade.id, {
+          currentSL: sl.value,
+          management: mgmt.value,
+          hasPartials: /parcial/i.test(mgmt.value) || trade.hasPartials === true,
+        });
         go("trade/" + trade.id);
       } catch (e) { err.textContent = e.message; }
     });
@@ -45,9 +49,16 @@ function renderCard(trade, setup) {
     actions.push(el("button", { type: "button", className: "ghost", text: "Ver Setup", onclick: () => go("setup/" + setup.id) }));
   }
 
-  const rLabel = trade.lifecycle === Lifecycle.CLOSED
-    ? (trade.rrRealized == null ? "R n/a" : `R ${trade.rrRealized.toFixed(2)}`)
-    : (trade.incompleteForR ? "INCOMPLETO PARA R / RISK" : "R al cierre");
+  let rLabel = "R al cierre";
+  if (trade.lifecycle === Lifecycle.CLOSED) {
+    if (trade.hasPartials) rLabel = "R n/a · parciales (exit no es media ponderada)";
+    else if (trade.rrRealized == null) rLabel = "R n/a";
+    else rLabel = `R ${trade.rrRealized.toFixed(2)}`;
+  } else if (trade.incompleteForR) {
+    rLabel = "INCOMPLETO PARA R / RISK";
+  } else if (trade.hasPartials) {
+    rLabel = "R n/a al cierre · parciales";
+  }
 
   return [
     el("section", { className: "panel" }, [
