@@ -22,6 +22,7 @@
     import { run as run3 } from "./slice3.test.js";
     import { run as run4 } from "./slice4.test.js";
     import { run as run5 } from "./slice5.test.js";
+    import { run as run6 } from "./slice6.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
@@ -30,6 +31,7 @@
       .then(() => run3())
       .then(() => run4())
       .then(() => run5())
+      .then(() => run6())
       .catch((err) => {
         out.className = "fail";
         out.textContent += "\nERROR " + err.message;
