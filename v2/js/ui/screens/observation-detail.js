@@ -58,7 +58,11 @@ export async function renderObservationDetail(ctx) {
       el("h2", { text: "Completar análisis" }),
       ...optionals.nodes,
       err,
-      el("div", { className: "row-actions" }, [save, archive]),
+      el("div", { className: "row-actions" }, [
+        save,
+        el("button", { type: "button", text: "Crear Setup", onclick: () => go("nuevo/setup/" + obs.id) }),
+        archive,
+      ]),
     ]),
   ];
 }

@@ -4,6 +4,7 @@ import { renderPlaceholder } from "./screens/placeholder.js";
 import { renderNuevo } from "./screens/nuevo.js";
 import { renderEstudio } from "./screens/estudio.js";
 import { renderObservationDetail } from "./screens/observation-detail.js";
+import { renderSetupDetail } from "./screens/setup-detail.js";
 
 export function parseHash() {
   const raw = (location.hash || "#/hoy").replace(/^#\/?/, "");
@@ -41,7 +42,11 @@ export async function paint(ctx) {
 
   if (parsed.name === "nuevo") {
     title = "Nuevo";
-    nodes = renderNuevo(viewCtx);
+    nodes = await renderNuevo(viewCtx);
+  } else if (parsed.name === "setup") {
+    title = "Setup";
+    nav = "estudio";
+    nodes = await renderSetupDetail(viewCtx);
   } else if (parsed.name === "estudio") {
     title = "Estudio";
     nodes = await renderEstudio(viewCtx);

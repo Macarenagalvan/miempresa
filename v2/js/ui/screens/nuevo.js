@@ -1,17 +1,20 @@
 import { el } from "../render.js";
 import { assetPicker, coreFields, field } from "../forms/observation.js";
 import { createObservation, defaultObservationDate } from "../../domain/observation.js";
+import { renderNuevoSetup } from "./setup-new.js";
 import { go } from "../router.js";
 
-export function renderNuevo(ctx) {
+export async function renderNuevo(ctx) {
   if (ctx.route.rest === "observacion") return renderNuevaObservacion(ctx);
+  if (ctx.route.rest === "setup" || ctx.route.rest.startsWith("setup/")) return renderNuevoSetup(ctx);
   return [
     el("section", { className: "panel" }, [
       el("h1", { text: "Nuevo" }),
       el("p", { className: "meta", text: "¿Qué querés registrar?" }),
       el("div", { className: "stack" }, [
         el("button", { type: "button", text: "Observación", onclick: () => go("nuevo/observacion") }),
-        el("p", { className: "hint", text: "Setup y Trade llegan en slices posteriores." }),
+        el("button", { type: "button", text: "Setup", onclick: () => go("nuevo/setup") }),
+        el("p", { className: "hint", text: "Trade llega en un slice posterior." }),
       ]),
     ]),
   ];
