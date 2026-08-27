@@ -128,8 +128,15 @@ function finiteNum(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+export function hasPartialsRecorded(trade) {
+  if (!trade) return false;
+  if (trade.hasPartials === true) return true;
+  return /parcial/i.test(String(trade.management || ""));
+}
+
 export function computeRrRealized(trade) {
   if (!trade || trade.lifecycle !== Lifecycle.CLOSED) return null;
+  if (hasPartialsRecorded(trade)) return null;
   const entry = finiteNum(trade.entry);
   const sl = finiteNum(trade.initialSL);
   const exit = finiteNum(trade.exit);

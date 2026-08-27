@@ -6,6 +6,7 @@ import {
   deriveResult,
   computeRrRealized,
   incompleteForR,
+  hasPartialsRecorded,
 } from "./integrity.js";
 import { getTrade, putTrade, listTrades } from "../storage/repos/trades.js";
 import { getSetup } from "../storage/repos/setups.js";
@@ -29,6 +30,7 @@ function snapshotFromSetup(setup) {
 }
 
 function deriveTrade(trade) {
+  trade.hasPartials = hasPartialsRecorded(trade);
   trade.incompleteForR = incompleteForR(trade);
   trade.rrRealized = computeRrRealized(trade);
   trade.costComplete = trade.commission != null && trade.swap != null;
@@ -71,6 +73,7 @@ export async function createTrade(input, stageId) {
     netPnl: null,
     result: null,
     management: input.management || null,
+    hasPartials: input.hasPartials === true,
     executionQuality: null,
     note: input.note || null,
     importBatchId: null,
