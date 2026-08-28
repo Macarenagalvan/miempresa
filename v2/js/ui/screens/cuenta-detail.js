@@ -10,6 +10,7 @@ import {
 } from "../../domain/account.js";
 import { createMovement, voidMovement, listAccountMovements } from "../../domain/movement.js";
 import { getAccount } from "../../storage/repos/accounts.js";
+import { listTrades } from "../../storage/repos/trades.js";
 import { go } from "../router.js";
 
 function contextLabel(ctx) {
@@ -27,7 +28,8 @@ export async function renderCuentaDetail(ctx) {
     return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Cuenta no encontrada." })])];
   }
   const movements = await listAccountMovements(account.id);
-  const bal = accountBalance(account, movements);
+  const trades = await listTrades();
+  const bal = accountBalance(account, movements, trades);
   const active = await getActiveAccount();
   const isActive = active && active.id === account.id;
   const err = el("p", { className: "err", text: "" });
