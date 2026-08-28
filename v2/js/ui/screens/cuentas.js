@@ -35,7 +35,7 @@ export async function renderCuentas(ctx) {
         el("strong", { text: a.name }),
         el("span", { text: contextLabel(a.context) }),
         el("span", { text: a.currency }),
-        el("span", { text: String(bal) }),
+        el("span", { className: "num", text: String(bal) }),
         el("span", { text: isOn ? "activa" : "" }),
       ]);
       item.addEventListener("click", () => go("cuenta/" + a.id));
@@ -79,7 +79,7 @@ export async function renderCuentas(ctx) {
       el("p", { className: "meta", text: `leídas ${report.read} · nuevas ${report.created} · duplicadas ${report.duplicates} · inválidas ${report.invalid} · símbolos sin mapping ${report.unknownSymbols}` }),
     );
   }
-  const pickBtn = el("button", { type: "button", text: "Elegir maca_mt5.csv" });
+  const pickBtn = el("button", { type: "button", className: "ghost", text: "Elegir maca_mt5.csv" });
   pickBtn.addEventListener("click", () => {
     syncErr.textContent = "";
     const acc = selectedAccount();
@@ -107,7 +107,7 @@ export async function renderCuentas(ctx) {
       syncErr.textContent = e.message;
     }
   });
-  const confirmBtn = el("button", { type: "button", text: "Confirmar import MT5" });
+  const confirmBtn = el("button", { type: "button", className: "ghost", text: "Confirmar import MT5" });
   confirmBtn.addEventListener("click", async () => {
     syncErr.textContent = "";
     const acc = selectedAccount();
@@ -147,7 +147,7 @@ export async function renderCuentas(ctx) {
       el("div", { className: "row-actions" }, [
         el("button", { type: "button", text: "Nueva cuenta", onclick: () => go("cuentas/nueva") }),
       ]),
-      el("div", { className: "list" }, list),
+      el("div", { className: "list table-wrap" }, list),
     ]),
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: "MT5 · lectura local" }),
@@ -191,7 +191,7 @@ function renderNueva(ctx) {
     } catch (e) { err.textContent = e.message; }
   });
   return [
-    el("section", { className: "panel" }, [
+    el("section", { className: "panel form" }, [
       el("h1", { text: "Nueva cuenta" }),
       field("nombre", name),
       field("tipo", context),
