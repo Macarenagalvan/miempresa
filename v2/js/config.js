@@ -16,6 +16,7 @@ export const ROADMAP_ASSETS = [
 export const SESSIONS = ["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"];
 
 export const RGM_SOURCE_ASSET = "SP500";
+export const RGM_SOURCE_CONTEXT = "LIVE";
 
 export const OBSERVATION_TAG_SUGGESTIONS = [
   "false-break",
