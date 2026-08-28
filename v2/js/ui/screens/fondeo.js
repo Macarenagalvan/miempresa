@@ -19,10 +19,10 @@ export async function renderFondeo(ctx) {
       const paid = pays.reduce((s, p) => s + Number(p.amount), 0);
       const item = el("button", { type: "button", className: "row hist" }, [
         el("strong", { text: ch.firm }),
-        el("span", { text: String(ch.size) }),
+        el("span", { className: "num", text: String(ch.size) }),
         el("span", { text: ch.status }),
         el("span", { text: `${accs.length} cta` }),
-        el("span", { text: paid ? `${paid} ${ch.currency}` : "—" }),
+        el("span", { className: "num", text: paid ? `${paid} ${ch.currency}` : "—" }),
       ]);
       item.addEventListener("click", () => go("challenge/" + ch.id));
       return item;
@@ -38,7 +38,7 @@ export async function renderFondeo(ctx) {
       el("div", { className: "row-actions" }, [
         el("button", { type: "button", text: "Nuevo challenge", onclick: () => go("fondeo/nuevo") }),
       ]),
-      el("div", { className: "list" }, list),
+      el("div", { className: "list table-wrap" }, list),
     ]),
   ];
 }
@@ -69,7 +69,7 @@ function renderNuevo(ctx) {
     } catch (e) { err.textContent = e.message; }
   });
   return [
-    el("section", { className: "panel" }, [
+    el("section", { className: "panel form" }, [
       el("h1", { text: "Nuevo challenge" }),
       field("firma", firm),
       field("comprado", purchasedAt),
