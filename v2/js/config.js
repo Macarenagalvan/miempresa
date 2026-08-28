@@ -18,6 +18,48 @@ export const SESSIONS = ["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"];
 export const RGM_SOURCE_ASSET = "SP500";
 export const RGM_SOURCE_CONTEXT = "LIVE";
 
+export const MT5_SOURCE_TIMEZONES = Object.freeze([
+  "UTC",
+  "Europe/Athens",
+  "Europe/Helsinki",
+  "Europe/Berlin",
+  "Europe/Rome",
+  "Europe/London",
+  "America/New_York",
+]);
+
+export const MT5_BROKER_SYMBOL_MAP = Object.freeze({
+  EURUSD: "EURUSD",
+  EURUSDC: "EURUSD",
+  "EURUSD.C": "EURUSD",
+  "EURUSD.M": "EURUSD",
+  EURUSDM: "EURUSD",
+  NZDUSD: "NZDUSD",
+  NZDUSDC: "NZDUSD",
+  "NZDUSD.M": "NZDUSD",
+  XAUUSD: "XAUUSD",
+  XAUUSDC: "XAUUSD",
+  "XAUUSD.M": "XAUUSD",
+  GOLD: "XAUUSD",
+  US500: "SP500",
+  US500C: "SP500",
+  "US500.M": "SP500",
+  SPX: "SP500",
+  SPX500: "SP500",
+  SP500: "SP500",
+  "S&P500": "SP500",
+  BTCUSD: "BTCUSD",
+  ETHUSD: "ETHUSD",
+  GBPUSD: "GBPUSD",
+  USDJPY: "USDJPY",
+  USDCHF: "USDCHF",
+  USDCAD: "USDCAD",
+  AUDUSD: "AUDUSD",
+  EURGBP: "EURGBP",
+  EURJPY: "EURJPY",
+  GBPJPY: "GBPJPY",
+});
+
 export const OBSERVATION_TAG_SUGGESTIONS = [
   "false-break",
   "wick",
