@@ -1,10 +1,28 @@
 :root {
-  --bg: #11140f;
-  --panel: #1a1f18;
-  --line: #2c3328;
-  --text: #e8eadf;
-  --muted: #9aa392;
-  --accent: #c4d39a;
-  --danger: #d4786a;
-  --font: "Segoe UI", system-ui, sans-serif;
+  --bg: #0c0d0f;
+  --sidebar: #101114;
+  --panel: #16181c;
+  --elev: #1b1e23;
+  --line: #2a2d33;
+  --line-strong: #3a3e46;
+  --text: #f3f4f6;
+  --muted: #8d929b;
+  --accent: #d2d4d8;
+  --accent-soft: rgba(210, 212, 216, 0.08);
+  --win: #86a37c;
+  --loss: #c77b72;
+  --be: #b7a16a;
+  --open: #8ea0b8;
+  --missed: #9a8fb0;
+  --danger: #c77b72;
+  --danger-bg: #2a1614;
+  --warn-bg: #2a2216;
+  --warn-text: #e4d0b0;
+  --focus: #e8eaee;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --sidebar-w: 232px;
+  --space: 16px;
+  --font: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-num: "IBM Plex Mono", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }

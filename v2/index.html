@@ -4,39 +4,48 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Journal V2</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23111111'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230c0d0f'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./css/tokens.css">
   <link rel="stylesheet" href="./css/layout.css">
 </head>
 <body>
-  <div class="shell">
-    <div id="file-warning" class="warn" hidden>
-      Journal V2 necesita un servidor local (http://localhost). No usar file://.
-    </div>
-    <header class="top">
-      <div>
+  <div id="file-warning" class="warn" hidden>
+    Journal V2 necesita un servidor local (http://localhost). No usar file://.
+  </div>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-block">
         <div class="brand">Journal V2</div>
         <div id="stage-label" class="stage-label"></div>
       </div>
-      <div class="top-actions">
-        <button id="export-backup" type="button">Exportar backup</button>
-      </div>
-    </header>
-    <nav class="nav" aria-label="Primaria">
-      <a href="#/hoy" data-route="hoy">Hoy</a>
-      <a href="#/nuevo" data-route="nuevo">Nuevo</a>
-      <a href="#/historial" data-route="historial">Historial</a>
-      <a href="#/numeros" data-route="numeros">Números</a>
-    </nav>
-    <nav class="nav secondary" aria-label="Secundaria">
-      <a href="#/estudio" data-route="estudio">Estudio</a>
-      <a href="#/senales" data-route="senales">Señales</a>
-      <a href="#/cuentas" data-route="cuentas">Cuentas</a>
-      <a href="#/fondeo" data-route="fondeo">Fondeo</a>
-      <a href="#/sistema" data-route="sistema">Sistema</a>
-    </nav>
-    <main id="app"></main>
+      <p class="nav-label">Principal</p>
+      <nav class="nav" aria-label="Primaria">
+        <a href="#/hoy" data-route="hoy">Hoy</a>
+        <a href="#/nuevo" data-route="nuevo">Nuevo</a>
+        <a href="#/historial" data-route="historial">Historial</a>
+        <a href="#/numeros" data-route="numeros">Números</a>
+      </nav>
+      <div class="nav-sep"></div>
+      <p class="nav-label">Más</p>
+      <nav class="nav secondary" aria-label="Secundaria">
+        <a href="#/estudio" data-route="estudio">Estudio</a>
+        <a href="#/senales" data-route="senales">Señales</a>
+        <a href="#/cuentas" data-route="cuentas">Cuentas</a>
+        <a href="#/fondeo" data-route="fondeo">Fondeo</a>
+        <a href="#/sistema" data-route="sistema">Sistema</a>
+      </nav>
+    </aside>
+    <div class="workspace">
+      <header class="top">
+        <button id="nav-toggle" type="button" class="ghost nav-toggle">Menú</button>
+        <div class="top-actions">
+          <button id="export-backup" type="button" class="ghost">Exportar backup</button>
+        </div>
+      </header>
+      <main id="app" class="content"></main>
+    </div>
   </div>
+  <div id="nav-backdrop" class="nav-backdrop" hidden></div>
   <script type="module" src="./js/boot.js"></script>
 </body>
 </html>

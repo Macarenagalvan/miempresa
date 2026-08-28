@@ -9,13 +9,35 @@ function warnFileProtocol() {
   }
 }
 
+function closeNav() {
+  document.body.classList.remove("nav-open");
+  const backdrop = document.getElementById("nav-backdrop");
+  if (backdrop) backdrop.hidden = true;
+}
+
+function openNav() {
+  document.body.classList.add("nav-open");
+  const backdrop = document.getElementById("nav-backdrop");
+  if (backdrop) backdrop.hidden = false;
+}
+
 function bindNav() {
   document.querySelectorAll("[data-route]").forEach((link) => {
     link.addEventListener("click", (event) => {
       event.preventDefault();
       location.hash = `#/${link.getAttribute("data-route")}`;
+      closeNav();
     });
   });
+  const toggle = document.getElementById("nav-toggle");
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      if (document.body.classList.contains("nav-open")) closeNav();
+      else openNav();
+    });
+  }
+  const backdrop = document.getElementById("nav-backdrop");
+  if (backdrop) backdrop.addEventListener("click", closeNav);
 }
 
 export async function boot() {
@@ -26,6 +48,7 @@ export async function boot() {
   if (stageLabel) stageLabel.textContent = ctx.stage.name;
   await paint(ctx);
   window.addEventListener("hashchange", () => {
+    closeNav();
     paint(ctx).catch((err) => console.error(err));
   });
   const exportBtn = document.getElementById("export-backup");
