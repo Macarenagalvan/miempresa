@@ -7,11 +7,12 @@ import {
 } from "./integrity.js";
 import { getAccount, putAccount, listAccounts } from "../storage/repos/accounts.js";
 import { listMovements } from "../storage/repos/movements.js";
+import { listTrades } from "../storage/repos/trades.js";
 import { getMeta, putMeta } from "../storage/repos/meta.js";
 import { linkAccountToChallenge } from "./challenge.js";
 
-export function accountBalance(account, movements) {
-  return balanceOf(account, movements);
+export function accountBalance(account, movements, trades) {
+  return balanceOf(account, movements, trades);
 }
 
 export async function createAccount(input, stageId) {
@@ -105,5 +106,13 @@ export async function balanceFor(accountId) {
   const account = await getAccount(accountId);
   if (!account) throw new Error("account no existe");
   const movements = await listMovements();
-  return accountBalance(account, movements);
+  const trades = await listTrades();
+  return accountBalance(account, movements, trades);
+}
+
+export function visibleActiveAccount(active, tradeContext) {
+  if (!active) return null;
+  if (active.status === AccountStatus.ARCHIVED) return null;
+  if (normalizeAccountContext(active.context) !== tradeContext) return null;
+  return active;
 }
