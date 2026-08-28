@@ -8,10 +8,11 @@ import {
   normalizeAsset,
 } from "./integrity.js";
 import { getSignal, putSignal, listSignals } from "../storage/repos/signals.js";
-import { getSetup } from "../storage/repos/setups.js";
-import { getTrade } from "../storage/repos/trades.js";
+import { getSetup, putSetup } from "../storage/repos/setups.js";
+import { getTrade, putTrade } from "../storage/repos/trades.js";
+import { SLICE9_DESK_FIXTURES, SLICE9_FIXTURE_NOTE } from "../fixtures/desk-slice9.js";
 
-const FIXTURE_NOTE = "SLICE9_FIXTURE";
+const FIXTURE_NOTE = SLICE9_FIXTURE_NOTE;
 
 function sourceRefOf(input) {
   const raw = input && input.sourceRef ? input.sourceRef : {};
@@ -28,14 +29,40 @@ function snapshotOf(input) {
   return null;
 }
 
-async function assertLinks(setupId, tradeId) {
+async function assertLinks(setupId, tradeId, signalId) {
   if (setupId) {
     const setup = await getSetup(setupId);
     if (!setup) throw new Error("setup no existe");
+    if (setup.deskSignalId && signalId && setup.deskSignalId !== signalId) {
+      throw new Error("setup ya enlazado a otra señal");
+    }
   }
   if (tradeId) {
     const trade = await getTrade(tradeId);
     if (!trade) throw new Error("trade no existe");
+    if (trade.deskSignalId && signalId && trade.deskSignalId !== signalId) {
+      throw new Error("trade ya enlazado a otra señal");
+    }
+  }
+}
+
+async function syncReverseLink(kind, prevId, nextId, signalId) {
+  if (prevId === nextId) return;
+  const get = kind === "setup" ? getSetup : getTrade;
+  const put = kind === "setup" ? putSetup : putTrade;
+  if (prevId) {
+    const prev = await get(prevId);
+    if (prev && prev.deskSignalId === signalId) {
+      await put({ ...prev, deskSignalId: null, updatedAt: nowIso() });
+    }
+  }
+  if (nextId) {
+    const row = await get(nextId);
+    if (!row) throw new Error(kind + " no existe");
+    if (row.deskSignalId && row.deskSignalId !== signalId) {
+      throw new Error(kind + " ya enlazado a otra señal");
+    }
+    await put({ ...row, deskSignalId: signalId, updatedAt: nowIso() });
   }
 }
 
@@ -63,10 +90,23 @@ export async function createDeskSignalFromFixture(input, stageId) {
     createdAt: now,
     updatedAt: now,
   };
-  await assertLinks(sig.setupId, sig.tradeId);
+  await assertLinks(sig.setupId, sig.tradeId, sig.id);
   assertDeskSignal(sig);
   await putSignal(sig);
+  await syncReverseLink("setup", null, sig.setupId, sig.id);
+  await syncReverseLink("trade", null, sig.tradeId, sig.id);
   return sig;
+}
+
+export async function loadSlice9Fixtures(stageId) {
+  const existing = await listStageSignals(stageId);
+  const already = existing.filter((s) => s.sourceRef && s.sourceRef.manualNote === FIXTURE_NOTE);
+  if (already.length) return already;
+  const created = [];
+  for (const fx of SLICE9_DESK_FIXTURES) {
+    created.push(await createDeskSignalFromFixture(fx, stageId));
+  }
+  return created;
 }
 
 export async function updateSignalFollowup(id, patch) {
@@ -90,7 +130,7 @@ export async function updateSignalFollowup(id, patch) {
   }
   const setupId = patch.setupId !== undefined ? (patch.setupId || null) : current.setupId;
   const tradeId = patch.tradeId !== undefined ? (patch.tradeId || null) : current.tradeId;
-  await assertLinks(setupId, tradeId);
+  await assertLinks(setupId, tradeId, current.id);
   const next = {
     ...current,
     disposition: patch.disposition !== undefined ? patch.disposition : current.disposition,
@@ -104,6 +144,8 @@ export async function updateSignalFollowup(id, patch) {
   assertPrintImmutable(current, next);
   assertDeskSignal(next);
   await putSignal(next);
+  await syncReverseLink("setup", current.setupId, next.setupId, next.id);
+  await syncReverseLink("trade", current.tradeId, next.tradeId, next.id);
   return next;
 }
 
