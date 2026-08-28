@@ -60,7 +60,7 @@ export async function renderSignalDetail(ctx) {
         : null,
       el("p", { className: "hint", text: "El print no se edita." }),
     ]),
-    el("section", { className: "panel" }, [
+    el("section", { className: "panel form" }, [
       el("p", { className: "kicker", text: "SEGUIMIENTO" }),
       el("h2", { text: "Qué hizo Maca / cómo cerró el aviso" }),
       field("disposition", disposition),

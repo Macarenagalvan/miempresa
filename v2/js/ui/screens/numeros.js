@@ -32,7 +32,7 @@ function fmt(value, kind) {
 function metric(label, value, kind, note) {
   return el("div", { className: "metric" }, [
     el("span", { className: "kicker", text: label }),
-    el("strong", { text: fmt(value, kind) }),
+    el("strong", { className: "num", text: fmt(value, kind) }),
     note ? el("span", { className: "meta", text: note }) : null,
   ]);
 }
