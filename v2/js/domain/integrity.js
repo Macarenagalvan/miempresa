@@ -235,13 +235,52 @@ export function isMovementLive(mov) {
   return Boolean(mov && mov.lifecycle !== Lifecycle.VOID && !mov.voidedAt);
 }
 
-export function accountBalance(account, movements) {
+export const REAL_CONTEXTS = Object.freeze([
+  Context.LIVE,
+  Context.PROP_CHALLENGE,
+  Context.FUNDED,
+]);
+
+export function universeContexts(universe) {
+  if (universe === "REAL") return REAL_CONTEXTS.slice();
+  if (universe === "DEMO") return [Context.DEMO];
+  if (universe === "BACKTEST") return [Context.BACKTEST];
+  return null;
+}
+
+export function isTradePnlForBalance(trade, accountId) {
+  return Boolean(
+    trade
+    && trade.accountId === accountId
+    && trade.lifecycle === Lifecycle.CLOSED
+    && trade.context !== Context.BACKTEST
+    && Number.isFinite(Number(trade.netPnl)),
+  );
+}
+
+export function accountBalance(account, movements, trades) {
   const initial = Number(account && account.initialAmount);
   if (!account || !Number.isFinite(initial)) return null;
   const extra = (movements || [])
     .filter((m) => m.accountId === account.id && isMovementLive(m))
     .reduce((sum, m) => sum + Number(m.amount || 0), 0);
-  return initial + extra;
+  const pnl = (trades || [])
+    .filter((t) => isTradePnlForBalance(t, account.id))
+    .reduce((sum, t) => sum + Number(t.netPnl), 0);
+  return initial + extra + pnl;
+}
+
+export function assertTradeAccountPair(trade, account) {
+  if (!trade) throw new Error("trade requerido");
+  if (trade.context === Context.BACKTEST) {
+    if (trade.accountId != null) throw new Error("BACKTEST no usa accountId");
+    return;
+  }
+  if (!account) throw new Error("accountId requerido fuera de BACKTEST");
+  if (trade.accountId && account.id !== trade.accountId) throw new Error("account no coincide");
+  if (account.status === AccountStatus.ARCHIVED) throw new Error("cuenta archivada no recibe trades");
+  const ctx = normalizeAccountContext(account.context);
+  if (ctx !== trade.context) throw new Error("context incompatible con la Account");
 }
 
 export function assertAccount(account) {
