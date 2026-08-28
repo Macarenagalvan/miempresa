@@ -2,6 +2,7 @@ import { createId, nowIso } from "./ids.js";
 import { Context, Lifecycle, Strategy } from "./enums.js";
 import {
   assertTrade,
+  assertTradeAccountPair,
   normalizeAsset,
   deriveResult,
   computeRrRealized,
@@ -9,6 +10,7 @@ import {
 } from "./integrity.js";
 import { getTrade, putTrade, listTrades } from "../storage/repos/trades.js";
 import { getSetup } from "../storage/repos/setups.js";
+import { getAccount } from "../storage/repos/accounts.js";
 import { lockSetupOnTrade } from "./setup.js";
 
 function numOrNull(v) {
@@ -46,14 +48,25 @@ export async function createTrade(input, stageId) {
   const sl = numOrNull(input.initialSL);
   const now = nowIso();
   const context = input.context || (setup && setup.context) || Context.BACKTEST;
+  let account = null;
+  let accountId = null;
+  if (context === Context.BACKTEST) {
+    accountId = null;
+  } else {
+    if (!input.accountId) throw new Error("accountId requerido fuera de BACKTEST");
+    account = await getAccount(input.accountId);
+    if (!account) throw new Error("account no existe");
+    accountId = account.id;
+  }
   const trade = deriveTrade({
     id: createId(),
     stageId,
     recordSource: "MANUAL",
     asset: normalizeAsset(input.asset || (setup && setup.asset)),
+    brokerSymbol: input.brokerSymbol ? String(input.brokerSymbol).trim() : null,
     context,
     direction: input.direction || (setup && setup.direction),
-    accountId: context === Context.BACKTEST ? null : input.accountId || null,
+    accountId,
     openedAt: input.openedAt || now,
     entry: numOrNull(input.entry),
     lifecycle: Lifecycle.OPEN,
@@ -87,6 +100,7 @@ export async function createTrade(input, stageId) {
     updatedAt: now,
   });
   assertTrade(trade);
+  assertTradeAccountPair(trade, account);
   await putTrade(trade);
   if (trade.setupId && trade.lifecycle !== Lifecycle.VOID) {
     await lockSetupOnTrade(trade.setupId);
@@ -172,11 +186,32 @@ export async function voidTrade(id, reason) {
   return next;
 }
 
+export async function amendClosedTrade(id, patch) {
+  const current = await getTrade(id);
+  if (!current) throw new Error("trade no existe");
+  if (current.lifecycle !== Lifecycle.CLOSED) throw new Error("solo se amenda un CLOSED");
+  const netPnl = patch.netPnl != null ? numOrNull(patch.netPnl) : current.netPnl;
+  const next = deriveTrade({
+    ...current,
+    netPnl,
+    commission: patch.commission !== undefined ? numOrNull(patch.commission) : current.commission,
+    swap: patch.swap !== undefined ? numOrNull(patch.swap) : current.swap,
+    result: patch.netPnl != null
+      ? deriveResult(current.closeType, netPnl, current.closeType === "BE")
+      : current.result,
+    updatedAt: nowIso(),
+  });
+  assertTrade(next);
+  await putTrade(next);
+  return next;
+}
+
 export async function listStageTrades(stageId, opts = {}) {
   const all = await listTrades();
   return all
     .filter((t) => t.stageId === stageId)
     .filter((t) => !opts.context || t.context === opts.context)
+    .filter((t) => !opts.accountId || t.accountId === opts.accountId)
     .filter((t) => opts.includeVoid || t.lifecycle !== Lifecycle.VOID)
     .filter((t) => !opts.setupId || t.setupId === opts.setupId)
     .sort((a, b) => {
