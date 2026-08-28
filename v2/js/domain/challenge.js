@@ -44,7 +44,6 @@ export async function createChallenge(input, stageId) {
     currency: input.currency || Currency.EUR,
     status,
     format: input.format ? String(input.format).trim() : null,
-    accountId: null,
     failReason: input.failReason || null,
     maxDailyLossPct: numOrNull(input.maxDailyLossPct),
     maxDrawdownPct: numOrNull(input.maxDrawdownPct),
@@ -85,10 +84,10 @@ export async function updateChallenge(id, patch) {
     endedAt: patch.endedAt !== undefined
       ? patch.endedAt
       : (TERMINAL.has(status) ? (current.endedAt || todayIsoDate()) : current.endedAt),
-    accountId: current.accountId,
     createdAt: current.createdAt,
     updatedAt: nowIso(),
   };
+  delete next.accountId;
   assertChallenge(next);
   await putChallenge(next);
   return next;
@@ -104,12 +103,6 @@ export async function linkAccountToChallenge(accountId, challengeId) {
   }
   const nextAccount = { ...account, challengeId, updatedAt: nowIso() };
   await putAccount(nextAccount);
-  if (!challenge.accountId) {
-    const nextCh = { ...challenge, accountId: account.id, updatedAt: nowIso() };
-    assertChallenge(nextCh);
-    await putChallenge(nextCh);
-    return { account: nextAccount, challenge: nextCh };
-  }
   return { account: nextAccount, challenge };
 }
 
