@@ -58,12 +58,9 @@ async function run() {
     assert("DeskSignal rechaza MT5_EA", /recordSource/.test(e.message));
   }
 
-  try {
-    ingestPrint();
-    assert("no alta via adapter RGM", false);
-  } catch (e) {
-    assert("no alta via adapter RGM", /Slice 10/.test(e.message));
-  }
+  const nSignalsBeforeAdapter = (await listSignals()).length;
+  ingestPrint({ id: "rgm-no-write", side: "LONG", alert_t: "2026-08-27T12:00:00.000Z" }, { sourceAsset: "SP500" });
+  assert("adapter map no escribe IDB", (await listSignals()).length === nSignalsBeforeAdapter);
   assert("no alta manual de producto", typeof signalApi.createDeskSignal !== "function");
   assert("alta solo via fixture/domain path", typeof createDeskSignalFromFixture === "function");
 
