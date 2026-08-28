@@ -1,6 +1,7 @@
 import { Direction, Disposition, Resolution } from "../domain/enums.js";
 
 export const DEFAULT_RGM_SOURCE_ASSET = "SP500";
+export const DEFAULT_RGM_SOURCE_CONTEXT = "LIVE";
 
 const SNAPSHOT_KEYS = [
   "entry",
@@ -102,7 +103,9 @@ function snapshotFromPayload(payload) {
 export function ingestPrint(payload, opts = {}) {
   if (!payload || typeof payload !== "object") throw new Error("payload RGM requerido");
   const sourceAsset = opts.sourceAsset;
+  const sourceContext = opts.sourceContext;
   if (!sourceAsset) throw new Error("sourceAsset requerido");
+  if (!sourceContext) throw new Error("sourceContext requerido");
   const rgmSignalId = payload.id == null || payload.id === "" ? null : String(payload.id);
   if (!rgmSignalId) return { ok: false, error: "id ausente" };
   const direction = mapRgmSide(payload.side);
@@ -116,6 +119,7 @@ export function ingestPrint(payload, opts = {}) {
     draft: {
       recordSource: "RGM_ADAPTER",
       asset: sourceAsset,
+      context: sourceContext,
       brokerSymbol: null,
       direction,
       printedAt,
@@ -146,6 +150,7 @@ export function applyResolution(payload) {
 export function printConflict(existing, draft) {
   if (!existing || !draft) return false;
   if (existing.asset !== draft.asset) return true;
+  if (existing.context !== draft.context) return true;
   if (existing.direction !== draft.direction) return true;
   if (String(existing.printedAt) !== String(draft.printedAt)) return true;
   const prevId = existing.sourceRef && existing.sourceRef.rgmSignalId;
