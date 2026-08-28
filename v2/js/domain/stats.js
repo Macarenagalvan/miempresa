@@ -1,5 +1,5 @@
 import { Context, Lifecycle, Result } from "./enums.js";
-import { computeRrRealized, hasPartialsRecorded, normalizeAsset } from "./integrity.js";
+import { computeRrRealized, hasPartialsRecorded, normalizeAsset, universeContexts } from "./integrity.js";
 
 export function realizedR(trade) {
   if (!trade || trade.lifecycle !== Lifecycle.CLOSED) return null;
@@ -16,7 +16,13 @@ export function filterTrades(trades, filters = {}) {
   const to = filters.to || "";
   return (trades || []).filter((t) => {
     if (filters.stageId && t.stageId !== filters.stageId) return false;
+    if (filters.universe) {
+      const allowed = universeContexts(filters.universe);
+      if (allowed && !allowed.includes(t.context)) return false;
+    }
     if (filters.context && t.context !== filters.context) return false;
+    if (filters.accountId && t.accountId !== filters.accountId) return false;
+    if (filters.accountIds && !filters.accountIds.includes(t.accountId)) return false;
     if (!filters.includeVoid && t.lifecycle === Lifecycle.VOID) return false;
     if (filters.lifecycle && t.lifecycle !== filters.lifecycle) return false;
     if (asset && normalizeAsset(t.asset) !== asset) return false;
@@ -79,7 +85,10 @@ function drawdown(moneyOrdered) {
 
 export function compute(trades, filters = {}) {
   const applied = {
-    context: filters.context || Context.BACKTEST,
+    universe: filters.universe || null,
+    context: filters.context || (filters.universe ? null : Context.BACKTEST),
+    accountId: filters.accountId || null,
+    accountIds: filters.accountIds || null,
     stageId: filters.stageId || null,
     asset: filters.asset || null,
     strategy: filters.strategy || null,
