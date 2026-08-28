@@ -1,7 +1,7 @@
 import { el } from "../render.js";
 import { listStageSignals, syncRgmJsonl } from "../../domain/signal.js";
 import { Disposition, Resolution, Direction } from "../../domain/enums.js";
-import { ROADMAP_ASSETS, RGM_SOURCE_ASSET } from "../../config.js";
+import { ROADMAP_ASSETS, RGM_SOURCE_ASSET, RGM_SOURCE_CONTEXT } from "../../config.js";
 import { getMeta, putMeta } from "../../storage/repos/meta.js";
 import { nowIso } from "../../domain/ids.js";
 import { go } from "../router.js";
@@ -94,12 +94,14 @@ export async function renderSenales(ctx) {
       const text = await chosen.text();
       const report = await syncRgmJsonl(text, ctx.stage.id, {
         sourceAsset: RGM_SOURCE_ASSET,
+        sourceContext: RGM_SOURCE_CONTEXT,
         syncFrom: new Date(syncFrom.value).toISOString(),
       });
       await putMeta({
         ...meta,
         rgmSync: {
           sourceAsset: RGM_SOURCE_ASSET,
+          sourceContext: RGM_SOURCE_CONTEXT,
           fileName: chosen.name,
           syncFrom: report.syncFrom,
           syncFromLocal: syncFrom.value,
@@ -115,6 +117,7 @@ export async function renderSenales(ctx) {
   const report = rgm.report;
   const syncMeta = [
     el("p", { className: "meta", text: `sourceAsset ${RGM_SOURCE_ASSET}` }),
+    el("p", { className: "meta", text: `sourceContext ${RGM_SOURCE_CONTEXT}` }),
     el("p", { className: "meta", text: `archivo ${rgm.fileName || "—"}` }),
     el("p", { className: "meta", text: `syncFrom ${rgm.syncFrom || "—"}` }),
     el("p", { className: "meta", text: `última sync ${rgm.lastSyncAt || "—"}` }),
