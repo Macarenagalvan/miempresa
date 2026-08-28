@@ -76,7 +76,7 @@ export async function paint(ctx) {
     nodes = await renderObservationDetail(viewCtx);
   } else if (parsed.name === "hoy") {
     title = "Hoy";
-    nodes = renderHoy(viewCtx);
+    nodes = await renderHoy(viewCtx);
   } else if (parsed.name === "trade") {
     title = "Trade";
     nav = "historial";
@@ -107,7 +107,7 @@ export async function paint(ctx) {
   } else {
     title = "Hoy";
     nav = "hoy";
-    nodes = renderHoy(viewCtx);
+    nodes = await renderHoy(viewCtx);
   }
 
   document.title = `Journal V2 · ${title}`;
