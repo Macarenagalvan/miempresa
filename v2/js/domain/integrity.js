@@ -20,6 +20,8 @@ import {
   AccountStatus,
   Currency,
   MovementType,
+  ChallengeStatus,
+  PayoutKind,
 } from "./enums.js";
 
 export function assertMeta(meta) {
@@ -265,4 +267,33 @@ export function assertMovement(mov) {
     if (!mov.voidedAt || !mov.voidReason) throw new Error("VOID requiere voidedAt y voidReason");
     if (!Object.values(VoidReason).includes(mov.voidReason)) throw new Error("voidReason inválido");
   }
+}
+
+export function assertChallenge(ch) {
+  if (!ch || !ch.id) throw new Error("challenge.id requerido");
+  if (!ch.stageId) throw new Error("challenge.stageId requerido");
+  if (!ch.firm || !String(ch.firm).trim()) throw new Error("firm requerido");
+  if (!ch.purchasedAt || !/^\d{4}-\d{2}-\d{2}$/.test(ch.purchasedAt)) throw new Error("purchasedAt inválida");
+  if (!Number.isFinite(Number(ch.size))) throw new Error("size requerido");
+  if (!Number.isFinite(Number(ch.cost))) throw new Error("cost requerido");
+  if (!Object.values(Currency).includes(ch.currency)) throw new Error("currency requerida");
+  if (!Object.values(ChallengeStatus).includes(ch.status)) throw new Error("challenge.status inválido");
+}
+
+export function assertPayout(p) {
+  if (!p || !p.id) throw new Error("payout.id requerido");
+  if (!p.stageId) throw new Error("payout.stageId requerido");
+  if (!p.challengeId) throw new Error("payout.challengeId requerido");
+  if (!p.date || !/^\d{4}-\d{2}-\d{2}$/.test(p.date)) throw new Error("date inválida");
+  if (!Number.isFinite(Number(p.amount)) || Number(p.amount) <= 0) throw new Error("amount debe ser positivo");
+  if (!Object.values(Currency).includes(p.currency)) throw new Error("currency requerida");
+  if (!Object.values(PayoutKind).includes(p.kind)) throw new Error("payout.kind inválido");
+  if (p.lifecycle === Lifecycle.VOID) {
+    if (!p.voidedAt || !p.voidReason) throw new Error("VOID requiere voidedAt y voidReason");
+    if (!Object.values(VoidReason).includes(p.voidReason)) throw new Error("voidReason inválido");
+  }
+}
+
+export function isPayoutLive(p) {
+  return Boolean(p && p.lifecycle !== Lifecycle.VOID && !p.voidedAt);
 }
