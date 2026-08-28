@@ -50,12 +50,15 @@ export async function renderSignalDetail(ctx) {
       el("p", { className: "kicker", text: "PRINT ORIGINAL · inmutable" }),
       el("h1", { text: `${sig.asset} ${sig.direction}` }),
       el("p", { className: "meta", text: `printedAt ${sig.printedAt}` }),
-      el("p", { className: "meta", text: `broker ${sig.brokerSymbol || "—"} · context ${sig.context}` }),
+      el("p", { className: "meta", text: `broker ${sig.brokerSymbol || "—"} · context ${sig.context} · recordSource ${sig.recordSource}` }),
       el("p", { className: "meta", text: `rgmSignalId ${dump(sig.sourceRef && sig.sourceRef.rgmSignalId)}` }),
       el("p", { className: "meta", text: `rgmPrintAt ${dump(sig.sourceRef && sig.sourceRef.rgmPrintAt)}` }),
       el("p", { className: "meta", text: `score ${dump(snap.score)} · rrProposed ${dump(snap.rrProposed)} · session ${dump(snap.session)}` }),
       snap.entry != null ? el("p", { className: "meta", text: `entry ${snap.entry} · sl ${dump(snap.sl)} · tp ${dump(snap.tp)}` }) : null,
-      el("p", { className: "hint", text: "El print no se edita. RGM adapter = Slice 10." }),
+      snap.kind != null || snap.rgmResolvedRaw != null
+        ? el("p", { className: "meta", text: `kind ${dump(snap.kind)} · rgmResolvedRaw ${dump(snap.rgmResolvedRaw)}` })
+        : null,
+      el("p", { className: "hint", text: "El print no se edita." }),
     ]),
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: "SEGUIMIENTO" }),
