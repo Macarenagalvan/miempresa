@@ -64,6 +64,11 @@ export const Resolution = Object.freeze({
   MISSED: "MISSED",
 });
 
+export const DeskRecordSource = Object.freeze({
+  MANUAL: "MANUAL",
+  RGM_ADAPTER: "RGM_ADAPTER",
+});
+
 export const Direction = Object.freeze({
   LONG: "LONG",
   SHORT: "SHORT",

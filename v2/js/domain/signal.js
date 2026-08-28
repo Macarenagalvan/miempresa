@@ -1,5 +1,5 @@
 import { createId, nowIso } from "./ids.js";
-import { Context, Disposition, Resolution } from "./enums.js";
+import { Context, Disposition, Resolution, DeskRecordSource } from "./enums.js";
 import {
   assertDeskSignal,
   assertPrintImmutable,
@@ -73,7 +73,7 @@ export async function createDeskSignalFromFixture(input, stageId) {
   const sig = {
     id: input.id || createId(),
     stageId,
-    recordSource: "MANUAL",
+    recordSource: input.recordSource || DeskRecordSource.MANUAL,
     context: input.context || Context.LIVE,
     asset: normalizeAsset(input.asset),
     brokerSymbol: input.brokerSymbol ? String(input.brokerSymbol).trim() : null,
