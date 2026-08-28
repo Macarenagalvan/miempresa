@@ -11,6 +11,7 @@ import { getSignal, putSignal, listSignals } from "../storage/repos/signals.js";
 import { getSetup, putSetup } from "../storage/repos/setups.js";
 import { getTrade, putTrade } from "../storage/repos/trades.js";
 import { SLICE9_DESK_FIXTURES, SLICE9_FIXTURE_NOTE } from "../fixtures/desk-slice9.js";
+import { ingestPrint, printConflict, parseRgmJsonl, isOnOrAfterSyncFrom, rgmApplicableAt } from "../adapters/rgm.js";
 
 const FIXTURE_NOTE = SLICE9_FIXTURE_NOTE;
 
@@ -19,7 +20,7 @@ function sourceRefOf(input) {
   return {
     rgmSignalId: raw.rgmSignalId || null,
     rgmPrintAt: raw.rgmPrintAt || null,
-    manualNote: raw.manualNote || FIXTURE_NOTE,
+    manualNote: raw.manualNote || null,
   };
 }
 
@@ -84,7 +85,12 @@ export async function createDeskSignalFromFixture(input, stageId) {
     resolvedAt: input.resolvedAt || (isDeskResolved(resolution) ? now : null),
     setupId: input.setupId || null,
     tradeId: input.tradeId || null,
-    sourceRef: sourceRefOf(input),
+    sourceRef: sourceRefOf({
+      sourceRef: {
+        ...(input.sourceRef || {}),
+        manualNote: (input.sourceRef && input.sourceRef.manualNote) || (input.recordSource === DeskRecordSource.RGM_ADAPTER ? null : FIXTURE_NOTE),
+      },
+    }),
     snapshot: snapshotOf(input),
     note: input.note ? String(input.note).trim() : null,
     createdAt: now,
@@ -173,4 +179,80 @@ export function filterSignals(signals, filters = {}) {
       return true;
     })
     .sort((a, b) => String(b.printedAt || "").localeCompare(String(a.printedAt || "")));
+}
+
+export async function findSignalByRgmId(rgmSignalId) {
+  if (!rgmSignalId) return null;
+  const all = await listSignals();
+  const id = String(rgmSignalId);
+  return all.find((s) => s.sourceRef && String(s.sourceRef.rgmSignalId) === id) || null;
+}
+
+export async function ingestRgmPayload(payload, stageId, opts = {}) {
+  const mapped = ingestPrint(payload, { sourceAsset: opts.sourceAsset });
+  if (!mapped.ok) return { status: "invalid", error: mapped.error, payload };
+  const draft = mapped.draft;
+  const existing = await findSignalByRgmId(draft.sourceRef.rgmSignalId);
+  if (!existing) {
+    const created = await createDeskSignalFromFixture({
+      ...draft,
+      recordSource: DeskRecordSource.RGM_ADAPTER,
+      context: draft.context || Context.LIVE,
+    }, stageId);
+    return { status: "created", signal: created };
+  }
+  if (printConflict(existing, draft)) {
+    return { status: "conflict", signal: existing, error: "print distinto para el mismo rgmSignalId" };
+  }
+  const patch = {};
+  if (mapped.followup.resolution && mapped.followup.resolution !== existing.resolution) {
+    patch.resolution = mapped.followup.resolution;
+  }
+  if (mapped.followup.disposition && mapped.followup.disposition !== existing.disposition) {
+    if (existing.disposition !== Disposition.TAKEN && existing.disposition !== Disposition.IGNORED) {
+      patch.disposition = mapped.followup.disposition;
+    }
+  }
+  if (!Object.keys(patch).length) return { status: "duplicate", signal: existing };
+  const updated = await updateSignalFollowup(existing.id, patch);
+  return { status: "updated", signal: updated };
+}
+
+export async function syncRgmJsonl(text, stageId, opts = {}) {
+  const sourceAsset = opts.sourceAsset;
+  const syncFrom = opts.syncFrom;
+  if (!sourceAsset) throw new Error("sourceAsset requerido");
+  if (!syncFrom) throw new Error("syncFrom requerido");
+  const parsed = parseRgmJsonl(text);
+  const report = {
+    sourceAsset,
+    syncFrom,
+    read: parsed.read,
+    created: 0,
+    updated: 0,
+    duplicates: 0,
+    invalid: parsed.invalid.length,
+    conflicts: 0,
+    excluded: 0,
+    errors: parsed.invalid.slice(),
+  };
+  for (const row of parsed.rows) {
+    const at = rgmApplicableAt(row.payload);
+    if (!isOnOrAfterSyncFrom(at, syncFrom)) {
+      report.excluded += 1;
+      continue;
+    }
+    const result = await ingestRgmPayload(row.payload, stageId, { sourceAsset });
+    if (result.status === "created") report.created += 1;
+    else if (result.status === "updated") report.updated += 1;
+    else if (result.status === "duplicate") report.duplicates += 1;
+    else if (result.status === "conflict") {
+      report.conflicts += 1;
+      report.errors.push({ index: row.index, error: result.error, id: row.payload && row.payload.id });
+    } else {
+      report.invalid += 1;
+      report.errors.push({ index: row.index, error: result.error, id: row.payload && row.payload.id });
+    }
+  }
+  return report;
 }
