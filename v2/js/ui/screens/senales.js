@@ -1,7 +1,9 @@
 import { el } from "../render.js";
-import { listStageSignals } from "../../domain/signal.js";
+import { listStageSignals, syncRgmJsonl } from "../../domain/signal.js";
 import { Disposition, Resolution, Direction } from "../../domain/enums.js";
-import { ROADMAP_ASSETS } from "../../config.js";
+import { ROADMAP_ASSETS, RGM_SOURCE_ASSET } from "../../config.js";
+import { getMeta, putMeta } from "../../storage/repos/meta.js";
+import { nowIso } from "../../domain/ids.js";
 import { go } from "../router.js";
 
 function qs(query) {
@@ -33,6 +35,7 @@ export async function renderSenales(ctx) {
     from: q.from || "",
     to: q.to || "",
   };
+  const meta = await getMeta();
   const rows = await listStageSignals(ctx.stage.id, filters);
   const asset = select(filters.asset, [["", "asset"], ...ROADMAP_ASSETS.map((a) => [a.id, a.label])]);
   const direction = select(filters.direction, [["", "dir"], ...Object.values(Direction).map((d) => [d, d])]);
@@ -65,6 +68,60 @@ export async function renderSenales(ctx) {
       return item;
     })
     : [el("p", { className: "empty", text: "No hay señales en esta etapa." })];
+  const rgm = meta && meta.rgmSync ? meta.rgmSync : {};
+  const syncFrom = el("input", { className: "input slim", type: "datetime-local", value: rgm.syncFromLocal || "" });
+  const file = el("input", { className: "input", type: "file", accept: ".jsonl,.json,.txt,application/json" });
+  file.style.display = "none";
+  const syncErr = el("p", { className: "err", text: "" });
+  const syncBtn = el("button", { type: "button", text: "Sincronizar RGM" });
+  syncBtn.addEventListener("click", () => {
+    syncErr.textContent = "";
+    if (!syncFrom.value) {
+      syncErr.textContent = "Definí syncFrom antes de sincronizar.";
+      return;
+    }
+    file.click();
+  });
+  file.addEventListener("change", async () => {
+    const chosen = file.files && file.files[0];
+    file.value = "";
+    if (!chosen) return;
+    if (!syncFrom.value) {
+      syncErr.textContent = "Definí syncFrom antes de sincronizar.";
+      return;
+    }
+    try {
+      const text = await chosen.text();
+      const report = await syncRgmJsonl(text, ctx.stage.id, {
+        sourceAsset: RGM_SOURCE_ASSET,
+        syncFrom: new Date(syncFrom.value).toISOString(),
+      });
+      await putMeta({
+        ...meta,
+        rgmSync: {
+          sourceAsset: RGM_SOURCE_ASSET,
+          fileName: chosen.name,
+          syncFrom: report.syncFrom,
+          syncFromLocal: syncFrom.value,
+          lastSyncAt: nowIso(),
+          report,
+        },
+      });
+      go("senales" + qs(filters));
+    } catch (e) {
+      syncErr.textContent = e.message;
+    }
+  });
+  const report = rgm.report;
+  const syncMeta = [
+    el("p", { className: "meta", text: `sourceAsset ${RGM_SOURCE_ASSET}` }),
+    el("p", { className: "meta", text: `archivo ${rgm.fileName || "—"}` }),
+    el("p", { className: "meta", text: `syncFrom ${rgm.syncFrom || "—"}` }),
+    el("p", { className: "meta", text: `última sync ${rgm.lastSyncAt || "—"}` }),
+  ];
+  if (report) {
+    syncMeta.push(el("p", { className: "meta", text: `leídas ${report.read} · nuevas ${report.created} · actualizadas ${report.updated} · duplicadas ${report.duplicates} · inválidas ${report.invalid} · conflictos ${report.conflicts} · excluidas ${report.excluded}` }));
+  }
   return [
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: "Universo Desk · stage activa" }),
@@ -73,6 +130,16 @@ export async function renderSenales(ctx) {
       el("div", { className: "chips filters" }, [asset, direction, disposition, resolution, from, to]),
       el("p", { className: "meta", text: `${rows.length} señales` }),
       el("div", { className: "list" }, list),
+    ]),
+    el("section", { className: "panel" }, [
+      el("p", { className: "kicker", text: "RGM · lectura local" }),
+      el("h2", { text: "Sincronizar RGM" }),
+      el("p", { className: "hint", text: "Elegí shadow-live.jsonl. El Journal solo lee. No escribe ese archivo." }),
+      el("label", { className: "field" }, [el("span", { text: "syncFrom" }), syncFrom]),
+      file,
+      el("div", { className: "row-actions" }, [syncBtn]),
+      syncErr,
+      ...syncMeta,
     ]),
   ];
 }
