@@ -2,6 +2,17 @@ import { ensureJournalSeed } from "./domain/stage.js";
 import { downloadExport } from "./services/backup.js";
 import { paint, currentRoute, routeList } from "./ui/router.js";
 
+function retireLegacyWorkers() {
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((reg) => { reg.unregister(); });
+    }).catch(() => {});
+  }
+  if (window.caches && caches.keys) {
+    caches.keys().then((keys) => keys.forEach((key) => caches.delete(key))).catch(() => {});
+  }
+}
+
 function warnFileProtocol() {
   if (location.protocol === "file:") {
     const bar = document.getElementById("file-warning");
@@ -42,6 +53,7 @@ function bindNav() {
 
 export async function boot() {
   warnFileProtocol();
+  retireLegacyWorkers();
   bindNav();
   const ctx = await ensureJournalSeed();
   const stageLabel = document.getElementById("stage-label");
