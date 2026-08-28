@@ -1,6 +1,7 @@
 import { setMain } from "./render.js";
 import { renderHoy } from "./screens/hoy.js";
-import { renderPlaceholder } from "./screens/placeholder.js";
+import { renderSenales } from "./screens/senales.js";
+import { renderSignalDetail } from "./screens/signal-detail.js";
 import { renderNuevo } from "./screens/nuevo.js";
 import { renderEstudio } from "./screens/estudio.js";
 import { renderObservationDetail } from "./screens/observation-detail.js";
@@ -89,7 +90,11 @@ export async function paint(ctx) {
     nodes = await renderNumeros(viewCtx);
   } else if (parsed.name === "senales") {
     title = "Señales";
-    nodes = renderPlaceholder("Señales");
+    nodes = await renderSenales(viewCtx);
+  } else if (parsed.name === "senal") {
+    title = "Señal";
+    nav = "senales";
+    nodes = await renderSignalDetail(viewCtx);
   } else if (parsed.name === "cuentas") {
     title = "Cuentas";
     nodes = await renderCuentas(viewCtx);
