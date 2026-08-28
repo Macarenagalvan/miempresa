@@ -59,7 +59,7 @@ async function run() {
   }
 
   const nSignalsBeforeAdapter = (await listSignals()).length;
-  ingestPrint({ id: "rgm-no-write", side: "LONG", alert_t: "2026-08-27T12:00:00.000Z" }, { sourceAsset: "SP500" });
+  ingestPrint({ id: "rgm-no-write", side: "LONG", alert_t: "2026-08-27T12:00:00.000Z" }, { sourceAsset: "SP500", sourceContext: "LIVE" });
   assert("adapter map no escribe IDB", (await listSignals()).length === nSignalsBeforeAdapter);
   assert("no alta manual de producto", typeof signalApi.createDeskSignal !== "function");
   assert("alta solo via fixture/domain path", typeof createDeskSignalFromFixture === "function");
