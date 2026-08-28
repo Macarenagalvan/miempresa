@@ -35,6 +35,20 @@ export const MovementType = Object.freeze({
   ADJUSTMENT: "ADJUSTMENT",
 });
 
+export const ChallengeStatus = Object.freeze({
+  ACTIVE: "ACTIVE",
+  PHASE1_PASSED: "PHASE1_PASSED",
+  FUNDED: "FUNDED",
+  FAILED: "FAILED",
+  REFUNDED: "REFUNDED",
+  CANCELLED: "CANCELLED",
+});
+
+export const PayoutKind = Object.freeze({
+  PAYOUT: "PAYOUT",
+  REFUND: "REFUND",
+});
+
 export const Direction = Object.freeze({
   LONG: "LONG",
   SHORT: "SHORT",
