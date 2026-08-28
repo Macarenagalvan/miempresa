@@ -22,6 +22,8 @@ import {
   MovementType,
   ChallengeStatus,
   PayoutKind,
+  Disposition,
+  Resolution,
 } from "./enums.js";
 
 export function assertMeta(meta) {
@@ -245,6 +247,7 @@ export function universeContexts(universe) {
   if (universe === "REAL") return REAL_CONTEXTS.slice();
   if (universe === "DEMO") return [Context.DEMO];
   if (universe === "BACKTEST") return [Context.BACKTEST];
+  if (universe === "DESK") return [];
   return null;
 }
 
@@ -335,4 +338,45 @@ export function assertPayout(p) {
 
 export function isPayoutLive(p) {
   return Boolean(p && p.lifecycle !== Lifecycle.VOID && !p.voidedAt);
+}
+
+export const DESK_PRINT_KEYS = Object.freeze([
+  "asset",
+  "brokerSymbol",
+  "direction",
+  "printedAt",
+  "sourceRef",
+  "snapshot",
+  "recordSource",
+  "context",
+]);
+
+export function isDeskResolved(resolution) {
+  return resolution === Resolution.TP || resolution === Resolution.SL || resolution === Resolution.MISSED;
+}
+
+export function assertDeskSignal(sig) {
+  if (!sig || !sig.id) throw new Error("signal.id requerido");
+  if (!sig.stageId) throw new Error("signal.stageId requerido");
+  if (!normalizeAsset(sig.asset)) throw new Error("asset requerido");
+  if (!Object.values(Direction).includes(sig.direction)) throw new Error("direction requerida");
+  if (!sig.printedAt) throw new Error("printedAt requerido");
+  if (!Object.values(Disposition).includes(sig.disposition)) throw new Error("disposition inválida");
+  if (!Object.values(Resolution).includes(sig.resolution)) throw new Error("resolution inválida");
+  if (sig.context && !Object.values(Context).includes(sig.context)) throw new Error("context inválido");
+  if (sig.resolution === Resolution.OPEN && sig.resolvedAt) {
+    throw new Error("OPEN no lleva resolvedAt");
+  }
+  if (isDeskResolved(sig.resolution) && !sig.resolvedAt) {
+    throw new Error("resolvedAt requerido si no es OPEN");
+  }
+}
+
+export function assertPrintImmutable(current, next) {
+  if (!current || !next) throw new Error("signal requerido");
+  for (const key of DESK_PRINT_KEYS) {
+    if (JSON.stringify(current[key] ?? null) !== JSON.stringify(next[key] ?? null)) {
+      throw new Error("print original inmutable: " + key);
+    }
+  }
 }
