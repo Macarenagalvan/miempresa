@@ -10,6 +10,8 @@ import { renderTradeDetail } from "./screens/trade-detail.js";
 import { renderNumeros } from "./screens/numeros.js";
 import { renderCuentas } from "./screens/cuentas.js";
 import { renderCuentaDetail } from "./screens/cuenta-detail.js";
+import { renderFondeo } from "./screens/fondeo.js";
+import { renderChallengeDetail } from "./screens/challenge-detail.js";
 
 export function parseHash() {
   const raw = (location.hash || "#/hoy").replace(/^#\/?/, "");
@@ -97,7 +99,11 @@ export async function paint(ctx) {
     nodes = await renderCuentaDetail(viewCtx);
   } else if (parsed.name === "fondeo") {
     title = "Fondeo";
-    nodes = renderPlaceholder("Fondeo");
+    nodes = await renderFondeo(viewCtx);
+  } else if (parsed.name === "challenge") {
+    title = "Challenge";
+    nav = "fondeo";
+    nodes = await renderChallengeDetail(viewCtx);
   } else {
     title = "Hoy";
     nav = "hoy";
