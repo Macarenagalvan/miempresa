@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Journal V2 · tests</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23111111'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <style>
+    body { font-family: var(--font); background: var(--bg); color: var(--text); padding: 20px; }
+    .ok { color: #b6d38a; }
+    .fail { color: #e09084; }
+    pre { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <p id="proto"></p>
+  <pre id="out">corriendo…</pre>
+  <script type="module">
+    import { run as run0 } from "./slice0.test.js";
+    import { run as run1 } from "./slice1.test.js";
+    import { run as run2 } from "./slice2.test.js";
+    import { run as run3 } from "./slice3.test.js";
+    import { run as run4 } from "./slice4.test.js";
+    import { run as run5 } from "./slice5.test.js";
+    import { run as run6 } from "./slice6.test.js";
+    import { run as run7 } from "./slice7.test.js";
+    import { run as run8 } from "./slice8.test.js";
+    import { run as run9 } from "./slice9.test.js";
+    import { run as run10 } from "./slice10.test.js";
+    import { run as run11 } from "./slice11.test.js";
+    import { run as run12 } from "./slice12.test.js";
+    const out = document.getElementById("out");
+    Promise.resolve()
+      .then(() => run0())
+      .then(() => run1())
+      .then(() => run2())
+      .then(() => run3())
+      .then(() => run4())
+      .then(() => run5())
+      .then(() => run6())
+      .then(() => run7())
+      .then(() => run8())
+      .then(() => run9())
+      .then(() => run10())
+      .then(() => run11())
+      .then(() => run12())
+      .then(() => { console.log(out.textContent); })
+      .catch((err) => {
+        out.className = "fail";
+        out.textContent += "\nERROR " + err.message;
+        console.error(out.textContent);
+      });
+  </script>
+</body>
+</html>
