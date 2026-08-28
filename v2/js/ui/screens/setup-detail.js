@@ -84,7 +84,6 @@ function renderEvaluate(setup) {
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: "Evaluar setup" }),
       el("h1", { text: setup.asset }),
-      el("p", { className: "hint", text: "Checklist DEMO / test only. No es el Trading System ni el Validator." }),
       ...form.nodes,
       err,
       save,

@@ -93,7 +93,7 @@ export function evaluateFields(setup) {
       field("plannedSL", plannedSl),
       field("plannedTP", plannedTp),
       el("p", { className: "hint", text: "plannedRR se calcula. No se tipea." }),
-      field("Checklist (fixture Slice 2, no es el Validator)", el("div", { className: "stack" }, checkNodes)),
+      field("Checklist", el("div", { className: "stack" }, checkNodes)),
       field("validationMethod", method),
       field("validatorVersion", version),
       field("verdict", verdict),
