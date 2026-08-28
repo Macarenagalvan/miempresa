@@ -160,4 +160,5 @@ export const EXPORT_COLLECTIONS = [
   "signals",
   "challenges",
   "payouts",
+  "attachments",
 ];

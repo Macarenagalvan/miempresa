@@ -30,9 +30,36 @@ export async function withStores(storeNames, mode, fn) {
   const db = await openDb();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(storeNames, mode);
-    tx.onerror = () => reject(tx.error);
-    tx.onabort = () => reject(tx.error || new Error("transacción abortada"));
-    Promise.resolve(fn(tx)).then(resolve, reject);
+    let settled = false;
+    const fail = (err) => {
+      if (settled) return;
+      settled = true;
+      reject(err);
+    };
+    const succeed = (value) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+    tx.onerror = () => fail(tx.error);
+    tx.onabort = () => fail(tx.error || new Error("transacción abortada"));
+    let fnValue;
+    try {
+      fnValue = fn(tx);
+    } catch (err) {
+      try { tx.abort(); } catch (_) { /* ya abortada */ }
+      fail(err);
+      return;
+    }
+    tx.oncomplete = () => succeed(fnValue);
+    if (fnValue && typeof fnValue.then === "function") {
+      fnValue.then((value) => {
+        fnValue = value;
+      }, (err) => {
+        try { tx.abort(); } catch (_) { /* ya abortada */ }
+        fail(err);
+      });
+    }
   });
 }
 
