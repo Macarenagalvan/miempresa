@@ -13,6 +13,7 @@ import { renderCuentas } from "./screens/cuentas.js";
 import { renderCuentaDetail } from "./screens/cuenta-detail.js";
 import { renderFondeo } from "./screens/fondeo.js";
 import { renderChallengeDetail } from "./screens/challenge-detail.js";
+import { renderSistema } from "./screens/sistema.js";
 
 export function parseHash() {
   const raw = (location.hash || "#/hoy").replace(/^#\/?/, "");
@@ -51,6 +52,7 @@ export function routeList() {
     senales: true,
     cuentas: true,
     fondeo: true,
+    sistema: true,
   };
 }
 
@@ -109,6 +111,10 @@ export async function paint(ctx) {
     title = "Challenge";
     nav = "fondeo";
     nodes = await renderChallengeDetail(viewCtx);
+  } else if (parsed.name === "sistema") {
+    title = "Sistema";
+    nav = "sistema";
+    nodes = await renderSistema(viewCtx);
   } else {
     title = "Hoy";
     nav = "hoy";
