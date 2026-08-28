@@ -8,6 +8,7 @@ import {
 import { getAccount, putAccount, listAccounts } from "../storage/repos/accounts.js";
 import { listMovements } from "../storage/repos/movements.js";
 import { getMeta, putMeta } from "../storage/repos/meta.js";
+import { linkAccountToChallenge } from "./challenge.js";
 
 export function accountBalance(account, movements) {
   return balanceOf(account, movements);
@@ -30,13 +31,17 @@ export async function createAccount(input, stageId) {
     initialAmount: initial,
     broker: null,
     mt5Login: null,
-    challengeId: null,
+    challengeId: input.challengeId || null,
     status: AccountStatus.ACTIVE,
     createdAt: now,
     updatedAt: now,
   };
   assertAccount(account);
   await putAccount(account);
+  if (account.challengeId) {
+    await linkAccountToChallenge(account.id, account.challengeId);
+    return getAccount(account.id);
+  }
   return account;
 }
 
