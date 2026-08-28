@@ -3,6 +3,7 @@ import { listStageTrades } from "../../domain/trade.js";
 import { asrStatusLabel, isAsrPending, listStageAsrs } from "../../domain/asr.js";
 import { filterTrades, realizedR } from "../../domain/stats.js";
 import { Context, Strategy, Direction, Lifecycle, BlueVariant } from "../../domain/enums.js";
+import { listStageAccounts } from "../../domain/account.js";
 import { ROADMAP_ASSETS, SESSIONS } from "../../config.js";
 import { go } from "../router.js";
 
@@ -22,9 +23,11 @@ function select(current, options) {
 
 export async function renderHistorial(ctx) {
   const q = ctx.route.query || {};
-  const raw = await listStageTrades(ctx.stage.id, { context: Context.BACKTEST, includeVoid: false });
+  const raw = await listStageTrades(ctx.stage.id, { includeVoid: false });
+  const accounts = await listStageAccounts(ctx.stage.id, { includeArchived: true });
   const filters = {
-    context: Context.BACKTEST,
+    context: q.context || "",
+    accountId: q.account || "",
     stageId: ctx.stage.id,
     asset: q.asset || "",
     strategy: q.strategy || "",
@@ -41,6 +44,8 @@ export async function renderHistorial(ctx) {
     asrByTrade[row.tradeId] = row;
   }
   const pendingCount = rows.filter((t) => isAsrPending(t, asrByTrade[t.id])).length;
+  const ctxSel = select(filters.context, [["", "todos los context"], [Context.BACKTEST, "BACKTEST"], [Context.DEMO, "DEMO"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"]]);
+  const accSel = select(filters.accountId, [["", "todas las accounts"], ...accounts.map((a) => [a.id, a.name])]);
   const asset = select(filters.asset, [["", "asset"], ...ROADMAP_ASSETS.map((a) => [a.id, a.label])]);
   const strategy = select(filters.strategy, [["", "strategy"], ...Object.values(Strategy).map((s) => [s, s])]);
   const variant = select(filters.variant, [["", "variant"], ...Object.values(BlueVariant).map((v) => [v, v])]);
@@ -51,12 +56,13 @@ export async function renderHistorial(ctx) {
   const to = el("input", { className: "input slim", type: "date", value: filters.to });
   function apply() {
     go("historial" + qs({
+      context: ctxSel.value, account: accSel.value,
       asset: asset.value, strategy: strategy.value, variant: variant.value,
       direction: direction.value, session: session.value, lifecycle: lifecycle.value,
       from: from.value, to: to.value,
     }));
   }
-  [asset, strategy, variant, direction, session, lifecycle, from, to].forEach((n) => n.addEventListener("change", apply));
+  [ctxSel, accSel, asset, strategy, variant, direction, session, lifecycle, from, to].forEach((n) => n.addEventListener("change", apply));
   const list = rows.length
     ? rows.map((t) => {
       const when = (t.closedAt || t.openedAt || "").slice(0, 10);
@@ -70,6 +76,7 @@ export async function renderHistorial(ctx) {
       const item = el("button", { type: "button", className: "row hist" }, [
         el("span", { text: when }),
         el("strong", { text: t.asset }),
+        el("span", { text: t.context === "PROP_CHALLENGE" ? "PROP" : t.context }),
         el("span", { text: `${t.direction} · ${t.strategy}` }),
         el("span", { text: t.lifecycle }),
         el("span", { text: t.result || "—" }),
@@ -80,12 +87,12 @@ export async function renderHistorial(ctx) {
       item.addEventListener("click", () => go("trade/" + t.id));
       return item;
     })
-    : [el("p", { className: "empty", text: "0 trades BACKTEST con este filtro." })];
+    : [el("p", { className: "empty", text: "0 trades con este filtro." })];
   return [
     el("section", { className: "panel" }, [
       el("h1", { text: "Historial" }),
-      el("p", { className: "meta", text: "BACKTEST · stage activa. VOID fuera." }),
-      el("div", { className: "chips filters" }, [asset, strategy, variant, direction, session, lifecycle, from, to]),
+      el("p", { className: "meta", text: "Stage activa. VOID fuera. Context y Account visibles." }),
+      el("div", { className: "chips filters" }, [ctxSel, accSel, asset, strategy, variant, direction, session, lifecycle, from, to]),
       el("p", { className: "meta", text: `${rows.length} filas · ${pendingCount} ASR pendiente` }),
       el("div", { className: "list" }, list),
     ]),

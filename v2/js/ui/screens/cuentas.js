@@ -4,10 +4,12 @@ import { AccountContext, Currency } from "../../domain/enums.js";
 import {
   createAccount,
   listStageAccounts,
+  setActiveAccount,
   getActiveAccount,
   accountBalance,
 } from "../../domain/account.js";
 import { listMovements } from "../../storage/repos/movements.js";
+import { listTrades } from "../../storage/repos/trades.js";
 import { go } from "../router.js";
 
 function contextLabel(ctx) {
@@ -20,9 +22,10 @@ export async function renderCuentas(ctx) {
   const rows = await listStageAccounts(ctx.stage.id);
   const active = await getActiveAccount();
   const movements = await listMovements();
+  const trades = await listTrades();
   const list = rows.length
     ? rows.map((a) => {
-      const bal = accountBalance(a, movements);
+      const bal = accountBalance(a, movements, trades);
       const isOn = active && active.id === a.id;
       const item = el("button", { type: "button", className: "row hist" }, [
         el("strong", { text: a.name }),
