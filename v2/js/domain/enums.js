@@ -69,6 +69,11 @@ export const DeskRecordSource = Object.freeze({
   RGM_ADAPTER: "RGM_ADAPTER",
 });
 
+export const TradeRecordSource = Object.freeze({
+  MANUAL: "MANUAL",
+  MT5_EA: "MT5_EA",
+});
+
 export const Direction = Object.freeze({
   LONG: "LONG",
   SHORT: "SHORT",
