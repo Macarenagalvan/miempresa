@@ -24,6 +24,7 @@ import {
   PayoutKind,
   Disposition,
   Resolution,
+  DeskRecordSource,
 } from "./enums.js";
 
 export function assertMeta(meta) {
@@ -361,6 +362,9 @@ export function assertDeskSignal(sig) {
   if (!normalizeAsset(sig.asset)) throw new Error("asset requerido");
   if (!Object.values(Direction).includes(sig.direction)) throw new Error("direction requerida");
   if (!sig.printedAt) throw new Error("printedAt requerido");
+  if (!Object.values(DeskRecordSource).includes(sig.recordSource)) {
+    throw new Error("recordSource inválido");
+  }
   if (!Object.values(Disposition).includes(sig.disposition)) throw new Error("disposition inválida");
   if (!Object.values(Resolution).includes(sig.resolution)) throw new Error("resolution inválida");
   if (sig.context && !Object.values(Context).includes(sig.context)) throw new Error("context inválido");
