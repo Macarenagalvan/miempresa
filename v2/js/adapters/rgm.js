@@ -59,6 +59,8 @@ export function toIsoTime(value) {
 }
 
 export function mapRgmSide(side) {
+  // Contrato real verificado: side = LONG y side = SHORT.
+  // BUY/SELL se aceptan defensivamente; no aparecen en las muestras reales.
   const raw = String(side || "").trim().toUpperCase();
   if (raw === "LONG" || raw === "BUY") return Direction.LONG;
   if (raw === "SHORT" || raw === "SELL") return Direction.SHORT;
