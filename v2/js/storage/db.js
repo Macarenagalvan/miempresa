@@ -26,6 +26,16 @@ export async function withStore(storeName, mode, fn) {
   });
 }
 
+export async function withStores(storeNames, mode, fn) {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeNames, mode);
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new Error("transacción abortada"));
+    Promise.resolve(fn(tx)).then(resolve, reject);
+  });
+}
+
 export function requestToPromise(request) {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
