@@ -46,7 +46,7 @@ export async function renderSignalDetail(ctx) {
   });
   const snap = sig.snapshot || {};
   return [
-    el("section", { className: "panel" }, [
+    el("section", { className: "panel print-panel" }, [
       el("p", { className: "kicker", text: "PRINT ORIGINAL · inmutable" }),
       el("h1", { text: `${sig.asset} ${sig.direction}` }),
       el("p", { className: "meta", text: `printedAt ${sig.printedAt}` }),
