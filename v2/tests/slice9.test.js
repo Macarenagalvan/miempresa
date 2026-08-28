@@ -5,7 +5,7 @@ import { SLICE9_DESK_FIXTURES, SLICE9_FIXTURE_NOTE } from "../js/fixtures/desk-s
 import { createSetup } from "../js/domain/setup.js";
 import { createTrade, closeTrade } from "../js/domain/trade.js";
 import { compute, computeDesk } from "../js/domain/stats.js";
-import { Disposition, Resolution } from "../js/domain/enums.js";
+import { Disposition, Resolution, DeskRecordSource } from "../js/domain/enums.js";
 import { listTrades } from "../js/storage/repos/trades.js";
 import { listSetups } from "../js/storage/repos/setups.js";
 import { listSignals } from "../js/storage/repos/signals.js";
@@ -29,7 +29,34 @@ async function run() {
 
   assert("crear Signal mediante fixture", created["taken-tp"].id && created["taken-tp"].asset === "EURUSD");
   assert("fixture marcada", created["taken-tp"].sourceRef.manualNote === SLICE9_FIXTURE_NOTE);
-  assert("recordSource MANUAL", created["taken-tp"].recordSource === "MANUAL");
+  assert("recordSource MANUAL", created["taken-tp"].recordSource === DeskRecordSource.MANUAL);
+
+  const viaAdapter = await createDeskSignalFromFixture({
+    asset: "EURUSD",
+    direction: "LONG",
+    context: "LIVE",
+    printedAt: "2026-08-27T10:00:00.000Z",
+    disposition: "NONE",
+    resolution: "OPEN",
+    recordSource: DeskRecordSource.RGM_ADAPTER,
+    sourceRef: { rgmSignalId: "rgm-adapter-ok", rgmPrintAt: "2026-08-27T10:00:00.000Z", manualNote: SLICE9_FIXTURE_NOTE },
+  }, stage.id);
+  assert("DeskSignal acepta RGM_ADAPTER", viaAdapter.recordSource === DeskRecordSource.RGM_ADAPTER);
+  try {
+    await createDeskSignalFromFixture({
+      asset: "EURUSD",
+      direction: "SHORT",
+      context: "LIVE",
+      printedAt: "2026-08-27T10:01:00.000Z",
+      disposition: "NONE",
+      resolution: "OPEN",
+      recordSource: "MT5_EA",
+      sourceRef: { manualNote: SLICE9_FIXTURE_NOTE },
+    }, stage.id);
+    assert("DeskSignal rechaza MT5_EA", false);
+  } catch (e) {
+    assert("DeskSignal rechaza MT5_EA", /recordSource/.test(e.message));
+  }
 
   try {
     ingestPrint();
