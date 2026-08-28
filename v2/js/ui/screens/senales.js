@@ -1,5 +1,5 @@
 import { el } from "../render.js";
-import { listStageSignals, loadSlice9Fixtures } from "../../domain/signal.js";
+import { listStageSignals } from "../../domain/signal.js";
 import { Disposition, Resolution, Direction } from "../../domain/enums.js";
 import { ROADMAP_ASSETS } from "../../config.js";
 import { go } from "../router.js";
@@ -65,11 +65,6 @@ export async function renderSenales(ctx) {
       return item;
     })
     : [el("p", { className: "empty", text: "No hay señales en esta etapa." })];
-  const loadFx = el("button", { type: "button", className: "ghost", text: "Cargar fixtures Slice 9 (test)" });
-  loadFx.addEventListener("click", async () => {
-    await loadSlice9Fixtures(ctx.stage.id);
-    go("senales");
-  });
   return [
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: "Universo Desk · stage activa" }),
@@ -77,8 +72,6 @@ export async function renderSenales(ctx) {
       el("p", { className: "meta", text: "Registro del print. No es el motor RGM. Sin alta manual de producto." }),
       el("div", { className: "chips filters" }, [asset, direction, disposition, resolution, from, to]),
       el("p", { className: "meta", text: `${rows.length} señales` }),
-      rows.length === 0 ? el("p", { className: "hint", text: "Los fixtures de test no se siembran solos. No son prints reales." }) : null,
-      rows.length === 0 ? loadFx : null,
       el("div", { className: "list" }, list),
     ]),
   ];
