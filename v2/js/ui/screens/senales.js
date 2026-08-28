@@ -56,7 +56,8 @@ export async function renderSenales(ctx) {
   [asset, direction, disposition, resolution, from, to].forEach((n) => n.addEventListener("change", apply));
   const list = rows.length
     ? rows.map((s) => {
-      const item = el("button", { type: "button", className: "row hist" }, [
+      const resClass = s.resolution ? " res-" + String(s.resolution).toLowerCase() : "";
+      const item = el("button", { type: "button", className: "row hist" + resClass }, [
         el("span", { text: String(s.printedAt || "").slice(0, 16).replace("T", " ") }),
         el("strong", { text: s.asset }),
         el("span", { text: s.direction }),
@@ -132,7 +133,7 @@ export async function renderSenales(ctx) {
       el("p", { className: "meta", text: "Registro del print. No es el motor RGM. Sin alta manual de producto." }),
       el("div", { className: "chips filters" }, [asset, direction, disposition, resolution, from, to]),
       el("p", { className: "meta", text: `${rows.length} señales` }),
-      el("div", { className: "list" }, list),
+      el("div", { className: "list table-wrap" }, list),
     ]),
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: "RGM · lectura local" }),

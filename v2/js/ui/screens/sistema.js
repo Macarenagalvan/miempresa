@@ -39,7 +39,7 @@ export async function renderSistema() {
   const protectCheck = el("input", { type: "checkbox" });
   protectCheck.disabled = true;
 
-  const restoreBtn = el("button", { type: "button", text: "Confirmar reemplazo" });
+  const restoreBtn = el("button", { type: "button", className: "danger", text: "Confirmar reemplazo" });
   restoreBtn.disabled = true;
 
   function refreshRestoreGate() {
@@ -163,7 +163,7 @@ export async function renderSistema() {
       el("p", { className: "hint", text: "Solo backup nativo Journal V2. No migra V1, CSV MT5 ni JSONL RGM." }),
       el("div", { className: "row-actions" }, [exportBtn]),
     ]),
-    el("section", { className: "panel" }, [
+    el("section", { className: "panel panel-danger" }, [
       el("p", { className: "kicker", text: "Operación destructiva" }),
       el("h2", { text: "Restaurar backup" }),
       status,
