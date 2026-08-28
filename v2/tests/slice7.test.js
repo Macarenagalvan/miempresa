@@ -67,7 +67,7 @@ async function run() {
   await linkAccountToChallenge(evalAcc.id, ch.id);
   const linked = await getChallenge(ch.id);
   assert("vincular Account existente", (await accountsForChallenge(ch.id)).some((a) => a.id === evalAcc.id));
-  assert("vínculo también en Challenge.accountId", linked.accountId === evalAcc.id);
+  assert("relación solo Account.challengeId", linked.accountId == null);
   assert("Account.challengeId", (await accountsForChallenge(ch.id))[0].challengeId === ch.id);
 
   const fundedAcc = await createAccount({
@@ -79,7 +79,7 @@ async function run() {
   }, stage.id);
   const accs = await accountsForChallenge(ch.id);
   assert("1 Challenge → N Accounts", accs.length === 2 && accs.some((a) => a.id === fundedAcc.id));
-  assert("funded no pisa accountId primero", (await getChallenge(ch.id)).accountId === evalAcc.id);
+  assert("Challenge.accountId no es contrato", (await getChallenge(ch.id)).accountId == null);
   assert("context FUNDED intacto", fundedAcc.context === "FUNDED");
   assert("eval sigue PROP_CHALLENGE", evalAcc.context === "PROP_CHALLENGE" || (accs.find((a) => a.id === evalAcc.id).context === "PROP_CHALLENGE"));
 
