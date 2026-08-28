@@ -10,7 +10,7 @@ export async function renderNuevo(ctx) {
   if (ctx.route.rest === "setup" || ctx.route.rest.startsWith("setup/")) return renderNuevoSetup(ctx);
   if (ctx.route.rest === "trade" || ctx.route.rest.startsWith("trade/")) return renderNuevoTrade(ctx);
   return [
-    el("section", { className: "panel" }, [
+    el("section", { className: "panel form" }, [
       el("h1", { text: "Nuevo" }),
       el("p", { className: "meta", text: "¿Qué querés registrar?" }),
       el("div", { className: "stack" }, [
@@ -53,7 +53,7 @@ function renderNuevaObservacion(ctx) {
   });
 
   return [
-    el("section", { className: "panel" }, [
+    el("section", { className: "panel form" }, [
       el("p", { className: "kicker", text: "Nuevo" }),
       el("h1", { text: "Observación" }),
       field("Asset", pickerHost),

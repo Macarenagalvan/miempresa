@@ -30,7 +30,7 @@ export async function renderNuevoSetup(ctx) {
   });
 
   return [
-    el("section", { className: "panel" }, [
+    el("section", { className: "panel form" }, [
       el("p", { className: "kicker", text: "Nuevo" }),
       el("h1", { text: "Setup" }),
       fromObs

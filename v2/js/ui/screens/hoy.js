@@ -24,11 +24,11 @@ export async function renderHoy(ctx) {
 
   const openList = open.length
     ? open.map((t) => {
-      const row = el("button", { type: "button", className: "row hist" }, [
+      const row = el("button", { type: "button", className: "row hist is-open" }, [
         el("strong", { text: t.asset }),
         el("span", { text: contextLabel(t.context) }),
         el("span", { text: t.direction }),
-        el("span", { text: String(t.entry) }),
+        el("span", { className: "num", text: String(t.entry) }),
       ]);
       row.addEventListener("click", () => go("trade/" + t.id));
       return row;
@@ -36,12 +36,13 @@ export async function renderHoy(ctx) {
     : [el("p", { className: "empty", text: "No hay operaciones Real en esta etapa." })];
 
   const closedList = closed.map((t) => {
-    const row = el("button", { type: "button", className: "row hist" }, [
+    const tone = t.result === "WIN" ? " is-win" : t.result === "LOSS" ? " is-loss" : t.result === "BE" ? " is-be" : "";
+    const row = el("button", { type: "button", className: "row hist" + tone }, [
       el("span", { text: (t.closedAt || "").slice(0, 10) }),
       el("strong", { text: t.asset }),
       el("span", { text: contextLabel(t.context) }),
       el("span", { text: t.result || "—" }),
-      el("span", { text: t.netPnl == null ? "—" : String(t.netPnl) }),
+      el("span", { className: "num", text: t.netPnl == null ? "—" : String(t.netPnl) }),
     ]);
     row.addEventListener("click", () => go("trade/" + t.id));
     return row;
@@ -52,14 +53,14 @@ export async function renderHoy(ctx) {
       el("p", { className: "kicker", text: "Universo Real · stage activa" }),
       el("h1", { text: "Hoy" }),
       el("p", { className: "meta", text: `Stage: ${stageName}` }),
-      el("p", { className: "meta", text: balLine }),
+      el("p", { className: "meta num", text: balLine }),
       el("p", { className: "hint", text: "Real = LIVE / PROP / FUNDED. Demo y Backtest no completan este tablero." }),
       el("h2", { text: "Abiertas" }),
-      el("div", { className: "list" }, openList),
+      el("div", { className: "list table-wrap" }, openList),
       closed.length
         ? el("h2", { text: "Últimos cierres Real" })
         : null,
-      closed.length ? el("div", { className: "list" }, closedList) : null,
+      closed.length ? el("div", { className: "list table-wrap" }, closedList) : null,
       el("div", { className: "row-actions" }, [
         el("button", { type: "button", text: "Nuevo", onclick: () => go("nuevo") }),
       ]),
