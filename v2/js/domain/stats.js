@@ -1,5 +1,6 @@
-import { Context, Lifecycle, Result } from "./enums.js";
-import { computeRrRealized, hasPartialsRecorded, normalizeAsset, universeContexts } from "./integrity.js";
+import { Context, Lifecycle, Result, Disposition, Resolution } from "./enums.js";
+import { computeRrRealized, hasPartialsRecorded, isDeskResolved, normalizeAsset, universeContexts } from "./integrity.js";
+import { filterSignals } from "./signal.js";
 
 export function realizedR(trade) {
   if (!trade || trade.lifecycle !== Lifecycle.CLOSED) return null;
@@ -148,5 +149,50 @@ export function compute(trades, filters = {}) {
     maxDrawdown: nMoney ? drawdown(moneyOrdered) : null,
     maxConsecWins: nClosed ? maxConsecWins : null,
     maxConsecLosses: nClosed ? maxConsecLosses : null,
+  };
+}
+
+export function computeDesk(signals, filters = {}) {
+  const applied = {
+    universe: "DESK",
+    stageId: filters.stageId || null,
+    asset: filters.asset || null,
+    direction: filters.direction || null,
+    disposition: filters.disposition || null,
+    resolution: filters.resolution || null,
+    from: filters.from || null,
+    to: filters.to || null,
+  };
+  const scoped = filterSignals(signals, applied);
+  const n = scoped.length;
+  const nOpen = scoped.filter((s) => s.resolution === Resolution.OPEN).length;
+  const nTp = scoped.filter((s) => s.resolution === Resolution.TP).length;
+  const nSl = scoped.filter((s) => s.resolution === Resolution.SL).length;
+  const nMissed = scoped.filter((s) => s.resolution === Resolution.MISSED).length;
+  const nResolved = scoped.filter((s) => isDeskResolved(s.resolution)).length;
+  const nTaken = scoped.filter((s) => s.disposition === Disposition.TAKEN).length;
+  const nIgnored = scoped.filter((s) => s.disposition === Disposition.IGNORED).length;
+  const nSkipped = scoped.filter((s) => s.disposition === Disposition.SKIPPED_OPEN_POSITION).length;
+  const nStale = scoped.filter((s) => s.disposition === Disposition.STALE).length;
+  const nNone = scoped.filter((s) => s.disposition === Disposition.NONE).length;
+  const decided = nTaken + nIgnored;
+  const hitDen = nTp + nSl;
+  return {
+    filters: applied,
+    printed: n,
+    nOpen,
+    nTp,
+    nSl,
+    nMissed,
+    nResolved,
+    nTaken,
+    nIgnored,
+    nSkipped,
+    nStale,
+    nNone,
+    resolutionRate: n ? nResolved / n : null,
+    hitRate: hitDen ? nTp / hitDen : null,
+    takeRate: decided ? nTaken / decided : null,
+    skipRate: n ? nSkipped / n : null,
   };
 }
