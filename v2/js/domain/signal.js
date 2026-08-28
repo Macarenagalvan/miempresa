@@ -189,7 +189,7 @@ export async function findSignalByRgmId(rgmSignalId) {
 }
 
 export async function ingestRgmPayload(payload, stageId, opts = {}) {
-  const mapped = ingestPrint(payload, { sourceAsset: opts.sourceAsset });
+  const mapped = ingestPrint(payload, { sourceAsset: opts.sourceAsset, sourceContext: opts.sourceContext });
   if (!mapped.ok) return { status: "invalid", error: mapped.error, payload };
   const draft = mapped.draft;
   const existing = await findSignalByRgmId(draft.sourceRef.rgmSignalId);
@@ -197,7 +197,7 @@ export async function ingestRgmPayload(payload, stageId, opts = {}) {
     const created = await createDeskSignalFromFixture({
       ...draft,
       recordSource: DeskRecordSource.RGM_ADAPTER,
-      context: draft.context || Context.LIVE,
+      context: draft.context,
     }, stageId);
     return { status: "created", signal: created };
   }
@@ -220,12 +220,15 @@ export async function ingestRgmPayload(payload, stageId, opts = {}) {
 
 export async function syncRgmJsonl(text, stageId, opts = {}) {
   const sourceAsset = opts.sourceAsset;
+  const sourceContext = opts.sourceContext;
   const syncFrom = opts.syncFrom;
   if (!sourceAsset) throw new Error("sourceAsset requerido");
+  if (!sourceContext) throw new Error("sourceContext requerido");
   if (!syncFrom) throw new Error("syncFrom requerido");
   const parsed = parseRgmJsonl(text);
   const report = {
     sourceAsset,
+    sourceContext,
     syncFrom,
     read: parsed.read,
     created: 0,
@@ -242,7 +245,7 @@ export async function syncRgmJsonl(text, stageId, opts = {}) {
       report.excluded += 1;
       continue;
     }
-    const result = await ingestRgmPayload(row.payload, stageId, { sourceAsset });
+    const result = await ingestRgmPayload(row.payload, stageId, { sourceAsset, sourceContext });
     if (result.status === "created") report.created += 1;
     else if (result.status === "updated") report.updated += 1;
     else if (result.status === "duplicate") report.duplicates += 1;
