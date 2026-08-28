@@ -1,4 +1,5 @@
 export const RGM_SLICE10_SOURCE_ASSET = "SP500";
+export const RGM_SLICE10_SOURCE_CONTEXT = "LIVE";
 
 export const RGM_SLICE10_LINES = {
   openedLong: {
