@@ -73,15 +73,17 @@ export async function renderHistorial(ctx) {
       } else if (t.incompleteForR || t.hasPartials) {
         r = "R n/a";
       }
-      const item = el("button", { type: "button", className: "row hist" }, [
+      const tone = t.result === "WIN" ? " is-win" : t.result === "LOSS" ? " is-loss" : t.result === "BE" ? " is-be" : "";
+      const open = t.lifecycle === "OPEN" ? " is-open" : "";
+      const item = el("button", { type: "button", className: "row hist" + tone + open }, [
         el("span", { text: when }),
         el("strong", { text: t.asset }),
         el("span", { text: t.context === "PROP_CHALLENGE" ? "PROP" : t.context }),
         el("span", { text: `${t.direction} · ${t.strategy}` }),
         el("span", { text: t.lifecycle }),
         el("span", { text: t.result || "—" }),
-        el("span", { text: t.netPnl == null ? "—" : String(t.netPnl) }),
-        el("span", { text: r }),
+        el("span", { className: "num", text: t.netPnl == null ? "—" : String(t.netPnl) }),
+        el("span", { className: "num", text: r }),
         el("span", { text: asrStatusLabel(t, asrByTrade[t.id]) || "—" }),
       ]);
       item.addEventListener("click", () => go("trade/" + t.id));
@@ -94,7 +96,7 @@ export async function renderHistorial(ctx) {
       el("p", { className: "meta", text: "Stage activa. VOID fuera. Context y Account visibles." }),
       el("div", { className: "chips filters" }, [ctxSel, accSel, asset, strategy, variant, direction, session, lifecycle, from, to]),
       el("p", { className: "meta", text: `${rows.length} filas · ${pendingCount} ASR pendiente` }),
-      el("div", { className: "list" }, list),
+      el("div", { className: "list table-wrap" }, list),
     ]),
   ];
 }
