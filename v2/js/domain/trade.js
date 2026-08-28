@@ -1,5 +1,5 @@
 import { createId, nowIso } from "./ids.js";
-import { Context, Lifecycle, Strategy } from "./enums.js";
+import { Context, Lifecycle, Strategy, TradeRecordSource } from "./enums.js";
 import {
   assertTrade,
   assertTradeAccountPair,
@@ -12,6 +12,7 @@ import { getTrade, putTrade, listTrades } from "../storage/repos/trades.js";
 import { getSetup } from "../storage/repos/setups.js";
 import { getAccount } from "../storage/repos/accounts.js";
 import { lockSetupOnTrade } from "./setup.js";
+import { parseMt5Csv, toTradeDraft, dedupKey } from "../adapters/mt5.js";
 
 function numOrNull(v) {
   if (v === "" || v == null) return null;
@@ -61,7 +62,7 @@ export async function createTrade(input, stageId) {
   const trade = deriveTrade({
     id: createId(),
     stageId,
-    recordSource: "MANUAL",
+    recordSource: TradeRecordSource.MANUAL,
     asset: normalizeAsset(input.asset || (setup && setup.asset)),
     brokerSymbol: input.brokerSymbol ? String(input.brokerSymbol).trim() : null,
     context,
@@ -89,6 +90,7 @@ export async function createTrade(input, stageId) {
     executionQuality: null,
     note: input.note || null,
     importBatchId: null,
+    sourceRef: input.sourceRef || null,
     strategy: snap.strategy,
     style: snap.style,
     variant: snap.variant,
@@ -204,6 +206,161 @@ export async function amendClosedTrade(id, patch) {
   assertTrade(next);
   await putTrade(next);
   return next;
+}
+
+export async function findTradeByMt5Position(accountId, mt5Position) {
+  const key = dedupKey(accountId, mt5Position);
+  if (!key) return null;
+  const all = await listTrades();
+  return all.find((t) => (
+    t.accountId === accountId
+    && t.sourceRef
+    && String(t.sourceRef.mt5Position) === String(mt5Position)
+    && t.lifecycle !== Lifecycle.VOID
+  )) || null;
+}
+
+export async function importClosedMt5Trade(draft, stageId) {
+  if (!draft) throw new Error("draft MT5 requerido");
+  if (draft.recordSource !== TradeRecordSource.MT5_EA) throw new Error("recordSource MT5_EA requerido");
+  if (!draft.accountId) throw new Error("accountId requerido");
+  const account = await getAccount(draft.accountId);
+  if (!account) throw new Error("account no existe");
+  const now = nowIso();
+  const trade = deriveTrade({
+    id: createId(),
+    stageId,
+    recordSource: TradeRecordSource.MT5_EA,
+    asset: normalizeAsset(draft.asset),
+    brokerSymbol: draft.brokerSymbol ? String(draft.brokerSymbol).trim() : null,
+    context: draft.context,
+    direction: draft.direction,
+    accountId: account.id,
+    openedAt: draft.openedAt,
+    entry: numOrNull(draft.entry),
+    lifecycle: Lifecycle.CLOSED,
+    initialSL: null,
+    currentSL: null,
+    tp: null,
+    lots: numOrNull(draft.lots),
+    setupId: null,
+    deskSignalId: null,
+    session: null,
+    closedAt: draft.closedAt,
+    exit: numOrNull(draft.exit),
+    closeType: "UNKNOWN",
+    commission: null,
+    swap: null,
+    netPnl: numOrNull(draft.netPnl),
+    result: draft.result,
+    management: null,
+    hasPartials: false,
+    executionQuality: null,
+    note: null,
+    importBatchId: draft.importBatchId || null,
+    sourceRef: draft.sourceRef || null,
+    strategy: Strategy.UNCLASSIFIED,
+    style: null,
+    variant: null,
+    rrPlanned: null,
+    rrRealized: null,
+    voidedAt: null,
+    voidReason: null,
+    createdAt: now,
+    updatedAt: now,
+  });
+  assertTrade(trade);
+  assertTradeAccountPair(trade, account);
+  await putTrade(trade);
+  return trade;
+}
+
+export async function previewMt5Csv(text, opts = {}) {
+  if (!opts.accountId) throw new Error("accountId requerido");
+  if (!opts.context) throw new Error("context de Account requerido");
+  if (!opts.timeZone) throw new Error("timezone fuente requerido");
+  const parsed = parseMt5Csv(text);
+  const report = {
+    accountId: opts.accountId,
+    context: opts.context,
+    timeZone: opts.timeZone,
+    read: parsed.read,
+    created: 0,
+    duplicates: 0,
+    invalid: parsed.invalid.length,
+    unknownSymbols: 0,
+    errors: parsed.invalid.slice(),
+    drafts: [],
+  };
+  for (const row of parsed.rows) {
+    const mapped = toTradeDraft(row.rec, opts);
+    if (!mapped.ok) {
+      if (mapped.code === "UNKNOWN_SYMBOL") report.unknownSymbols += 1;
+      report.invalid += 1;
+      report.errors.push({
+        index: row.index,
+        error: mapped.error,
+        id: row.rec && row.rec.ID,
+        brokerSymbol: mapped.brokerSymbol || (row.rec && row.rec.Activo),
+      });
+      continue;
+    }
+    const existing = await findTradeByMt5Position(opts.accountId, mapped.draft.sourceRef.mt5Position);
+    if (existing) {
+      report.duplicates += 1;
+      continue;
+    }
+    report.drafts.push(mapped.draft);
+    report.created += 1;
+  }
+  return report;
+}
+
+export async function syncMt5Csv(text, stageId, opts = {}) {
+  if (!opts.accountId) throw new Error("accountId requerido");
+  if (!opts.context) throw new Error("context de Account requerido");
+  if (!opts.timeZone) throw new Error("timezone fuente requerido");
+  const account = await getAccount(opts.accountId);
+  if (!account) throw new Error("account no existe");
+  if (account.context !== opts.context) {
+    throw new Error("context incompatible con la Account");
+  }
+  const importBatchId = opts.importBatchId || createId();
+  const parsed = parseMt5Csv(text);
+  const report = {
+    accountId: account.id,
+    context: opts.context,
+    timeZone: opts.timeZone,
+    importBatchId,
+    read: parsed.read,
+    created: 0,
+    duplicates: 0,
+    invalid: parsed.invalid.length,
+    unknownSymbols: 0,
+    errors: parsed.invalid.slice(),
+  };
+  for (const row of parsed.rows) {
+    const mapped = toTradeDraft(row.rec, { ...opts, importBatchId });
+    if (!mapped.ok) {
+      if (mapped.code === "UNKNOWN_SYMBOL") report.unknownSymbols += 1;
+      report.invalid += 1;
+      report.errors.push({
+        index: row.index,
+        error: mapped.error,
+        id: row.rec && row.rec.ID,
+        brokerSymbol: mapped.brokerSymbol || (row.rec && row.rec.Activo),
+      });
+      continue;
+    }
+    const existing = await findTradeByMt5Position(account.id, mapped.draft.sourceRef.mt5Position);
+    if (existing) {
+      report.duplicates += 1;
+      continue;
+    }
+    await importClosedMt5Trade(mapped.draft, stageId);
+    report.created += 1;
+  }
+  return report;
 }
 
 export async function listStageTrades(stageId, opts = {}) {
