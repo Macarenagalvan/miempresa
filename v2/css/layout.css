@@ -69,7 +69,10 @@ h2 { font-size: 16px; margin: 20px 0 8px; }
 .clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-weight: 400; }
 .row-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .row.hist {
-  grid-template-columns: 90px 80px 1fr 80px 50px 60px 70px 110px;
+  grid-template-columns: 130px 90px 70px 110px 80px;
+}
+.row.hist.is-open {
+  border-color: var(--accent);
 }
 .check { display: flex; gap: 8px; align-items: center; font-size: 14px; }
 .filters { margin: 12px 0; }
