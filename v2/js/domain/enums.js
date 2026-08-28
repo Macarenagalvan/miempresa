@@ -49,6 +49,21 @@ export const PayoutKind = Object.freeze({
   REFUND: "REFUND",
 });
 
+export const Disposition = Object.freeze({
+  NONE: "NONE",
+  TAKEN: "TAKEN",
+  IGNORED: "IGNORED",
+  SKIPPED_OPEN_POSITION: "SKIPPED_OPEN_POSITION",
+  STALE: "STALE",
+});
+
+export const Resolution = Object.freeze({
+  OPEN: "OPEN",
+  TP: "TP",
+  SL: "SL",
+  MISSED: "MISSED",
+});
+
 export const Direction = Object.freeze({
   LONG: "LONG",
   SHORT: "SHORT",
