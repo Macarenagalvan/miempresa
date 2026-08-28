@@ -56,12 +56,15 @@ async function run() {
   const payload = await buildExportPayload();
   assert("export journalEdition v2", payload.journalEdition === "v2");
   assert("export schemaVersion 1", payload.schemaVersion === 1);
+  assert("export product Journal V2", payload.product === "Journal V2");
+  assert("export format journal-v2", payload.format === "journal-v2");
+  assert("export backupVersion 1", payload.backupVersion === 1);
   assert("export tiene exportedAt", typeof payload.exportedAt === "string" && payload.exportedAt.includes("T"));
   assert("export incluye meta y stages", Boolean(payload.meta) && Array.isArray(payload.stages) && payload.stages.length === 1);
-  for (const key of ["accounts", "movements", "observations", "setups", "trades", "asrs", "signals", "challenges", "payouts"]) {
+  for (const key of ["accounts", "movements", "observations", "setups", "trades", "asrs", "signals", "challenges", "payouts", "attachments"]) {
     assert(`export.${key} array`, Array.isArray(payload[key]));
   }
-  assert("export no incluye attachments binarios", payload.attachments == null);
+  assert("export attachments reserva vacía", Array.isArray(payload.attachments) && payload.attachments.length === 0);
 
   if (indexedDB.databases) {
     const dbs = await indexedDB.databases();
