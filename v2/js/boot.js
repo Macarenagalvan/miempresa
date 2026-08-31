@@ -1,6 +1,7 @@
 import { ensureJournalSeed } from "./domain/stage.js";
 import { downloadExport } from "./services/backup.js";
 import { paint, currentRoute, routeList } from "./ui/router.js";
+import { applyIdentity } from "./ui/identity.js";
 
 function retireLegacyWorkers() {
   if (navigator.serviceWorker) {
@@ -56,8 +57,7 @@ export async function boot() {
   retireLegacyWorkers();
   bindNav();
   const ctx = await ensureJournalSeed();
-  const stageLabel = document.getElementById("stage-label");
-  if (stageLabel) stageLabel.textContent = ctx.stage.name;
+  applyIdentity(ctx.meta, ctx.stage);
   await paint(ctx);
   window.addEventListener("hashchange", () => {
     closeNav();
