@@ -68,7 +68,10 @@ export async function renderSenales(ctx) {
       item.addEventListener("click", () => go("senal/" + s.id));
       return item;
     })
-    : [el("p", { className: "empty", text: "No hay señales en esta etapa." })];
+    : [el("div", { className: "empty-block" }, [
+      el("p", { className: "empty", text: "Todavía no hay señales de RGM en esta etapa." }),
+      el("p", { className: "hint", text: "Una señal es un print. No crea sola una operación." }),
+    ])];
   const rgm = meta && meta.rgmSync ? meta.rgmSync : {};
   const syncFrom = el("input", { className: "input slim", type: "datetime-local", value: rgm.syncFromLocal || "" });
   const file = el("input", { className: "input", type: "file", accept: ".jsonl,.json,.txt,application/json" });
@@ -128,9 +131,9 @@ export async function renderSenales(ctx) {
   }
   return [
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: "Universo Desk · stage activa" }),
+      el("p", { className: "kicker", text: "Input de RGM" }),
       el("h1", { text: "Señales" }),
-      el("p", { className: "meta", text: "Registro del print. No es el motor RGM. Sin alta manual de producto." }),
+      el("p", { className: "meta", text: "Lo que imprime RGM. Se toma, se ignora o se enlaza a una idea. Nunca crea sola una operación." }),
       el("div", { className: "chips filters" }, [asset, direction, disposition, resolution, from, to]),
       el("p", { className: "meta", text: `${rows.length} señales` }),
       el("div", { className: "list table-wrap" }, list),
