@@ -41,7 +41,10 @@ export async function renderCuentas(ctx) {
       item.addEventListener("click", () => go("cuenta/" + a.id));
       return item;
     })
-    : [el("p", { className: "empty", text: "No hay cuenta. El balance no es 0." })];
+    : [el("div", { className: "empty-block" }, [
+      el("p", { className: "empty", text: "Todavía no hay una cuenta. El balance no es 0." }),
+      el("button", { type: "button", className: "ghost", text: "Nueva cuenta", onclick: () => go("cuentas/nueva") }),
+    ])];
   const meta = await getMeta();
   const mt5 = meta && meta.mt5Sync ? meta.mt5Sync : {};
   const accountSel = el("select", { className: "input" }, [
