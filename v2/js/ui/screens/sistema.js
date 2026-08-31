@@ -5,6 +5,8 @@ import {
   previewBackupText,
   restoreBackup,
 } from "../../services/backup.js";
+import { getMeta, putMeta } from "../../storage/repos/meta.js";
+import { applyIdentity, visibleName } from "../identity.js";
 
 function countLines(preview) {
   const c = preview.counts || {};
@@ -22,7 +24,7 @@ function countLines(preview) {
   ];
 }
 
-export async function renderSistema() {
+export async function renderSistema(ctx) {
   const status = el("p", { className: "hint", text: "Restore reemplaza todo el Journal. No hay merge." });
   const err = el("p", { className: "err", text: "" });
   const previewBox = el("div", { className: "list" }, []);
@@ -156,11 +158,35 @@ export async function renderSistema() {
     el("span", { text: "Ya descargué el backup del estado actual." }),
   ]);
 
+  const meta = await getMeta();
+  const nameInput = el("input", { className: "input", value: visibleName(meta), placeholder: "Maca" });
+  const nameStatus = el("p", { className: "hint", text: "Aparece en el saludo y en la barra. Sin login." });
+  const saveName = el("button", { type: "button", text: "Guardar nombre" });
+  saveName.addEventListener("click", async () => {
+    const next = { ...meta, traderName: String(nameInput.value || "").trim() };
+    await putMeta(next);
+    if (ctx) ctx.meta = next;
+    applyIdentity(next, ctx && ctx.stage);
+    nameStatus.textContent = next.traderName
+      ? "Nombre visible: " + next.traderName
+      : "Nombre vacío. El saludo queda en Buen día, sin Trader.";
+  });
+
   return [
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: "Sistema" }),
+      el("p", { className: "kicker", text: "Perfil" }),
+      el("h1", { text: "Quién usa este journal" }),
+      el("label", { className: "field" }, [
+        el("span", { text: "Nombre visible" }),
+        nameInput,
+      ]),
+      nameStatus,
+      el("div", { className: "row-actions" }, [saveName]),
+    ]),
+    el("section", { className: "panel" }, [
+      el("p", { className: "kicker", text: "Sistema · técnico" }),
       el("h1", { text: "Backup / Restore" }),
-      el("p", { className: "hint", text: "Solo backup nativo Journal V2. No migra V1, CSV MT5 ni JSONL RGM." }),
+      el("p", { className: "hint", text: "Producto técnico: Journal V2. Solo backup nativo. No migra V1, CSV MT5 ni JSONL RGM." }),
       el("div", { className: "row-actions" }, [exportBtn]),
     ]),
     el("section", { className: "panel panel-danger" }, [
