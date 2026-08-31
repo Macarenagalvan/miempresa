@@ -27,7 +27,10 @@ export async function renderFondeo(ctx) {
       item.addEventListener("click", () => go("challenge/" + ch.id));
       return item;
     }))
-    : [el("p", { className: "empty", text: "No hay challenges en esta etapa." })];
+    : [el("div", { className: "empty-block" }, [
+      el("p", { className: "empty", text: "Todavía no hay challenges en esta etapa." }),
+      el("button", { type: "button", className: "ghost", text: "Nuevo challenge", onclick: () => go("fondeo/nuevo") }),
+    ])];
   const costBits = Object.entries(summary.costByCurrency).map(([c, n]) => `${n} ${c}`).join(" · ") || "—";
   const payBits = Object.entries(summary.payoutByCurrency).map(([c, n]) => `${n} ${c}`).join(" · ") || "—";
   return [
