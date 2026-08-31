@@ -1,14 +1,14 @@
 :root {
-  --bg: #0c0d0f;
-  --sidebar: #101114;
-  --panel: #16181c;
-  --elev: #1b1e23;
-  --line: #2a2d33;
-  --line-strong: #3a3e46;
-  --text: #f3f4f6;
-  --muted: #8d929b;
-  --accent: #d2d4d8;
-  --accent-soft: rgba(210, 212, 216, 0.08);
+  --bg: #111318;
+  --sidebar: #161922;
+  --panel: #1C2028;
+  --elev: #232833;
+  --line: #2C3240;
+  --line-strong: #3C4454;
+  --text: #F2EFEA;
+  --muted: #A39B8F;
+  --accent: #C4A574;
+  --accent-soft: rgba(196, 165, 116, 0.12);
   --win: #86a37c;
   --loss: #c77b72;
   --be: #b7a16a;
@@ -18,11 +18,11 @@
   --danger-bg: #2a1614;
   --warn-bg: #2a2216;
   --warn-text: #e4d0b0;
-  --focus: #e8eaee;
-  --radius: 8px;
-  --radius-sm: 6px;
-  --sidebar-w: 232px;
+  --focus: #C4A574;
+  --radius: 10px;
+  --radius-sm: 8px;
+  --sidebar-w: 240px;
   --space: 16px;
-  --font: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-num: "IBM Plex Mono", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font: Outfit, "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-num: "IBM Plex Mono", "Roboto Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
