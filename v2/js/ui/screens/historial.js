@@ -89,11 +89,14 @@ export async function renderHistorial(ctx) {
       item.addEventListener("click", () => go("trade/" + t.id));
       return item;
     })
-    : [el("p", { className: "empty", text: "0 trades con este filtro." })];
+    : [el("div", { className: "empty-block" }, [
+      el("p", { className: "empty", text: "No hay operaciones con este filtro." }),
+      el("button", { type: "button", className: "ghost", text: "Nueva operación", onclick: () => go("nuevo/trade") }),
+    ])];
   return [
     el("section", { className: "panel" }, [
       el("h1", { text: "Historial" }),
-      el("p", { className: "meta", text: "Stage activa. VOID fuera. Context y Account visibles." }),
+      el("p", { className: "meta", text: "Operaciones de la etapa activa. VOID fuera. Context y cuenta visibles." }),
       el("div", { className: "chips filters" }, [ctxSel, accSel, asset, strategy, variant, direction, session, lifecycle, from, to]),
       el("p", { className: "meta", text: `${rows.length} filas · ${pendingCount} ASR pendiente` }),
       el("div", { className: "list table-wrap" }, list),
