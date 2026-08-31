@@ -39,7 +39,7 @@ export async function ensureJournalSeed() {
     schemaVersion: SCHEMA_VERSION,
     journalEdition: JOURNAL_EDITION,
     activeStageId: stage.id,
-    traderName: "",
+    traderName: "Maca",
     createdAt: now,
     lastBackupAt: null,
     activeAccountId: null,
