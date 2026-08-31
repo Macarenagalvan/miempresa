@@ -31,15 +31,15 @@ export async function renderNuevoSetup(ctx) {
 
   return [
     el("section", { className: "panel form" }, [
-      el("p", { className: "kicker", text: "Nuevo" }),
-      el("h1", { text: "Setup" }),
+      el("p", { className: "kicker", text: "Nueva idea" }),
+      el("h1", { text: "Idea" }),
       fromObs
-        ? el("p", { className: "meta", text: `Desde observación ${fromObs.asset} · ${fromObs.date}` })
-        : el("p", { className: "meta", text: "Directo. Sin Observation." }),
+        ? el("p", { className: "meta", text: `Desde nota ${fromObs.asset} · ${fromObs.date}` })
+        : el("p", { className: "meta", text: "Directo. Sin nota de origen." }),
       field("Asset", el("div", { className: "chips" }, [fields.asset, fields.other])),
       field("Context", fields.context),
       field("Direction", fields.direction),
-      el("p", { className: "hint", text: "Nace WATCHING + UNCLASSIFIED. Evaluar viene después." }),
+      el("p", { className: "hint", text: "Nace WATCHING + UNCLASSIFIED. Evaluar viene después. Internamente es un Setup." }),
       err,
       save,
     ]),
