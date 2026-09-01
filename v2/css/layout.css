@@ -440,6 +440,71 @@ textarea.input { min-height: 88px; resize: vertical; }
   color: var(--muted);
 }
 
+.task-panel { display: flex; flex-direction: column; gap: 8px; }
+.task-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px auto;
+  gap: 8px;
+  align-items: center;
+}
+.task-input { margin: 0; }
+.task-due { max-width: none; width: 100%; }
+.task-err { min-height: 0; margin: 0; }
+.task-list { display: flex; flex-direction: column; gap: 6px; }
+.task-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+  padding: 6px 0;
+}
+.task-check {
+  width: 18px;
+  height: 18px;
+  margin: 3px 0 0;
+  accent-color: var(--accent);
+}
+.task-main { min-width: 0; }
+.task-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--text);
+}
+.task-row.is-done .task-text {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+.task-chip {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.task-chip.is-today { color: var(--accent); }
+.task-chip.is-late { color: var(--danger); }
+.task-actions { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+button.ghost.task-mini {
+  padding: 4px 8px;
+  font-size: 11px;
+  min-width: 0;
+}
+.task-edit {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px auto auto;
+  gap: 8px;
+  align-items: center;
+}
+.task-done { margin-top: 4px; }
+.task-done summary {
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.task-done-list { margin-top: 6px; }
+
 @media (max-width: 900px) {
   .sidebar {
     position: fixed;
@@ -466,4 +531,13 @@ textarea.input { min-height: 88px; resize: vertical; }
       "day";
   }
   .hoy-capture { grid-template-columns: 1fr; }
+  .task-composer,
+  .task-edit {
+    grid-template-columns: 1fr;
+  }
+  .task-row {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+  .task-actions { grid-column: 2; }
+  .task-check { width: 20px; height: 20px; }
 }
