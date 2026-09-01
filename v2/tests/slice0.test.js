@@ -24,7 +24,7 @@ async function run() {
 
   const names = await listStoreNames();
   const expected = Object.values(STORES).sort();
-  assert("stores del schema 1", JSON.stringify([...names].sort()) === JSON.stringify(expected), names.join(","));
+  assert("stores del schema vigente", JSON.stringify([...names].sort()) === JSON.stringify(expected), names.join(","));
 
   const first = await ensureJournalSeed();
   const second = await ensureJournalSeed();
@@ -32,14 +32,14 @@ async function run() {
   const meta = await getMeta();
 
   assert("JournalMeta.journalEdition = v2", meta.journalEdition === JOURNAL_EDITION);
-  assert("JournalMeta.schemaVersion = 1", meta.schemaVersion === SCHEMA_VERSION);
+  assert("JournalMeta.schemaVersion vigente", meta.schemaVersion === SCHEMA_VERSION);
   assert("meta.activeStageId es UUID", typeof meta.activeStageId === "string" && meta.activeStageId.length >= 32);
   assert("exactamente una Stage", stages.length === 1, String(stages.length));
   assert("Stage ACTIVE", stages[0].status === "ACTIVE");
   assert("segundo boot no duplica Stage", first.stage.id === second.stage.id && stages.length === 1);
   assert("Stage referenciada existe", Boolean(await getStage(meta.activeStageId)));
 
-  for (const emptyName of ["accounts", "movements", "observations", "setups", "trades", "asrs", "signals", "challenges", "payouts"]) {
+  for (const emptyName of ["accounts", "movements", "observations", "setups", "trades", "asrs", "signals", "challenges", "payouts", "officeTasks", "officeNotes", "officeEvents", "officeShortcuts"]) {
     const n = await countCollection(emptyName);
     assert(`${emptyName} nace en 0`, n === 0, String(n));
   }
@@ -55,13 +55,13 @@ async function run() {
 
   const payload = await buildExportPayload();
   assert("export journalEdition v2", payload.journalEdition === "v2");
-  assert("export schemaVersion 1", payload.schemaVersion === 1);
+  assert("export schemaVersion vigente", payload.schemaVersion === SCHEMA_VERSION);
   assert("export product Journal V2", payload.product === "Journal V2");
   assert("export format journal-v2", payload.format === "journal-v2");
   assert("export backupVersion 1", payload.backupVersion === 1);
   assert("export tiene exportedAt", typeof payload.exportedAt === "string" && payload.exportedAt.includes("T"));
   assert("export incluye meta y stages", Boolean(payload.meta) && Array.isArray(payload.stages) && payload.stages.length === 1);
-  for (const key of ["accounts", "movements", "observations", "setups", "trades", "asrs", "signals", "challenges", "payouts", "attachments"]) {
+  for (const key of ["accounts", "movements", "observations", "setups", "trades", "asrs", "signals", "challenges", "payouts", "attachments", "officeTasks", "officeNotes", "officeEvents", "officeShortcuts"]) {
     assert(`export.${key} array`, Array.isArray(payload[key]));
   }
   assert("export attachments reserva vacía", Array.isArray(payload.attachments) && payload.attachments.length === 0);
