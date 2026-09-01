@@ -42,7 +42,8 @@ export async function renderCuentas(ctx) {
       return item;
     })
     : [el("div", { className: "empty-block" }, [
-      el("p", { className: "empty", text: "Todavía no hay una cuenta. El balance no es 0." }),
+      el("p", { className: "empty", text: "Todavía no agregaste una cuenta." }),
+      el("p", { className: "hint", text: "Sin cuenta no hay balance. Cero no se inventa." }),
       el("button", { type: "button", className: "ghost", text: "Nueva cuenta", onclick: () => go("cuentas/nueva") }),
     ])];
   const meta = await getMeta();
@@ -59,7 +60,7 @@ export async function renderCuentas(ctx) {
   }
   function paintContext() {
     const acc = selectedAccount();
-    contextOut.textContent = acc ? `context ${acc.context}` : "context —";
+    contextOut.textContent = acc ? `Tipo de cuenta: ${acc.context}` : "Elegí una cuenta para ver el tipo.";
   }
   paintContext();
   accountSel.addEventListener("change", paintContext);
@@ -146,19 +147,19 @@ export async function renderCuentas(ctx) {
   return [
     el("section", { className: "panel" }, [
       el("h1", { text: "Cuentas" }),
-      el("p", { className: "meta", text: "Ledger por cuenta. Sin FX. Backtest no vive acá." }),
+      el("p", { className: "meta", text: "Tus cuentas de trading. Backtest no vive acá." }),
       el("div", { className: "row-actions" }, [
         el("button", { type: "button", text: "Nueva cuenta", onclick: () => go("cuentas/nueva") }),
       ]),
       el("div", { className: "list table-wrap" }, list),
     ]),
-    el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: "MT5 · lectura local" }),
-      el("h2", { text: "Sincronizar MT5" }),
-      el("p", { className: "hint", text: "CSV de MacaJournalExport v1.01. El Journal solo lee. No crea Accounts." }),
-      field("Account destino", accountSel),
+    el("section", { className: "panel tech-fold" }, [
+      el("p", { className: "kicker", text: "Importar" }),
+      el("h2", { text: "Traer operaciones de MT5" }),
+      el("p", { className: "hint", text: "CSV de MacaJournalExport v1.01. El Journal solo lee. No crea cuentas." }),
+      field("Cuenta destino", accountSel),
       contextOut,
-      field("timezone fuente", tzSel),
+      field("Zona horaria de esa fuente", tzSel),
       file,
       el("div", { className: "row-actions" }, [pickBtn, confirmBtn]),
       syncErr,
