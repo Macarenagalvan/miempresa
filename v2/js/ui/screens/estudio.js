@@ -21,7 +21,7 @@ export async function renderEstudio(ctx) {
     el("button", {
       type: "button",
       className: "chip" + (tab === "obs" ? " is-on" : ""),
-      text: "Notas",
+      text: "Notas de mercado",
       onclick: () => go(asset ? "estudio/" + asset : "estudio"),
     }),
     el("button", {
@@ -88,7 +88,7 @@ export async function renderEstudio(ctx) {
   return [
     el("section", { className: "panel" }, [
       el("h1", { text: "Estudio" }),
-      el("p", { className: "hint", text: "Notas de lo que observás. Una nota puede pasar después a idea; no es obligatorio." }),
+      el("p", { className: "hint", text: "Notas de mercado e Ideas viven acá. Una nota puede pasar después a idea; no es obligatorio." }),
       tabs,
       chips,
       el("div", { className: "list" }, list),

@@ -28,7 +28,7 @@ export async function renderFondeo(ctx) {
       return item;
     }))
     : [el("div", { className: "empty-block" }, [
-      el("p", { className: "empty", text: "Todavía no hay challenges en esta etapa." }),
+      el("p", { className: "empty", text: "Todavía no cargaste un challenge." }),
       el("button", { type: "button", className: "ghost", text: "Nuevo challenge", onclick: () => go("fondeo/nuevo") }),
     ])];
   const costBits = Object.entries(summary.costByCurrency).map(([c, n]) => `${n} ${c}`).join(" · ") || "—";
@@ -37,7 +37,7 @@ export async function renderFondeo(ctx) {
     el("section", { className: "panel" }, [
       el("h1", { text: "Fondeo" }),
       el("p", { className: "meta", text: `${summary.nChallenges} challenges · costo ${costBits} · payouts ${payBits}` }),
-      el("p", { className: "hint", text: "No es performance de trading. Sin FX." }),
+      el("p", { className: "hint", text: "Un challenge no es una cuenta. Acá se registra el fondeo, no el trading." }),
       el("div", { className: "row-actions" }, [
         el("button", { type: "button", text: "Nuevo challenge", onclick: () => go("fondeo/nuevo") }),
       ]),
