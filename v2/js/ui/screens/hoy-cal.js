@@ -105,21 +105,22 @@ function eventRow(ev, ctx) {
     row.replaceChildren(el("div", { className: "cal-edit" }, [titleField, dateField, timeField, noteField, save, cancel]));
     titleField.focus();
   }
-  row.append(
+  const kids = [
     el("p", { className: "cal-event-line" }, [
       el("span", { className: "cal-event-time", text: ev.time || "—" }),
       el("span", { className: "cal-event-dot", text: "·" }),
       el("span", { className: "cal-event-title", text: ev.title }),
     ]),
-    ev.note ? el("p", { className: "cal-event-note", text: ev.note }) : null,
-    el("div", { className: "cal-event-actions" }, [
-      iconBtn("Editar", "cal-edit-btn", ICONS.edit, showEdit),
-      iconBtn("Archivar", "cal-archive-btn", ICONS.archive, async () => {
-        await archiveOfficeEvent(ev.id);
-        await refreshCalCard(ctx, row);
-      }),
-    ]),
-  );
+  ];
+  if (ev.note) kids.push(el("p", { className: "cal-event-note", text: ev.note }));
+  kids.push(el("div", { className: "cal-event-actions" }, [
+    iconBtn("Editar", "cal-edit-btn", ICONS.edit, showEdit),
+    iconBtn("Archivar", "cal-archive-btn", ICONS.archive, async () => {
+      await archiveOfficeEvent(ev.id);
+      await refreshCalCard(ctx, row);
+    }),
+  ]));
+  row.append(...kids);
   return row;
 }
 
