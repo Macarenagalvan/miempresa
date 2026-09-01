@@ -21,6 +21,7 @@ import {
   archiveOfficeNote,
   listHoyNotes,
 } from "../../domain/office-note.js";
+import { buildCalCard } from "./hoy-cal.js";
 
 const FOLLOW_STATUSES = [SetupStatus.WATCHING, SetupStatus.WAITING_CONFIRMATION];
 
@@ -312,31 +313,6 @@ async function buildNotesCard(ctx) {
   ]), "office-notes");
 }
 
-function monthGrid(now = new Date()) {
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7;
-  const lastDate = new Date(year, month + 1, 0).getDate();
-  const today = now.getDate();
-  const rawTitle = now.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
-  const title = rawTitle ? rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1) : rawTitle;
-  const heads = ["L", "M", "M", "J", "V", "S", "D"].map((d) => el("span", { className: "cal-dow", text: d }));
-  const cells = [];
-  for (let i = 0; i < firstDow; i += 1) {
-    cells.push(el("span", { className: "cal-day is-pad", text: "" }));
-  }
-  for (let day = 1; day <= lastDate; day += 1) {
-    cells.push(el("span", {
-      className: "cal-day" + (day === today ? " is-today" : ""),
-      text: String(day),
-    }));
-  }
-  return el("div", { className: "cal-wrap" }, [
-    el("p", { className: "cal-title", text: title }),
-    el("div", { className: "cal-grid" }, heads.concat(cells)),
-  ]);
-}
-
 export async function renderHoy(ctx) {
   const stageName = ctx.stage ? ctx.stage.name : "-";
   const today = localYmd();
@@ -430,7 +406,7 @@ export async function renderHoy(ctx) {
         el("h2", { className: "hoy-col-title day-label", text: "Mi Día" }),
         await buildTasksCard(ctx),
         await buildNotesCard(ctx),
-        officeCard("Calendario", ICONS.cal, monthGrid()),
+        await buildCalCard(ctx),
         officeCard("Accesos rápidos", ICONS.link, emptyShell("Todavía no configuraste accesos rápidos.")),
       ]),
     ]),
