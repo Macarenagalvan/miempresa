@@ -46,6 +46,17 @@ export function icon(path) {
   return svg;
 }
 
+export function iconBtn(label, className, path, onClick) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = ("ghost task-mini icon-btn " + className).trim();
+  btn.title = label;
+  btn.setAttribute("aria-label", label);
+  btn.append(icon(path));
+  if (onClick) btn.addEventListener("click", onClick);
+  return btn;
+}
+
 export const ICONS = {
   note: "M5 5h10l4 4v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm10 0v4h4M8 13h8M8 17h5",
   idea: "M12 3a6 6 0 0 1 4 10.5V16H8v-2.5A6 6 0 0 1 12 3zm-2 15h4M10 19h4",
@@ -54,4 +65,8 @@ export const ICONS = {
   pin: "M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
   cal: "M7 3v3M17 3v3M4 8h16M6 5h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z",
   link: "M10 13a5 5 0 0 0 7.07 0l1.41-1.41a5 5 0 0 0-7.07-7.07L10 5.93M14 11a5 5 0 0 0-7.07 0L5.52 12.4a5 5 0 0 0 7.07 7.07L14 18.07",
+  edit: "M4 20h4L18 10l-4-4L4 16v4zm10-14 4 4",
+  archive: "M4 6h16l-1.2 13H5.2L4 6zm4-3h8l1 3H7l1-3",
+  up: "M12 19V6M6 11l6-6 6 6",
+  down: "M12 5v13M6 13l6 6 6-6",
 };
