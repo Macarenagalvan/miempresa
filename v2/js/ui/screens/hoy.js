@@ -7,6 +7,14 @@ import { REAL_CONTEXTS } from "../../domain/integrity.js";
 import { Lifecycle, SetupStatus } from "../../domain/enums.js";
 import { go } from "../router.js";
 import { greetingLine, longDate, icon, ICONS } from "../identity.js";
+import {
+  addOfficeTask,
+  updateOfficeTask,
+  completeOfficeTask,
+  reopenOfficeTask,
+  archiveOfficeTask,
+  listHoyTasks,
+} from "../../domain/office-task.js";
 
 const FOLLOW_STATUSES = [SetupStatus.WATCHING, SetupStatus.WAITING_CONFIRMATION];
 
@@ -44,14 +52,166 @@ function histRow(cells, path, extraClass = "") {
   return row;
 }
 
-function officeCard(title, pathIcon, body) {
-  return el("section", { className: "panel office-card" }, [
+function officeCard(title, pathIcon, body, extraClass = "") {
+  return el("section", { className: ("panel office-card" + (extraClass ? " " + extraClass : "")).trim() }, [
     el("h2", { className: "office-card-title" }, [
       icon(pathIcon),
       el("span", { text: title }),
     ]),
     body,
   ]);
+}
+
+function shortDue(ymd) {
+  const parts = String(ymd || "").split("-").map(Number);
+  if (parts.length !== 3 || !parts[0]) return "";
+  return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString("es-AR", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+function dueChip(task, today) {
+  if (!task.dueDate) return null;
+  if (task.dueDate === today) return el("span", { className: "task-chip is-today", text: "Hoy" });
+  if (!task.done && task.dueDate < today) return el("span", { className: "task-chip is-late", text: "Atrasada" });
+  return el("span", { className: "task-chip", text: shortDue(task.dueDate) });
+}
+
+function ghostBtn(label, className, onClick) {
+  const btn = el("button", { type: "button", className: "ghost task-mini " + className, text: label });
+  btn.addEventListener("click", onClick);
+  return btn;
+}
+
+async function refreshTasksCard(ctx, node) {
+  const card = node.closest(".office-tasks");
+  if (!card) return;
+  card.replaceWith(await buildTasksCard(ctx));
+}
+
+function taskRow(task, ctx, today) {
+  const row = el("div", { className: "task-row" + (task.done ? " is-done" : "") });
+  const box = el("input", { type: "checkbox", className: "task-check" });
+  box.checked = task.done;
+  box.addEventListener("change", async () => {
+    try {
+      if (box.checked) await completeOfficeTask(task.id);
+      else await reopenOfficeTask(task.id);
+      await refreshTasksCard(ctx, row);
+    } catch (err) {
+      box.checked = task.done;
+      const host = row.closest(".office-tasks");
+      if (host) {
+        const errEl = host.querySelector(".task-err");
+        if (errEl) errEl.textContent = err.message;
+      }
+    }
+  });
+
+  function showEdit() {
+    const textField = el("input", { className: "input task-edit-text", type: "text", value: task.text });
+    const dateField = el("input", { className: "input slim task-edit-due", type: "date" });
+    if (task.dueDate) dateField.value = task.dueDate;
+    const save = ghostBtn("Guardar", "task-save", async () => {
+      try {
+        await updateOfficeTask(task.id, { text: textField.value, dueDate: dateField.value || null });
+        await refreshTasksCard(ctx, row);
+      } catch (err) {
+        const host = row.closest(".office-tasks");
+        if (host) {
+          const errEl = host.querySelector(".task-err");
+          if (errEl) errEl.textContent = err.message;
+        }
+      }
+    });
+    const cancel = ghostBtn("Cancelar", "task-cancel", async () => {
+      await refreshTasksCard(ctx, row);
+    });
+    row.replaceChildren(
+      el("div", { className: "task-edit" }, [textField, dateField, save, cancel]),
+    );
+    textField.focus();
+    textField.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        save.click();
+      }
+    });
+  }
+
+  const main = el("div", { className: "task-main" }, [
+    el("p", { className: "task-text", text: task.text }),
+    dueChip(task, today),
+  ]);
+  const actions = el("div", { className: "task-actions" }, [
+    ghostBtn("Editar", "task-edit-btn", showEdit),
+    ghostBtn("Archivar", "task-archive-btn", async () => {
+      await archiveOfficeTask(task.id);
+      await refreshTasksCard(ctx, row);
+    }),
+  ]);
+  row.append(box, main, actions);
+  return row;
+}
+
+async function buildTasksCard(ctx) {
+  const { pending, doneToday, today } = await listHoyTasks();
+  const err = el("p", { className: "err task-err", text: "" });
+  const textInput = el("input", {
+    className: "input task-input",
+    type: "text",
+    placeholder: "¿Qué tenés pendiente?",
+    autocomplete: "off",
+  });
+  const dateInput = el("input", { className: "input slim task-due", type: "date" });
+  const addBtn = el("button", { type: "button", className: "ghost task-add", text: "Agregar" });
+
+  async function submit() {
+    err.textContent = "";
+    const text = textInput.value;
+    try {
+      await addOfficeTask({ text, dueDate: dateInput.value || null });
+      textInput.value = "";
+      dateInput.value = "";
+      await refreshTasksCard(ctx, addBtn);
+    } catch (e) {
+      err.textContent = e.message;
+    }
+  }
+  addBtn.addEventListener("click", submit);
+  textInput.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      submit();
+    }
+  });
+
+  const composer = el("div", { className: "task-composer" }, [textInput, dateInput, addBtn]);
+  const list = el("div", { className: "task-list" }, pending.map((task) => taskRow(task, ctx, today)));
+  const empty = pending.length
+    ? null
+    : el("p", { className: "empty office-empty", text: "No tenés tareas pendientes." });
+
+  let doneBlock = null;
+  if (doneToday.length) {
+    const body = el("div", { className: "task-done-list" }, doneToday.map((task) => taskRow(task, ctx, today)));
+    const wrap = el("details", { className: "task-done" });
+    wrap.open = true;
+    wrap.append(
+      el("summary", { text: "Completadas hoy (" + doneToday.length + ")" }),
+      body,
+    );
+    doneBlock = wrap;
+  }
+
+  return officeCard("Tareas", ICONS.task, el("div", { className: "task-panel" }, [
+    composer,
+    err,
+    empty,
+    list,
+    doneBlock,
+  ]), "office-tasks");
 }
 
 function monthGrid(now = new Date()) {
@@ -170,7 +330,7 @@ export async function renderHoy(ctx) {
       ]),
       el("div", { className: "hoy-day" }, [
         el("h2", { className: "hoy-col-title day-label", text: "Mi Día" }),
-        officeCard("Tareas", ICONS.task, emptyShell("No tenés tareas pendientes.")),
+        await buildTasksCard(ctx),
         officeCard("No olvidar", ICONS.pin, emptyShell("Nada anotado por ahora.")),
         officeCard("Calendario", ICONS.cal, monthGrid()),
         officeCard("Accesos rápidos", ICONS.link, emptyShell("Todavía no configuraste accesos rápidos.")),
