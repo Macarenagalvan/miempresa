@@ -15,6 +15,12 @@ import {
   archiveOfficeTask,
   listHoyTasks,
 } from "../../domain/office-task.js";
+import {
+  addOfficeNote,
+  updateOfficeNote,
+  archiveOfficeNote,
+  listHoyNotes,
+} from "../../domain/office-note.js";
 
 const FOLLOW_STATUSES = [SetupStatus.WATCHING, SetupStatus.WAITING_CONFIRMATION];
 
@@ -214,6 +220,98 @@ async function buildTasksCard(ctx) {
   ]), "office-tasks");
 }
 
+async function refreshNotesCard(ctx, node) {
+  const card = node.closest(".office-notes");
+  if (!card) return;
+  card.replaceWith(await buildNotesCard(ctx));
+}
+
+function notePaper(note, ctx) {
+  const card = el("article", { className: "note-paper" });
+
+  function showEdit() {
+    const field = el("textarea", { className: "input note-edit-text", rows: "3" });
+    field.value = note.text;
+    const save = ghostBtn("Guardar", "note-save", async () => {
+      try {
+        await updateOfficeNote(note.id, { text: field.value });
+        await refreshNotesCard(ctx, card);
+      } catch (err) {
+        const host = card.closest(".office-notes");
+        if (host) {
+          const errEl = host.querySelector(".note-err");
+          if (errEl) errEl.textContent = err.message;
+        }
+      }
+    });
+    const cancel = ghostBtn("Cancelar", "note-cancel", async () => {
+      await refreshNotesCard(ctx, card);
+    });
+    field.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) {
+        ev.preventDefault();
+        save.click();
+      }
+    });
+    card.replaceChildren(el("div", { className: "note-edit" }, [field, save, cancel]));
+    field.focus();
+  }
+
+  card.append(
+    el("p", { className: "note-text", text: note.text }),
+    el("div", { className: "note-actions" }, [
+      ghostBtn("Editar", "note-edit-btn", showEdit),
+      ghostBtn("Archivar", "note-archive-btn", async () => {
+        await archiveOfficeNote(note.id);
+        await refreshNotesCard(ctx, card);
+      }),
+    ]),
+  );
+  return card;
+}
+
+async function buildNotesCard(ctx) {
+  const notes = await listHoyNotes();
+  const err = el("p", { className: "err note-err", text: "" });
+  const field = el("textarea", {
+    className: "input note-input",
+    rows: "2",
+    placeholder: "Anotá algo para no olvidarte…",
+  });
+  const addBtn = el("button", { type: "button", className: "ghost note-add", text: "Guardar" });
+
+  async function submit() {
+    err.textContent = "";
+    try {
+      await addOfficeNote({ text: field.value });
+      field.value = "";
+      await refreshNotesCard(ctx, addBtn);
+    } catch (e) {
+      err.textContent = e.message;
+    }
+  }
+  addBtn.addEventListener("click", submit);
+  field.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) {
+      ev.preventDefault();
+      submit();
+    }
+  });
+
+  const composer = el("div", { className: "note-composer" }, [field, addBtn]);
+  const grid = el("div", { className: "note-grid" }, notes.map((note) => notePaper(note, ctx)));
+  const empty = notes.length
+    ? null
+    : el("p", { className: "empty office-empty", text: "Nada anotado por ahora." });
+
+  return officeCard("No olvidar", ICONS.pin, el("div", { className: "note-panel" }, [
+    composer,
+    err,
+    empty,
+    grid,
+  ]), "office-notes");
+}
+
 function monthGrid(now = new Date()) {
   const year = now.getFullYear();
   const month = now.getMonth();
@@ -321,7 +419,7 @@ export async function renderHoy(ctx) {
         el("div", { className: "choice-grid hoy-capture" }, [
           choice("Nota", "Algo que vi o aprendí.", "nuevo/observacion", ICONS.note),
           choice("Idea", "Una oportunidad que estoy siguiendo.", "nuevo/setup", ICONS.idea),
-          choice("Operación", "Un trade que ejecuté o quiero registrar.", "nuevo/trade", ICONS.trade),
+          choice("Operación", "Un trade que ejecute o quiero registrar.", "nuevo/trade", ICONS.trade),
         ]),
       ]),
       el("section", { className: "panel hoy-trading" }, [
@@ -331,7 +429,7 @@ export async function renderHoy(ctx) {
       el("div", { className: "hoy-day" }, [
         el("h2", { className: "hoy-col-title day-label", text: "Mi Día" }),
         await buildTasksCard(ctx),
-        officeCard("No olvidar", ICONS.pin, emptyShell("Nada anotado por ahora.")),
+        await buildNotesCard(ctx),
         officeCard("Calendario", ICONS.cal, monthGrid()),
         officeCard("Accesos rápidos", ICONS.link, emptyShell("Todavía no configuraste accesos rápidos.")),
       ]),
