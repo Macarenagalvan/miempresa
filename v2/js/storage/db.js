@@ -3,6 +3,21 @@ import { applyMigrations } from "./migrations.js";
 
 let opening = null;
 
+export function resetOpenCache() {
+  opening = null;
+}
+
+export async function closeDb() {
+  if (!opening) return;
+  try {
+    const db = await opening;
+    db.close();
+  } catch (_) {
+    /* conexión inválida */
+  }
+  opening = null;
+}
+
 export function openDb() {
   if (opening) return opening;
   opening = new Promise((resolve, reject) => {
