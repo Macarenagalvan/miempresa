@@ -505,6 +505,62 @@ button.ghost.task-mini {
 }
 .task-done-list { margin-top: 6px; }
 
+.note-panel { display: flex; flex-direction: column; gap: 10px; }
+.note-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+textarea.input.note-input,
+textarea.input.note-edit-text {
+  min-height: 56px;
+  margin: 0;
+  resize: vertical;
+  line-height: 1.4;
+}
+.note-err { min-height: 0; margin: 0; }
+.note-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.note-paper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(196, 165, 116, 0.10), rgba(196, 165, 116, 0.04));
+  border: 1px solid rgba(196, 165, 116, 0.22);
+  box-shadow: inset 0 1px 0 rgba(242, 239, 234, 0.05);
+  min-width: 0;
+}
+.note-paper:nth-child(3n) {
+  background: linear-gradient(180deg, rgba(196, 165, 116, 0.08), rgba(35, 40, 51, 0.35));
+}
+.note-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.note-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.note-edit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: end;
+}
+button.ghost.note-add { align-self: end; }
+
 @media (max-width: 900px) {
   .sidebar {
     position: fixed;
@@ -540,4 +596,10 @@ button.ghost.task-mini {
   }
   .task-actions { grid-column: 2; }
   .task-check { width: 20px; height: 20px; }
+  .note-composer,
+  .note-edit {
+    grid-template-columns: 1fr;
+  }
+  .note-grid { grid-template-columns: 1fr; }
+  button.ghost.note-add { width: 100%; }
 }
