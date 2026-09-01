@@ -6,7 +6,7 @@ import { listActiveSetups } from "../../domain/setup.js";
 import { REAL_CONTEXTS } from "../../domain/integrity.js";
 import { Lifecycle, SetupStatus } from "../../domain/enums.js";
 import { go } from "../router.js";
-import { greetingLine, longDate, icon, ICONS } from "../identity.js";
+import { greetingLine, longDate, icon, iconBtn, ICONS } from "../identity.js";
 import {
   addOfficeTask,
   updateOfficeTask,
@@ -153,8 +153,8 @@ function taskRow(task, ctx, today) {
     dueChip(task, today),
   ]);
   const actions = el("div", { className: "task-actions" }, [
-    ghostBtn("Editar", "task-edit-btn", showEdit),
-    ghostBtn("Archivar", "task-archive-btn", async () => {
+    iconBtn("Editar", "task-edit-btn", ICONS.edit, showEdit),
+    iconBtn("Archivar", "task-archive-btn", ICONS.archive, async () => {
       await archiveOfficeTask(task.id);
       await refreshTasksCard(ctx, row);
     }),
@@ -262,8 +262,8 @@ function notePaper(note, ctx) {
   card.append(
     el("p", { className: "note-text", text: note.text }),
     el("div", { className: "note-actions" }, [
-      ghostBtn("Editar", "note-edit-btn", showEdit),
-      ghostBtn("Archivar", "note-archive-btn", async () => {
+      iconBtn("Editar", "note-edit-btn", ICONS.edit, showEdit),
+      iconBtn("Archivar", "note-archive-btn", ICONS.archive, async () => {
         await archiveOfficeNote(note.id);
         await refreshNotesCard(ctx, card);
       }),
@@ -396,7 +396,7 @@ export async function renderHoy(ctx) {
         el("div", { className: "choice-grid hoy-capture" }, [
           choice("Nota", "Algo que vi o aprendí.", "nuevo/observacion", ICONS.note),
           choice("Idea", "Una oportunidad que estoy siguiendo.", "nuevo/setup", ICONS.idea),
-          choice("Operación", "Un trade que ejecute o quiero registrar.", "nuevo/trade", ICONS.trade),
+          choice("Operación", "Un trade que ejecuté o quiero registrar.", "nuevo/trade", ICONS.trade),
         ]),
       ]),
       el("section", { className: "panel hoy-trading" }, [
