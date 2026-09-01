@@ -1,6 +1,6 @@
 export const DB_NAME = "JournalV2";
-export const DB_VERSION = 1;
-export const SCHEMA_VERSION = 1;
+export const DB_VERSION = 2;
+export const SCHEMA_VERSION = 2;
 export const JOURNAL_EDITION = "v2";
 export const BACKUP_PRODUCT = "Journal V2";
 export const BACKUP_FORMAT = "journal-v2";
@@ -85,6 +85,10 @@ export const STORES = {
   challenges: "challenges",
   payouts: "payouts",
   attachments: "attachments",
+  officeTasks: "officeTasks",
+  officeNotes: "officeNotes",
+  officeEvents: "officeEvents",
+  officeShortcuts: "officeShortcuts",
 };
 
 export const STORE_INDEXES = {
@@ -128,7 +132,7 @@ export const STORE_INDEXES = {
   asrs: [
     ["stageId", "stageId", { unique: false }],
     ["tradeId", "tradeId", { unique: true }],
-  ],
+    ],
   signals: [
     ["stageId", "stageId", { unique: false }],
     ["asset", "asset", { unique: false }],
@@ -147,9 +151,20 @@ export const STORE_INDEXES = {
     ["date", "date", { unique: false }],
   ],
   attachments: [["entity", ["entityType", "entityId"], { unique: false }]],
+  officeTasks: [
+    ["dueDate", "dueDate", { unique: false }],
+    ["done", "done", { unique: false }],
+    ["archivedAt", "archivedAt", { unique: false }],
+  ],
+  officeNotes: [
+    ["archivedAt", "archivedAt", { unique: false }],
+    ["createdAt", "createdAt", { unique: false }],
+  ],
+  officeEvents: [["date", "date", { unique: false }]],
+  officeShortcuts: [["order", "order", { unique: false }]],
 };
 
-export const EXPORT_COLLECTIONS = [
+export const TRADING_COLLECTIONS = [
   "stages",
   "accounts",
   "movements",
@@ -162,3 +177,12 @@ export const EXPORT_COLLECTIONS = [
   "payouts",
   "attachments",
 ];
+
+export const OFFICE_COLLECTIONS = [
+  "officeTasks",
+  "officeNotes",
+  "officeEvents",
+  "officeShortcuts",
+];
+
+export const EXPORT_COLLECTIONS = TRADING_COLLECTIONS.concat(OFFICE_COLLECTIONS);
