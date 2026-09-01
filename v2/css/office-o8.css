@@ -1,0 +1,20 @@
+/* O8B — panel Sincronización (auth only) */
+.sync-panel .sync-status {
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.sync-panel .sync-form {
+  display: grid;
+  gap: 10px;
+  max-width: 420px;
+}
+.sync-panel .sync-now[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.sync-panel .sync-config-fold {
+  margin-top: 12px;
+}
+.sync-panel .sync-config-fold .input {
+  margin-top: 6px;
+}
