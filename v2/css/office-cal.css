@@ -13,7 +13,7 @@ button.ghost.cal-nav-btn { padding: 2px 0; min-width: 28px; font-size: 16px; }
 button.ghost.cal-today-btn { padding: 4px 8px; font-size: 11px; }
 .cal-day,
 button.cal-day {
-  min-height: 28px;
+  min-height: 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -77,7 +77,7 @@ button.cal-day:hover { filter: none; background: var(--accent-soft); }
 @media (max-width: 900px) {
   .cal-panel .cal-month { order: 2; }
   .cal-panel .cal-agenda { order: 1; }
-  button.cal-day { min-height: 36px; }
+  button.cal-day { min-height: 40px; }
   .cal-composer, .cal-edit { grid-template-columns: 1fr; }
   .cal-add { grid-column: 1; width: 100%; justify-self: stretch; }
 }
