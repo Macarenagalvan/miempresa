@@ -23,7 +23,7 @@ async function run() {
 
   assert("Hoy renderiza escritorio", Boolean(host.querySelector(".hoy-desk")) && Boolean(host.querySelector(".hoy-ident")) && Boolean(host.querySelector(".hoy-day")));
   assert("kicker Trading Office", Boolean(host.querySelector(".kicker") && host.querySelector(".kicker").textContent === "Trading Office"));
-  assert("saludo contextual", text.includes(greet) && /Buen (día|as tardes|as noches)/.test(greet));
+  assert("saludo contextual", text.includes(greet) && /Buen( día|as tardes|as noches)/.test(greet));
   assert("muestra etapa", text.includes("Etapa ") && Boolean(seed.stage && seed.stage.name && text.includes(seed.stage.name)));
   assert("sin cuenta no inventa balance", !text.includes("Abrir Cuentas") && !text.includes("Todavía no hay una cuenta activa."));
   assert("columna Trading Hoy", text.includes("Trading Hoy"));
@@ -54,6 +54,7 @@ async function run() {
   assert("calendario tiene días clicables", host.querySelectorAll("button.cal-day[data-ymd]").length > 0);
   assert("Calendario tiene alta rápida", Boolean(host.querySelector(".office-cal .cal-title-input")));
   assert("Tareas tiene alta rápida", Boolean(host.querySelector(".office-tasks .task-input")));
+  assert("Accesos apunta a Sistema", Boolean(host.querySelector(".office-shortcuts .shortcut-config")));
 
   const failed = results.filter((r) => !r.ok);
   const hostOut = document.getElementById("out");
