@@ -29,7 +29,14 @@ a.shortcut-chip:hover {
   background: var(--accent-soft);
   filter: none;
 }
-button.ghost.shortcut-config { align-self: start; }
+button.ghost.shortcut-config {
+  align-self: start;
+  color: var(--muted);
+  border-color: transparent;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+button.ghost.shortcut-config:hover { border-color: var(--line); }
 .shortcut-composer {
   display: grid;
   grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.3fr) auto;
@@ -68,6 +75,5 @@ button.ghost.shortcut-config { align-self: start; }
   }
   .shortcut-admin-row { grid-template-columns: 1fr; }
   .shortcut-admin-actions { justify-content: flex-start; }
-  button.ghost.shortcut-add,
-  button.ghost.shortcut-config { width: 100%; }
+  button.ghost.shortcut-add { width: 100%; }
 }
