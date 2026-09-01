@@ -1,5 +1,6 @@
 import { ensureJournalSeed } from "./domain/stage.js";
 import { downloadExport } from "./services/backup.js";
+import { restoreAuthSession } from "./services/auth.js";
 import { paint, currentRoute, routeList } from "./ui/router.js";
 import { applyIdentity } from "./ui/identity.js";
 
@@ -58,6 +59,7 @@ export async function boot() {
   bindNav();
   const ctx = await ensureJournalSeed();
   applyIdentity(ctx.meta, ctx.stage);
+  await restoreAuthSession().catch(() => {});
   await paint(ctx);
   window.addEventListener("hashchange", () => {
     closeNav();
