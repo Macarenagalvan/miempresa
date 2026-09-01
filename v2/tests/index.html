@@ -30,6 +30,7 @@
     import { run as run10 } from "./slice10.test.js";
     import { run as run11 } from "./slice11.test.js";
     import { run as run12 } from "./slice12.test.js";
+    import { run as run13 } from "./slice13.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
@@ -45,6 +46,7 @@
       .then(() => run10())
       .then(() => run11())
       .then(() => run12())
+      .then(() => run13())
       .then(() => { console.log(out.textContent); })
       .catch((err) => {
         out.className = "fail";
