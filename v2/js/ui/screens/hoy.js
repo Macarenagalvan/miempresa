@@ -22,6 +22,7 @@ import {
   listHoyNotes,
 } from "../../domain/office-note.js";
 import { buildCalCard } from "./hoy-cal.js";
+import { listHoyShortcuts } from "../../domain/office-shortcut.js";
 
 const FOLLOW_STATUSES = [SetupStatus.WATCHING, SetupStatus.WAITING_CONFIRMATION];
 
@@ -407,7 +408,7 @@ export async function renderHoy(ctx) {
         await buildTasksCard(ctx),
         await buildNotesCard(ctx),
         await buildCalCard(ctx),
-        officeCard("Accesos rápidos", ICONS.link, emptyShell("Todavía no configuraste accesos rápidos.")),
+        await buildShortcutsCard(ctx),
       ]),
     ]),
   ];
@@ -415,4 +416,30 @@ export async function renderHoy(ctx) {
 
 function emptyShell(copy) {
   return el("p", { className: "empty office-empty", text: copy });
+}
+
+function shortcutChip(item) {
+  const link = el("a", {
+    className: "shortcut-chip",
+    href: item.url,
+    target: "_blank",
+    rel: "noopener noreferrer",
+  }, [
+    icon(ICONS.link),
+    el("span", { text: item.label }),
+  ]);
+  return link;
+}
+
+async function buildShortcutsCard() {
+  const items = await listHoyShortcuts();
+  const configure = el("button", { type: "button", className: "ghost task-mini shortcut-config", text: "Configurar" });
+  configure.addEventListener("click", () => go("sistema"));
+  const chips = items.length
+    ? el("div", { className: "shortcut-row" }, items.map(shortcutChip))
+    : emptyShell("Todavía no configuraste accesos rápidos.");
+  return officeCard("Accesos rápidos", ICONS.link, el("div", { className: "shortcut-panel" }, [
+    chips,
+    configure,
+  ]), "office-shortcuts");
 }
