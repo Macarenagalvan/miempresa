@@ -49,8 +49,9 @@ async function run() {
   assert("Nota abre nuevo/observacion", clicks.includes("#/nuevo/observacion"));
   assert("Idea abre nuevo/setup", clicks.includes("#/nuevo/setup"));
   assert("Operación abre nuevo/trade", clicks.includes("#/nuevo/trade"));
-  assert("Office shell sin inputs CRUD", host.querySelectorAll(".hoy-day input, .hoy-day textarea, .hoy-day select").length === 0);
-  assert("calendario no es alta", host.querySelectorAll(".cal-day button, .hoy-day form").length === 0);
+  assert("resto de Mi Día sin CRUD", host.querySelectorAll(".hoy-day .office-card:not(.office-tasks) input, .hoy-day .office-card:not(.office-tasks) textarea, .hoy-day .office-card:not(.office-tasks) select").length === 0);
+  assert("calendario no es alta", host.querySelectorAll(".cal-day button").length === 0);
+  assert("Tareas tiene alta rápida", Boolean(host.querySelector(".office-tasks .task-input")));
 
   const failed = results.filter((r) => !r.ok);
   const hostOut = document.getElementById("out");
