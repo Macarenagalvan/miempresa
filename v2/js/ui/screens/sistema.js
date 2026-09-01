@@ -32,3 +32,9 @@ function countLines(preview) {
     el("p", { className: "meta", text: `attachments ${c.attachments || 0}` }),
   ];
 }
+
+function ghostMini(label, className, onClick) {
+  const btn = el("button", { type: "button", className: "ghost task-mini " + className, text: label });
+  btn.addEventListener("click", onClick);
+  return btn;
+}
