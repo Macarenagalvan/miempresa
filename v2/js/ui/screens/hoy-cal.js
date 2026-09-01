@@ -1,5 +1,5 @@
 import { el } from "../render.js";
-import { icon, ICONS } from "../identity.js";
+import { icon, iconBtn, ICONS } from "../identity.js";
 import {
   addOfficeEvent,
   updateOfficeEvent,
@@ -113,8 +113,8 @@ function eventRow(ev, ctx) {
     ]),
     ev.note ? el("p", { className: "cal-event-note", text: ev.note }) : null,
     el("div", { className: "cal-event-actions" }, [
-      ghostBtn("Editar", "cal-edit-btn", showEdit),
-      ghostBtn("Archivar", "cal-archive-btn", async () => {
+      iconBtn("Editar", "cal-edit-btn", ICONS.edit, showEdit),
+      iconBtn("Archivar", "cal-archive-btn", ICONS.archive, async () => {
         await archiveOfficeEvent(ev.id);
         await refreshCalCard(ctx, row);
       }),

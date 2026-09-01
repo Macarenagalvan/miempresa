@@ -58,7 +58,7 @@ button.ghost.shortcut-config:hover { border-color: var(--line); }
   font-size: 12px;
   overflow-wrap: anywhere;
 }
-.shortcut-admin-actions { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.shortcut-admin-actions { display: flex; gap: 2px; flex-wrap: nowrap; justify-content: flex-end; }
 .shortcut-edit {
   grid-column: 1 / -1;
   display: grid;
