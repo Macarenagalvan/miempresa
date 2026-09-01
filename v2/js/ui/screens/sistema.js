@@ -6,7 +6,8 @@ import {
   restoreBackup,
 } from "../../services/backup.js";
 import { getMeta, putMeta } from "../../storage/repos/meta.js";
-import { applyIdentity, visibleName } from "../identity.js";
+import { applyIdentity, visibleName, iconBtn, ICONS } from "../identity.js";
+import { DB_NAME, SCHEMA_VERSION, BACKUP_PRODUCT, BACKUP_FORMAT, BACKUP_VERSION } from "../../config.js";
 import {
   addOfficeShortcut,
   updateOfficeShortcut,
@@ -112,18 +113,18 @@ async function buildOficinaPanel() {
         el("p", { className: "shortcut-admin-url", text: item.url }),
       ]),
       el("div", { className: "shortcut-admin-actions" }, [
-        ghostMini("Subir", "shortcut-up", async () => {
+        iconBtn("Subir", "shortcut-up", ICONS.up, async () => {
           if (index === 0) return;
           await moveOfficeShortcut(item.id, "up");
           await refreshOficina(row);
         }),
-        ghostMini("Bajar", "shortcut-down", async () => {
+        iconBtn("Bajar", "shortcut-down", ICONS.down, async () => {
           if (index === items.length - 1) return;
           await moveOfficeShortcut(item.id, "down");
           await refreshOficina(row);
         }),
-        ghostMini("Editar", "shortcut-edit-btn", showEdit),
-        ghostMini("Archivar", "shortcut-archive-btn", async () => {
+        iconBtn("Editar", "shortcut-edit-btn", ICONS.edit, showEdit),
+        iconBtn("Archivar", "shortcut-archive-btn", ICONS.archive, async () => {
           await archiveOfficeShortcut(item.id);
           await refreshOficina(row);
         }),
@@ -298,7 +299,7 @@ export async function renderSistema(ctx) {
   return [
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: "Perfil" }),
-      el("h1", { text: "Quién usa este journal" }),
+      el("h1", { text: "Quién usa esta Office" }),
       el("label", { className: "field" }, [
         el("span", { text: "Nombre visible" }),
         nameInput,
@@ -308,9 +309,9 @@ export async function renderSistema(ctx) {
     ]),
     await buildOficinaPanel(),
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: "Sistema · técnico" }),
+      el("p", { className: "kicker", text: "Resguardo" }),
       el("h1", { text: "Backup / Restore" }),
-      el("p", { className: "hint", text: "Producto técnico: Journal V2. Solo backup nativo. No migra V1, CSV MT5 ni JSONL RGM." }),
+      el("p", { className: "hint", text: "Exportá cuando quieras un resguardo. Restore reemplaza todo: no hay merge." }),
       el("div", { className: "row-actions" }, [exportBtn]),
     ]),
     el("section", { className: "panel panel-danger" }, [
@@ -323,6 +324,15 @@ export async function renderSistema(ctx) {
       protectLabel,
       err,
       previewBox,
+    ]),
+    el("details", { className: "panel tech-fold" }, [
+      el("summary", {}, [
+        el("p", { className: "kicker", text: "Información técnica" }),
+        el("strong", { text: "Journal V2" }),
+      ]),
+      el("p", { className: "meta", text: "Base " + DB_NAME + " · schema " + SCHEMA_VERSION }),
+      el("p", { className: "meta", text: "Backup " + BACKUP_PRODUCT + " · " + BACKUP_FORMAT + " · v" + BACKUP_VERSION }),
+      el("p", { className: "hint", text: "Nombres internos del producto. No cambian cómo operás el día a día." }),
     ]),
   ];
 }
