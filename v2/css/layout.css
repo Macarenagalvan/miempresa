@@ -205,6 +205,7 @@ h2 { font-size: 14px; margin: 20px 0 8px; font-weight: 650; color: var(--text); 
 .hoy-desk {
   display: grid;
   grid-template-columns: minmax(0, 58fr) minmax(280px, 42fr);
+  grid-template-rows: auto auto 1fr;
   grid-template-areas:
     "ident ident"
     "actions day"
