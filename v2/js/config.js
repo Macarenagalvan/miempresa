@@ -132,7 +132,7 @@ export const STORE_INDEXES = {
   asrs: [
     ["stageId", "stageId", { unique: false }],
     ["tradeId", "tradeId", { unique: true }],
-    ],
+  ],
   signals: [
     ["stageId", "stageId", { unique: false }],
     ["asset", "asset", { unique: false }],
