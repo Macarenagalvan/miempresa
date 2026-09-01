@@ -49,9 +49,10 @@ async function run() {
   assert("Nota abre nuevo/observacion", clicks.includes("#/nuevo/observacion"));
   assert("Idea abre nuevo/setup", clicks.includes("#/nuevo/setup"));
   assert("Operación abre nuevo/trade", clicks.includes("#/nuevo/trade"));
-  assert("resto de Mi Día sin CRUD", host.querySelectorAll(".hoy-day .office-card:not(.office-tasks):not(.office-notes) input, .hoy-day .office-card:not(.office-tasks):not(.office-notes) textarea, .hoy-day .office-card:not(.office-tasks):not(.office-notes) select").length === 0);
+  assert("resto de Mi Día sin CRUD", host.querySelectorAll(".hoy-day .office-card:not(.office-tasks):not(.office-notes):not(.office-cal) input, .hoy-day .office-card:not(.office-tasks):not(.office-notes):not(.office-cal) textarea, .hoy-day .office-card:not(.office-tasks):not(.office-notes):not(.office-cal) select").length === 0);
   assert("No olvidar tiene composer", Boolean(host.querySelector(".office-notes .note-input")));
-  assert("calendario no es alta", host.querySelectorAll(".cal-day button").length === 0);
+  assert("calendario tiene días clicables", host.querySelectorAll("button.cal-day[data-ymd]").length > 0);
+  assert("Calendario tiene alta rápida", Boolean(host.querySelector(".office-cal .cal-title-input")));
   assert("Tareas tiene alta rápida", Boolean(host.querySelector(".office-tasks .task-input")));
 
   const failed = results.filter((r) => !r.ok);
