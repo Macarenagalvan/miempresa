@@ -18,3 +18,19 @@
 .sync-panel .sync-config-fold .input {
   margin-top: 6px;
 }
+.sync-panel .sync-engine-status {
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.sync-panel .sync-conflict {
+  border: 1px solid var(--line, #2a2d33);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+.sync-panel .sync-json {
+  font-size: 11px;
+  overflow: auto;
+  max-height: 180px;
+  white-space: pre-wrap;
+}
