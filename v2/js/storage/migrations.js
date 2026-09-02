@@ -22,6 +22,9 @@ export function applyMigrations(db, oldVersion, newVersion) {
   if (oldVersion < 2 && newVersion >= 2) {
     migrateTo2(db);
   }
+  if (oldVersion < 3 && newVersion >= 3) {
+    migrateTo3(db);
+  }
 }
 
 function createStoreIfMissing(db, name) {
@@ -43,4 +46,10 @@ function migrateTo2(db) {
   for (const name of OFFICE_COLLECTIONS) {
     createStoreIfMissing(db, name);
   }
+}
+
+function migrateTo3(db) {
+  createStoreIfMissing(db, STORES.syncState);
+  createStoreIfMissing(db, STORES.syncLedger);
+  createStoreIfMissing(db, STORES.syncConflicts);
 }

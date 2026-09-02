@@ -1,6 +1,13 @@
 import { ensureJournalSeed } from "./domain/stage.js";
 import { downloadExport } from "./services/backup.js";
 import { restoreAuthSession } from "./services/auth.js";
+import {
+  ensureDeviceState,
+  bootstrapFromCloudIfEmpty,
+  discardVirginSeedIfCloudHasJournal,
+  bindNetworkSync,
+  syncNow,
+} from "./services/sync-engine.js";
 import { paint, currentRoute, routeList } from "./ui/router.js";
 import { applyIdentity } from "./ui/identity.js";
 
@@ -57,9 +64,16 @@ export async function boot() {
   warnFileProtocol();
   retireLegacyWorkers();
   bindNav();
+  await ensureDeviceState();
+  await restoreAuthSession().catch(() => {});
+  const pulled = await bootstrapFromCloudIfEmpty().catch(() => ({ applied: false }));
+  if (!pulled || !pulled.applied) {
+    await discardVirginSeedIfCloudHasJournal().catch(() => {});
+  }
   const ctx = await ensureJournalSeed();
   applyIdentity(ctx.meta, ctx.stage);
-  await restoreAuthSession().catch(() => {});
+  bindNetworkSync();
+  syncNow({ reason: "boot" }).catch(() => {});
   await paint(ctx);
   window.addEventListener("hashchange", () => {
     closeNav();
