@@ -129,9 +129,9 @@ async function deleteJournalDb() {
 async function run() {
   await ensureJournalSeed();
   const db = await openDb();
-  assert("DB_VERSION app = 2", DB_VERSION === 2);
-  assert("SCHEMA_VERSION app = 2", SCHEMA_VERSION === 2);
-  assert("IDB version 2", db.version === 2, String(db.version));
+  assert("DB_VERSION app vigente", DB_VERSION === SCHEMA_VERSION && DB_VERSION === 3);
+  assert("SCHEMA_VERSION app vigente", SCHEMA_VERSION === 3);
+  assert("IDB version vigente", db.version === SCHEMA_VERSION, String(db.version));
 
   const names = await listStoreNames();
   for (const store of OFFICE_COLLECTIONS) {
@@ -147,7 +147,7 @@ async function run() {
   }
 
   const exported = await buildExportPayload();
-  assert("export schema 2", exported.schemaVersion === 2 && exported.journalEdition === JOURNAL_EDITION);
+  assert("export schema vigente", exported.schemaVersion === SCHEMA_VERSION && exported.journalEdition === JOURNAL_EDITION);
   for (const name of OFFICE_COLLECTIONS) {
     assert(`export incluye ${name}`, Array.isArray(exported[name]));
   }
@@ -160,7 +160,7 @@ async function run() {
 
   await restoreBackup(schema1, { confirmed: true, alreadyProtected: true });
   const metaAfter1 = await getMeta();
-  assert("restore schema 1 deja meta live schema 2", metaAfter1.schemaVersion === 2);
+  assert("restore schema 1 deja meta live schema vigente", metaAfter1.schemaVersion === SCHEMA_VERSION);
   assert("restore schema 1 conserva stage", metaAfter1.activeStageId === STAGE_EMPTY);
   const obsAfter1 = await repoFor("observations").get("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeee01");
   assert("restore schema 1 conserva trading", Boolean(obsAfter1) && obsAfter1.note === "schema-1-keep");
@@ -275,7 +275,7 @@ async function run() {
   resetOpenCache();
 
   const dbV2 = await openDb();
-  assert("upgrade 1→2 sube IDB version", dbV2.version === 2, String(dbV2.version));
+  assert("upgrade 1→vigente sube IDB version", dbV2.version === SCHEMA_VERSION, String(dbV2.version));
   const upgradedNames = await listStoreNames();
   for (const name of OFFICE_COLLECTIONS) {
     assert(`upgrade crea ${name}`, upgradedNames.includes(name));
@@ -286,7 +286,7 @@ async function run() {
   const kept = await requestToPromise(dbV2.transaction("observations").objectStore("observations").get(keepObs));
   assert("upgrade conserva observation", kept && kept.note === "keep-across-upgrade");
   const seed = await ensureJournalSeed();
-  assert("upgrade bump meta a schema 2", seed.meta.schemaVersion === 2);
+  assert("upgrade bump meta a schema vigente", seed.meta.schemaVersion === SCHEMA_VERSION);
   assert("upgrade no resetea stage", seed.meta.activeStageId === stageId);
   for (const name of OFFICE_COLLECTIONS) {
     assert(`upgrade Office vacío ${name}`, (await countCollection(name)) === 0);

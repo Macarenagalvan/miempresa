@@ -8,6 +8,7 @@ import {
   TRADING_COLLECTIONS,
   OFFICE_COLLECTIONS,
   STORES,
+  SYNC_STORES,
 } from "../config.js";
 import { nowIso } from "../domain/ids.js";
 import { getMeta, putMeta } from "../storage/repos/meta.js";
@@ -29,6 +30,7 @@ import {
   assertTradeAccountPair,
 } from "../domain/integrity.js";
 import { Context } from "../domain/enums.js";
+import { ensureDeviceState, isRestoreBlocked } from "./sync-engine.js";
 
 const V1_MESSAGE = "Este archivo pertenece a Journal V1 y no puede restaurarse en Journal V2.";
 
@@ -37,7 +39,7 @@ export function backupCollectionNames() {
 }
 
 export function restoreStoreNames() {
-  return Object.values(STORES);
+  return Object.values(STORES).filter((name) => !SYNC_STORES.includes(name));
 }
 
 function emptyCounts() {
@@ -459,6 +461,10 @@ export async function restoreBackup(input, options = {}) {
   const report = validateBackup(parsed.payload);
   if (!report.ok) {
     throw new Error(report.reason || "backup inválido");
+  }
+  const syncState = await ensureDeviceState();
+  if (isRestoreBlocked(syncState)) {
+    throw new Error(syncState.restoreBlockedReason || "Restore bloqueado mientras la sincronización está activa.");
   }
   if (!options.confirmed) {
     throw new Error("restore exige confirmación explícita");
