@@ -99,27 +99,34 @@ function sessionEmail(session) {
     : null;
 }
 
+function sessionUserId(session) {
+  return session && session.user && session.user.id
+    ? String(session.user.id)
+    : null;
+}
+
 export async function getAuthState() {
   const cfg = readSupabaseConfig();
   if (!configReady(cfg)) {
-    return { status: "missing_config", email: null, error: null };
+    return { status: "missing_config", email: null, userId: null, error: null };
   }
   try {
     const client = await getAuthClient();
     if (!client || !client.auth || typeof client.auth.getSession !== "function") {
-      return { status: "error", email: null, error: lastError || "cliente de Auth no disponible" };
+      return { status: "error", email: null, userId: null, error: lastError || "cliente de Auth no disponible" };
     }
     const { data, error } = await client.auth.getSession();
     if (error) {
       lastError = error.message || String(error);
-      return { status: "error", email: null, error: lastError };
+      return { status: "error", email: null, userId: null, error: lastError };
     }
     const email = sessionEmail(data && data.session);
-    if (email) return { status: "signed_in", email, error: null };
-    return { status: "signed_out", email: null, error: null };
+    const userId = sessionUserId(data && data.session);
+    if (email) return { status: "signed_in", email, userId, error: null };
+    return { status: "signed_out", email: null, userId: null, error: null };
   } catch (err) {
     lastError = err && err.message ? err.message : String(err);
-    return { status: "error", email: null, error: lastError };
+    return { status: "error", email: null, userId: null, error: lastError };
   }
 }
 
@@ -141,7 +148,7 @@ export async function signInWithPassword(email, password) {
     lastError = error.message || String(error);
     return {
       ok: false,
-      state: { status: "error", email: null, error: lastError },
+      state: { status: "error", email: null, userId: null, error: lastError },
     };
   }
   lastError = null;
@@ -150,6 +157,7 @@ export async function signInWithPassword(email, password) {
     state: {
       status: "signed_in",
       email: sessionEmail(data && data.session),
+      userId: sessionUserId(data && data.session),
       error: null,
     },
   };
