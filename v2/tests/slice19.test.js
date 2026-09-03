@@ -68,12 +68,12 @@ async function run() {
   const seed = await ensureJournalSeed();
   const names = await listStoreNames();
 
-  assert("schema local sigue 2", SCHEMA_VERSION === 2 && DB_VERSION === 2);
-  assert("meta.schemaVersion 2", seed.meta.schemaVersion === 2);
-  assert("no store syncState", !names.includes("syncState") && STORES.syncState == null);
-  assert("no store syncLedger", !names.includes("syncLedger") && STORES.syncLedger == null);
-  assert("no store syncConflicts", !names.includes("syncConflicts") && STORES.syncConflicts == null);
-  assert("stores = schema 2", JSON.stringify([...names].sort()) === JSON.stringify(Object.values(STORES).sort()));
+  assert("schema local 3", SCHEMA_VERSION === 3 && DB_VERSION === 3);
+  assert("meta.schemaVersion 3", seed.meta.schemaVersion === 3);
+  assert("store syncState", names.includes("syncState") && STORES.syncState === "syncState");
+  assert("store syncLedger", names.includes("syncLedger") && STORES.syncLedger === "syncLedger");
+  assert("store syncConflicts", names.includes("syncConflicts") && STORES.syncConflicts === "syncConflicts");
+  assert("stores = schema 3", JSON.stringify([...names].sort()) === JSON.stringify(Object.values(STORES).sort()));
 
   assert("config committed vacía", SUPABASE_URL === "" && SUPABASE_PUBLISHABLE_KEY === "");
   let banned = false;
