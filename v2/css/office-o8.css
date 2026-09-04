@@ -34,3 +34,9 @@
   max-height: 180px;
   white-space: pre-wrap;
 }
+.sync-panel .sync-conflict-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

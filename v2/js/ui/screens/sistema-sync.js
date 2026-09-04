@@ -17,6 +17,8 @@ import {
   countLocalSyncable,
   cloudLooksEmpty,
   isRestoreBlocked,
+  resolveConflictKeepLocal,
+  resolveConflictUseCloud,
 } from "../../services/sync-engine.js";
 import { pullCloudRecords } from "../../services/sync-cloud.js";
 
@@ -142,13 +144,50 @@ export async function buildSincronizacionPanel() {
 
   if (snap.conflicts.length) {
     children.push(el("h2", { text: "Conflicto" }));
-    children.push(el("p", { className: "hint", text: "No se pisa ninguna versión. Este registro no se vuelve a empujar hasta resolverlo." }));
+    children.push(el("p", { className: "hint", text: "No se pisa ninguna versión. Elegí explícitamente cuál queda. El conflicto no se cierra si el push falla." }));
     for (const row of snap.conflicts) {
+      const keepBtn = el("button", { type: "button", className: "ghost sync-keep-local", text: "Conservar local" });
+      const cloudBtn = el("button", { type: "button", className: "ghost sync-use-cloud", text: "Usar versión de la nube" });
+      keepBtn.disabled = !online;
+      keepBtn.addEventListener("click", async () => {
+        err.textContent = "";
+        keepBtn.disabled = true;
+        cloudBtn.disabled = true;
+        try {
+          const result = await resolveConflictKeepLocal(row.entityType, row.entityId);
+          if (!result.ok) {
+            err.textContent = result.reason === "stale"
+              ? "La nube cambió mientras resolvías. El conflicto sigue abierto."
+              : ("No se pudo conservar local: " + (result.reason || "error"));
+          }
+          await refreshSyncPanel(keepBtn);
+        } catch (e) {
+          err.textContent = e.message;
+          keepBtn.disabled = false;
+          cloudBtn.disabled = false;
+        }
+      });
+      cloudBtn.addEventListener("click", async () => {
+        err.textContent = "";
+        keepBtn.disabled = true;
+        cloudBtn.disabled = true;
+        try {
+          const result = await resolveConflictUseCloud(row.entityType, row.entityId);
+          if (!result.ok) err.textContent = "No se pudo usar la nube: " + (result.reason || "error");
+          await refreshSyncPanel(cloudBtn);
+        } catch (e) {
+          err.textContent = e.message;
+          keepBtn.disabled = false;
+          cloudBtn.disabled = false;
+        }
+      });
       children.push(el("article", { className: "sync-conflict" }, [
         el("p", { className: "kicker", text: row.entityType + " · " + row.entityId }),
+        el("p", { className: "meta", text: "entidad " + row.entityType }),
         el("p", { className: "meta", text: "cloud revision " + String(row.cloudRevision) }),
-        el("pre", { className: "sync-json", text: "local\n" + JSON.stringify(row.localPayload, null, 2) }),
-        el("pre", { className: "sync-json", text: "cloud\n" + JSON.stringify(row.cloudPayload, null, 2) }),
+        el("pre", { className: "sync-json", text: "versión local\n" + JSON.stringify(row.localPayload, null, 2) }),
+        el("pre", { className: "sync-json", text: "versión cloud\n" + JSON.stringify(row.cloudPayload, null, 2) }),
+        el("div", { className: "row-actions sync-conflict-actions" }, [keepBtn, cloudBtn]),
       ]));
     }
   }
