@@ -30,6 +30,10 @@ import {
   setSyncEnabled,
   isRestoreBlocked,
 } from "../js/services/sync-engine.js";
+import {
+  resolveConflictKeepLocal,
+  resolveConflictUseCloud,
+} from "../js/services/sync-resolve.js";
 import { projectMetaForSync, applyRemoteMeta } from "../js/domain/sync-meta.js";
 import { getLedgerEntry } from "../js/storage/repos/sync-ledger.js";
 import { listConflicts } from "../js/storage/repos/sync-conflicts.js";
@@ -208,6 +212,119 @@ async function run() {
   const archLedger = await getLedgerEntry("officeTasks", archived.id);
   const stillRow = await repoFor("officeTasks").get(archived.id);
   assert("archive != tombstone", stillRow && stillRow.archivedAt && archLedger && archLedger.tombstone === false && archLedger.dirty === true);
+
+  const resolveCloud = createMemoryCloud([
+    {
+      entityType: "officeNotes", entityId: "note-keep",
+      payload: { id: "note-keep", text: "cloud-keep", createdAt: "2026-09-04T00:00:00.000Z", updatedAt: "2026-09-04T00:00:00.000Z", archivedAt: null },
+      revision: 2, tombstone: false,
+    },
+    {
+      entityType: "officeNotes", entityId: "note-use",
+      payload: { id: "note-use", text: "cloud-use", createdAt: "2026-09-04T00:00:00.000Z", updatedAt: "2026-09-04T00:00:00.000Z", archivedAt: null },
+      revision: 2, tombstone: false,
+    },
+    {
+      entityType: "officeNotes", entityId: "note-stale",
+      payload: { id: "note-stale", text: "cloud-stale-2", createdAt: "2026-09-04T00:00:00.000Z", updatedAt: "2026-09-04T00:00:00.000Z", archivedAt: null },
+      revision: 2, tombstone: false,
+    },
+    {
+      entityType: "officeNotes", entityId: "note-tomb",
+      payload: {},
+      revision: 4, tombstone: true,
+    },
+    {
+      entityType: "officeNotes", entityId: "note-fail",
+      payload: { id: "note-fail", text: "cloud-fail", createdAt: "2026-09-04T00:00:00.000Z", updatedAt: "2026-09-04T00:00:00.000Z", archivedAt: null },
+      revision: 2, tombstone: false,
+    },
+  ]);
+  setSyncCloud(resolveCloud);
+  await withApplyLock(async () => {
+    await repoFor("officeNotes").put({ id: "note-keep", text: "local-keep", createdAt: "2026-09-04T00:00:00.000Z", updatedAt: "2026-09-04T00:00:00.000Z", archivedAt: null });
+    await repoFor("officeNotes").put({ id: "note-use", text: "local-use", createdAt: "2026-09-04T00:00:00.000Z", updatedAt: "2026-09-04T00:00:00.000Z", archivedAt: null });
+    await repoFor("officeNotes").put({ id: "note-stale", text: "local-stale", createdAt: "2026-09-04T00:00:00.000Z", updatedAt: "2026-09-04T00:00:00.000Z", archivedAt: null });
+    await repoFor("officeNotes").put({ id: "note-tomb", text: "local-tomb", createdAt: "2026-09-04T00:00:00.000Z", updatedAt: "2026-09-04T00:00:00.000Z", archivedAt: null });
+    await repoFor("officeNotes").put({ id: "note-fail", text: "local-fail", createdAt: "2026-09-04T00:00:00.000Z", updatedAt: "2026-09-04T00:00:00.000Z", archivedAt: null });
+  });
+  await noteLocalMutation("officeNotes", "note-keep");
+  await noteLocalMutation("officeNotes", "note-use");
+  await noteLocalMutation("officeNotes", "note-stale");
+  await noteLocalMutation("officeNotes", "note-tomb");
+  await noteLocalMutation("officeNotes", "note-fail");
+  await pullNow();
+
+  const keepResult = await resolveConflictKeepLocal("officeNotes", "note-keep");
+  const keptNote = await repoFor("officeNotes").get("note-keep");
+  const keptCloud = resolveCloud.rows.get("officeNotes::note-keep");
+  const keptConflict = (await listConflicts()).find((row) => row.entityId === "note-keep");
+  const keptLedger = await getLedgerEntry("officeNotes", "note-keep");
+  assert("conservar local ok", keepResult.ok === true && keepResult.resolution === "keep_local");
+  assert("conservar local no pisa local", keptNote && keptNote.text === "local-keep");
+  assert("conservar local push revision", keptCloud && keptCloud.payload && keptCloud.payload.text === "local-keep" && keptCloud.revision === 3);
+  assert("conservar local cierra conflicto", keptConflict && Boolean(keptConflict.resolvedAt));
+  assert("conservar local ledger limpio", keptLedger && keptLedger.dirty === false && keptLedger.cloudRevision === 3);
+
+  const useResult = await resolveConflictUseCloud("officeNotes", "note-use");
+  const usedNote = await repoFor("officeNotes").get("note-use");
+  const usedConflict = (await listConflicts()).find((row) => row.entityId === "note-use");
+  const usedLedger = await getLedgerEntry("officeNotes", "note-use");
+  assert("usar cloud ok", useResult.ok === true && useResult.resolution === "use_cloud");
+  assert("usar cloud aplica payload", usedNote && usedNote.text === "cloud-use");
+  assert("usar cloud cierra conflicto", usedConflict && Boolean(usedConflict.resolvedAt));
+  assert("usar cloud ledger limpio", usedLedger && usedLedger.dirty === false && usedLedger.cloudRevision === 2);
+
+  const staleAdapter = {
+    async pullRecords() { return resolveCloud.pullRecords(); },
+    async pushRecord(input) {
+      if (input.entityId === "note-stale") {
+        const current = resolveCloud.rows.get("officeNotes::note-stale");
+        current.revision = Number(current.revision) + 1;
+        current.payload = { ...current.payload, text: "cloud-stale-moved" };
+      }
+      return resolveCloud.pushRecord(input);
+    },
+  };
+  setSyncCloud(staleAdapter);
+  const localBeforeStale = await repoFor("officeNotes").get("note-stale");
+  const cloudBeforeStale = { ...(resolveCloud.rows.get("officeNotes::note-stale").payload) };
+  const staleResult = await resolveConflictKeepLocal("officeNotes", "note-stale");
+  const staleConflict = (await listConflicts()).find((row) => row.entityId === "note-stale");
+  const localAfterStale = await repoFor("officeNotes").get("note-stale");
+  const cloudAfterStale = resolveCloud.rows.get("officeNotes::note-stale");
+  assert("stale durante resolución no cierra", staleResult.ok === false && staleResult.reason === "stale");
+  assert("stale preserva local", localAfterStale && localAfterStale.text === localBeforeStale.text);
+  assert("stale preserva cloud", cloudAfterStale && cloudAfterStale.payload && cloudAfterStale.payload.text === "cloud-stale-moved");
+  assert("stale conflicto sigue abierto", staleConflict && !staleConflict.resolvedAt);
+  assert("stale no perdió snapshot cloud previo", Boolean(cloudBeforeStale && cloudBeforeStale.text));
+
+  setSyncCloud(resolveCloud);
+  const tombResult = await resolveConflictUseCloud("officeNotes", "note-tomb");
+  const tombLocal = await repoFor("officeNotes").get("note-tomb");
+  const tombConflict = (await listConflicts()).find((row) => row.entityId === "note-tomb");
+  const tombLedger = await getLedgerEntry("officeNotes", "note-tomb");
+  assert("tombstone usar cloud elimina local", tombResult.ok === true && !tombLocal);
+  assert("tombstone conflicto cerrado", tombConflict && Boolean(tombConflict.resolvedAt));
+  assert("tombstone ledger", tombLedger && tombLedger.tombstone === true && tombLedger.dirty === false);
+
+  const failAdapter = {
+    async pullRecords() { return resolveCloud.pullRecords(); },
+    async pushRecord() { return { ok: false, kind: "error" }; },
+  };
+  setSyncCloud(failAdapter);
+  const failLocalBefore = await repoFor("officeNotes").get("note-fail");
+  const failCloudBefore = resolveCloud.rows.get("officeNotes::note-fail");
+  const failResult = await resolveConflictKeepLocal("officeNotes", "note-fail");
+  const failConflict = (await listConflicts()).find((row) => row.entityId === "note-fail");
+  const failLocalAfter = await repoFor("officeNotes").get("note-fail");
+  const failCloudAfter = resolveCloud.rows.get("officeNotes::note-fail");
+  assert("conflicto no cierra si push falla", failResult.ok === false && failResult.reason === "push_rejected");
+  assert("fallo preserva local", failLocalAfter && failLocalAfter.text === failLocalBefore.text);
+  assert("fallo preserva cloud", failCloudAfter && failCloudAfter.payload && failCloudAfter.payload.text === failCloudBefore.payload.text);
+  assert("fallo conflicto abierto", failConflict && !failConflict.resolvedAt);
+
+  setSyncCloud(resolveCloud);
 
   const first = await ingestRgmPayload({
     id: "sig-SHORT-fvg-s-test", side: "SHORT", alert_t: "2026-09-02T10:00:00.000Z",
