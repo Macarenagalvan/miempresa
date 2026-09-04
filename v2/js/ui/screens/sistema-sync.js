@@ -17,9 +17,11 @@ import {
   countLocalSyncable,
   cloudLooksEmpty,
   isRestoreBlocked,
+} from "../../services/sync-engine.js";
+import {
   resolveConflictKeepLocal,
   resolveConflictUseCloud,
-} from "../../services/sync-engine.js";
+} from "../../services/sync-resolve.js";
 import { pullCloudRecords } from "../../services/sync-cloud.js";
 
 async function refreshSyncPanel(node) {
