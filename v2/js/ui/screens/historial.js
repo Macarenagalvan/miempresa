@@ -44,11 +44,11 @@ export async function renderHistorial(ctx) {
     asrByTrade[row.tradeId] = row;
   }
   const pendingCount = rows.filter((t) => isAsrPending(t, asrByTrade[t.id])).length;
-  const ctxSel = select(filters.context, [["", "todos los context"], [Context.BACKTEST, "BACKTEST"], [Context.DEMO, "DEMO"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"]]);
-  const accSel = select(filters.accountId, [["", "todas las accounts"], ...accounts.map((a) => [a.id, a.name])]);
-  const asset = select(filters.asset, [["", "asset"], ...ROADMAP_ASSETS.map((a) => [a.id, a.label])]);
-  const strategy = select(filters.strategy, [["", "strategy"], ...Object.values(Strategy).map((s) => [s, s])]);
-  const variant = select(filters.variant, [["", "variant"], ...Object.values(BlueVariant).map((v) => [v, v])]);
+  const ctxSel = select(filters.context, [["", "todos los contextos"], [Context.BACKTEST, "BACKTEST"], [Context.DEMO, "DEMO"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"]]);
+  const accSel = select(filters.accountId, [["", "todas las cuentas"], ...accounts.map((a) => [a.id, a.name])]);
+  const asset = select(filters.asset, [["", "activo"], ...ROADMAP_ASSETS.map((a) => [a.id, a.label])]);
+  const strategy = select(filters.strategy, [["", "estrategia"], ...Object.values(Strategy).map((s) => [s, s])]);
+  const variant = select(filters.variant, [["", "variante"], ...Object.values(BlueVariant).map((v) => [v, v])]);
   const direction = select(filters.direction, [["", "dir"], ...Object.values(Direction).map((d) => [d, d])]);
   const session = select(filters.session, [["", "sesión"], ...SESSIONS.map((s) => [s, s])]);
   const lifecycle = select(filters.lifecycle, [["", "OPEN+CLOSED"], [Lifecycle.OPEN, "OPEN"], [Lifecycle.CLOSED, "CLOSED"]]);
@@ -63,6 +63,7 @@ export async function renderHistorial(ctx) {
     }));
   }
   [ctxSel, accSel, asset, strategy, variant, direction, session, lifecycle, from, to].forEach((n) => n.addEventListener("change", apply));
+  const stageEmpty = raw.length === 0;
   const list = rows.length
     ? rows.map((t) => {
       const when = (t.closedAt || t.openedAt || "").slice(0, 10);
@@ -89,13 +90,20 @@ export async function renderHistorial(ctx) {
       item.addEventListener("click", () => go("trade/" + t.id));
       return item;
     })
-    : [el("p", { className: "empty", text: "0 trades con este filtro." })];
+    : [el("div", { className: "empty-block" }, [
+      el("p", { className: "empty", text: stageEmpty
+        ? "Todavía no registraste operaciones en esta etapa."
+        : "No hay operaciones con este filtro." }),
+      el("button", { type: "button", className: "ghost", text: "Nueva operación", onclick: () => go("nuevo/trade") }),
+    ])];
   return [
     el("section", { className: "panel" }, [
       el("h1", { text: "Historial" }),
-      el("p", { className: "meta", text: "Stage activa. VOID fuera. Context y Account visibles." }),
+      el("p", { className: "meta", text: "Operaciones de la etapa activa. VOID fuera." }),
       el("div", { className: "chips filters" }, [ctxSel, accSel, asset, strategy, variant, direction, session, lifecycle, from, to]),
-      el("p", { className: "meta", text: `${rows.length} filas · ${pendingCount} ASR pendiente` }),
+      stageEmpty
+        ? null
+        : el("p", { className: "meta", text: `${rows.length} operaciones · ${pendingCount} ASR pendiente` }),
       el("div", { className: "list table-wrap" }, list),
     ]),
   ];

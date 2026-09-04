@@ -104,7 +104,7 @@ export async function renderCuentaDetail(ctx) {
       }
       return line;
     })
-    : [el("p", { className: "empty", text: "0 movements." })];
+    : [el("p", { className: "empty", text: "Todavía no hay movimientos en esta cuenta." })];
 
   return [
     el("section", { className: "panel" }, [

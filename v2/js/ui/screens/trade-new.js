@@ -96,8 +96,8 @@ export async function renderNuevoTrade(ctx) {
 
   return [
     el("section", { className: "panel form" }, [
-      el("p", { className: "kicker", text: "Nuevo" }),
-      el("h1", { text: setup ? "Trade desde Setup" : "Trade" }),
+      el("p", { className: "kicker", text: "Nueva operación" }),
+      el("h1", { text: setup ? "Operación desde idea" : "Operación" }),
       ...refs,
       field("Asset", asset),
       field("brokerSymbol (opcional)", broker),

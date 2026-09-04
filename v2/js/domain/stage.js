@@ -12,13 +12,21 @@ import { getStage, putStage, listStages } from "../storage/repos/stages.js";
 export async function ensureJournalSeed() {
   const existing = await getMeta();
   if (existing) {
-    assertMeta(existing);
-    const stage = await getStage(existing.activeStageId);
+    let meta = existing;
+    const existingSchema = Number(existing.schemaVersion);
+    if (Number.isInteger(existingSchema) && existingSchema < SCHEMA_VERSION) {
+      meta = { ...existing, schemaVersion: SCHEMA_VERSION };
+      assertMeta(meta);
+      await putMeta(meta);
+    } else {
+      assertMeta(meta);
+    }
+    const stage = await getStage(meta.activeStageId);
     if (!stage) throw new Error("Stage activa referenciada no existe");
     assertStage(stage);
     const all = await listStages();
     assertSingleActive(all);
-    return { meta: existing, stage };
+    return { meta, stage };
   }
 
   const now = nowIso();
@@ -39,7 +47,7 @@ export async function ensureJournalSeed() {
     schemaVersion: SCHEMA_VERSION,
     journalEdition: JOURNAL_EDITION,
     activeStageId: stage.id,
-    traderName: "",
+    traderName: "Maca",
     createdAt: now,
     lastBackupAt: null,
     activeAccountId: null,

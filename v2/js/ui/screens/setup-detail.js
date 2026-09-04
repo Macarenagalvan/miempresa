@@ -11,7 +11,7 @@ export async function renderSetupDetail(ctx) {
   const id = ctx.route.rest.replace(/\/evaluar$/, "");
   const setup = id ? await getSetup(id) : null;
   if (!setup) {
-    return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Setup no encontrado." })])];
+    return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Idea no encontrada." })])];
   }
 
   if (evaluateMode) return renderEvaluate(setup);
@@ -34,8 +34,8 @@ export async function renderSetupDetail(ctx) {
   }
 
   const origin = setup.observationId
-    ? el("button", { type: "button", className: "ghost", text: "Ver Observation origen", onclick: () => go("observacion/" + setup.observationId) })
-    : el("p", { className: "meta", text: "Sin Observation origen." });
+    ? el("button", { type: "button", className: "ghost", text: "Ver nota de origen", onclick: () => go("observacion/" + setup.observationId) })
+    : el("p", { className: "meta", text: "Sin nota de origen." });
 
   const trades = await listStageTrades(ctx.stage.id, { setupId: setup.id, includeVoid: true });
   const tradeList = trades.length
@@ -48,11 +48,11 @@ export async function renderSetupDetail(ctx) {
       row.addEventListener("click", () => go("trade/" + t.id));
       return row;
     })
-    : [el("p", { className: "meta", text: "Sin trades todavía." })];
+    : [el("p", { className: "meta", text: "Todavía no hay operaciones de esta idea." })];
 
   return [
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: setup.status }),
+      el("p", { className: "kicker", text: `Idea · Setup · ${setup.status}` }),
       el("h1", { text: `${setup.asset} ${setup.direction}` }),
       el("p", { className: "meta", text: `${setup.context} · ${setup.strategy} · ${setup.createdAt.slice(0, 10)}` }),
       setup.plannedRr != null ? el("p", { className: "meta", text: `plannedRR ${setup.plannedRr.toFixed(2)}` }) : null,
@@ -61,7 +61,7 @@ export async function renderSetupDetail(ctx) {
       origin,
       err,
       el("div", { className: "row-actions" }, actions),
-      el("h2", { text: "Trades de este Setup" }),
+      el("h2", { text: "Operaciones de esta idea" }),
       el("div", { className: "list" }, tradeList),
     ]),
   ];

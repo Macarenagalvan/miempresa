@@ -1,0 +1,79 @@
+/* O6 accesos rápidos */
+.shortcut-panel { display: flex; flex-direction: column; gap: 10px; }
+.shortcut-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+a.shortcut-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+a.shortcut-chip .ico {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+a.shortcut-chip:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  filter: none;
+}
+button.ghost.shortcut-config {
+  align-self: start;
+  color: var(--muted);
+  border-color: transparent;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+button.ghost.shortcut-config:hover { border-color: var(--line); }
+.shortcut-composer {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.3fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+.shortcut-admin-list { display: flex; flex-direction: column; gap: 8px; }
+.shortcut-admin-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+  padding: 6px 0;
+}
+.shortcut-admin-label { margin: 0; font-size: 14px; }
+.shortcut-admin-url {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.shortcut-admin-actions { display: flex; gap: 2px; flex-wrap: nowrap; justify-content: flex-end; }
+.shortcut-edit {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.3fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+.shortcut-err { min-height: 0; margin: 0; }
+@media (max-width: 900px) {
+  a.shortcut-chip { min-height: 40px; padding: 8px 12px; }
+  .shortcut-composer,
+  .shortcut-edit {
+    grid-template-columns: 1fr;
+  }
+  .shortcut-admin-row { grid-template-columns: 1fr; }
+  .shortcut-admin-actions { justify-content: flex-start; }
+  button.ghost.shortcut-add { width: 100%; }
+}

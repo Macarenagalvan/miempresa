@@ -67,21 +67,21 @@ export async function paint(ctx) {
     title = "Nuevo";
     nodes = await renderNuevo(viewCtx);
   } else if (parsed.name === "setup") {
-    title = "Setup";
+    title = "Idea";
     nav = "estudio";
     nodes = await renderSetupDetail(viewCtx);
   } else if (parsed.name === "estudio") {
     title = "Estudio";
     nodes = await renderEstudio(viewCtx);
   } else if (parsed.name === "observacion") {
-    title = "Observación";
+    title = "Nota";
     nav = "estudio";
     nodes = await renderObservationDetail(viewCtx);
   } else if (parsed.name === "hoy") {
     title = "Hoy";
     nodes = await renderHoy(viewCtx);
   } else if (parsed.name === "trade") {
-    title = "Trade";
+    title = "Operación";
     nav = "historial";
     nodes = await renderTradeDetail(viewCtx);
   } else if (parsed.name === "historial") {
@@ -121,7 +121,7 @@ export async function paint(ctx) {
     nodes = await renderHoy(viewCtx);
   }
 
-  document.title = `Journal V2 · ${title}`;
+  document.title = `Maca · ${title}`;
   setMain(nodes);
   document.querySelectorAll("[data-route]").forEach((link) => {
     link.classList.toggle("is-active", link.getAttribute("data-route") === nav);

@@ -1,0 +1,45 @@
+/* O7 polish — header, densidad, iconos, tech-fold */
+@media (min-width: 901px) {
+  .top { display: none; }
+}
+.identity-band { padding: 18px 22px 16px; }
+.identity-band h1 { font-size: 28px; margin-bottom: 4px; }
+.hoy-desk { gap: 14px; }
+.hoy-day { gap: 10px; }
+.hoy-actions { padding: 16px 18px 14px; }
+.office-card { padding: 14px 14px 12px; }
+button.ghost.icon-btn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-color: transparent;
+}
+button.ghost.icon-btn .ico {
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+}
+button.ghost.icon-btn:hover { border-color: var(--line); }
+button.ghost.icon-btn:hover .ico { color: var(--text); }
+.tech-fold {
+  background: var(--bg);
+  border-style: dashed;
+}
+.tech-fold summary {
+  cursor: pointer;
+  list-style: none;
+}
+.tech-fold summary::-webkit-details-marker { display: none; }
+.tech-fold summary .kicker { margin-bottom: 4px; }
+.tech-fold[open] summary { margin-bottom: 10px; }
+@media (max-width: 900px) {
+  button.ghost.icon-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+}

@@ -5,14 +5,17 @@ import {
   BACKUP_FORMAT,
   BACKUP_VERSION,
   EXPORT_COLLECTIONS,
+  TRADING_COLLECTIONS,
+  OFFICE_COLLECTIONS,
   STORES,
+  SYNC_STORES,
 } from "../config.js";
 import { nowIso } from "../domain/ids.js";
 import { getMeta, putMeta } from "../storage/repos/meta.js";
 import { dumpCollections } from "../storage/repos/collections.js";
 import { withStores } from "../storage/db.js";
 import {
-  assertMeta,
+  assertBackupMeta,
   assertStage,
   assertSingleActive,
   assertObservation,
@@ -27,6 +30,7 @@ import {
   assertTradeAccountPair,
 } from "../domain/integrity.js";
 import { Context } from "../domain/enums.js";
+import { ensureDeviceState, isRestoreBlocked } from "./sync-engine.js";
 
 const V1_MESSAGE = "Este archivo pertenece a Journal V1 y no puede restaurarse en Journal V2.";
 
@@ -35,7 +39,7 @@ export function backupCollectionNames() {
 }
 
 export function restoreStoreNames() {
-  return Object.values(STORES);
+  return Object.values(STORES).filter((name) => !SYNC_STORES.includes(name));
 }
 
 function emptyCounts() {
@@ -154,13 +158,16 @@ export function validateBackup(payload) {
   if (!payload.meta || typeof payload.meta !== "object" || Array.isArray(payload.meta)) {
     pushError(errors, "meta faltante");
   }
-  for (const name of EXPORT_COLLECTIONS) {
+  for (const name of TRADING_COLLECTIONS) {
     if (!Array.isArray(payload[name])) {
       pushError(errors, `store faltante: ${name}`);
       counts[name] = 0;
     } else {
       counts[name] = payload[name].length;
     }
+  }
+  for (const name of OFFICE_COLLECTIONS) {
+    counts[name] = Array.isArray(payload[name]) ? payload[name].length : 0;
   }
 
   const stages = Array.isArray(payload.stages) ? payload.stages : [];
@@ -188,7 +195,7 @@ export function validateBackup(payload) {
   uniqueIds(attachments, "attachments", errors);
 
   if (payload.meta) {
-    runAssert(() => assertMeta(payload.meta), errors);
+    runAssert(() => assertBackupMeta(payload.meta), errors);
     if (payload.meta.activeStageId) {
       mustRef(payload.meta.activeStageId, stageIds, errors, "JournalMeta → activeStageId rota");
     }
@@ -416,7 +423,12 @@ export async function applyRestoreTransaction(payload) {
     for (const name of storeNames) {
       tx.objectStore(name).clear();
     }
-    if (payload.meta) tx.objectStore(STORES.meta).put(payload.meta);
+    if (payload.meta) {
+      tx.objectStore(STORES.meta).put({
+        ...payload.meta,
+        schemaVersion: SCHEMA_VERSION,
+      });
+    }
     for (const name of EXPORT_COLLECTIONS) {
       const rows = Array.isArray(payload[name]) ? payload[name] : [];
       const store = tx.objectStore(name);
@@ -449,6 +461,10 @@ export async function restoreBackup(input, options = {}) {
   const report = validateBackup(parsed.payload);
   if (!report.ok) {
     throw new Error(report.reason || "backup inválido");
+  }
+  const syncState = await ensureDeviceState();
+  if (isRestoreBlocked(syncState)) {
+    throw new Error(syncState.restoreBlockedReason || "Restore bloqueado mientras la sincronización está activa.");
   }
   if (!options.confirmed) {
     throw new Error("restore exige confirmación explícita");

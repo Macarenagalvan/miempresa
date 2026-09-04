@@ -27,11 +27,23 @@ import {
   DeskRecordSource,
 } from "./enums.js";
 
-export function assertMeta(meta) {
+function assertMetaShape(meta) {
   if (!meta || meta.id !== META_ID) throw new Error("meta.id debe ser singleton");
   if (meta.journalEdition !== JOURNAL_EDITION) throw new Error("journalEdition inválido");
-  if (meta.schemaVersion !== SCHEMA_VERSION) throw new Error("schemaVersion inválido");
   if (!meta.activeStageId) throw new Error("meta.activeStageId requerido");
+}
+
+export function assertBackupMeta(meta) {
+  assertMetaShape(meta);
+  const schema = Number(meta.schemaVersion);
+  if (!Number.isInteger(schema) || schema < 1 || schema > SCHEMA_VERSION) {
+    throw new Error("schemaVersion inválido");
+  }
+}
+
+export function assertMeta(meta) {
+  assertMetaShape(meta);
+  if (meta.schemaVersion !== SCHEMA_VERSION) throw new Error("schemaVersion inválido");
 }
 
 export function assertStage(stage) {

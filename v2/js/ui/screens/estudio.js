@@ -21,13 +21,13 @@ export async function renderEstudio(ctx) {
     el("button", {
       type: "button",
       className: "chip" + (tab === "obs" ? " is-on" : ""),
-      text: "Observaciones",
+      text: "Notas de mercado",
       onclick: () => go(asset ? "estudio/" + asset : "estudio"),
     }),
     el("button", {
       type: "button",
       className: "chip" + (tab === "setups" ? " is-on" : ""),
-      text: "Setups",
+      text: "Ideas",
       onclick: () => go(asset ? "estudio/setups/" + asset : "estudio/setups"),
     }),
   ]);
@@ -63,7 +63,10 @@ export async function renderEstudio(ctx) {
         item.addEventListener("click", () => go("setup/" + s.id));
         return item;
       })
-      : [el("p", { className: "empty", text: "0 setups." })];
+      : [el("div", { className: "empty-block" }, [
+        el("p", { className: "empty", text: asset ? `Todavía no hay ideas de ${asset}.` : "Todavía no hay ideas guardadas." }),
+        el("button", { type: "button", className: "ghost", text: "Nueva idea", onclick: () => go("nuevo/setup") }),
+      ])];
   } else {
     const rows = await listActiveObservations(ctx.stage.id, asset || null);
     list = rows.length
@@ -76,12 +79,16 @@ export async function renderEstudio(ctx) {
         item.addEventListener("click", () => go("observacion/" + obs.id));
         return item;
       })
-      : [el("p", { className: "empty", text: asset ? `0 observaciones de ${asset}.` : "0 observaciones." })];
+      : [el("div", { className: "empty-block" }, [
+        el("p", { className: "empty", text: asset ? `Todavía no hay notas de ${asset}.` : "Todavía no guardaste notas de mercado." }),
+        el("button", { type: "button", className: "ghost", text: "Nueva nota", onclick: () => go("nuevo/observacion") }),
+      ])];
   }
 
   return [
     el("section", { className: "panel" }, [
       el("h1", { text: "Estudio" }),
+      el("p", { className: "hint", text: "Notas de mercado e Ideas viven acá. Una nota puede pasar después a idea; no es obligatorio." }),
       tabs,
       chips,
       el("div", { className: "list" }, list),

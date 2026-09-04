@@ -5,6 +5,17 @@ import {
   previewBackupText,
   restoreBackup,
 } from "../../services/backup.js";
+import { getMeta, putMeta } from "../../storage/repos/meta.js";
+import { applyIdentity, visibleName, iconBtn, ICONS } from "../identity.js";
+import { DB_NAME, SCHEMA_VERSION, BACKUP_PRODUCT, BACKUP_FORMAT, BACKUP_VERSION } from "../../config.js";
+import {
+  addOfficeShortcut,
+  updateOfficeShortcut,
+  archiveOfficeShortcut,
+  moveOfficeShortcut,
+  listHoyShortcuts,
+} from "../../domain/office-shortcut.js";
+import { buildSincronizacionPanel } from "./sistema-sync.js";
 
 function countLines(preview) {
   const c = preview.counts || {};
@@ -22,7 +33,123 @@ function countLines(preview) {
   ];
 }
 
-export async function renderSistema() {
+function ghostMini(label, className, onClick) {
+  const btn = el("button", { type: "button", className: "ghost task-mini " + className, text: label });
+  btn.addEventListener("click", onClick);
+  return btn;
+}
+
+async function refreshOficina(node) {
+  const panel = node.closest(".office-sistema");
+  if (!panel) return;
+  panel.replaceWith(await buildOficinaPanel());
+}
+
+function shortcutEditor(item) {
+  const labelField = el("input", { className: "input shortcut-edit-label", type: "text", value: item.label });
+  const urlField = el("input", { className: "input shortcut-edit-url", type: "text", value: item.url });
+  return { labelField, urlField };
+}
+
+async function buildOficinaPanel() {
+  const items = await listHoyShortcuts();
+  const err = el("p", { className: "err shortcut-err", text: "" });
+  const labelInput = el("input", {
+    className: "input shortcut-label",
+    type: "text",
+    placeholder: "TradingView",
+    autocomplete: "off",
+  });
+  const urlInput = el("input", {
+    className: "input shortcut-url",
+    type: "url",
+    placeholder: "https://… o http://localhost:8080",
+    autocomplete: "off",
+  });
+  const addBtn = el("button", { type: "button", className: "ghost shortcut-add", text: "Agregar" });
+
+  async function submit() {
+    err.textContent = "";
+    try {
+      await addOfficeShortcut({ label: labelInput.value, url: urlInput.value });
+      labelInput.value = "";
+      urlInput.value = "";
+      await refreshOficina(addBtn);
+    } catch (e) {
+      err.textContent = e.message;
+    }
+  }
+  addBtn.addEventListener("click", submit);
+  urlInput.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      submit();
+    }
+  });
+
+  const rows = items.map((item, index) => {
+    const row = el("div", { className: "shortcut-admin-row" });
+    function showEdit() {
+      const fields = shortcutEditor(item);
+      const save = ghostMini("Guardar", "shortcut-save", async () => {
+        err.textContent = "";
+        try {
+          await updateOfficeShortcut(item.id, { label: fields.labelField.value, url: fields.urlField.value });
+          await refreshOficina(row);
+        } catch (e) {
+          err.textContent = e.message;
+        }
+      });
+      const cancel = ghostMini("Cancelar", "shortcut-cancel", async () => {
+        await refreshOficina(row);
+      });
+      row.replaceChildren(el("div", { className: "shortcut-edit" }, [
+        fields.labelField, fields.urlField, save, cancel,
+      ]));
+      fields.labelField.focus();
+    }
+    row.append(
+      el("div", { className: "shortcut-admin-main" }, [
+        el("p", { className: "shortcut-admin-label", text: item.label }),
+        el("p", { className: "shortcut-admin-url", text: item.url }),
+      ]),
+      el("div", { className: "shortcut-admin-actions" }, [
+        iconBtn("Subir", "shortcut-up", ICONS.up, async () => {
+          if (index === 0) return;
+          await moveOfficeShortcut(item.id, "up");
+          await refreshOficina(row);
+        }),
+        iconBtn("Bajar", "shortcut-down", ICONS.down, async () => {
+          if (index === items.length - 1) return;
+          await moveOfficeShortcut(item.id, "down");
+          await refreshOficina(row);
+        }),
+        iconBtn("Editar", "shortcut-edit-btn", ICONS.edit, showEdit),
+        iconBtn("Archivar", "shortcut-archive-btn", ICONS.archive, async () => {
+          await archiveOfficeShortcut(item.id);
+          await refreshOficina(row);
+        }),
+      ]),
+    );
+    return row;
+  });
+
+  const empty = items.length
+    ? null
+    : el("p", { className: "empty office-empty", text: "Todavía no configuraste accesos rápidos." });
+
+  return el("section", { className: "panel office-sistema", id: "oficina" }, [
+    el("p", { className: "kicker", text: "Oficina" }),
+    el("h1", { text: "Accesos rápidos" }),
+    el("p", { className: "hint", text: "Se abren desde Hoy. No entran a Números. Ejemplos (no se guardan solos): TradingView, RGM Desk." }),
+    el("div", { className: "shortcut-composer" }, [labelInput, urlInput, addBtn]),
+    err,
+    empty,
+    el("div", { className: "shortcut-admin-list" }, rows),
+  ]);
+}
+
+export async function renderSistema(ctx) {
   const status = el("p", { className: "hint", text: "Restore reemplaza todo el Journal. No hay merge." });
   const err = el("p", { className: "err", text: "" });
   const previewBox = el("div", { className: "list" }, []);
@@ -156,11 +283,37 @@ export async function renderSistema() {
     el("span", { text: "Ya descargué el backup del estado actual." }),
   ]);
 
+  const meta = await getMeta();
+  const nameInput = el("input", { className: "input", value: visibleName(meta), placeholder: "Maca" });
+  const nameStatus = el("p", { className: "hint", text: "Aparece en el saludo y en la barra. Sin login." });
+  const saveName = el("button", { type: "button", text: "Guardar nombre" });
+  saveName.addEventListener("click", async () => {
+    const next = { ...meta, traderName: String(nameInput.value || "").trim() };
+    await putMeta(next);
+    if (ctx) ctx.meta = next;
+    applyIdentity(next, ctx && ctx.stage);
+    nameStatus.textContent = next.traderName
+      ? "Nombre visible: " + next.traderName
+      : "Nombre vacío. El saludo queda en Buen día, sin Trader.";
+  });
+
   return [
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: "Sistema" }),
+      el("p", { className: "kicker", text: "Perfil" }),
+      el("h1", { text: "Quién usa esta Office" }),
+      el("label", { className: "field" }, [
+        el("span", { text: "Nombre visible" }),
+        nameInput,
+      ]),
+      nameStatus,
+      el("div", { className: "row-actions" }, [saveName]),
+    ]),
+    await buildSincronizacionPanel(),
+    await buildOficinaPanel(),
+    el("section", { className: "panel" }, [
+      el("p", { className: "kicker", text: "Resguardo" }),
       el("h1", { text: "Backup / Restore" }),
-      el("p", { className: "hint", text: "Solo backup nativo Journal V2. No migra V1, CSV MT5 ni JSONL RGM." }),
+      el("p", { className: "hint", text: "Exportá cuando quieras un resguardo. Restore reemplaza todo: no hay merge." }),
       el("div", { className: "row-actions" }, [exportBtn]),
     ]),
     el("section", { className: "panel panel-danger" }, [
@@ -173,6 +326,15 @@ export async function renderSistema() {
       protectLabel,
       err,
       previewBox,
+    ]),
+    el("details", { className: "panel tech-fold" }, [
+      el("summary", {}, [
+        el("p", { className: "kicker", text: "Información técnica" }),
+        el("strong", { text: "Journal V2" }),
+      ]),
+      el("p", { className: "meta", text: "Base " + DB_NAME + " · schema " + SCHEMA_VERSION }),
+      el("p", { className: "meta", text: "Backup " + BACKUP_PRODUCT + " · " + BACKUP_FORMAT + " · v" + BACKUP_VERSION }),
+      el("p", { className: "hint", text: "Nombres internos del producto. No cambian cómo operás el día a día." }),
     ]),
   ];
 }

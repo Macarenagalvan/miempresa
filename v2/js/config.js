@@ -1,6 +1,6 @@
 export const DB_NAME = "JournalV2";
-export const DB_VERSION = 1;
-export const SCHEMA_VERSION = 1;
+export const DB_VERSION = 3;
+export const SCHEMA_VERSION = 3;
 export const JOURNAL_EDITION = "v2";
 export const BACKUP_PRODUCT = "Journal V2";
 export const BACKUP_FORMAT = "journal-v2";
@@ -85,6 +85,13 @@ export const STORES = {
   challenges: "challenges",
   payouts: "payouts",
   attachments: "attachments",
+  officeTasks: "officeTasks",
+  officeNotes: "officeNotes",
+  officeEvents: "officeEvents",
+  officeShortcuts: "officeShortcuts",
+  syncState: "syncState",
+  syncLedger: "syncLedger",
+  syncConflicts: "syncConflicts",
 };
 
 export const STORE_INDEXES = {
@@ -147,9 +154,25 @@ export const STORE_INDEXES = {
     ["date", "date", { unique: false }],
   ],
   attachments: [["entity", ["entityType", "entityId"], { unique: false }]],
+  officeTasks: [
+    ["dueDate", "dueDate", { unique: false }],
+    ["done", "done", { unique: false }],
+    ["archivedAt", "archivedAt", { unique: false }],
+  ],
+  officeNotes: [
+    ["archivedAt", "archivedAt", { unique: false }],
+    ["createdAt", "createdAt", { unique: false }],
+  ],
+  officeEvents: [["date", "date", { unique: false }]],
+  officeShortcuts: [["order", "order", { unique: false }]],
+  syncLedger: [
+    ["entityType", "entityType", { unique: false }],
+    ["dirty", "dirty", { unique: false }],
+  ],
+  syncConflicts: [["resolvedAt", "resolvedAt", { unique: false }]],
 };
 
-export const EXPORT_COLLECTIONS = [
+export const TRADING_COLLECTIONS = [
   "stages",
   "accounts",
   "movements",
@@ -162,3 +185,56 @@ export const EXPORT_COLLECTIONS = [
   "payouts",
   "attachments",
 ];
+
+export const OFFICE_COLLECTIONS = [
+  "officeTasks",
+  "officeNotes",
+  "officeEvents",
+  "officeShortcuts",
+];
+
+export const EXPORT_COLLECTIONS = TRADING_COLLECTIONS.concat(OFFICE_COLLECTIONS);
+
+export const SYNC_STORES = ["syncState", "syncLedger", "syncConflicts"];
+
+export const PRODUCT_STORE_NAMES = ["meta"].concat(EXPORT_COLLECTIONS);
+
+export const PRODUCT_SYNC_STORES = PRODUCT_STORE_NAMES.slice();
+
+export const META_SYNC_FIELDS = Object.freeze([
+  "id",
+  "schemaVersion",
+  "journalEdition",
+  "activeStageId",
+  "traderName",
+  "createdAt",
+  "activeAccountId",
+]);
+
+export const META_DEVICE_FIELDS = Object.freeze([
+  "lastBackupAt",
+  "rgmSync",
+  "mt5Sync",
+]);
+
+export const SYNC_PUSH_ORDER = Object.freeze([
+  "stages",
+  "accounts",
+  "challenges",
+  "observations",
+  "setups",
+  "trades",
+  "movements",
+  "asrs",
+  "signals",
+  "payouts",
+  "attachments",
+  "officeTasks",
+  "officeNotes",
+  "officeEvents",
+  "officeShortcuts",
+  "meta",
+]);
+
+export const SYNC_STATE_ID = "singleton";
+export const SYNC_DEBOUNCE_MS = 1200;

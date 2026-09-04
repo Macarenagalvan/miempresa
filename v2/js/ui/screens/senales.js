@@ -37,7 +37,7 @@ export async function renderSenales(ctx) {
   };
   const meta = await getMeta();
   const rows = await listStageSignals(ctx.stage.id, filters);
-  const asset = select(filters.asset, [["", "asset"], ...ROADMAP_ASSETS.map((a) => [a.id, a.label])]);
+  const asset = select(filters.asset, [["", "activo"], ...ROADMAP_ASSETS.map((a) => [a.id, a.label])]);
   const direction = select(filters.direction, [["", "dir"], ...Object.values(Direction).map((d) => [d, d])]);
   const disposition = select(filters.disposition, [["", "disposition"], ...Object.values(Disposition).map((d) => [d, labelDisposition(d)])]);
   const resolution = select(filters.resolution, [["", "resolution"], ...Object.values(Resolution).map((d) => [d, d])]);
@@ -68,7 +68,10 @@ export async function renderSenales(ctx) {
       item.addEventListener("click", () => go("senal/" + s.id));
       return item;
     })
-    : [el("p", { className: "empty", text: "No hay señales en esta etapa." })];
+    : [el("div", { className: "empty-block" }, [
+      el("p", { className: "empty", text: "Todavía no hay señales de RGM en esta etapa." }),
+      el("p", { className: "hint", text: "Una señal es un print. No crea sola una operación." }),
+    ])];
   const rgm = meta && meta.rgmSync ? meta.rgmSync : {};
   const syncFrom = el("input", { className: "input slim", type: "datetime-local", value: rgm.syncFromLocal || "" });
   const file = el("input", { className: "input", type: "file", accept: ".jsonl,.json,.txt,application/json" });
@@ -78,7 +81,7 @@ export async function renderSenales(ctx) {
   syncBtn.addEventListener("click", () => {
     syncErr.textContent = "";
     if (!syncFrom.value) {
-      syncErr.textContent = "Definí syncFrom antes de sincronizar.";
+      syncErr.textContent = "Definí desde cuándo importar antes de sincronizar.";
       return;
     }
     file.click();
@@ -88,7 +91,7 @@ export async function renderSenales(ctx) {
     file.value = "";
     if (!chosen) return;
     if (!syncFrom.value) {
-      syncErr.textContent = "Definí syncFrom antes de sincronizar.";
+      syncErr.textContent = "Definí desde cuándo importar antes de sincronizar.";
       return;
     }
     try {
@@ -117,32 +120,32 @@ export async function renderSenales(ctx) {
   });
   const report = rgm.report;
   const syncMeta = [
-    el("p", { className: "meta", text: `sourceAsset ${RGM_SOURCE_ASSET}` }),
-    el("p", { className: "meta", text: `sourceContext ${RGM_SOURCE_CONTEXT}` }),
-    el("p", { className: "meta", text: `archivo ${rgm.fileName || "—"}` }),
-    el("p", { className: "meta", text: `syncFrom ${rgm.syncFrom || "—"}` }),
-    el("p", { className: "meta", text: `última sync ${rgm.lastSyncAt || "—"}` }),
+    el("p", { className: "meta", text: `Activo que lee RGM: ${RGM_SOURCE_ASSET}` }),
+    el("p", { className: "meta", text: `Contexto de esas señales: ${RGM_SOURCE_CONTEXT}` }),
+    el("p", { className: "meta", text: `Archivo: ${rgm.fileName || "—"}` }),
+    el("p", { className: "meta", text: `Desde: ${rgm.syncFrom || "—"}` }),
+    el("p", { className: "meta", text: `Última sync: ${rgm.lastSyncAt || "—"}` }),
   ];
   if (report) {
     syncMeta.push(el("p", { className: "meta", text: `leídas ${report.read} · nuevas ${report.created} · actualizadas ${report.updated} · duplicadas ${report.duplicates} · inválidas ${report.invalid} · conflictos ${report.conflicts} · excluidas ${report.excluded}` }));
   }
   return [
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: "Universo Desk · stage activa" }),
+      el("p", { className: "kicker", text: "RGM" }),
       el("h1", { text: "Señales" }),
-      el("p", { className: "meta", text: "Registro del print. No es el motor RGM. Sin alta manual de producto." }),
-      el("div", { className: "chips filters" }, [asset, direction, disposition, resolution, from, to]),
-      el("p", { className: "meta", text: `${rows.length} señales` }),
-      el("div", { className: "list table-wrap" }, list),
-    ]),
-    el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: "RGM · lectura local" }),
-      el("h2", { text: "Sincronizar RGM" }),
-      el("p", { className: "hint", text: "Elegí shadow-live.jsonl. El Journal solo lee. No escribe ese archivo." }),
-      el("label", { className: "field" }, [el("span", { text: "syncFrom" }), syncFrom]),
-      file,
+      el("p", { className: "meta", text: "Lo que imprime RGM. Se toma, se ignora o se enlaza a una idea. Nunca crea sola una operación." }),
       el("div", { className: "row-actions" }, [syncBtn]),
       syncErr,
+      el("div", { className: "chips filters" }, [asset, direction, disposition, resolution, from, to]),
+      el("p", { className: "meta", text: rows.length ? `${rows.length} señales` : "" }),
+      el("div", { className: "list table-wrap" }, list),
+    ]),
+    el("section", { className: "panel tech-fold" }, [
+      el("p", { className: "kicker", text: "Sincronizar" }),
+      el("h2", { text: "Cómo entra el archivo" }),
+      el("p", { className: "hint", text: "Elegí shadow-live.jsonl. El Journal solo lee. No escribe ese archivo." }),
+      el("label", { className: "field" }, [el("span", { text: "Desde cuándo importar" }), syncFrom]),
+      file,
       ...syncMeta,
     ]),
   ];

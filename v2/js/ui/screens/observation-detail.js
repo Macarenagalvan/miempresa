@@ -8,7 +8,7 @@ export async function renderObservationDetail(ctx) {
   const id = ctx.route.rest;
   const obs = id ? await getObservation(id) : null;
   if (!obs || obs.archived) {
-    return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Observación no encontrada." })])];
+    return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Nota no encontrada." })])];
   }
 
   const state = { asset: obs.asset };
@@ -50,7 +50,7 @@ export async function renderObservationDetail(ctx) {
 
   return [
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: "Observación" }),
+      el("p", { className: "kicker", text: "Nota · Estudio" }),
       el("h1", { text: obs.asset }),
       field("Asset", pickerHost),
       field("Fecha", cores.date),

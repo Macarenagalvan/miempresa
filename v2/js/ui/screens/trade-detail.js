@@ -24,7 +24,7 @@ export async function renderTradeDetail(ctx) {
   const id = ctx.route.rest.replace(/\/(cerrar|void|asr)$/, "");
   const trade = id ? await getTrade(id) : null;
   if (!trade) {
-    return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Trade no encontrado." })])];
+    return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Operación no encontrada." })])];
   }
   const setup = trade.setupId ? await getSetup(trade.setupId) : null;
   const asr = await asrForTrade(trade.id);
@@ -69,7 +69,7 @@ function renderCard(trade, setup, asr) {
     }));
   }
   if (setup) {
-    actions.push(el("button", { type: "button", className: "ghost", text: "Ver Setup", onclick: () => go("setup/" + setup.id) }));
+    actions.push(el("button", { type: "button", className: "ghost", text: "Ver idea", onclick: () => go("setup/" + setup.id) }));
   }
 
   let rLabel = "R al cierre";
