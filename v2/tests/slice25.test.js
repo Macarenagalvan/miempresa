@@ -146,6 +146,9 @@ async function run() {
   const nuevoStrat = nuevo.querySelector('select[name="strategy"]');
   assert("alta lista GREEN_CRYPTO", optionValues(nuevoStrat).includes(Strategy.GREEN_CRYPTO));
   assert("alta label GREEN CRYPTO", optionTexts(nuevoStrat).includes("GREEN CRYPTO"));
+  const lotsInput = nuevo.querySelector('input[name="lots"]');
+  assert("alta tiene Lotaje", lotsInput && lotsInput.tagName === "INPUT");
+  assert("alta Lotaje vacío", lotsInput.value === "");
   const assetInput = nuevo.querySelector('input[name="asset"]');
   assert("alta asset libre", assetInput && assetInput.tagName === "INPUT");
   assert("ROADMAP no es whitelist de trade", !ROADMAP_ASSETS.some((a) => a.id === "NZDJPY") && !ROADMAP_ASSETS.some((a) => a.id === "BTCUSD"));
@@ -171,6 +174,7 @@ async function run() {
     netPnl: -31,
     commission: -1.2,
     swap: -0.3,
+    lots: 0.20,
     closeType: CloseType.SL,
   }, stage.id);
   assert("manual nace CLOSED", manual.lifecycle === Lifecycle.CLOSED && manual.strategy === Strategy.RED);
@@ -180,6 +184,81 @@ async function run() {
   assert("reload manual risk/mgmt/note", manualReload.riskPercent === 0.5 && manualReload.riskMoney === 50 && manualReload.management === "parcial en 0.5R" && manualReload.note === "manual-closed-final");
   assert("reload manual costs/partials", manualReload.commission === -1.2 && manualReload.swap === -0.3 && manualReload.hasPartials === true && manualReload.closeType === CloseType.SL);
   assert("reload manual TP/RR", manualReload.tp === 86.80 && manualReload.rrPlanned === 1.5);
+  assert("CLOSED manual lots 0.20", manual.lots === 0.2);
+  assert("reload CLOSED lots", manualReload.lots === 0.2);
+
+  const cardClosed = flatten(await renderTradeDetail({
+    ...seed,
+    route: { name: "trade", rest: manual.id, query: {} },
+  }));
+  const closedTxt = cardClosed.textContent;
+  assert("ficha CLOSED openedAt", /openedAt 2026-09-11T07:00:00.000Z/.test(closedTxt));
+  assert("ficha CLOSED closedAt", /closedAt 2026-09-11T08:00:00.000Z/.test(closedTxt));
+  assert("ficha CLOSED lots", /lots 0\.2/.test(closedTxt));
+  assert("ficha CLOSED commission", /commission -1\.2/.test(closedTxt));
+  assert("ficha CLOSED swap", /swap -0\.3/.test(closedTxt));
+
+  const emptyLots = await createClosedTrade({
+    asset: "EURUSD",
+    direction: "LONG",
+    strategy: Strategy.BLUE,
+    entry: 1.1,
+    exit: 1.2,
+    openedAt: "2026-09-11T10:00:00.000Z",
+    closedAt: "2026-09-11T11:00:00.000Z",
+    netPnl: 10,
+    closeType: CloseType.TP,
+    lots: "",
+  }, stage.id);
+  assert("empty lots → null", emptyLots.lots === null);
+  const emptyReload = await getTrade(emptyLots.id);
+  assert("reload empty lots null", emptyReload.lots === null);
+
+  let lotsInvalid = "";
+  try {
+    await createClosedTrade({
+      asset: "EURUSD",
+      direction: "LONG",
+      entry: 1.1,
+      exit: 1.2,
+      openedAt: "2026-09-11T10:00:00.000Z",
+      closedAt: "2026-09-11T11:00:00.000Z",
+      netPnl: 1,
+      closeType: CloseType.TP,
+      lots: "no-num",
+    }, stage.id);
+  } catch (e) {
+    lotsInvalid = e.message;
+  }
+  assert("lots inválido rechazado", lotsInvalid === "lots inválido");
+
+  const openLots = await createTrade({
+    asset: "NZDJPY",
+    direction: "SHORT",
+    entry: 87.15,
+    lots: 0.20,
+  }, stage.id);
+  assert("OPEN manual lots 0.20", openLots.lifecycle === Lifecycle.OPEN && openLots.lots === 0.2);
+  const openLotsReload = await getTrade(openLots.id);
+  assert("reload OPEN lots", openLotsReload.lots === 0.2);
+  const cardOpen = flatten(await renderTradeDetail({
+    ...seed,
+    route: { name: "trade", rest: openLots.id, query: {} },
+  }));
+  assert("ficha OPEN openedAt", /openedAt /.test(cardOpen.textContent));
+  assert("ficha OPEN lots", /lots 0\.2/.test(cardOpen.textContent));
+  assert("ficha OPEN no closedAt", !/closedAt /.test(cardOpen.textContent));
+  assert("ficha OPEN no commission", !/commission /.test(cardOpen.textContent));
+
+  let enrichLotsBlocked = "";
+  try {
+    await enrichTrade(openLots.id, { lots: 9 });
+  } catch (e) {
+    enrichLotsBlocked = e.message;
+  }
+  assert("enrich no edita lots", enrichLotsBlocked === "campo no editable: lots");
+  const afterEnrichLots = await getTrade(openLots.id);
+  assert("OPEN lots intacto post enrich reject", afterEnrichLots.lots === 0.2);
 
   const histManual = flatten(await renderHistorial({
     ...ctxBase,
@@ -201,6 +280,8 @@ async function run() {
   assert("MT5 UNCLASSIFIED", raw.strategy === Strategy.UNCLASSIFIED);
   assert("MT5 brokerSymbol", raw.brokerSymbol === "NZDJPY");
   assert("MT5 provenance", raw.recordSource === TradeRecordSource.MT5_EA && raw.sourceRef && raw.sourceRef.mt5Position === "20021");
+  const mt5Lots = raw.lots;
+  assert("MT5 lots importado", mt5Lots === 0.1);
 
   const classified = await enrichTrade(raw.id, {
     strategy: Strategy.RED,
@@ -218,6 +299,16 @@ async function run() {
   const shots = await listTradeImages(again.id);
   assert("reimport duplicate", second.created === 0 && second.duplicates === 1 && again.id === raw.id);
   assert("enriquecimiento sobrevive reimport", again.strategy === Strategy.RED && again.note === "mt5-enrich-final" && again.riskMoney === 40 && again.management === "corte broker");
+  assert("MT5 lots no lo pisa enrich/reimport", again.lots === mt5Lots && again.recordSource === TradeRecordSource.MT5_EA && again.sourceRef.mt5Position === "20021");
+  let mt5LotsPatch = "";
+  try {
+    await enrichTrade(again.id, { lots: 99 });
+  } catch (e) {
+    mt5LotsPatch = e.message;
+  }
+  assert("enrich no pisa lots MT5", mt5LotsPatch === "campo no editable: lots");
+  const mt5AfterPatch = await getTrade(again.id);
+  assert("MT5 lots intacto", mt5AfterPatch.lots === 0.1 && mt5AfterPatch.recordSource === TradeRecordSource.MT5_EA);
   assert("attachment sobrevive reimport", shots.length === 1 && shots[0].id === shot.id);
   const samePos = await findTradeByMt5Position(bullfy.id, "20021");
   assert("dedup por position", samePos.id === raw.id);
