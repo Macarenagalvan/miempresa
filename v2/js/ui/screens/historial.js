@@ -2,7 +2,7 @@ import { el } from "../render.js";
 import { listStageTrades } from "../../domain/trade.js";
 import { asrStatusLabel, isAsrPending, listStageAsrs } from "../../domain/asr.js";
 import { filterTrades, realizedR, assetFilterOptions } from "../../domain/stats.js";
-import { Context, Strategy, Direction, Lifecycle, BlueVariant } from "../../domain/enums.js";
+import { Context, Strategy, Direction, Lifecycle, BlueVariant, strategyLabel } from "../../domain/enums.js";
 import { listStageAccounts } from "../../domain/account.js";
 import { SESSIONS } from "../../config.js";
 import { go } from "../router.js";
@@ -48,7 +48,7 @@ export async function renderHistorial(ctx) {
   const accSel = select(filters.accountId, [["", "todas las cuentas"], ...accounts.map((a) => [a.id, a.name])]);
   const asset = select(filters.asset, assetFilterOptions(raw, filters.asset, "activo"));
   asset.setAttribute("name", "asset");
-  const strategy = select(filters.strategy, [["", "estrategia"], ...Object.values(Strategy).map((s) => [s, s])]);
+  const strategy = select(filters.strategy, [["", "estrategia"], ...Object.values(Strategy).map((s) => [s, strategyLabel(s)])]);
   strategy.setAttribute("name", "strategy");
   const variant = select(filters.variant, [["", "variante"], ...Object.values(BlueVariant).map((v) => [v, v])]);
   const direction = select(filters.direction, [["", "dir"], ...Object.values(Direction).map((d) => [d, d])]);
@@ -82,7 +82,7 @@ export async function renderHistorial(ctx) {
         el("span", { text: when }),
         el("strong", { text: t.asset }),
         el("span", { text: t.context === "PROP_CHALLENGE" ? "PROP" : t.context }),
-        el("span", { text: `${t.direction} · ${t.strategy}` }),
+        el("span", { text: `${t.direction} · ${strategyLabel(t.strategy)}` }),
         el("span", { text: t.lifecycle }),
         el("span", { text: t.result || "—" }),
         el("span", { className: "num", text: t.netPnl == null ? "—" : String(t.netPnl) }),
