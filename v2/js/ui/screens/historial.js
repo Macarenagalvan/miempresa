@@ -1,10 +1,10 @@
 import { el } from "../render.js";
 import { listStageTrades } from "../../domain/trade.js";
 import { asrStatusLabel, isAsrPending, listStageAsrs } from "../../domain/asr.js";
-import { filterTrades, realizedR } from "../../domain/stats.js";
+import { filterTrades, realizedR, assetFilterOptions } from "../../domain/stats.js";
 import { Context, Strategy, Direction, Lifecycle, BlueVariant } from "../../domain/enums.js";
 import { listStageAccounts } from "../../domain/account.js";
-import { ROADMAP_ASSETS, SESSIONS } from "../../config.js";
+import { SESSIONS } from "../../config.js";
 import { go } from "../router.js";
 
 function qs(query) {
@@ -46,8 +46,10 @@ export async function renderHistorial(ctx) {
   const pendingCount = rows.filter((t) => isAsrPending(t, asrByTrade[t.id])).length;
   const ctxSel = select(filters.context, [["", "todos los contextos"], [Context.BACKTEST, "BACKTEST"], [Context.DEMO, "DEMO"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"]]);
   const accSel = select(filters.accountId, [["", "todas las cuentas"], ...accounts.map((a) => [a.id, a.name])]);
-  const asset = select(filters.asset, [["", "activo"], ...ROADMAP_ASSETS.map((a) => [a.id, a.label])]);
+  const asset = select(filters.asset, assetFilterOptions(raw, filters.asset, "activo"));
+  asset.setAttribute("name", "asset");
   const strategy = select(filters.strategy, [["", "estrategia"], ...Object.values(Strategy).map((s) => [s, s])]);
+  strategy.setAttribute("name", "strategy");
   const variant = select(filters.variant, [["", "variante"], ...Object.values(BlueVariant).map((v) => [v, v])]);
   const direction = select(filters.direction, [["", "dir"], ...Object.values(Direction).map((d) => [d, d])]);
   const session = select(filters.session, [["", "sesión"], ...SESSIONS.map((s) => [s, s])]);
