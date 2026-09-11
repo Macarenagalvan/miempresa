@@ -8,6 +8,7 @@ import { CloseType, VoidReason, Lifecycle, Strategy, Style, BlueVariant } from "
 import { SESSIONS } from "../../config.js";
 import { asrFields } from "../forms/asr.js";
 import { go } from "../router.js";
+import { addTradeImage, listTradeImages, removeAttachment } from "../../storage/repos/attachments.js";
 
 function partialsSelect(current) {
   const node = el("select", { className: "input" }, [
@@ -34,10 +35,16 @@ export async function renderTradeDetail(ctx) {
   if (voidMode) return renderVoid(trade);
   if (asrMode) return renderAsr(trade, asr);
   if (editMode) return renderEdit(trade);
-  return renderCard(trade, setup, asr);
+  return await renderCard(trade, setup, asr);
 }
 
-function renderCard(trade, setup, asr) {
+function metaLine(label, value) {
+  if (value == null || value === "") return null;
+  return el("p", { className: "meta", text: `${label} ${value}` });
+}
+
+async function renderCard(trade, setup, asr) {
+  const images = await listTradeImages(trade.id);
   const err = el("p", { className: "err", text: "" });
   const sl = el("input", { className: "input", value: trade.currentSL ?? "" });
   const mgmt = el("textarea", { className: "input", rows: "3" });
@@ -98,11 +105,18 @@ function renderCard(trade, setup, asr) {
       el("p", { className: "kicker", text: `${trade.lifecycle} · ${trade.context}` }),
       el("h1", { text: `${trade.asset} ${trade.direction}` }),
       el("p", { className: "meta", text: `entry ${trade.entry} · strategy ${trade.strategy} · style ${trade.style || "—"}` }),
-      el("p", { className: "meta", text: `closeType ${trade.closeType || "—"} · note ${trade.note || "—"}` }),
+      metaLine("variant", trade.variant),
+      metaLine("session", trade.session),
+      trade.note ? el("p", { className: "meta", text: `note ${trade.note}` }) : null,
+      trade.closeType ? el("p", { className: "meta", text: `closeType ${trade.closeType}` }) : null,
       el("p", { className: "meta", text: `account ${trade.accountId || "—"} · broker ${trade.brokerSymbol || "—"}` }),
       el("p", { className: "meta origen", text: origenLine(trade) }),
       setup ? el("p", { className: "meta", text: `plannedEntry ${setup.plannedEntry ?? "—"} ≠ actual ${trade.entry}` }) : null,
       el("p", { className: "meta", text: `initialSL ${trade.initialSL ?? "—"} · currentSL ${trade.currentSL ?? "—"}` }),
+      metaLine("TP", trade.tp),
+      metaLine("RR planned", trade.rrPlanned),
+      metaLine("Risk %", trade.riskPercent),
+      metaLine("Risk $", trade.riskMoney),
       el("p", { className: "meta", text: rLabel }),
       trade.result ? el("p", { className: "meta", text: `${trade.result} · netPnl ${trade.netPnl}` }) : null,
       asrLabel ? el("p", { className: "meta", text: asrLabel }) : null,
@@ -114,8 +128,59 @@ function renderCard(trade, setup, asr) {
       trade.voidReason ? el("p", { className: "hint", text: `VOID ${trade.voidReason} ${trade.voidedAt}` }) : null,
       err,
       el("div", { className: "row-actions" }, actions),
+      renderCaptures(trade, images, err),
     ]),
   ];
+}
+
+function renderCaptures(trade, images, err) {
+  const file = el("input", { className: "input", type: "file", accept: "image/png,image/jpeg,image/webp" });
+  file.setAttribute("name", "trade-image");
+  const add = el("button", { type: "button", text: "Añadir imagen" });
+  add.addEventListener("click", async () => {
+    err.textContent = "";
+    const picked = file.files && file.files[0];
+    if (!picked) {
+      err.textContent = "elegí una imagen";
+      return;
+    }
+    try {
+      await addTradeImage(trade.id, picked);
+      go("trade/" + trade.id);
+    } catch (e) {
+      err.textContent = e.message;
+    }
+  });
+  const thumbs = images.map((att) => {
+    const src = att.blob ? URL.createObjectURL(att.blob) : "";
+    const img = el("img", { className: "thumb", alt: att.name || "captura" });
+    if (src) img.src = src;
+    img.addEventListener("click", () => {
+      if (src) window.open(src, "_blank");
+    });
+    const del = el("button", { type: "button", className: "ghost", text: "Quitar" });
+    del.addEventListener("click", async () => {
+      err.textContent = "";
+      try {
+        await removeAttachment(att.id);
+        go("trade/" + trade.id);
+      } catch (e) {
+        err.textContent = e.message;
+      }
+    });
+    return el("div", { className: "thumb-card", "data-att": att.id }, [
+      img,
+      el("p", { className: "meta", text: att.name || "captura" }),
+      del,
+    ]);
+  });
+  return el("div", { className: "captures" }, [
+    el("p", { className: "kicker", text: "Capturas / Imágenes" }),
+    images.length ? el("div", { className: "thumb-row" }, thumbs) : el("p", { className: "meta", text: "Sin capturas." }),
+    file,
+    add,
+    el("p", { className: "hint", text: "PNG, JPEG o WEBP. Máx 8 MB. Local en este dispositivo." }),
+  ]);
 }
 
 function origenLine(trade) {
@@ -143,6 +208,8 @@ function renderEdit(trade) {
   const sl = el("input", { className: "input", name: "initialSL", value: trade.initialSL ?? "" });
   const tp = el("input", { className: "input", name: "tp", value: trade.tp ?? "" });
   const rr = el("input", { className: "input", name: "rrPlanned", value: trade.rrPlanned ?? "" });
+  const riskPct = el("input", { className: "input", name: "riskPercent", value: trade.riskPercent ?? "" });
+  const riskMoney = el("input", { className: "input", name: "riskMoney", value: trade.riskMoney ?? "" });
   const mgmt = el("textarea", { className: "input", name: "management", rows: "3" });
   mgmt.value = trade.management || "";
   const note = el("textarea", { className: "input", name: "note", rows: "3" });
@@ -163,6 +230,8 @@ function renderEdit(trade) {
         initialSL: sl.value,
         tp: tp.value,
         rrPlanned: rr.value,
+        riskPercent: riskPct.value,
+        riskMoney: riskMoney.value,
         management: mgmt.value,
         note: note.value,
         hasPartials: partials.value === "true",
@@ -192,6 +261,8 @@ function renderEdit(trade) {
     field("Initial SL", sl),
     field("TP", tp),
     field("RR planned", rr),
+    field("Riesgo %", riskPct),
+    field("Riesgo $ / €", riskMoney),
     field("Management", mgmt),
     field("Note", note),
     field("Hubo cierres parciales", partials),
@@ -261,7 +332,9 @@ function renderAsr(trade, asr) {
       if (asr) await updateAsr(asr.id, input);
       else await createAsr({ ...input, tradeId: trade.id }, trade.stageId);
       go("trade/" + trade.id);
-    } catch (e) { err.textContent = e.message; }
+    } catch (e) {
+      err.textContent = e.message;
+    }
   });
   return [
     el("section", { className: "panel" }, [
