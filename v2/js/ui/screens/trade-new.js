@@ -1,7 +1,7 @@
 import { el } from "../render.js";
 import { field } from "../forms/observation.js";
 import { getSetup } from "../../storage/repos/setups.js";
-import { createTrade, createClosedTrade } from "../../domain/trade.js";
+import { createTrade, createClosedTrade, enrichTrade } from "../../domain/trade.js";
 import { getActiveAccount, listStageAccounts, visibleActiveAccount } from "../../domain/account.js";
 import { go } from "../router.js";
 import { Context, Direction, Strategy, Style, CloseType, BlueVariant, Lifecycle } from "../../domain/enums.js";
@@ -50,12 +50,15 @@ export async function renderNuevoTrade(ctx) {
   const style = select([["", "—"]].concat(Object.values(Style).map((s) => [s, s])), setup && setup.style ? setup.style : "");
   style.setAttribute("name", "style");
   const variant = select([["", "—"]].concat(Object.values(BlueVariant).map((s) => [s, s])), "");
+  variant.setAttribute("name", "variant");
   const session = select([["", "—"]].concat(SESSIONS.map((s) => [s, s])), "");
+  session.setAttribute("name", "session");
   const openedAt = el("input", { className: "input", name: "openedAt", value: new Date().toISOString().slice(0, 16) });
   const closedAt = el("input", { className: "input", name: "closedAt", value: new Date().toISOString().slice(0, 16) });
   const entry = el("input", { className: "input", name: "entry", value: "" });
   const sl = el("input", { className: "input", name: "initialSL", value: "" });
   const tp = el("input", { className: "input", name: "tp", value: "" });
+  const rr = el("input", { className: "input", name: "rrPlanned", value: "" });
   const exit = el("input", { className: "input", name: "exit", value: "" });
   const net = el("input", { className: "input", name: "netPnl", value: "" });
   const comm = el("input", { className: "input", name: "commission", value: "" });
@@ -66,6 +69,7 @@ export async function renderNuevoTrade(ctx) {
   const mgmt = el("textarea", { className: "input", name: "management", rows: "2" });
   const note = el("textarea", { className: "input", name: "note", rows: "2" });
   const partials = select([["false", "No"], ["true", "Sí"]], "false");
+  partials.setAttribute("name", "hasPartials");
   const accountPick = el("select", { className: "input" });
   const hint = el("p", { className: "hint", text: "" });
   const err = el("p", { className: "err", text: "" });
@@ -111,6 +115,7 @@ export async function renderNuevoTrade(ctx) {
     field("Variant", variant),
     field("Session", session),
     field("TP (opcional)", tp),
+    field("RR planned (opcional)", rr),
   );
 
   function paintLifecycle() {
@@ -152,6 +157,7 @@ export async function renderNuevoTrade(ctx) {
           entry: entry.value,
           initialSL: sl.value,
           tp: tp.value,
+          rrPlanned: rr.value,
           exit: exit.value,
           netPnl: net.value,
           commission: comm.value,
@@ -177,7 +183,18 @@ export async function renderNuevoTrade(ctx) {
         setupId: setup ? setup.id : null,
         hasPartials: partials.value === "true",
       }, ctx.stage.id);
-      go("trade/" + trade.id);
+      const journal = {
+        strategy: strategy.value,
+        style: style.value || null,
+        variant: variant.value || null,
+        session: session.value || null,
+        tp: tp.value,
+        rrPlanned: rr.value,
+        management: mgmt.value || null,
+        note: note.value || null,
+      };
+      const enriched = await enrichTrade(trade.id, journal);
+      go("trade/" + enriched.id);
     } catch (e) {
       err.textContent = e.message;
     }
