@@ -104,15 +104,15 @@ async function renderCard(trade, setup, asr) {
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: `${trade.lifecycle} · ${trade.context}` }),
       el("h1", { text: `${trade.asset} ${trade.direction}` }),
-      el("p", { className: "meta", text: `entry ${trade.entry} · strategy ${trade.strategy} · style ${trade.style || "—"}` }),
+      el("p", { className: "meta", text: `entry ${trade.entry} · strategy ${trade.strategy} · style ${trade.style || "\u2014"}` }),
       metaLine("variant", trade.variant),
       metaLine("session", trade.session),
       trade.note ? el("p", { className: "meta", text: `note ${trade.note}` }) : null,
       trade.closeType ? el("p", { className: "meta", text: `closeType ${trade.closeType}` }) : null,
-      el("p", { className: "meta", text: `account ${trade.accountId || "—"} · broker ${trade.brokerSymbol || "—"}` }),
+      el("p", { className: "meta", text: `account ${trade.accountId || "\u2014"} · broker ${trade.brokerSymbol || "\u2014"}` }),
       el("p", { className: "meta origen", text: origenLine(trade) }),
-      setup ? el("p", { className: "meta", text: `plannedEntry ${setup.plannedEntry ?? "—"} ≠ actual ${trade.entry}` }) : null,
-      el("p", { className: "meta", text: `initialSL ${trade.initialSL ?? "—"} · currentSL ${trade.currentSL ?? "—"}` }),
+      setup ? el("p", { className: "meta", text: `plannedEntry ${setup.plannedEntry ?? "\u2014"} ≠ actual ${trade.entry}` }) : null,
+      el("p", { className: "meta", text: `initialSL ${trade.initialSL ?? "\u2014"} · currentSL ${trade.currentSL ?? "\u2014"}` }),
       metaLine("TP", trade.tp),
       metaLine("RR planned", trade.rrPlanned),
       metaLine("Risk %", trade.riskPercent),
@@ -186,9 +186,9 @@ function renderCaptures(trade, images, err) {
 function origenLine(trade) {
   const pos = trade.sourceRef && trade.sourceRef.mt5Position;
   if (trade.recordSource === "MT5_EA") {
-    return `origen MT5_EA · position ${pos || "—"}`;
+    return `origen MT5_EA · position ${pos || "\u2014"}`;
   }
-  return `origen ${trade.recordSource || "—"}`;
+  return `origen ${trade.recordSource || "\u2014"}`;
 }
 
 function enumSelect(values, current, name, emptyLabel) {
@@ -202,9 +202,9 @@ function enumSelect(values, current, name, emptyLabel) {
 
 function renderEdit(trade) {
   const strategy = enumSelect(Object.values(Strategy), trade.strategy, "strategy");
-  const style = enumSelect(Object.values(Style), trade.style, "style", "—");
-  const variant = enumSelect(Object.values(BlueVariant), trade.variant, "variant", "—");
-  const session = enumSelect(SESSIONS, trade.session, "session", "—");
+  const style = enumSelect(Object.values(Style), trade.style, "style", "\u2014");
+  const variant = enumSelect(Object.values(BlueVariant), trade.variant, "variant", "\u2014");
+  const session = enumSelect(SESSIONS, trade.session, "session", "\u2014");
   const sl = el("input", { className: "input", name: "initialSL", value: trade.initialSL ?? "" });
   const tp = el("input", { className: "input", name: "tp", value: trade.tp ?? "" });
   const rr = el("input", { className: "input", name: "rrPlanned", value: trade.rrPlanned ?? "" });
@@ -332,9 +332,7 @@ function renderAsr(trade, asr) {
       if (asr) await updateAsr(asr.id, input);
       else await createAsr({ ...input, tradeId: trade.id }, trade.stageId);
       go("trade/" + trade.id);
-    } catch (e) {
-      err.textContent = e.message;
-    }
+    } catch (e) { err.textContent = e.message; }
   });
   return [
     el("section", { className: "panel" }, [
