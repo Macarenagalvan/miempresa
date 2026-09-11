@@ -4,7 +4,7 @@ import { getTrade } from "../../storage/repos/trades.js";
 import { getSetup } from "../../storage/repos/setups.js";
 import { updateOpenTrade, closeTrade, voidTrade, enrichTrade } from "../../domain/trade.js";
 import { asrForTrade, asrStatusLabel, createAsr, updateAsr } from "../../domain/asr.js";
-import { CloseType, VoidReason, Lifecycle, Strategy, Style, BlueVariant } from "../../domain/enums.js";
+import { CloseType, VoidReason, Lifecycle, Strategy, Style, BlueVariant, strategyLabel } from "../../domain/enums.js";
 import { SESSIONS } from "../../config.js";
 import { asrFields } from "../forms/asr.js";
 import { go } from "../router.js";
@@ -104,7 +104,7 @@ async function renderCard(trade, setup, asr) {
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: `${trade.lifecycle} · ${trade.context}` }),
       el("h1", { text: `${trade.asset} ${trade.direction}` }),
-      el("p", { className: "meta", text: `entry ${trade.entry} · strategy ${trade.strategy} · style ${trade.style || "—"}` }),
+      el("p", { className: "meta", text: `entry ${trade.entry} · strategy ${strategyLabel(trade.strategy)} · style ${trade.style || "—"}` }),
       metaLine("variant", trade.variant),
       metaLine("session", trade.session),
       trade.note ? el("p", { className: "meta", text: `note ${trade.note}` }) : null,
@@ -191,17 +191,17 @@ function origenLine(trade) {
   return `origen ${trade.recordSource || "—"}`;
 }
 
-function enumSelect(values, current, name, emptyLabel) {
+function enumSelect(values, current, name, emptyLabel, labelFn) {
   const opts = [];
   if (emptyLabel != null) opts.push(el("option", { value: "", text: emptyLabel }));
-  for (const v of values) opts.push(el("option", { value: v, text: v }));
+  for (const v of values) opts.push(el("option", { value: v, text: labelFn ? labelFn(v) : v }));
   const node = el("select", { className: "input", name }, opts);
   node.value = current || (emptyLabel != null ? "" : values[0]);
   return node;
 }
 
 function renderEdit(trade) {
-  const strategy = enumSelect(Object.values(Strategy), trade.strategy, "strategy");
+  const strategy = enumSelect(Object.values(Strategy), trade.strategy, "strategy", null, strategyLabel);
   const style = enumSelect(Object.values(Style), trade.style, "style", "—");
   const variant = enumSelect(Object.values(BlueVariant), trade.variant, "variant", "—");
   const session = enumSelect(SESSIONS, trade.session, "session", "—");
@@ -332,7 +332,9 @@ function renderAsr(trade, asr) {
       if (asr) await updateAsr(asr.id, input);
       else await createAsr({ ...input, tradeId: trade.id }, trade.stageId);
       go("trade/" + trade.id);
-    } catch (e) { err.textContent = e.message; }
+    } catch (e) {
+      err.textContent = e.message;
+    }
   });
   return [
     el("section", { className: "panel" }, [
