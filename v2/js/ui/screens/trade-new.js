@@ -59,6 +59,8 @@ export async function renderNuevoTrade(ctx) {
   const sl = el("input", { className: "input", name: "initialSL", value: "" });
   const tp = el("input", { className: "input", name: "tp", value: "" });
   const rr = el("input", { className: "input", name: "rrPlanned", value: "" });
+  const riskPct = el("input", { className: "input", name: "riskPercent", value: "" });
+  const riskMoney = el("input", { className: "input", name: "riskMoney", value: "" });
   const exit = el("input", { className: "input", name: "exit", value: "" });
   const net = el("input", { className: "input", name: "netPnl", value: "" });
   const comm = el("input", { className: "input", name: "commission", value: "" });
@@ -167,6 +169,8 @@ export async function renderNuevoTrade(ctx) {
           note: note.value || null,
           setupId: setup ? setup.id : null,
           hasPartials: partials.value === "true",
+          riskPercent: riskPct.value,
+          riskMoney: riskMoney.value,
         }, ctx.stage.id);
         go("trade/" + trade.id);
         return;
@@ -182,6 +186,8 @@ export async function renderNuevoTrade(ctx) {
         initialSL: sl.value,
         setupId: setup ? setup.id : null,
         hasPartials: partials.value === "true",
+        riskPercent: riskPct.value,
+        riskMoney: riskMoney.value,
       }, ctx.stage.id);
       const journal = {
         strategy: strategy.value,
@@ -192,6 +198,8 @@ export async function renderNuevoTrade(ctx) {
         rrPlanned: rr.value,
         management: mgmt.value || null,
         note: note.value || null,
+        riskPercent: riskPct.value,
+        riskMoney: riskMoney.value,
       };
       const enriched = await enrichTrade(trade.id, journal);
       go("trade/" + enriched.id);
@@ -223,6 +231,8 @@ export async function renderNuevoTrade(ctx) {
       field("openedAt", openedAt),
       field("entry (confirmar)", entry),
       field("initialSL (opcional)", sl),
+      field("Riesgo % (opcional)", riskPct),
+      field("Riesgo $ / € (opcional)", riskMoney),
       field("Hubo cierres parciales", partials),
       closedBlock,
       hint,
