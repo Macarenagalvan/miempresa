@@ -122,13 +122,27 @@ async function run() {
   assert("Nueva default OPEN", nuevoOpen.querySelector('[name="lifecycle"]').value === Lifecycle.OPEN);
   assert("asset es input libre", nuevoOpen.querySelector('[name="asset"]') && nuevoOpen.querySelector('[name="asset"]').tagName === "INPUT");
   assert("sugerencias no son whitelist", Boolean(nuevoOpen.querySelector("#nuevo-asset-suggest")));
-  fill(nuevoOpen, "asset", "EURUSD");
-  fill(nuevoOpen, "entry", "1.1000");
+  fill(nuevoOpen, "asset", "NZDJPY");
+  fill(nuevoOpen, "direction", "SHORT");
+  fill(nuevoOpen, "strategy", Strategy.RED);
+  fill(nuevoOpen, "style", Style.SCALP);
+  fill(nuevoOpen, "entry", "87.15");
+  fill(nuevoOpen, "initialSL", "87.40");
   const saveOpen = [...nuevoOpen.querySelectorAll("button")].find((b) => b.textContent === "Guardar operación");
-  await saveOpen.click();
+  saveOpen.click();
+  let createdOpen = null;
+  for (let i = 0; i < 25; i++) {
+    const listed = await listTrades();
+    createdOpen = listed.find((t) => t.asset === "NZDJPY" && t.lifecycle === Lifecycle.OPEN && t.recordSource === TradeRecordSource.MANUAL && t.strategy === Strategy.RED);
+    if (createdOpen) break;
+    await new Promise((r) => setTimeout(r, 20));
+  }
   const afterOpen = await listTrades();
-  const createdOpen = afterOpen.find((t) => t.asset === "EURUSD" && t.lifecycle === Lifecycle.OPEN && t.recordSource === TradeRecordSource.MANUAL);
   assert("OPEN legacy crea 1 OPEN", Boolean(createdOpen) && afterOpen.length === nBefore + 1);
+  assert("OPEN NZDJPY SHORT", createdOpen && createdOpen.asset === "NZDJPY" && createdOpen.direction === "SHORT");
+  assert("OPEN nace RED no UNCLASSIFIED", createdOpen && createdOpen.strategy === Strategy.RED);
+  assert("OPEN nace SCALP", createdOpen && createdOpen.style === Style.SCALP);
+  assert("OPEN sigue OPEN", createdOpen && createdOpen.lifecycle === Lifecycle.OPEN);
 
   const nMid = afterOpen.length;
   const nuevoClosed = flatten(await renderNuevoTrade({
@@ -143,15 +157,29 @@ async function run() {
   fill(nuevoClosed, "openedAt", "2026-09-11T09:40");
   fill(nuevoClosed, "closedAt", "2026-09-11T10:05");
   fill(nuevoClosed, "entry", "87.15");
+  fill(nuevoClosed, "initialSL", "87.40");
+  fill(nuevoClosed, "tp", "86.80");
+  fill(nuevoClosed, "rrPlanned", "2.1");
+  fill(nuevoClosed, "hasPartials", "true");
+  fill(nuevoClosed, "variant", "BLUE_A");
+  fill(nuevoClosed, "session", "LONDON");
   fill(nuevoClosed, "exit", "87.42");
   fill(nuevoClosed, "netPnl", "-19.2");
+  fill(nuevoClosed, "commission", "0.7");
+  fill(nuevoClosed, "swap", "0");
   fill(nuevoClosed, "closeType", CloseType.SL);
   fill(nuevoClosed, "management", "Gestión manual");
   fill(nuevoClosed, "note", "Nota manual");
   const saveClosed = [...nuevoClosed.querySelectorAll("button")].find((b) => b.textContent === "Guardar operación");
-  await saveClosed.click();
+  saveClosed.click();
+  let createdClosed = [];
+  for (let i = 0; i < 25; i++) {
+    const listed = await listTrades();
+    createdClosed = listed.filter((t) => t.note === "Nota manual" && t.asset === "NZDJPY" && t.lifecycle === Lifecycle.CLOSED);
+    if (createdClosed.length) break;
+    await new Promise((r) => setTimeout(r, 20));
+  }
   const afterClosed = await listTrades();
-  const createdClosed = afterClosed.filter((t) => t.note === "Nota manual" && t.asset === "NZDJPY");
   assert("CLOSED crea una sola", createdClosed.length === 1 && afterClosed.length === nMid + 1);
   assert("NZDJPY manual aceptado", createdClosed[0].asset === "NZDJPY");
   assert("nace CLOSED", createdClosed[0].lifecycle === Lifecycle.CLOSED);
@@ -159,6 +187,13 @@ async function run() {
   assert("CLOSED SHORT", createdClosed[0].direction === "SHORT");
   assert("CLOSED MANUAL", createdClosed[0].recordSource === TradeRecordSource.MANUAL);
   assert("no OPEN intermedio", createdClosed[0].openedAt && createdClosed[0].closedAt && createdClosed[0].exit === 87.42);
+  assert("CLOSED initialSL", createdClosed[0].initialSL === 87.4);
+  assert("CLOSED TP", createdClosed[0].tp === 86.8);
+  assert("CLOSED rrPlanned", createdClosed[0].rrPlanned === 2.1);
+  assert("CLOSED hasPartials", createdClosed[0].hasPartials === true);
+  assert("CLOSED variant", createdClosed[0].variant === "BLUE_A");
+  assert("CLOSED session", createdClosed[0].session === "LONDON");
+  assert("CLOSED commission/swap", createdClosed[0].commission === 0.7 && createdClosed[0].swap === 0);
 
   const failed = results.filter((r) => !r.ok);
   const lines = results.map((r) => `${r.ok ? "OK" : "FAIL"}  ${r.name}${r.detail ? " — " + r.detail : ""}`);
