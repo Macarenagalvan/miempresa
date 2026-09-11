@@ -79,6 +79,7 @@ export const Direction = Object.freeze({
   SHORT: "SHORT",
 });
 
+// RGM no entra acá. RGM es sistema/señal aparte (Desk/adapter), no Strategy del Journal.
 export const Strategy = Object.freeze({
   UNCLASSIFIED: "UNCLASSIFIED",
   BLUE: "BLUE",
@@ -87,7 +88,13 @@ export const Strategy = Object.freeze({
   WHITE: "WHITE",
   BLACK: "BLACK",
   GREEN: "GREEN",
+  GREEN_CRYPTO: "GREEN_CRYPTO",
 });
+
+export function strategyLabel(value) {
+  if (value === Strategy.GREEN_CRYPTO) return "GREEN CRYPTO";
+  return value || "";
+}
 
 export const SetupStatus = Object.freeze({
   WATCHING: "WATCHING",

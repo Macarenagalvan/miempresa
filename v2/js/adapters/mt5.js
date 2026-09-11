@@ -1,5 +1,5 @@
 import { Direction, Result, Lifecycle } from "../domain/enums.js";
-import { MT5_BROKER_SYMBOL_MAP, MT5_SOURCE_TIMEZONES } from "../config.js";
+import { FOREX_CURRENCIES, MT5_BROKER_SYMBOL_MAP, MT5_SOURCE_TIMEZONES } from "../config.js";
 
 export const MT5_CSV_COLUMNS = Object.freeze([
   "ID", "Fecha", "Hora", "Fecha salida", "Hora salida", "Duracion", "Cuenta", "Modo",
@@ -14,6 +14,41 @@ const CANONICAL_ASSETS = Object.freeze([
   "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "USDCAD", "AUDUSD", "NZDUSD",
   "EURGBP", "EURJPY", "GBPJPY", "XAUUSD", "BTCUSD", "ETHUSD", "SP500",
 ]);
+
+const FOREX_CCY = new Set(FOREX_CURRENCIES);
+
+const BROKER_SUFFIXES = Object.freeze([
+  "PLUS", "MINI", "ZERO", "SPOT", "RAW", "ECN", "PRO", "C", "M", "I",
+]);
+
+export function isKnownForexCurrency(code) {
+  return FOREX_CCY.has(String(code || "").toUpperCase());
+}
+
+export function isValidForexPair(symbol) {
+  const six = String(symbol || "").toUpperCase();
+  if (six.length !== 6) return false;
+  const base = six.slice(0, 3);
+  const quote = six.slice(3);
+  return FOREX_CCY.has(base) && FOREX_CCY.has(quote) && base !== quote;
+}
+
+export function extractForexPair(compact) {
+  let core = String(compact || "").toUpperCase();
+  for (let i = 0; i < 8; i++) {
+    if (isValidForexPair(core)) return core;
+    let stripped = false;
+    for (const suf of BROKER_SUFFIXES) {
+      if (core.length > 6 && core.endsWith(suf)) {
+        core = core.slice(0, -suf.length);
+        stripped = true;
+        break;
+      }
+    }
+    if (!stripped) break;
+  }
+  return isValidForexPair(core) ? core : null;
+}
 
 export function parseCsvLine(line) {
   const out = [];
@@ -92,10 +127,12 @@ export function mapBrokerSymbolToAsset(raw) {
   if (Object.prototype.hasOwnProperty.call(MT5_BROKER_SYMBOL_MAP, upper)) {
     return MT5_BROKER_SYMBOL_MAP[upper];
   }
-  const compact = upper.replace(/[._-]/g, "");
+  const compact = upper.replace(/[._#/-]/g, "");
   if (Object.prototype.hasOwnProperty.call(MT5_BROKER_SYMBOL_MAP, compact)) {
     return MT5_BROKER_SYMBOL_MAP[compact];
   }
+  const forex = extractForexPair(compact);
+  if (forex) return forex;
   for (const asset of CANONICAL_ASSETS) {
     if (upper === asset || compact === asset) return asset;
     if (upper === asset + "C" || compact === asset + "C") return asset;

@@ -1,9 +1,9 @@
 import { el } from "../render.js";
 import { listTrades } from "../../storage/repos/trades.js";
 import { listSignals } from "../../storage/repos/signals.js";
-import { compute, computeDesk } from "../../domain/stats.js";
-import { Context, Strategy, Direction, BlueVariant, Disposition, Resolution } from "../../domain/enums.js";
-import { ROADMAP_ASSETS, SESSIONS } from "../../config.js";
+import { compute, computeDesk, assetFilterOptions } from "../../domain/stats.js";
+import { Context, Strategy, Direction, BlueVariant, Disposition, Resolution, strategyLabel } from "../../domain/enums.js";
+import { SESSIONS } from "../../config.js";
 import { go } from "../router.js";
 
 function qs(query) {
@@ -54,7 +54,10 @@ export async function renderNumeros(ctx) {
     to: q.to || "",
   };
   const uni = select(universe, [["REAL", "Real"], ["DEMO", "Demo"], ["BACKTEST", "Backtest"], ["DESK", "Desk"]]);
-  const asset = select(filters.asset, [["", "asset"], ...ROADMAP_ASSETS.map((a) => [a.id, a.label])]);
+  const allTrades = await listTrades();
+  const allSignals = universe === "DESK" ? await listSignals() : [];
+  const asset = select(filters.asset, assetFilterOptions(universe === "DESK" ? allSignals : allTrades, filters.asset, "asset"));
+  asset.setAttribute("name", "asset");
   const direction = select(filters.direction, [["", "dir"], ...Object.values(Direction).map((d) => [d, d])]);
   const from = el("input", { className: "input slim", type: "date", value: filters.from });
   const to = el("input", { className: "input slim", type: "date", value: filters.to });
@@ -68,7 +71,7 @@ export async function renderNumeros(ctx) {
       from: filters.from,
       to: filters.to,
     };
-    const desk = computeDesk(await listSignals(), deskFilters);
+    const desk = computeDesk(allSignals, deskFilters);
     const disp = select(deskFilters.disposition, [["", "disposition"], ...Object.values(Disposition).map((d) => [d, d])]);
     const reso = select(deskFilters.resolution, [["", "resolution"], ...Object.values(Resolution).map((d) => [d, d])]);
     function applyDesk() {
@@ -104,9 +107,10 @@ export async function renderNumeros(ctx) {
       ]),
     ];
   }
-  const stats = compute(await listTrades(), filters);
+  const stats = compute(allTrades, filters);
   const ctxSel = select(filters.context, [["", "context"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"], [Context.DEMO, "DEMO"], [Context.BACKTEST, "BACKTEST"]]);
-  const strategy = select(filters.strategy, [["", "strategy"], ...Object.values(Strategy).map((s) => [s, s])]);
+  const strategy = select(filters.strategy, [["", "strategy"], ...Object.values(Strategy).map((s) => [s, strategyLabel(s)])]);
+  strategy.setAttribute("name", "strategy");
   const variant = select(filters.variant, [["", "variant"], ...Object.values(BlueVariant).map((v) => [v, v])]);
   const session = select(filters.session, [["", "sesión"], ...SESSIONS.map((s) => [s, s])]);
   function apply() {

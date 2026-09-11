@@ -11,6 +11,23 @@ export function realizedR(trade) {
   return computeRrRealized(trade);
 }
 
+export function assetsPresent(rows) {
+  const seen = new Set();
+  for (const row of rows || []) {
+    const asset = normalizeAsset(row && row.asset);
+    if (asset) seen.add(asset);
+  }
+  return [...seen].sort((a, b) => a.localeCompare(b));
+}
+
+export function assetFilterOptions(rows, current, emptyLabel = "asset") {
+  const assets = assetsPresent(rows);
+  const selected = current ? normalizeAsset(current) : "";
+  if (selected && !assets.includes(selected)) assets.push(selected);
+  assets.sort((a, b) => a.localeCompare(b));
+  return [["", emptyLabel], ...assets.map((asset) => [asset, asset])];
+}
+
 export function filterTrades(trades, filters = {}) {
   const asset = filters.asset ? normalizeAsset(filters.asset) : "";
   const from = filters.from || "";

@@ -57,6 +57,20 @@ async function run() {
   assert("XAUUSD.m → XAUUSD", mapBrokerSymbolToAsset("XAUUSD.m") === "XAUUSD");
   assert("US500 → SP500", mapBrokerSymbolToAsset("US500") === "SP500");
   assert("símbolo desconocido no mapea", mapBrokerSymbolToAsset("FOOBAR99") == null);
+  assert("FOOBAR no es Forex", mapBrokerSymbolToAsset("FOOBAR") == null);
+  assert("símbolo vacío no mapea", mapBrokerSymbolToAsset("") == null);
+  assert("NZDJPY → NZDJPY", mapBrokerSymbolToAsset("NZDJPY") === "NZDJPY");
+  assert("EURUSD.m → EURUSD", mapBrokerSymbolToAsset("EURUSD.m") === "EURUSD");
+  assert("AUDCAD cruce → AUDCAD", mapBrokerSymbolToAsset("AUDCAD") === "AUDCAD");
+  assert("AUDCHF cruce → AUDCHF", mapBrokerSymbolToAsset("AUDCHF") === "AUDCHF");
+  assert("AUDJPY cruce → AUDJPY", mapBrokerSymbolToAsset("AUDJPY") === "AUDJPY");
+  assert("AUDNZD cruce → AUDNZD", mapBrokerSymbolToAsset("AUDNZD") === "AUDNZD");
+  assert("EURAUD cruce → EURAUD", mapBrokerSymbolToAsset("EURAUD") === "EURAUD");
+  assert("USDCHF → USDCHF", mapBrokerSymbolToAsset("USDCHF") === "USDCHF");
+  assert("USDCAD → USDCAD", mapBrokerSymbolToAsset("USDCAD") === "USDCAD");
+  assert("GBPJPY → GBPJPY", mapBrokerSymbolToAsset("GBPJPY") === "GBPJPY");
+  assert("GBPUSD.m → GBPUSD", mapBrokerSymbolToAsset("GBPUSD.m") === "GBPUSD");
+  assert("misma moneda no es par", mapBrokerSymbolToAsset("USDUSD") == null);
 
   const noTz = wallClockToIso("2026-08-27", "14:10", "");
   assert("timezone obligatorio", noTz.ok === false && /timezone/.test(noTz.error));
@@ -105,6 +119,27 @@ async function run() {
   const preview = await previewMt5Csv(csv, src);
   assert("preview cuenta leídas", preview.read >= 5);
   assert("preview unknown symbol", preview.unknownSymbols >= 1);
+
+  const nzdDraft = toTradeDraft({
+    ID: "20021", Fecha: "2026-09-11", Hora: "09:40",
+    "Fecha salida": "2026-09-11", "Hora salida": "10:05",
+    Direccion: "Short", Activo: "NZDJPY", Entrada: "87.150",
+    Salida: "87.420", "B/P Neto": "-19.20", Resultado: "Loss", Lotaje: "0.10",
+    Comisiones: "",
+  }, src);
+  assert("draft NZDJPY ok", nzdDraft.ok && nzdDraft.draft.asset === "NZDJPY");
+  assert("draft NZDJPY conserva brokerSymbol", nzdDraft.ok && nzdDraft.draft.brokerSymbol === "NZDJPY");
+  const nzdPrev = await previewMt5Csv(asMt5Csv([MT5_SLICE11_ROWS.nzdjpyShort]), src);
+  assert("preview NZDJPY leídas 1", nzdPrev.read === 1);
+  assert("preview NZDJPY nuevas 1", nzdPrev.created === 1);
+  assert("preview NZDJPY duplicadas 0", nzdPrev.duplicates === 0);
+  assert("preview NZDJPY inválidas 0", nzdPrev.invalid === 0);
+  assert("preview NZDJPY sin mapping 0", nzdPrev.unknownSymbols === 0);
+  const nzdRow = nzdPrev.drafts && nzdPrev.drafts[0];
+  assert("preview NZDJPY asset", nzdRow && nzdRow.asset === "NZDJPY");
+  assert("preview NZDJPY brokerSymbol", nzdRow && nzdRow.brokerSymbol === "NZDJPY");
+  assert("preview NZDJPY SHORT", nzdRow && nzdRow.direction === "SHORT");
+  assert("preview NZDJPY CLOSED", nzdRow && nzdRow.lifecycle === Lifecycle.CLOSED);
   assert("preview no importa todavía", (await listTrades()).length === nTradesBefore);
 
   const sync1 = await syncMt5Csv(csv, stage.id, src);

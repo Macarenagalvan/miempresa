@@ -175,6 +175,22 @@ export function incompleteForR(trade) {
   return entry == null || sl == null || entry === sl;
 }
 
+export function parseRiskNum(raw) {
+  if (raw === "" || raw == null) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) throw new Error("riesgo inválido");
+  if (n < 0) throw new Error("riesgo no puede ser negativo");
+  return n;
+}
+
+export function parseLots(raw) {
+  if (raw === "" || raw == null) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) throw new Error("lots inválido");
+  if (n < 0) throw new Error("lots no puede ser negativo");
+  return n;
+}
+
 export function assertTrade(trade) {
   if (!trade || !trade.id) throw new Error("trade.id requerido");
   if (!trade.stageId) throw new Error("trade.stageId requerido");
@@ -201,6 +217,8 @@ export function assertTrade(trade) {
     if (!trade.voidedAt || !trade.voidReason) throw new Error("VOID requiere voidedAt y voidReason");
     if (!Object.values(VoidReason).includes(trade.voidReason)) throw new Error("voidReason inválido");
   }
+  if (trade.riskPercent != null) parseRiskNum(trade.riskPercent);
+  if (trade.riskMoney != null) parseRiskNum(trade.riskMoney);
 }
 
 export function assertAsr(asr) {

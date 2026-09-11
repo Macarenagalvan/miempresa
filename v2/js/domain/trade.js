@@ -7,6 +7,8 @@ import {
   deriveResult,
   computeRrRealized,
   incompleteForR,
+  parseRiskNum,
+  parseLots,
 } from "./integrity.js";
 import { getTrade, putTrade, listTrades } from "../storage/repos/trades.js";
 import { getSetup } from "../storage/repos/setups.js";
@@ -74,7 +76,7 @@ export async function createTrade(input, stageId) {
     initialSL: sl,
     currentSL: sl,
     tp: numOrNull(input.tp),
-    lots: numOrNull(input.lots),
+    lots: parseLots(input.lots),
     setupId: setup ? setup.id : null,
     deskSignalId: null,
     session: (setup && setup.session) || input.session || null,
@@ -95,6 +97,8 @@ export async function createTrade(input, stageId) {
     style: snap.style,
     variant: snap.variant,
     rrPlanned: setup ? setup.plannedRr : null,
+    riskPercent: parseRiskNum(input.riskPercent),
+    riskMoney: parseRiskNum(input.riskMoney),
     rrRealized: null,
     voidedAt: null,
     voidReason: null,
@@ -377,3 +381,5 @@ export async function listStageTrades(stageId, opts = {}) {
       return da < db ? 1 : -1;
     });
 }
+
+export { enrichTrade, createClosedTrade, TRADE_JOURNAL_FIELDS } from "./trade-journal.js";
