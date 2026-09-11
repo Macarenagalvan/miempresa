@@ -3,6 +3,7 @@ import {
   Context,
   Direction,
   Strategy,
+  strategyLabel,
   SetupStatus,
   BlueVariant,
   Style,
@@ -39,7 +40,7 @@ export function readCore(fields) {
 }
 
 export function evaluateFields(setup) {
-  const strategy = select(Object.values(Strategy).map((s) => [s, s]), setup.strategy || Strategy.UNCLASSIFIED);
+  const strategy = select(Object.values(Strategy).map((s) => [s, strategyLabel(s)]), setup.strategy || Strategy.UNCLASSIFIED);
   const variant = select([["", "—"], ...Object.values(BlueVariant).map((v) => [v, v])], setup.variant || "");
   const style = select([["", "—"], ...Object.values(Style).map((s) => [s, s])], setup.style || "");
   const session = select([["", "—"], ...SESSIONS.map((s) => [s, s])], setup.session || "");
