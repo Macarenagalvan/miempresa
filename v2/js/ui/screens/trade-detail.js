@@ -2,9 +2,10 @@ import { el } from "../render.js";
 import { field } from "../forms/observation.js";
 import { getTrade } from "../../storage/repos/trades.js";
 import { getSetup } from "../../storage/repos/setups.js";
-import { updateOpenTrade, closeTrade, voidTrade } from "../../domain/trade.js";
+import { updateOpenTrade, closeTrade, voidTrade, enrichTrade } from "../../domain/trade.js";
 import { asrForTrade, asrStatusLabel, createAsr, updateAsr } from "../../domain/asr.js";
-import { CloseType, VoidReason, Lifecycle } from "../../domain/enums.js";
+import { CloseType, VoidReason, Lifecycle, Strategy, Style, BlueVariant } from "../../domain/enums.js";
+import { SESSIONS } from "../../config.js";
 import { asrFields } from "../forms/asr.js";
 import { go } from "../router.js";
 
@@ -21,7 +22,8 @@ export async function renderTradeDetail(ctx) {
   const closeMode = ctx.route.rest.includes("/cerrar");
   const voidMode = ctx.route.rest.includes("/void");
   const asrMode = ctx.route.rest.includes("/asr");
-  const id = ctx.route.rest.replace(/\/(cerrar|void|asr)$/, "");
+  const editMode = ctx.route.rest.includes("/editar");
+  const id = ctx.route.rest.replace(/\/(cerrar|void|asr|editar)$/, "");
   const trade = id ? await getTrade(id) : null;
   if (!trade) {
     return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Operación no encontrada." })])];
@@ -31,6 +33,7 @@ export async function renderTradeDetail(ctx) {
   if (closeMode) return renderClose(trade);
   if (voidMode) return renderVoid(trade);
   if (asrMode) return renderAsr(trade, asr);
+  if (editMode) return renderEdit(trade);
   return renderCard(trade, setup, asr);
 }
 
@@ -43,6 +46,13 @@ function renderCard(trade, setup, asr) {
   const actions = [];
   const asrLabel = asrStatusLabel(trade, asr);
 
+  if (trade.lifecycle === Lifecycle.OPEN || trade.lifecycle === Lifecycle.CLOSED) {
+    actions.push(el("button", {
+      type: "button",
+      text: "Editar operación",
+      onclick: () => go("trade/" + trade.id + "/editar"),
+    }));
+  }
   if (trade.lifecycle === Lifecycle.OPEN) {
     const save = el("button", { type: "button", text: "Guardar gestión" });
     save.addEventListener("click", async () => {
@@ -87,8 +97,10 @@ function renderCard(trade, setup, asr) {
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: `${trade.lifecycle} · ${trade.context}` }),
       el("h1", { text: `${trade.asset} ${trade.direction}` }),
-      el("p", { className: "meta", text: `entry ${trade.entry} · strategy ${trade.strategy}` }),
+      el("p", { className: "meta", text: `entry ${trade.entry} · strategy ${trade.strategy} · style ${trade.style || "—"}` }),
+      el("p", { className: "meta", text: `closeType ${trade.closeType || "—"} · note ${trade.note || "—"}` }),
       el("p", { className: "meta", text: `account ${trade.accountId || "—"} · broker ${trade.brokerSymbol || "—"}` }),
+      el("p", { className: "meta origen", text: origenLine(trade) }),
       setup ? el("p", { className: "meta", text: `plannedEntry ${setup.plannedEntry ?? "—"} ≠ actual ${trade.entry}` }) : null,
       el("p", { className: "meta", text: `initialSL ${trade.initialSL ?? "—"} · currentSL ${trade.currentSL ?? "—"}` }),
       el("p", { className: "meta", text: rLabel }),
@@ -104,6 +116,90 @@ function renderCard(trade, setup, asr) {
       el("div", { className: "row-actions" }, actions),
     ]),
   ];
+}
+
+function origenLine(trade) {
+  const pos = trade.sourceRef && trade.sourceRef.mt5Position;
+  if (trade.recordSource === "MT5_EA") {
+    return `origen MT5_EA · position ${pos || "—"}`;
+  }
+  return `origen ${trade.recordSource || "—"}`;
+}
+
+function enumSelect(values, current, name, emptyLabel) {
+  const opts = [];
+  if (emptyLabel != null) opts.push(el("option", { value: "", text: emptyLabel }));
+  for (const v of values) opts.push(el("option", { value: v, text: v }));
+  const node = el("select", { className: "input", name }, opts);
+  node.value = current || (emptyLabel != null ? "" : values[0]);
+  return node;
+}
+
+function renderEdit(trade) {
+  const strategy = enumSelect(Object.values(Strategy), trade.strategy, "strategy");
+  const style = enumSelect(Object.values(Style), trade.style, "style", "—");
+  const variant = enumSelect(Object.values(BlueVariant), trade.variant, "variant", "—");
+  const session = enumSelect(SESSIONS, trade.session, "session", "—");
+  const sl = el("input", { className: "input", name: "initialSL", value: trade.initialSL ?? "" });
+  const tp = el("input", { className: "input", name: "tp", value: trade.tp ?? "" });
+  const rr = el("input", { className: "input", name: "rrPlanned", value: trade.rrPlanned ?? "" });
+  const mgmt = el("textarea", { className: "input", name: "management", rows: "3" });
+  mgmt.value = trade.management || "";
+  const note = el("textarea", { className: "input", name: "note", rows: "3" });
+  note.value = trade.note || "";
+  const partials = partialsSelect(trade.hasPartials);
+  partials.setAttribute("name", "hasPartials");
+  const closeType = enumSelect(Object.values(CloseType), trade.closeType || CloseType.UNKNOWN, "closeType");
+  const err = el("p", { className: "err", text: "" });
+  const save = el("button", { type: "button", text: "Guardar cambios" });
+  save.addEventListener("click", async () => {
+    err.textContent = "";
+    try {
+      const patch = {
+        strategy: strategy.value,
+        style: style.value || null,
+        variant: variant.value || null,
+        session: session.value || null,
+        initialSL: sl.value,
+        tp: tp.value,
+        rrPlanned: rr.value,
+        management: mgmt.value,
+        note: note.value,
+        hasPartials: partials.value === "true",
+      };
+      if (trade.lifecycle === Lifecycle.CLOSED) patch.closeType = closeType.value;
+      const next = await enrichTrade(trade.id, patch);
+      go("trade/" + next.id);
+    } catch (e) {
+      err.textContent = e.message;
+    }
+  });
+  const cancel = el("button", {
+    type: "button",
+    className: "ghost",
+    text: "Cancelar",
+    onclick: () => go("trade/" + trade.id),
+  });
+  const nodes = [
+    el("p", { className: "kicker", text: "Editar operación" }),
+    el("h1", { text: `${trade.asset} ${trade.direction}` }),
+    el("p", { className: "meta origen", text: origenLine(trade) }),
+    el("p", { className: "hint", text: "Origen y cuenta no se editan acá." }),
+    field("Strategy", strategy),
+    field("Style", style),
+    field("Variant", variant),
+    field("Session", session),
+    field("Initial SL", sl),
+    field("TP", tp),
+    field("RR planned", rr),
+    field("Management", mgmt),
+    field("Note", note),
+    field("Hubo cierres parciales", partials),
+  ];
+  if (trade.lifecycle === Lifecycle.CLOSED) nodes.push(field("Close type", closeType));
+  nodes.push(err);
+  nodes.push(el("div", { className: "row-actions" }, [save, cancel]));
+  return [el("section", { className: "panel form" }, nodes)];
 }
 
 function renderClose(trade) {
