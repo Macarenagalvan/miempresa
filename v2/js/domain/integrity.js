@@ -183,6 +183,14 @@ export function parseRiskNum(raw) {
   return n;
 }
 
+export function parseLots(raw) {
+  if (raw === "" || raw == null) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) throw new Error("lots inválido");
+  if (n < 0) throw new Error("lots no puede ser negativo");
+  return n;
+}
+
 export function assertTrade(trade) {
   if (!trade || !trade.id) throw new Error("trade.id requerido");
   if (!trade.stageId) throw new Error("trade.stageId requerido");

@@ -8,6 +8,7 @@ import {
   computeRrRealized,
   incompleteForR,
   parseRiskNum,
+  parseLots,
 } from "./integrity.js";
 import { getTrade, putTrade, listTrades } from "../storage/repos/trades.js";
 import { getSetup } from "../storage/repos/setups.js";
@@ -75,7 +76,7 @@ export async function createTrade(input, stageId) {
     initialSL: sl,
     currentSL: sl,
     tp: numOrNull(input.tp),
-    lots: numOrNull(input.lots),
+    lots: parseLots(input.lots),
     setupId: setup ? setup.id : null,
     deskSignalId: null,
     session: (setup && setup.session) || input.session || null,
