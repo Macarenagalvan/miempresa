@@ -2,7 +2,7 @@ import { el } from "../render.js";
 import { listTrades } from "../../storage/repos/trades.js";
 import { listSignals } from "../../storage/repos/signals.js";
 import { compute, computeDesk, assetFilterOptions } from "../../domain/stats.js";
-import { Context, Strategy, Direction, BlueVariant, Disposition, Resolution } from "../../domain/enums.js";
+import { Context, Strategy, Direction, BlueVariant, Disposition, Resolution, strategyLabel } from "../../domain/enums.js";
 import { SESSIONS } from "../../config.js";
 import { go } from "../router.js";
 
@@ -109,7 +109,7 @@ export async function renderNumeros(ctx) {
   }
   const stats = compute(allTrades, filters);
   const ctxSel = select(filters.context, [["", "context"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"], [Context.DEMO, "DEMO"], [Context.BACKTEST, "BACKTEST"]]);
-  const strategy = select(filters.strategy, [["", "strategy"], ...Object.values(Strategy).map((s) => [s, s])]);
+  const strategy = select(filters.strategy, [["", "strategy"], ...Object.values(Strategy).map((s) => [s, strategyLabel(s)])]);
   strategy.setAttribute("name", "strategy");
   const variant = select(filters.variant, [["", "variant"], ...Object.values(BlueVariant).map((v) => [v, v])]);
   const session = select(filters.session, [["", "sesión"], ...SESSIONS.map((s) => [s, s])]);
