@@ -21,6 +21,12 @@ export const SESSIONS = ["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"];
 export const RGM_SOURCE_ASSET = "SP500";
 export const RGM_SOURCE_CONTEXT = "LIVE";
 
+export const FOREX_CURRENCIES = Object.freeze([
+  "USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "NZD",
+  "NOK", "SEK", "DKK", "PLN", "HUF", "CZK", "TRY", "ZAR",
+  "MXN", "SGD", "HKD", "CNH", "CNY", "INR", "KRW", "THB",
+]);
+
 export const MT5_SOURCE_TIMEZONES = Object.freeze([
   "UTC",
   "Europe/Athens",
