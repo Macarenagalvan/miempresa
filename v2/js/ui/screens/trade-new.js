@@ -4,7 +4,7 @@ import { getSetup } from "../../storage/repos/setups.js";
 import { createTrade, createClosedTrade, enrichTrade } from "../../domain/trade.js";
 import { getActiveAccount, listStageAccounts, visibleActiveAccount } from "../../domain/account.js";
 import { go } from "../router.js";
-import { Context, Direction, Strategy, Style, CloseType, BlueVariant, Lifecycle } from "../../domain/enums.js";
+import { Context, Direction, Strategy, Style, CloseType, BlueVariant, Lifecycle, strategyLabel } from "../../domain/enums.js";
 import { ROADMAP_ASSETS, SESSIONS } from "../../config.js";
 import { normalizeAsset } from "../../domain/integrity.js";
 
@@ -45,7 +45,7 @@ export async function renderNuevoTrade(ctx) {
   const context = select(Object.values(Context).map((c) => [c, contextLabel(c)]), initialContext);
   const direction = select(Object.values(Direction).map((d) => [d, d]), setup ? setup.direction : Direction.LONG);
   direction.setAttribute("name", "direction");
-  const strategy = select(Object.values(Strategy).map((s) => [s, s]), setup ? setup.strategy : Strategy.UNCLASSIFIED);
+  const strategy = select(Object.values(Strategy).map((s) => [s, strategyLabel(s)]), setup ? setup.strategy : Strategy.UNCLASSIFIED);
   strategy.setAttribute("name", "strategy");
   const style = select([["", "—"]].concat(Object.values(Style).map((s) => [s, s])), setup && setup.style ? setup.style : "");
   style.setAttribute("name", "style");
