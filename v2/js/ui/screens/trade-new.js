@@ -61,6 +61,7 @@ export async function renderNuevoTrade(ctx) {
   const rr = el("input", { className: "input", name: "rrPlanned", value: "" });
   const riskPct = el("input", { className: "input", name: "riskPercent", value: "" });
   const riskMoney = el("input", { className: "input", name: "riskMoney", value: "" });
+  const lots = el("input", { className: "input", name: "lots", value: "" });
   const exit = el("input", { className: "input", name: "exit", value: "" });
   const net = el("input", { className: "input", name: "netPnl", value: "" });
   const comm = el("input", { className: "input", name: "commission", value: "" });
@@ -171,6 +172,7 @@ export async function renderNuevoTrade(ctx) {
           hasPartials: partials.value === "true",
           riskPercent: riskPct.value,
           riskMoney: riskMoney.value,
+          lots: lots.value,
         }, ctx.stage.id);
         go("trade/" + trade.id);
         return;
@@ -188,6 +190,7 @@ export async function renderNuevoTrade(ctx) {
         hasPartials: partials.value === "true",
         riskPercent: riskPct.value,
         riskMoney: riskMoney.value,
+        lots: lots.value,
       }, ctx.stage.id);
       const journal = {
         strategy: strategy.value,
@@ -233,6 +236,7 @@ export async function renderNuevoTrade(ctx) {
       field("initialSL (opcional)", sl),
       field("Riesgo % (opcional)", riskPct),
       field("Riesgo $ / € (opcional)", riskMoney),
+      field("Lotaje", lots),
       field("Hubo cierres parciales", partials),
       closedBlock,
       hint,
