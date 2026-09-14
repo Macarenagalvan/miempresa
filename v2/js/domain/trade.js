@@ -231,6 +231,7 @@ export async function importClosedMt5Trade(draft, stageId) {
   const account = await getAccount(draft.accountId);
   if (!account) throw new Error("account no existe");
   const now = nowIso();
+  const initialSL = numOrNull(draft.initialSL);
   const trade = deriveTrade({
     id: createId(),
     stageId,
@@ -243,9 +244,9 @@ export async function importClosedMt5Trade(draft, stageId) {
     openedAt: draft.openedAt,
     entry: numOrNull(draft.entry),
     lifecycle: Lifecycle.CLOSED,
-    initialSL: null,
-    currentSL: null,
-    tp: null,
+    initialSL,
+    currentSL: draft.currentSL != null ? numOrNull(draft.currentSL) : initialSL,
+    tp: numOrNull(draft.tp),
     lots: numOrNull(draft.lots),
     setupId: null,
     deskSignalId: null,
@@ -266,7 +267,9 @@ export async function importClosedMt5Trade(draft, stageId) {
     strategy: Strategy.UNCLASSIFIED,
     style: null,
     variant: null,
-    rrPlanned: null,
+    rrPlanned: numOrNull(draft.rrPlanned),
+    riskPercent: parseRiskNum(draft.riskPercent),
+    riskMoney: parseRiskNum(draft.riskMoney),
     rrRealized: null,
     voidedAt: null,
     voidReason: null,
