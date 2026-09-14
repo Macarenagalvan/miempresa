@@ -105,6 +105,7 @@ async function renderCard(trade, setup, asr) {
       el("p", { className: "kicker", text: `${trade.lifecycle} · ${trade.context}` }),
       el("h1", { text: `${trade.asset} ${trade.direction}` }),
       el("p", { className: "meta", text: `entry ${trade.entry} · strategy ${strategyLabel(trade.strategy)} · style ${trade.style || "—"}` }),
+      trade.lifecycle === Lifecycle.CLOSED ? metaLine("exit", trade.exit) : null,
       metaLine("variant", trade.variant),
       metaLine("session", trade.session),
       trade.note ? el("p", { className: "meta", text: `note ${trade.note}` }) : null,
@@ -206,6 +207,8 @@ function enumSelect(values, current, name, emptyLabel, labelFn) {
 }
 
 function renderEdit(trade) {
+  const entryActual = el("input", { className: "input", name: "entryActual", value: trade.entry ?? "", readonly: true });
+  const exitActual = el("input", { className: "input", name: "exitActual", value: trade.exit ?? "", readonly: true });
   const strategy = enumSelect(Object.values(Strategy), trade.strategy, "strategy", null, strategyLabel);
   const style = enumSelect(Object.values(Style), trade.style, "style", "—");
   const variant = enumSelect(Object.values(BlueVariant), trade.variant, "variant", "—");
@@ -258,7 +261,9 @@ function renderEdit(trade) {
     el("p", { className: "kicker", text: "Editar operación" }),
     el("h1", { text: `${trade.asset} ${trade.direction}` }),
     el("p", { className: "meta origen", text: origenLine(trade) }),
-    el("p", { className: "hint", text: "Origen y cuenta no se editan acá." }),
+    el("p", { className: "hint", text: "Origen, cuenta, Entry y Exit son datos de ejecución y no se editan acá." }),
+    field("Entry (solo lectura)", entryActual),
+    trade.lifecycle === Lifecycle.CLOSED ? field("Exit (solo lectura)", exitActual) : null,
     field("Strategy", strategy),
     field("Style", style),
     field("Variant", variant),
