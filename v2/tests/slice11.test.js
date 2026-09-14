@@ -7,6 +7,7 @@ import {
   syncMt5Csv,
   findTradeByMt5Position,
   listStageTrades,
+  enrichTrade,
 } from "../js/domain/trade.js";
 import {
   parseMt5Csv,
@@ -31,6 +32,21 @@ import { V1_DB_NAME } from "../js/config.js";
 const results = [];
 function assert(name, cond, detail = "") {
   results.push({ name, ok: Boolean(cond), detail });
+}
+
+function patchMt5Row(raw, values) {
+  const cols = parseCsvLine(raw);
+  Object.entries(values).forEach(([idx, val]) => {
+    cols[Number(idx)] = val == null ? "" : String(val);
+  });
+  return cols.map((value) => {
+    const text = String(value == null ? "" : value);
+    return /[;"\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }).join(";");
+}
+
+function almostEqual(a, b, eps = 1e-9) {
+  return Number.isFinite(Number(a)) && Math.abs(Number(a) - Number(b)) <= eps;
 }
 
 async function run() {
@@ -102,7 +118,22 @@ async function run() {
   assert("draft netPnl autoridad", mapped.ok && mapped.draft.netPnl === 24.6);
   assert("draft no parte commission/swap", mapped.ok && mapped.draft.commission == null && mapped.draft.swap == null);
   assert("draft no inventa strategy", mapped.ok && mapped.draft.strategy === Strategy.UNCLASSIFIED && mapped.draft.setupId == null && mapped.draft.deskSignalId == null);
+  assert("draft sin SL/TP no inventa técnicos", mapped.ok && mapped.draft.initialSL == null && mapped.draft.tp == null && mapped.draft.rrPlanned == null && mapped.draft.sourceRrFinal == null);
   assert("toTradeDraft no escribe IDB", (await listTrades()).every((t) => !t.sourceRef || t.sourceRef.mt5Position !== "10011"));
+
+  const longTechRow = patchMt5Row(MT5_SLICE11_ROWS.longWin, {
+    17: "1.16750",
+    18: "1.17050",
+    28: "12.30",
+    29: "0.60",
+    30: "2.00",
+    31: "2.70",
+  });
+  const longTechParsed = parseMt5Csv(asMt5Csv([longTechRow]));
+  const longTechDraft = toTradeDraft(longTechParsed.rows[0].rec, src);
+  assert("draft lee SL/TP", longTechDraft.ok && longTechDraft.draft.initialSL === 1.1675 && longTechDraft.draft.currentSL === 1.1675 && longTechDraft.draft.tp === 1.1705);
+  assert("draft lee RR fuente", longTechDraft.ok && longTechDraft.draft.rrPlanned === 2 && longTechDraft.draft.sourceRrFinal === 2.7);
+  assert("draft lee riesgo", longTechDraft.ok && longTechDraft.draft.riskMoney === 12.3 && longTechDraft.draft.riskPercent === 0.6);
 
   const nSetupsBefore = (await listSetups()).length;
   const nSignalsBefore = (await listSignals()).length;
@@ -163,8 +194,8 @@ async function run() {
   assert("netPnl sin doble descuento", longT.netPnl === 24.6);
   assert("Win/Loss/BE", longT.result === Result.WIN && shortT.result === Result.LOSS && beT.result === Result.BE);
   assert("strategy no inventada", longT.strategy === Strategy.UNCLASSIFIED && longT.setupId == null && longT.deskSignalId == null);
-  assert("session/SL/TP no inferidos", longT.session == null && longT.initialSL == null && longT.tp == null);
-  assert("hasPartials false no habilita R", longT.hasPartials === false && longT.incompleteForR === true && longT.rrRealized == null);
+  assert("fuente sin SL/TP sigue nula", longT.session == null && longT.initialSL == null && longT.tp == null && longT.rrPlanned == null);
+  assert("sin SL no calcula R", longT.hasPartials === false && longT.incompleteForR === true && longT.rrRealized == null);
   assert("importBatchId presente", Boolean(longT.importBatchId) && longT.importBatchId === shortT.importBatchId);
   assert("alta MT5 no crea Setup/Signal", (await listSetups()).length === nSetupsBefore && (await listSignals()).length === nSignalsBefore);
 
@@ -187,17 +218,58 @@ async function run() {
   assert("DEMO aislado del import", demoStats.netPnl === 50 && demoTrade.accountId === demo.id);
   assert("REAL no mezcla DEMO/BACKTEST", realAfter.netPnl === 24.6 - 19.5 && realAfter.nClosed === 3);
 
-  const sync2 = await syncMt5Csv(csv, stage.id, src);
-  assert("reimport idempotente", sync2.created === 0 && sync2.duplicates === 3);
+  await enrichTrade(shortT.id, {
+    initialSL: 2469.2,
+    tp: 2442.2,
+    rrPlanned: 2,
+  });
+
+  const enrichedShortRow = patchMt5Row(MT5_SLICE11_ROWS.shortLoss, {
+    17: "2468.10",
+    18: "2444.40",
+    28: "20.00",
+    29: "1.00",
+    30: "2.00",
+    31: "-1.00",
+  });
+  const enrichedBeRow = patchMt5Row(MT5_SLICE11_ROWS.beSp500, {
+    17: "6452.25",
+    18: "6482.25",
+    28: "10.00",
+    29: "0.50",
+    30: "2.00",
+    31: "0.00",
+  });
+  const enrichedCsv = asMt5Csv([longTechRow, enrichedShortRow, enrichedBeRow]);
+
+  const sync2 = await syncMt5Csv(enrichedCsv, stage.id, src);
+  assert("reimport no duplica", sync2.created === 0 && sync2.duplicates === 3);
+  assert("reimport enriquece existentes", sync2.enriched === 3);
+
+  const longE = await findTradeByMt5Position(live.id, "10011");
+  const shortE = await findTradeByMt5Position(live.id, "10012");
+  const beE = await findTradeByMt5Position(live.id, "10013");
+  assert("enrichment completa SL/TP/RR", longE.initialSL === 1.1675 && longE.currentSL === 1.1675 && longE.tp === 1.1705 && longE.rrPlanned === 2);
+  assert("enrichment completa riesgo", longE.riskMoney === 12.3 && longE.riskPercent === 0.6);
+  assert("R realizado se deriva", longE.incompleteForR === false && almostEqual(longE.rrRealized, 2.7));
+  assert("BE con SL calcula R cero", beE.incompleteForR === false && almostEqual(beE.rrRealized, 0));
+  assert("manual no se pisa por CSV", shortE.initialSL === 2469.2 && shortE.currentSL === 2469.2 && shortE.tp === 2442.2 && shortE.rrPlanned === 2);
+  assert("campos manualmente vacíos sí se completan", shortE.riskMoney === 20 && shortE.riskPercent === 1);
+
+  const sync3 = await syncMt5Csv(enrichedCsv, stage.id, src);
+  assert("reimport enriquecido idempotente", sync3.created === 0 && sync3.duplicates === 3 && sync3.enriched === 0);
   assert("dedup account+mt5Position", (await listStageTrades(stage.id)).filter((t) => t.recordSource === "MT5_EA").length === 3);
   assert("dedupKey estable", dedupKey(live.id, "10011") === live.id + "::10011");
 
-  const samePosOtherAcc = await syncMt5Csv(asMt5Csv([MT5_SLICE11_ROWS.longWin]), stage.id, {
+  const samePosOtherAcc = await syncMt5Csv(asMt5Csv([longTechRow]), stage.id, {
     accountId: demo.id,
     context: demo.context,
     timeZone: tz,
   });
   assert("misma posición otra Account sí entra", samePosOtherAcc.created === 1);
+  const demoImported = await findTradeByMt5Position(demo.id, "10011");
+  assert("trade nuevo conserva técnicos", demoImported && demoImported.initialSL === 1.1675 && demoImported.tp === 1.1705 && demoImported.rrPlanned === 2 && demoImported.riskMoney === 12.3 && demoImported.riskPercent === 0.6);
+  assert("trade nuevo deriva R realizado", demoImported && almostEqual(demoImported.rrRealized, 2.7));
 
   const unknownOnly = await syncMt5Csv(asMt5Csv([MT5_SLICE11_ROWS.unknownSymbol]), stage.id, src);
   assert("unknown symbol no se importa", unknownOnly.created === 0 && unknownOnly.unknownSymbols === 1 && !(await findTradeByMt5Position(live.id, "19999")));
