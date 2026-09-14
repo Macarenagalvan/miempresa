@@ -76,7 +76,7 @@ async function renderCard(trade, setup, asr) {
     actions.push(el("button", { type: "button", text: "Cerrar operación", onclick: () => go("trade/" + trade.id + "/cerrar") }));
   }
   if (trade.lifecycle !== Lifecycle.VOID) {
-    actions.push(el("button", { type: "button", className: "ghost", text: "VOID", onclick: () => go("trade/" + trade.id + "/void") }));
+    actions.push(el("button", { type: "button", className: "ghost", text: "Anular operación", onclick: () => go("trade/" + trade.id + "/void") }));
   }
   if (trade.lifecycle === Lifecycle.CLOSED) {
     actions.push(el("button", {
@@ -359,7 +359,7 @@ function renderAsr(trade, asr) {
 function renderVoid(trade) {
   const reason = el("select", { className: "input" }, Object.values(VoidReason).map((r) => el("option", { value: r, text: r })));
   const err = el("p", { className: "err", text: "" });
-  const save = el("button", { type: "button", text: "Confirmar VOID" });
+  const save = el("button", { type: "button", text: "Anular operación" });
   save.addEventListener("click", async () => {
     try {
       await voidTrade(trade.id, reason.value);
@@ -368,11 +368,14 @@ function renderVoid(trade) {
   });
   return [
     el("section", { className: "panel" }, [
-      el("h1", { text: "VOID" }),
-      el("p", { className: "hint", text: "Solo duplicado, fantasma, prueba, accidente o inválido. No para esconder un LOSS." }),
+      el("h1", { text: "Anular operación" }),
+      el("p", { className: "hint", text: "¿Seguro que querés anular esta operación? Quedará marcada como VOID y dejará de considerarse una operación válida del Journal." }),
       field("voidReason", reason),
       err,
-      save,
+      el("div", { className: "row-actions" }, [
+        el("button", { type: "button", className: "ghost", text: "Cancelar", onclick: () => go("trade/" + trade.id) }),
+        save,
+      ]),
     ]),
   ];
 }
