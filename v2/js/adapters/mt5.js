@@ -243,7 +243,13 @@ export function toTradeDraft(rec, opts = {}) {
   const closed = wallClockToIso(rec["Fecha salida"], rec["Hora salida"], timeZone);
   if (!closed.ok) return { ok: false, error: "closedAt: " + closed.error };
   const entry = finiteNum(rec.Entrada);
+  const initialSL = finiteNum(rec.SL);
+  const tp = finiteNum(rec.TP);
   const exit = finiteNum(rec.Salida);
+  const riskMoney = finiteNum(rec["Riesgo $"]);
+  const riskPercent = finiteNum(rec["Riesgo %"]);
+  const rrPlanned = finiteNum(rec["RR Inicial"]);
+  const sourceRrFinal = finiteNum(rec["RR Final"]);
   const netPnl = finiteNum(rec["B/P Neto"]);
   const lots = finiteNum(rec.Lotaje);
   const result = mapMt5Result(rec.Resultado);
@@ -271,9 +277,9 @@ export function toTradeDraft(rec, opts = {}) {
       setupId: null,
       deskSignalId: null,
       session: null,
-      initialSL: null,
-      currentSL: null,
-      tp: null,
+      initialSL,
+      currentSL: initialSL,
+      tp,
       commission: null,
       swap: null,
       closeType: "UNKNOWN",
@@ -281,6 +287,10 @@ export function toTradeDraft(rec, opts = {}) {
       style: null,
       variant: null,
       hasPartials: false,
+      rrPlanned,
+      sourceRrFinal,
+      riskMoney,
+      riskPercent,
       importBatchId: opts.importBatchId || null,
       sourceRef: {
         mt5Ticket: null,
