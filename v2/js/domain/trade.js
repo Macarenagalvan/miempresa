@@ -224,6 +224,39 @@ export async function findTradeByMt5Position(accountId, mt5Position) {
   )) || null;
 }
 
+async function enrichExistingMt5TradeFromDraft(existing, draft) {
+  if (!existing || !draft) return { trade: existing, updated: false };
+  if (existing.recordSource !== TradeRecordSource.MT5_EA) {
+    return { trade: existing, updated: false };
+  }
+
+  const next = { ...existing };
+  let changed = false;
+
+  const fillNumberIfMissing = (field, raw, parser = numOrNull) => {
+    if (next[field] != null) return;
+    const value = parser(raw);
+    if (value == null) return;
+    next[field] = value;
+    changed = true;
+  };
+
+  fillNumberIfMissing("initialSL", draft.initialSL);
+  fillNumberIfMissing("currentSL", draft.currentSL != null ? draft.currentSL : draft.initialSL);
+  fillNumberIfMissing("tp", draft.tp);
+  fillNumberIfMissing("rrPlanned", draft.rrPlanned);
+  fillNumberIfMissing("riskPercent", draft.riskPercent, parseRiskNum);
+  fillNumberIfMissing("riskMoney", draft.riskMoney, parseRiskNum);
+
+  if (!changed) return { trade: existing, updated: false };
+
+  next.updatedAt = nowIso();
+  deriveTrade(next);
+  assertTrade(next);
+  await putTrade(next);
+  return { trade: next, updated: true };
+}
+
 export async function importClosedMt5Trade(draft, stageId) {
   if (!draft) throw new Error("draft MT5 requerido");
   if (draft.recordSource !== TradeRecordSource.MT5_EA) throw new Error("recordSource MT5_EA requerido");
@@ -342,6 +375,7 @@ export async function syncMt5Csv(text, stageId, opts = {}) {
     read: parsed.read,
     created: 0,
     duplicates: 0,
+    enriched: 0,
     invalid: parsed.invalid.length,
     unknownSymbols: 0,
     errors: parsed.invalid.slice(),
@@ -362,6 +396,8 @@ export async function syncMt5Csv(text, stageId, opts = {}) {
     const existing = await findTradeByMt5Position(account.id, mapped.draft.sourceRef.mt5Position);
     if (existing) {
       report.duplicates += 1;
+      const enriched = await enrichExistingMt5TradeFromDraft(existing, mapped.draft);
+      if (enriched.updated) report.enriched += 1;
       continue;
     }
     await importClosedMt5Trade(mapped.draft, stageId);
