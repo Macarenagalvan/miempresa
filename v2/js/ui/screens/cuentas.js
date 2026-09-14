@@ -136,13 +136,13 @@ export async function renderCuentas(ctx) {
         },
       });
       pendingText = "";
-      go("cuentas");
+      go(`cuentas?sync=${Date.now()}`);
     } catch (e) {
       syncErr.textContent = e.message;
     }
   });
   const last = mt5.report
-    ? el("p", { className: "meta", text: `última sync ${mt5.lastSyncAt || "—"} · ${mt5.fileName || ""} · nuevas ${mt5.report.created} · dup ${mt5.report.duplicates}` })
+    ? el("p", { className: "meta", text: `última sync ${mt5.lastSyncAt || "—"} · ${mt5.fileName || ""} · nuevas ${mt5.report.created} · dup ${mt5.report.duplicates} · enriquecidas ${mt5.report.enriched || 0}` })
     : el("p", { className: "meta", text: "sin sync MT5 todavía" });
   return [
     el("section", { className: "panel" }, [
@@ -156,7 +156,7 @@ export async function renderCuentas(ctx) {
     el("section", { className: "panel tech-fold" }, [
       el("p", { className: "kicker", text: "Importar" }),
       el("h2", { text: "Traer operaciones de MT5" }),
-      el("p", { className: "hint", text: "CSV de MacaJournalExport v1.01. El Journal solo lee. No crea cuentas." }),
+      el("p", { className: "hint", text: "CSV de MacaJournalExport v1.02 (compatible con v1.01). El Journal solo lee. No crea cuentas." }),
       field("Cuenta destino", accountSel),
       contextOut,
       field("Zona horaria de esa fuente", tzSel),
