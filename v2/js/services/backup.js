@@ -30,6 +30,7 @@ import {
   assertTradeAccountPair,
 } from "../domain/integrity.js";
 import { Context } from "../domain/enums.js";
+import { encodeAttachment, decodeAttachment } from "./backup-images.js";
 import { ensureDeviceState, isRestoreBlocked } from "./sync-engine.js";
 
 const V1_MESSAGE = "Este archivo pertenece a Journal V1 y no puede restaurarse en Journal V2.";
@@ -277,6 +278,7 @@ export function validateBackup(payload) {
 
   for (const att of attachments) {
     if (!att || att.id == null || att.id === "") pushError(errors, "attachments: id faltante");
+    runAssert(() => decodeAttachment(att), errors);
   }
 
   return {
@@ -365,6 +367,7 @@ export function previewBackupText(text, fileName = "") {
 export async function buildExportPayload() {
   const meta = await getMeta();
   const collections = await dumpCollections();
+  collections.attachments = await Promise.all((collections.attachments || []).map(encodeAttachment));
   return {
     product: BACKUP_PRODUCT,
     format: BACKUP_FORMAT,
@@ -418,6 +421,8 @@ export async function downloadCurrentBackup() {
 }
 
 export async function applyRestoreTransaction(payload) {
+  // Decode all images before opening a transaction or clearing any store.
+  const attachments = (payload.attachments || []).map(decodeAttachment);
   const storeNames = restoreStoreNames();
   await withStores(storeNames, "readwrite", (tx) => {
     for (const name of storeNames) {
@@ -430,7 +435,7 @@ export async function applyRestoreTransaction(payload) {
       });
     }
     for (const name of EXPORT_COLLECTIONS) {
-      const rows = Array.isArray(payload[name]) ? payload[name] : [];
+      const rows = name === STORES.attachments ? attachments : (Array.isArray(payload[name]) ? payload[name] : []);
       const store = tx.objectStore(name);
       for (const rec of rows) store.put(rec);
     }

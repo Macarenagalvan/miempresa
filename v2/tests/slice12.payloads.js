@@ -227,6 +227,9 @@ export function richV2() {
       id: ATT,
       entityType: "trade",
       entityId: TRADE_LIVE,
+      mime: "image/png",
+      size: 3,
+      dataBase64: "AQID",
     }],
   };
 }

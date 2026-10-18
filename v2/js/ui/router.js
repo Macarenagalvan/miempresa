@@ -35,7 +35,12 @@ export function parseHash() {
 }
 
 export function go(path) {
-  location.hash = `#/${path}`;
+  const next = `#/${path}`;
+  if (location.hash === next) {
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+  } else {
+    location.hash = next;
+  }
 }
 
 export function currentRoute() {
