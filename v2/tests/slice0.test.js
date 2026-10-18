@@ -58,7 +58,7 @@ async function run() {
   assert("export schemaVersion vigente", payload.schemaVersion === SCHEMA_VERSION);
   assert("export product Journal V2", payload.product === "Journal V2");
   assert("export format journal-v2", payload.format === "journal-v2");
-  assert("export backupVersion 1", payload.backupVersion === 1);
+  assert("export backupVersion 2", payload.backupVersion === 2);
   assert("export tiene exportedAt", typeof payload.exportedAt === "string" && payload.exportedAt.includes("T"));
   assert("export incluye meta y stages", Boolean(payload.meta) && Array.isArray(payload.stages) && payload.stages.length === 1);
   for (const key of ["accounts", "movements", "observations", "setups", "trades", "asrs", "signals", "challenges", "payouts", "attachments", "officeTasks", "officeNotes", "officeEvents", "officeShortcuts"]) {
@@ -87,3 +87,4 @@ async function run() {
 }
 
 export { run };
+
