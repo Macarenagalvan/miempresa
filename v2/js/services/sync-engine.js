@@ -9,7 +9,8 @@ import {
   SYNC_STATE_ID,
 } from "../config.js";
 import { createId, nowIso } from "../domain/ids.js";
-import { projectMetaForSync, applyRemoteMeta } from "../domain/sync-meta.js";
+import { applyRemoteMeta } from "../domain/sync-meta.js";
+import { encodeSyncPayload, decodeSyncPayload } from "./sync-payload.js";
 import { getMeta, putMeta } from "../storage/repos/meta.js";
 import { repoFor, countCollection } from "../storage/repos/collections.js";
 import { getSyncStateRow, putSyncStateRow } from "../storage/repos/sync-state.js";
@@ -140,10 +141,6 @@ export function scheduleSync() {
   }, SYNC_DEBOUNCE_MS);
 }
 
-function payloadFor(entityType, record) {
-  return entityType === "meta" ? projectMetaForSync(record) : record;
-}
-
 async function readLocalRecord(entityType, entityId) {
   if (entityType === "meta") return getMeta();
   const repo = repoFor(entityType);
@@ -157,7 +154,7 @@ async function writeLocalRecord(entityType, payload) {
   }
   const repo = repoFor(entityType);
   if (!repo) throw new Error("store desconocido: " + entityType);
-  return repo.put(payload);
+  return repo.put(decodeSyncPayload(entityType, payload));
 }
 
 async function deleteLocalRecord(entityType, entityId) {
@@ -324,7 +321,7 @@ export async function pushDirty() {
     const response = await pushCloudRecord({
       entityType: entry.entityType,
       entityId: entry.entityId,
-      payload: entry.tombstone ? {} : payloadFor(entry.entityType, local),
+      payload: entry.tombstone ? {} : await encodeSyncPayload(entry.entityType, local),
       expectedRevision: Number(entry.cloudRevision || 0),
       tombstone: Boolean(entry.tombstone),
       deviceId: state.deviceId,
