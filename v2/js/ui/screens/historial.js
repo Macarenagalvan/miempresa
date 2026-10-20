@@ -100,12 +100,28 @@ export async function renderHistorial(ctx) {
     ])];
   return [
     el("section", { className: "panel" }, [
-      el("h1", { text: "Historial" }),
-      el("p", { className: "meta", text: "Operaciones de la etapa activa. VOID fuera." }),
-      el("div", { className: "chips filters" }, [ctxSel, accSel, asset, strategy, variant, direction, session, lifecycle, from, to]),
+      el("div", { className: "historial-header" }, [
+        el("div", {}, [
+          el("h1", { text: "Operaciones" }),
+          el("p", { className: "meta", text: "Consultá tus trades y revisiones de la etapa activa." }),
+        ]),
+        el("button", { type: "button", className: "top-new-trade", text: "+ Nueva operación", onclick: () => go("nuevo/trade") }),
+      ]),
+      el("div", { className: "filters-basic", "aria-label": "Filtros rápidos" }, [ctxSel, accSel, asset, lifecycle]),
+      (() => {
+        const advanced = el("details", { className: "filters-advanced" }, [
+          el("summary", { text: "Más filtros · estrategia, sesión, dirección y fechas" }),
+          el("div", { className: "chips filters" }, [
+            strategy, variant, direction, session, from, to,
+            el("button", { type: "button", className: "ghost filters-reset", text: "Limpiar filtros", onclick: () => go("historial") }),
+          ]),
+        ]);
+        advanced.open = Boolean(filters.strategy || filters.variant || filters.direction || filters.session || filters.from || filters.to);
+        return advanced;
+      })(),
       stageEmpty
         ? null
-        : el("p", { className: "meta", text: `${rows.length} operaciones · ${pendingCount} ASR pendiente` }),
+        : el("p", { className: "meta historial-count", text: `${rows.length} operaciones · ${pendingCount} ASR pendiente` }),
       el("div", { className: "list table-wrap" }, list),
     ]),
   ];
