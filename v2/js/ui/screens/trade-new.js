@@ -180,7 +180,7 @@ export async function renderNuevoTrade(ctx) {
   function paintLifecycle() {
     const closed = lifecycle.value === Lifecycle.CLOSED;
     closedBlock.hidden = !closed;
-    save.textContent = dedicatedBacktest ? "Guardar backtest" : "Guardar operación";
+    save.textContent = dedicatedBacktest ? "Guardar backtest / borrador" : "Guardar operación / borrador";
     refreshRR();
   }
   lifecycle.addEventListener("change", paintLifecycle);
@@ -246,14 +246,15 @@ export async function renderNuevoTrade(ctx) {
     try {
       const chosen = dedicatedBacktest ? selectedCaptures() : [];
       validateCaptures(chosen);
-      if (dedicatedBacktest && !openedAt.value) throw new Error("Elegí la fecha y hora histórica de entrada.");
+
       const assetVal = normalizeAsset(asset.value);
       if (!assetVal) throw new Error("asset requerido");
       if (context.value !== Context.BACKTEST && !accountPick.value) {
         throw new Error("elegí una Account compatible o creá una en Cuentas");
       }
       const openedIso = openedAt.value ? new Date(openedAt.value).toISOString() : undefined;
-      if (lifecycle.value === Lifecycle.CLOSED) {
+      const completeClose = lifecycle.value === Lifecycle.CLOSED && Boolean(entry.value.trim()) && Boolean(exit.value.trim()) && Boolean(net.value.trim()) && Boolean(closedAt.value);
+      if (completeClose) {
         if (!closedAt.value) throw new Error("Ingresá la fecha y hora de cierre.");
         if (!exit.value) throw new Error("exit requerido");
         if (net.value === "") throw new Error("netPnl requerido");
@@ -294,6 +295,10 @@ export async function renderNuevoTrade(ctx) {
         return;
       }
       const trade = await createTrade({
+        isDraft: true,
+        exit: exit.value,
+        netPnl: net.value,
+        closedAt: closedAt.value ? new Date(closedAt.value).toISOString() : null,
         asset: assetVal,
         brokerSymbol: broker.value,
         context: context.value,
@@ -302,6 +307,10 @@ export async function renderNuevoTrade(ctx) {
         openedAt: openedIso,
         entry: entry.value,
         initialSL: sl.value,
+        tp: tp.value,
+        lots: lots.value,
+        management: mgmt.value,
+        note: note.value,
         setupId: setup ? setup.id : null,
         hasPartials: partials.value === "true",
         riskPercent: riskPct.value,
