@@ -46,6 +46,28 @@ export async function run() {
   if (form.querySelector('input[name="openedAt"]').type !== "datetime-local") {
     throw new Error("La entrada debe usar selector de fecha y hora local");
   }
+  const capturedBefore = form.querySelector('input[name="capture-before"]');
+  const capturedAfter = form.querySelector('input[name="capture-after"]');
+  if (!capturedBefore || !capturedAfter || !capturedBefore.multiple || !capturedAfter.multiple) {
+    throw new Error("El registro debe permitir múltiples capturas Antes y Después");
+  }
+  if (form.querySelector('input[name="openedAt"]').value !== "") {
+    throw new Error("Backtesting debe pedir la fecha histórica sin inventar la actual");
+  }
+  const entry = form.querySelector('input[name="entry"]');
+  const sl = form.querySelector('input[name="initialSL"]');
+  const tp = form.querySelector('input[name="tp"]');
+  const exit = form.querySelector('input[name="exit"]');
+  for (const [input, value] of [[entry, "200"], [sl, "195"], [tp, "210"], [exit, "205"]]) {
+    input.value = value;
+    input.dispatchEvent(new Event("input"));
+  }
+  const preview = form.querySelector(".trade-rr-preview");
+  if (!preview || !preview.textContent.includes("2.00R") || !preview.textContent.includes("1.00R")) {
+    throw new Error("Falla la vista previa 2R planificado / 1R realizado");
+  }
+  const contextField = [...form.querySelectorAll("label.field")].find((label) => label.textContent.trim().startsWith("Contexto"));
+  if (!contextField || !contextField.hidden) throw new Error("Contexto BACKTEST no debe ocupar espacio");
   status.value = "OPEN";
   status.dispatchEvent(new Event("change"));
   if (!result.hidden) throw new Error("Un registro OPEN no debe pedir resultado final");
