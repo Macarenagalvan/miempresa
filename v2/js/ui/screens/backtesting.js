@@ -2,14 +2,8 @@ import { el } from "../render.js";
 import { listStageTrades } from "../../domain/trade.js";
 import { compute, realizedR } from "../../domain/stats.js";
 import { Context, Lifecycle } from "../../domain/enums.js";
+import { isTestRecord } from "../../domain/test-record.js";
 import { go } from "../router.js";
-
-function isTestRecord(trade) {
-  const asset = String(trade.asset || "").toUpperCase();
-  const note = String(trade.note || "").toUpperCase();
-  return asset.startsWith("TEST/") || asset.startsWith("TEST ") ||
-    note.includes("TEST / FICTICIO");
-}
 
 function fmtR(value) {
   return value == null || !Number.isFinite(Number(value))
@@ -62,7 +56,7 @@ export async function renderBacktesting(ctx) {
       el("p", { className: "hint", text: "Registrá pruebas históricas sin mezclarlas con operaciones ejecutadas ni afectar el saldo de ninguna cuenta." }),
       el("div", { className: "row-actions" }, [
         el("button", { type: "button", text: "+ Registrar backtest", onclick: action }),
-        el("button", { type: "button", className: "ghost", text: "Ver estadísticas", onclick: () => go("numeros?universe=BACKTEST") }),
+        el("button", { type: "button", className: "ghost", text: "Ver estadísticas", onclick: () => go("numeros?universe=BACKTEST&excludeTest=1") }),
       ]),
       el("div", { className: "bt-summary" }, [
         summary("Registros", genuine.length, "Pruebas históricas"),
