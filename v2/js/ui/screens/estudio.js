@@ -27,7 +27,7 @@ export async function renderEstudio(ctx) {
     el("button", {
       type: "button",
       className: "chip" + (tab === "setups" ? " is-on" : ""),
-      text: "Ideas",
+      text: "Ideas / Setups",
       onclick: () => go(asset ? "estudio/setups/" + asset : "estudio/setups"),
     }),
   ]);
@@ -88,8 +88,26 @@ export async function renderEstudio(ctx) {
   return [
     el("section", { className: "panel" }, [
       el("h1", { text: "Estudio" }),
-      el("p", { className: "hint", text: "Notas de mercado e Ideas viven acá. Una nota puede pasar después a idea; no es obligatorio." }),
+      el("p", { className: "hint", text: "Acá guardás lo que observás en el mercado y las oportunidades que querés seguir. No es el historial de trades ni el backtesting." }),
+      el("div", { className: "estudio-explain" }, [
+        el("div", { className: "estudio-step" }, [
+          el("strong", { text: "1. Notas de mercado" }),
+          el("p", { text: "Una lectura, un nivel, una observación o un aprendizaje. No hace falta que exista una oportunidad." }),
+        ]),
+        el("div", { className: "estudio-step" }, [
+          el("strong", { text: "2. Ideas / Setups" }),
+          el("p", { text: "Una posible operación que estás siguiendo. Podés validarla, descartarla o registrarla como trade." }),
+        ]),
+      ]),
       tabs,
+      el("div", { className: "estudio-actions" }, [
+        el("p", { className: "hint", text: tab === "setups" ? "Estás viendo ideas en seguimiento." : "Estás viendo tus observaciones de mercado." }),
+        el("button", {
+          type: "button",
+          text: tab === "setups" ? "+ Nueva idea" : "+ Nueva nota",
+          onclick: () => go(tab === "setups" ? "nuevo/setup" : "nuevo/observacion"),
+        }),
+      ]),
       chips,
       el("div", { className: "list" }, list),
     ]),
