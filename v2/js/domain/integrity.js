@@ -208,9 +208,9 @@ export function assertTrade(trade) {
     if (trade.result != null || trade.closedAt != null) throw new Error("OPEN no lleva result/closedAt");
   }
   if (trade.lifecycle === Lifecycle.CLOSED) {
-    if (!Number.isFinite(Number(trade.exit))) throw new Error("exit requerido");
+    if (trade.exit == null || trade.exit === "" || !Number.isFinite(Number(trade.exit))) throw new Error("exit requerido");
     if (!trade.closedAt) throw new Error("closedAt requerido");
-    if (!Number.isFinite(Number(trade.netPnl))) throw new Error("netPnl requerido");
+    if (trade.netPnl == null || trade.netPnl === "" || !Number.isFinite(Number(trade.netPnl))) throw new Error("netPnl requerido");
     if (!Object.values(Result).includes(trade.result)) throw new Error("result inválido");
   }
   if (trade.lifecycle === Lifecycle.VOID) {
