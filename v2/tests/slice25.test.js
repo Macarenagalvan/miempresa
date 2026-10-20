@@ -293,7 +293,7 @@ async function run() {
     note: "mt5-enrich-final",
   });
   assert("MT5 editado RED SCALP SL", classified.strategy === Strategy.RED && classified.style === Style.SCALP && classified.initialSL === 87.05);
-  const shot = await addTradeImage(classified.id, { type: "image/png", name: "mt5-final.png", blob: pngBlob() });
+  const shot = await addTradeImage(classified.id, { type: "image/png", name: "mt5-final.png", blob: pngBlob(), phase: "BEFORE" });
   const second = await syncMt5Csv(asMt5Csv([MT5_SLICE11_ROWS.nzdjpyShort]), stage.id, src);
   const again = await getTrade(classified.id);
   const shots = await listTradeImages(again.id);
@@ -310,6 +310,7 @@ async function run() {
   const mt5AfterPatch = await getTrade(again.id);
   assert("MT5 lots intacto", mt5AfterPatch.lots === 0.1 && mt5AfterPatch.recordSource === TradeRecordSource.MT5_EA);
   assert("attachment sobrevive reimport", shots.length === 1 && shots[0].id === shot.id);
+  assert("fase de captura persiste", shots[0].phase === "BEFORE");
   const samePos = await findTradeByMt5Position(bullfy.id, "20021");
   assert("dedup por position", samePos.id === raw.id);
 
@@ -325,6 +326,7 @@ async function run() {
     ...seed,
     route: { name: "trade", rest: classified.id, query: {} },
   }));
+  assert("etiqueta antes en ficha", /ANTES · mt5-final.png/.test(cardHint.textContent));
   assert("hint imágenes locales", /Local en este dispositivo/.test(cardHint.textContent));
   assert("hint no promete cloud", !/sincroniz/i.test(cardHint.textContent));
 
