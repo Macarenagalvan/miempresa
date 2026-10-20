@@ -43,6 +43,7 @@ export async function addTradeImage(tradeId, input) {
     entityType: "trade",
     entityId: tradeId,
     kind: "image",
+    phase: ["BEFORE", "AFTER"].includes(input.phase) ? input.phase : null,
     mime,
     name: String(input.name || "captura"),
     size,
