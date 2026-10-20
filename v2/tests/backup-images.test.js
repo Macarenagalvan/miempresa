@@ -17,6 +17,12 @@ export async function run() {
   let rejectedBrokenSync = false;
   try { decodeSyncPayload("attachments", { ...record, blob: {} }); } catch { rejectedBrokenSync = true; }
   check(rejectedBrokenSync, "sync rechaza capturas sin bytes");
+  // Large screenshots must not overflow the JavaScript regexp stack.
+  const largeBytes = new Uint8Array(8 * 1024 * 1024);
+  const largeRecord = { id: "test-large-image", name: "large.png", mime: "image/png", size: largeBytes.length, blob: new Blob([largeBytes], { type: "image/png" }) };
+  const largeEncoded = await encodeSyncPayload("attachments", largeRecord);
+  const largeRoundtrip = decodeSyncPayload("attachments", JSON.parse(JSON.stringify(largeEncoded)));
+  check(largeRoundtrip.blob.size === largeBytes.length, "sync restaura imagen límite de 8 MB sin overflow");
   const decoded = decodeAttachment(JSON.parse(JSON.stringify(encoded)));
   check(decoded.blob.type === "image/png", "MIME conservado");
   check(new Uint8Array(await decoded.blob.arrayBuffer()).every((b, i) => b === bytes[i]), "bytes conservados");
