@@ -148,3 +148,32 @@ button.trade-form-submit { min-width: 175px; }
   .trade-form-footer button { width: 100%; }
   .trade-extra { padding-left: 12px; padding-right: 12px; }
 }
+
+/* Historical entry: R preview, chart evidence, and shorter basic flow. */
+.trade-rr-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 12px;
+  background: rgba(196,165,116,.05);
+  border: 1px solid rgba(196,165,116,.25);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 12px;
+}
+.trade-rr-item { display:flex; flex-direction:column; gap:6px; }
+.trade-rr-item span { font-size:12px; color:var(--muted); }
+.trade-rr-item strong { font:600 22px var(--font-num); color:var(--text); }
+.trade-rr-preview > .hint { grid-column: 1/-1; margin:0; font-size:12px; }
+.trade-evidence .input[type="file"] {
+  padding: 10px;
+  font-size: 12px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+.trade-evidence .hint { margin: 0 0 4px; }
+.trade-form > button.ghost[hidden] { display: none; }
+@media (max-width: 450px) {
+  .trade-rr-preview { gap: 8px; padding: 10px; }
+  .trade-rr-item strong { font-size: 19px; }
+}
