@@ -23,10 +23,11 @@ function select(current, options) {
 
 export async function renderHistorial(ctx) {
   const q = ctx.route.query || {};
-  const raw = await listStageTrades(ctx.stage.id, { includeVoid: false });
+  const allTrades = await listStageTrades(ctx.stage.id, { includeVoid: false });
+  const raw = allTrades.filter((trade) => trade.context !== Context.BACKTEST);
   const accounts = await listStageAccounts(ctx.stage.id, { includeArchived: true });
   const filters = {
-    context: q.context || "",
+    context: q.context === Context.BACKTEST ? "" : (q.context || ""),
     accountId: q.account || "",
     stageId: ctx.stage.id,
     asset: q.asset || "",
@@ -38,13 +39,13 @@ export async function renderHistorial(ctx) {
     to: q.to || "",
     lifecycle: q.lifecycle || "",
   };
-  const rows = filterTrades(raw, filters);
+  const rows = filterTrades(q.context === Context.BACKTEST ? allTrades.filter((t) => t.context === Context.BACKTEST) : raw, filters);
   const asrByTrade = {};
   for (const row of await listStageAsrs(ctx.stage.id)) {
     asrByTrade[row.tradeId] = row;
   }
   const pendingCount = rows.filter((t) => isAsrPending(t, asrByTrade[t.id])).length;
-  const ctxSel = select(filters.context, [["", "todos los contextos"], [Context.BACKTEST, "BACKTEST"], [Context.DEMO, "DEMO"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"]]);
+  const ctxSel = select(q.context === Context.BACKTEST ? Context.BACKTEST : filters.context, [["", "todos los contextos"], [Context.BACKTEST, "BACKTEST"], [Context.DEMO, "DEMO"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"]]);
   const accSel = select(filters.accountId, [["", "todas las cuentas"], ...accounts.map((a) => [a.id, a.name])]);
   const asset = select(filters.asset, assetFilterOptions(raw, filters.asset, "activo"));
   asset.setAttribute("name", "asset");
@@ -65,7 +66,7 @@ export async function renderHistorial(ctx) {
     }));
   }
   [ctxSel, accSel, asset, strategy, variant, direction, session, lifecycle, from, to].forEach((n) => n.addEventListener("change", apply));
-  const stageEmpty = raw.length === 0;
+  const stageEmpty = (q.context === Context.BACKTEST ? allTrades.filter((t) => t.context === Context.BACKTEST) : raw).length === 0;
   const list = rows.length
     ? rows.map((t) => {
       const when = (t.closedAt || t.openedAt || "").slice(0, 10);
@@ -83,7 +84,7 @@ export async function renderHistorial(ctx) {
         el("strong", { text: t.asset }),
         el("span", { text: t.context === "PROP_CHALLENGE" ? "PROP" : t.context }),
         el("span", { text: `${t.direction} · ${strategyLabel(t.strategy)}` }),
-        el("span", { text: t.lifecycle }),
+        el("span", { text: t.isDraft === true ? "BORRADOR" : t.lifecycle }),
         el("span", { text: t.result || "—" }),
         el("span", { className: "num", text: t.netPnl == null ? "—" : String(t.netPnl) }),
         el("span", { className: "num", text: r }),
