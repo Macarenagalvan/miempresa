@@ -266,7 +266,7 @@ async function run() {
 
   const histManual = flatten(await renderHistorial({
     ...ctxBase,
-    route: { name: "historial", rest: "", query: { asset: "NZDJPY", strategy: Strategy.RED } },
+    route: { name: "historial", rest: "", query: { context: Context.BACKTEST, asset: "NZDJPY", strategy: Strategy.RED } },
   }));
   assert("Historial muestra manual NZDJPY RED", /NZDJPY/.test(histManual.textContent) && /RED/.test(histManual.textContent));
   const statsManual = compute([manual], { universe: "BACKTEST", asset: "NZDJPY", strategy: Strategy.RED });
