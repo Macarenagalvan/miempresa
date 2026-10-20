@@ -18,6 +18,21 @@ function contextLabel(ctx) {
   return ctx === Context.PROP_CHALLENGE ? "PROP" : ctx;
 }
 
+function localDateTimeValue(date = new Date()) {
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formSection(title, description, children, extra = "") {
+  return el("section", { className: ("trade-form-section " + extra).trim() }, [
+    el("div", { className: "trade-section-heading" }, [
+      el("h2", { text: title }),
+      description ? el("p", { className: "hint", text: description }) : null,
+    ]),
+    el("div", { className: "trade-fields-grid" }, children),
+  ]);
+}
+
 export async function renderNuevoTrade(ctx) {
   const setupId = ctx.route.rest.startsWith("trade/") ? ctx.route.rest.slice("trade/".length) : "";
   const dedicatedBacktest = !setupId && ctx.route.query && ctx.route.query.context === Context.BACKTEST;
@@ -59,8 +74,8 @@ export async function renderNuevoTrade(ctx) {
   variant.setAttribute("name", "variant");
   const session = select([["", "—"]].concat(SESSIONS.map((s) => [s, s])), "");
   session.setAttribute("name", "session");
-  const openedAt = el("input", { className: "input", name: "openedAt", value: new Date().toISOString().slice(0, 16) });
-  const closedAt = el("input", { className: "input", name: "closedAt", value: new Date().toISOString().slice(0, 16) });
+  const openedAt = el("input", { className: "input", type: "datetime-local", name: "openedAt", value: localDateTimeValue() });
+  const closedAt = el("input", { className: "input", type: "datetime-local", name: "closedAt", value: localDateTimeValue() });
   const entry = el("input", { className: "input", name: "entry", value: "" });
   const sl = el("input", { className: "input", name: "initialSL", value: "" });
   const tp = el("input", { className: "input", name: "tp", value: "" });
@@ -80,17 +95,19 @@ export async function renderNuevoTrade(ctx) {
   const partials = select([["false", "No"], ["true", "Sí"]], "false");
   partials.setAttribute("name", "hasPartials");
   const accountPick = el("select", { className: "input" });
+  const accountField = field("Cuenta", accountPick);
   const hint = el("p", { className: "hint", text: "" });
-  const err = el("p", { className: "err", text: "" });
+  const err = el("p", { className: "err", text: "", role: "alert" });
   const closedBlock = el("div", { className: "closed-only" });
 
   function paintAccounts() {
     const ctxVal = context.value;
+    accountField.hidden = ctxVal === Context.BACKTEST;
     accountPick.replaceChildren();
     if (ctxVal === Context.BACKTEST) {
       accountPick.append(el("option", { value: "", text: "sin account (BACKTEST)" }));
       accountPick.disabled = true;
-      hint.textContent = "BACKTEST no usa Account. accountId = null.";
+      hint.textContent = "Modo histórico: esta prueba no afecta el balance de ninguna cuenta.";
       return;
     }
     accountPick.disabled = false;
@@ -112,19 +129,18 @@ export async function renderNuevoTrade(ctx) {
   context.addEventListener("change", paintAccounts);
   paintAccounts();
 
+  closedBlock.className = "trade-form-section trade-result";
   closedBlock.append(
-    field("closedAt", closedAt),
-    field("exit", exit),
-    field("netPnl", net),
-    field("comisión (opcional)", comm),
-    field("swap (opcional)", swap),
-    field("Close type", closeType),
-    field("Management", mgmt),
-    field("Note", note),
-    field("Variant", variant),
-    field("Session", session),
-    field("TP (opcional)", tp),
-    field("RR planned (opcional)", rr),
+    el("div", { className: "trade-section-heading" }, [
+      el("h2", { text: "3. Resultado de la operación" }),
+      el("p", { className: "hint", text: "Completá esta sección si el trade ya terminó. El resultado es manual, no se calcula automáticamente." }),
+    ]),
+    el("div", { className: "trade-fields-grid" }, [
+      field("Fecha y hora de cierre", closedAt),
+      field("Precio de salida", exit),
+      field("Resultado neto (moneda de la cuenta o simulado)", net),
+      field("Tipo de cierre", closeType),
+    ]),
   );
 
   function paintLifecycle() {
@@ -134,7 +150,7 @@ export async function renderNuevoTrade(ctx) {
   }
   lifecycle.addEventListener("change", paintLifecycle);
 
-  const save = el("button", { type: "button", text: "Guardar operación" });
+  const save = el("button", { type: "button", text: "Guardar operación", className: "trade-form-submit" });
   paintLifecycle();
   save.addEventListener("click", async () => {
     err.textContent = "";
@@ -223,32 +239,63 @@ export async function renderNuevoTrade(ctx) {
     refs.push(el("p", { className: "meta", text: `plannedEntry ${setup.plannedEntry ?? "—"} · plannedSL ${setup.plannedSl ?? "—"} · plannedTP ${setup.plannedTp ?? "—"}` }));
   }
 
+  const extra = el("details", { className: "trade-extra" }, [
+    el("summary", { text: "Detalles adicionales · estrategia, sesión, costes y notas" }),
+    el("p", { className: "hint", text: "Estos campos son opcionales. Usalos para documentar el contexto y mejorar tus estadísticas." }),
+    el("div", { className: "trade-fields-grid" }, [
+      field("Estrategia", strategy),
+      field("Estilo", style),
+      field("Variante", variant),
+      field("Sesión", session),
+      field("Símbolo del broker", broker),
+      field("Riesgo (%)", riskPct),
+      field("RR planificado", rr),
+      field("Comisiones", comm),
+      field("Swap", swap),
+      field("Cierres parciales", partials),
+      el("div", { className: "trade-field-wide" }, [field("Gestión de la operación", mgmt)]),
+      el("div", { className: "trade-field-wide" }, [field("Notas y aprendizaje", note)]),
+    ]),
+  ]);
+
   return [
-    el("section", { className: "panel form" }, [
-      el("p", { className: "kicker", text: dedicatedBacktest ? "Prueba histórica · sin cuenta real" : "Nueva operación" }),
-      el("h1", { text: dedicatedBacktest ? "Registrar backtest" : (setup ? "Operación desde idea" : "Operación") }),
-      dedicatedBacktest ? el("p", { className: "hint", text: "Cargá una operación histórica. El contexto BACKTEST queda fijo y no modifica balances reales. Si todavía no terminó, cambiá Estado a OPEN." }) : null,
-      ...refs,
-      field("Estado", lifecycle),
-      field("Asset", asset),
+    el("section", { className: "panel form trade-form" }, [
+      el("div", { className: "trade-form-intro" }, [
+        el("p", { className: "kicker", text: dedicatedBacktest ? "Backtesting / Registro histórico" : "Journal / Registro" }),
+        el("h1", { text: dedicatedBacktest ? "Registrar backtest" : (setup ? "Operación desde idea" : "Registrar operación") }),
+        el("p", { className: "hint", text: dedicatedBacktest
+          ? "Guardá una operación simulada del pasado. No modifica cuentas ni saldos reales."
+          : "Registrá los datos básicos ahora. Podés completar el análisis en detalles adicionales." }),
+        ...refs,
+      ]),
+      formSection("1. Identificación", "Seleccioná el mercado, la dirección y el estado de la operación.", [
+        field("Activo / símbolo", asset),
+        field("Dirección", direction),
+        field("Estado", lifecycle),
+        field("Contexto", context),
+        accountField,
+        field("Fecha y hora de entrada", openedAt),
+      ]),
       assetList,
-      field("brokerSymbol (opcional)", broker),
-      field("Context", context),
-      field("Account", accountPick),
-      field("Direction", direction),
-      field("Strategy", strategy),
-      field("Style", style),
-      field("openedAt", openedAt),
-      field("entry (confirmar)", entry),
-      field("initialSL (opcional)", sl),
-      field("Riesgo % (opcional)", riskPct),
-      field("Riesgo $ / € (opcional)", riskMoney),
-      field("Lotaje", lots),
-      field("Hubo cierres parciales", partials),
+      formSection("2. Plan y niveles", "Primero los precios y el stop técnico; después, el tamaño y el riesgo.", [
+        field("Entrada", entry),
+        field("Stop Loss (SL)", sl),
+        field("Take Profit (TP)", tp),
+        field("Lotaje / cantidad", lots),
+        field("Riesgo monetario", riskMoney),
+      ]),
       closedBlock,
+      extra,
       hint,
       err,
-      save,
+      el("div", { className: "trade-form-footer" }, [
+        el("button", {
+          type: "button", className: "ghost",
+          text: dedicatedBacktest ? "Volver a Backtesting" : "Volver a Operaciones",
+          onclick: () => go(dedicatedBacktest ? "backtesting" : "historial"),
+        }),
+        save,
+      ]),
     ]),
   ];
 }
