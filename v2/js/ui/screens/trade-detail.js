@@ -2,7 +2,7 @@ import { el } from "../render.js";
 import { field } from "../forms/observation.js";
 import { getTrade } from "../../storage/repos/trades.js";
 import { getSetup } from "../../storage/repos/setups.js";
-import { updateOpenTrade, closeTrade, voidTrade, enrichTrade } from "../../domain/trade.js";
+import { updateOpenTrade, updateDraftTrade, closeTrade, voidTrade, enrichTrade } from "../../domain/trade.js";
 import { asrForTrade, asrStatusLabel, createAsr, updateAsr } from "../../domain/asr.js";
 import { CloseType, VoidReason, Lifecycle, Strategy, Style, BlueVariant, strategyLabel } from "../../domain/enums.js";
 import { SESSIONS } from "../../config.js";
@@ -102,9 +102,9 @@ async function renderCard(trade, setup, asr) {
 
   return [
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: `${trade.lifecycle} · ${trade.context}` }),
+      el("p", { className: "kicker", text: `${trade.isDraft ? "BORRADOR" : trade.lifecycle} · ${trade.context}` }),
       el("h1", { text: `${trade.asset} ${trade.direction}` }),
-      el("p", { className: "meta", text: `entry ${trade.entry} · strategy ${strategyLabel(trade.strategy)} · style ${trade.style || "—"}` }),
+      el("p", { className: "meta", text: `entry ${trade.entry ?? "—"} · strategy ${strategyLabel(trade.strategy)} · style ${trade.style || "—"}` }),
       trade.lifecycle === Lifecycle.CLOSED ? metaLine("exit", trade.exit) : null,
       metaLine("variant", trade.variant),
       metaLine("session", trade.session),
@@ -209,6 +209,12 @@ function enumSelect(values, current, name, emptyLabel, labelFn) {
 function renderEdit(trade) {
   const entryActual = el("input", { className: "input", name: "entryActual", value: trade.entry ?? "", readonly: true });
   const exitActual = el("input", { className: "input", name: "exitActual", value: trade.exit ?? "", readonly: true });
+  const draft = trade.isDraft === true;
+  const entryEdit = el("input", { className: "input", value: trade.entry ?? "" });
+  const exitEdit = el("input", { className: "input", value: trade.draftExit ?? "" });
+  const netEdit = el("input", { className: "input", value: trade.draftNetPnl ?? "" });
+  const openedEdit = el("input", { className: "input", type: "datetime-local", value: trade.openedAt ? trade.openedAt.slice(0,16) : "" });
+  const closedEdit = el("input", { className: "input", type: "datetime-local", value: trade.draftClosedAt ? trade.draftClosedAt.slice(0,16) : "" });
   const strategy = enumSelect(Object.values(Strategy), trade.strategy, "strategy", null, strategyLabel);
   const style = enumSelect(Object.values(Style), trade.style, "style", "—");
   const variant = enumSelect(Object.values(BlueVariant), trade.variant, "variant", "—");
@@ -245,6 +251,7 @@ function renderEdit(trade) {
         hasPartials: partials.value === "true",
       };
       if (trade.lifecycle === Lifecycle.CLOSED) patch.closeType = closeType.value;
+      if (draft) await updateDraftTrade(trade.id, { entry: entryEdit.value, exit: exitEdit.value, netPnl: netEdit.value, openedAt: openedEdit.value ? new Date(openedEdit.value).toISOString() : null, closedAt: closedEdit.value ? new Date(closedEdit.value).toISOString() : null });
       const next = await enrichTrade(trade.id, patch);
       go("trade/" + next.id);
     } catch (e) {
@@ -262,7 +269,11 @@ function renderEdit(trade) {
     el("h1", { text: `${trade.asset} ${trade.direction}` }),
     el("p", { className: "meta origen", text: origenLine(trade) }),
     el("p", { className: "hint", text: "Origen, cuenta, Entry y Exit son datos de ejecución y no se editan acá." }),
-    field("Entry (solo lectura)", entryActual),
+    draft ? field("Entrada (borrador)", entryEdit) : field("Entry (solo lectura)", entryActual),
+    draft ? field("Fecha de entrada", openedEdit) : null,
+    draft ? field("Salida prevista/observada (borrador)", exitEdit) : null,
+    draft ? field("PnL (borrador)", netEdit) : null,
+    draft ? field("Fecha de cierre (borrador)", closedEdit) : null,
     trade.lifecycle === Lifecycle.CLOSED ? field("Exit (solo lectura)", exitActual) : null,
     field("Strategy", strategy),
     field("Style", style),
@@ -284,9 +295,9 @@ function renderEdit(trade) {
 }
 
 function renderClose(trade) {
-  const exit = el("input", { className: "input", value: "" });
-  const closedAt = el("input", { className: "input", value: new Date().toISOString().slice(0, 16) });
-  const net = el("input", { className: "input", value: "" });
+  const exit = el("input", { className: "input", value: trade.draftExit ?? "" });
+  const closedAt = el("input", { className: "input", type: "datetime-local", value: trade.draftClosedAt ? trade.draftClosedAt.slice(0,16) : "" });
+  const net = el("input", { className: "input", value: trade.draftNetPnl ?? "" });
   const comm = el("input", { className: "input", value: "" });
   const swap = el("input", { className: "input", value: "" });
   const closeType = el("select", { className: "input" }, Object.values(CloseType).map((c) => el("option", { value: c, text: c })));
