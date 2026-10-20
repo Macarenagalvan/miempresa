@@ -25,7 +25,7 @@ function tradeRow(trade) {
   return el("button", {
     type: "button",
     className: "bt-row",
-    onclick: () => go("trade/" + trade.id),
+    onclick: () => go("trade/" + trade.id + "?from=backtesting"),
     "aria-label": `Abrir backtest ${trade.asset} ${trade.direction}, ${day}`,
   }, [
     el("span", { className: "bt-row-date", text: day }),
