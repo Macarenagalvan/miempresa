@@ -35,5 +35,19 @@ export async function run() {
   if (!status || status.value !== "CLOSED") {
     throw new Error("El registro histórico debe empezar como cerrado");
   }
-  console.log("UX Backtesting: ruta, render y formulario aislado OK");
+  if (!form.querySelector(".trade-form .trade-fields-grid") || !form.querySelector("details.trade-extra")) {
+    throw new Error("El formulario debe agrupar campos y plegar los secundarios");
+  }
+  const result = form.querySelector(".trade-result");
+  if (!result || result.hidden) throw new Error("Un backtest cerrado debe mostrar su resultado");
+  const account = [...form.querySelectorAll("label.field")].find((label) =>
+    label.textContent.trim().startsWith("Cuenta"));
+  if (!account || !account.hidden) throw new Error("Backtesting no debe pedir una cuenta");
+  if (form.querySelector('input[name="openedAt"]').type !== "datetime-local") {
+    throw new Error("La entrada debe usar selector de fecha y hora local");
+  }
+  status.value = "OPEN";
+  status.dispatchEvent(new Event("change"));
+  if (!result.hidden) throw new Error("Un registro OPEN no debe pedir resultado final");
+  console.log("UX Backtesting: ruta, render, formulario agrupado y estado CLOSED/OPEN OK");
 }
