@@ -20,7 +20,7 @@ function summary(label, value, note) {
 
 function tradeRow(trade) {
   const day = String(trade.closedAt || trade.openedAt || "").slice(0, 10) || "Sin fecha";
-  const status = trade.lifecycle === Lifecycle.CLOSED ? (trade.result || "Cerrado") : "En curso";
+  const status = trade.isDraft === true ? "Borrador" : (trade.lifecycle === Lifecycle.CLOSED ? (trade.result || "Cerrado") : "En curso");
   const value = trade.lifecycle === Lifecycle.CLOSED ? fmtR(realizedR(trade)) : "Pendiente";
   return el("button", {
     type: "button",
@@ -76,7 +76,7 @@ export async function renderBacktesting(ctx) {
         ? el("div", { className: "bt-list" }, genuine.map(tradeRow))
         : el("div", { className: "empty-block" }, [
           el("p", { className: "empty", text: "Todavía no tenés backtests registrados." }),
-          el("p", { className: "hint", text: "Empezá con un activo, fecha, dirección, entrada, SL, TP y resultado. Podés sumar capturas después." }),
+          el("p", { className: "hint", text: "Empezá con el activo y la dirección. Podés guardar un borrador y completar fechas, precios y resultado después." }),
           el("button", { type: "button", text: "Registrar primer backtest", onclick: action }),
         ]),
       qa,
