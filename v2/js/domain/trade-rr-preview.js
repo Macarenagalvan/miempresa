@@ -2,7 +2,7 @@ import { Direction, Lifecycle } from "./enums.js";
 import { computePlannedRr, computeRrRealized } from "./integrity.js";
 
 function validNumber(value) {
-  return value !== "" && value != null && Number.isFinite(Number(value));
+  return value != null && String(value).trim() !== "" && Number.isFinite(Number(value));
 }
 
 // RR is based on price movement, never on hypothetical cash PnL.
