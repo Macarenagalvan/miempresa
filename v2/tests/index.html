@@ -45,6 +45,7 @@
     import { run as run25 } from "./slice25.test.js";
     import { run as runBackupImages } from "./backup-images.test.js";
     import { run as runBacktestingUI } from "./backtesting-ui.test.js";
+    import { run as runRrPreview } from "./rr-preview.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
@@ -75,6 +76,7 @@
       .then(() => run25())
       .then(() => runBackupImages())
       .then(() => runBacktestingUI())
+      .then(() => runRrPreview())
       .then(() => { console.log(out.textContent); })
       .catch((err) => {
         out.className = "fail";
