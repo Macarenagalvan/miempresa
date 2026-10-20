@@ -53,7 +53,7 @@ export async function renderNumeros(ctx) {
     from: q.from || "",
     to: q.to || "",
   };
-  const uni = select(universe, [["REAL", "Real"], ["DEMO", "Demo"], ["BACKTEST", "Backtest"], ["DESK", "Desk"]]);
+  const uni = select(universe, [["REAL", "Real"], ["DEMO", "Demo"], ["BACKTEST", "Backtest"]]);
   const allTrades = await listTrades();
   const allSignals = universe === "DESK" ? await listSignals() : [];
   const asset = select(filters.asset, assetFilterOptions(universe === "DESK" ? allSignals : allTrades, filters.asset, "asset"));
@@ -125,7 +125,7 @@ export async function renderNumeros(ctx) {
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: `Universo ${universe} · stage activa` }),
       el("h1", { text: "Números" }),
-      el("p", { className: "meta", text: "Real = LIVE+PROP+FUNDED. Demo aparte. Desk es otra vista. Misma stats.compute() acá." }),
+      el("p", { className: "meta", text: "Real = LIVE + PROP + FUNDED. Demo y Backtesting tienen resultados separados." }),
       el("div", { className: "chips filters" }, [uni, ctxSel, asset, strategy, variant, direction, session, from, to]),
       el("div", { className: "metrics" }, [
         metric("Total Trades", stats.nClosed),
