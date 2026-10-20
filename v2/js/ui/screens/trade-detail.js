@@ -298,10 +298,10 @@ function renderClose(trade) {
   const exit = el("input", { className: "input", value: trade.draftExit ?? "" });
   const closedAt = el("input", { className: "input", type: "datetime-local", value: trade.draftClosedAt ? trade.draftClosedAt.slice(0,16) : "" });
   const net = el("input", { className: "input", value: trade.draftNetPnl ?? "" });
-  const comm = el("input", { className: "input", value: "" });
-  const swap = el("input", { className: "input", value: "" });
+  const comm = el("input", { className: "input", value: trade.draftCommission ?? "" });
+  const swap = el("input", { className: "input", value: trade.draftSwap ?? "" });
   const closeType = el("select", { className: "input" }, Object.values(CloseType).map((c) => el("option", { value: c, text: c })));
-  closeType.value = CloseType.MANUAL;
+  closeType.value = trade.draftCloseType || CloseType.MANUAL;
   const mgmt = el("textarea", { className: "input", rows: "2" });
   mgmt.value = trade.management || "";
   const partials = partialsSelect(trade.hasPartials);
