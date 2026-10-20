@@ -372,6 +372,24 @@ export async function renderHoy(ctx) {
     el("span", { text: s.disposition || "-" }),
   ], "senal/" + s.id));
 
+  const summaryCards = el("div", { className: "hoy-summary", "aria-label": "Resumen operativo de la etapa" }, [
+    el("div", { className: "hoy-stat" }, [
+      el("span", { className: "stat-label", text: "Operaciones abiertas" }),
+      el("strong", { text: String(open.length) }),
+      el("span", { className: "stat-note", text: "Contextos reales y fondeados" }),
+    ]),
+    el("div", { className: "hoy-stat" }, [
+      el("span", { className: "stat-label", text: "Cerradas hoy" }),
+      el("strong", { text: String(closedToday.length) }),
+      el("span", { className: "stat-note", text: "Sin incluir backtest" }),
+    ]),
+    el("div", { className: "hoy-stat" }, [
+      el("span", { className: "stat-label", text: "Ideas en seguimiento" }),
+      el("strong", { text: String(ideas.length) }),
+      el("span", { className: "stat-note", text: "Observación o confirmación" }),
+    ]),
+  ]);
+
   const tradingBlocks = [
     el("h2", { text: "Abiertas" }),
     el("div", { className: "list table-wrap" }, openList),
@@ -390,6 +408,7 @@ export async function renderHoy(ctx) {
         el("h1", { text: greetingLine(ctx.meta) }),
         el("p", { className: "meta", text: longDate() + " · Etapa " + stageName }),
         accountBlock,
+        summaryCards,
       ]),
       el("section", { className: "panel hoy-actions" }, [
         el("h2", { className: "hoy-col-title", text: "Registrar" }),
@@ -400,7 +419,7 @@ export async function renderHoy(ctx) {
         ]),
       ]),
       el("section", { className: "panel hoy-trading" }, [
-        el("h2", { className: "hoy-col-title", text: "Trading Hoy" }),
+        el("h2", { className: "hoy-col-title", text: "Actividad operativa" }),
         ...tradingBlocks,
       ]),
       el("div", { className: "hoy-day" }, [
