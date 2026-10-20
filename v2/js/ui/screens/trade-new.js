@@ -318,7 +318,6 @@ export async function renderNuevoTrade(ctx) {
         hasPartials: partials.value === "true",
         riskPercent: riskPct.value,
         riskMoney: riskMoney.value,
-        lots: lots.value,
       }, ctx.stage.id);
       persistedTrade = trade;
       const journal = {
