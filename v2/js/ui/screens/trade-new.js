@@ -167,7 +167,7 @@ export async function renderNuevoTrade(ctx) {
   closedBlock.append(
     el("div", { className: "trade-section-heading" }, [
       el("h2", { text: "3. Resultado de la operación" }),
-      el("p", { className: "hint", text: "Completá esta sección si el trade ya terminó. El resultado es manual, no se calcula automáticamente." }),
+      el("p", { className: "hint", text: "El R realizado se calcula con los precios. El resultado monetario se ingresa manualmente hasta contar con las especificaciones del instrumento." }),
     ]),
     el("div", { className: "trade-fields-grid" }, [
       field("Fecha y hora de cierre", closedAt),
