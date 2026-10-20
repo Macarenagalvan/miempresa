@@ -14,6 +14,8 @@ export async function run() {
   check(invalid.planned === null && invalid.realized === null, "stop wrong side");
   const missing = previewTradeR({ ...base, entry: "", sl: "" });
   check(missing.planned === null && missing.realized === null, "empty entry and stop");
+  const blankSpaces = previewTradeR({ ...base, entry: "   ", sl: "   " });
+  check(blankSpaces.planned === null && blankSpaces.realized === null, "whitespace is not a price");
   const pending = previewTradeR({ ...base, lifecycle: Lifecycle.OPEN });
   check(pending.realized === null, "open position has no realized R");
   const partial = previewTradeR({ ...base, hasPartials: true });
@@ -22,5 +24,5 @@ export async function run() {
   check(breakeven.realized === 0, "price breakeven is zero R");
   const noTarget = previewTradeR({ ...base, tp: "" });
   check(noTarget.planned === null && noTarget.realized === 1, "missing TP does not affect actual price R");
-  console.log("RR preview: 8 independent cases OK");
+  console.log("RR preview: 9 independent cases OK");
 }
