@@ -20,6 +20,7 @@ function contextLabel(ctx) {
 
 export async function renderNuevoTrade(ctx) {
   const setupId = ctx.route.rest.startsWith("trade/") ? ctx.route.rest.slice("trade/".length) : "";
+  const dedicatedBacktest = !setupId && ctx.route.query && ctx.route.query.context === Context.BACKTEST;
   const setup = setupId ? await getSetup(setupId) : null;
   const accounts = await listStageAccounts(ctx.stage.id);
   const active = await getActiveAccount();
@@ -42,7 +43,12 @@ export async function renderNuevoTrade(ctx) {
   const assetList = el("datalist", { id: "nuevo-asset-suggest" }, suggest.map((s) => el("option", { value: s })));
   const lifecycle = select([[Lifecycle.OPEN, "OPEN"], [Lifecycle.CLOSED, "CLOSED"]], Lifecycle.OPEN);
   lifecycle.setAttribute("name", "lifecycle");
+  if (dedicatedBacktest) lifecycle.value = Lifecycle.CLOSED;
   const context = select(Object.values(Context).map((c) => [c, contextLabel(c)]), initialContext);
+  if (dedicatedBacktest) {
+    context.value = Context.BACKTEST;
+    context.disabled = true;
+  }
   const direction = select(Object.values(Direction).map((d) => [d, d]), setup ? setup.direction : Direction.LONG);
   direction.setAttribute("name", "direction");
   const strategy = select(Object.values(Strategy).map((s) => [s, strategyLabel(s)]), setup ? setup.strategy : Strategy.UNCLASSIFIED);
@@ -124,7 +130,7 @@ export async function renderNuevoTrade(ctx) {
   function paintLifecycle() {
     const closed = lifecycle.value === Lifecycle.CLOSED;
     closedBlock.hidden = !closed;
-    save.textContent = "Guardar operación";
+    save.textContent = dedicatedBacktest ? "Guardar backtest" : "Guardar operación";
   }
   lifecycle.addEventListener("change", paintLifecycle);
 
@@ -219,8 +225,9 @@ export async function renderNuevoTrade(ctx) {
 
   return [
     el("section", { className: "panel form" }, [
-      el("p", { className: "kicker", text: "Nueva operación" }),
-      el("h1", { text: setup ? "Operación desde idea" : "Operación" }),
+      el("p", { className: "kicker", text: dedicatedBacktest ? "Prueba histórica · sin cuenta real" : "Nueva operación" }),
+      el("h1", { text: dedicatedBacktest ? "Registrar backtest" : (setup ? "Operación desde idea" : "Operación") }),
+      dedicatedBacktest ? el("p", { className: "hint", text: "Cargá una operación histórica. El contexto BACKTEST queda fijo y no modifica balances reales. Si todavía no terminó, cambiá Estado a OPEN." }) : null,
       ...refs,
       field("Estado", lifecycle),
       field("Asset", asset),
