@@ -176,7 +176,7 @@ function renderCaptures(trade, images, err) {
     });
     return el("div", { className: "thumb-card", "data-att": att.id }, [
       img,
-      el("p", { className: "meta", text: att.name || "captura" }),
+      el("p", { className: "meta", text: (att.phase === "BEFORE" ? "ANTES · " : att.phase === "AFTER" ? "DESPUÉS · " : "") + (att.name || "captura") }),
       del,
     ]);
   });
