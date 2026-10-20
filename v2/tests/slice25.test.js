@@ -109,6 +109,7 @@ async function run() {
   const histAll = flatten(await renderHistorial({ ...ctxBase, route: { name: "historial", rest: "", query: {} } }));
   const stratSel = histAll.querySelector('select[name="strategy"]');
   assert("Historial lista GREEN_CRYPTO", optionValues(stratSel).includes(Strategy.GREEN_CRYPTO));
+  assert("Historial lista MACA", optionValues(stratSel).includes(Strategy.MACA));
   assert("Historial label GREEN CRYPTO", optionTexts(stratSel).includes("GREEN CRYPTO"));
   const histCrypto = flatten(await renderHistorial({
     ...ctxBase,
@@ -124,6 +125,7 @@ async function run() {
   }));
   const numStrat = numCrypto.querySelector('select[name="strategy"]');
   assert("Números lista GREEN_CRYPTO", optionValues(numStrat).includes(Strategy.GREEN_CRYPTO));
+  assert("Estadísticas lista MACA", optionValues(numStrat).includes(Strategy.MACA));
   assert("Números label GREEN CRYPTO", optionTexts(numStrat).includes("GREEN CRYPTO"));
 
   const cardCrypto = flatten(await renderTradeDetail({
@@ -138,6 +140,7 @@ async function run() {
   const editSel = editCrypto.querySelector('select[name="strategy"]');
   assert("editar value GREEN_CRYPTO", editSel && editSel.value === Strategy.GREEN_CRYPTO);
   assert("editar label GREEN CRYPTO", optionTexts(editSel).includes("GREEN CRYPTO"));
+  assert("editar permite MACA", optionValues(editSel).includes(Strategy.MACA));
 
   const nuevo = flatten(await renderNuevoTrade({
     ...seed,
@@ -146,6 +149,7 @@ async function run() {
   const nuevoStrat = nuevo.querySelector('select[name="strategy"]');
   assert("alta lista GREEN_CRYPTO", optionValues(nuevoStrat).includes(Strategy.GREEN_CRYPTO));
   assert("alta label GREEN CRYPTO", optionTexts(nuevoStrat).includes("GREEN CRYPTO"));
+  assert("alta permite MACA", optionValues(nuevoStrat).includes(Strategy.MACA) && optionTexts(nuevoStrat).includes("MACA"));
   const lotsInput = nuevo.querySelector('input[name="lots"]');
   assert("alta tiene Lotaje", lotsInput && lotsInput.tagName === "INPUT");
   assert("alta Lotaje vacío", lotsInput.value === "");
