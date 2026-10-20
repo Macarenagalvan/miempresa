@@ -1,4 +1,5 @@
 import { encodeAttachment, decodeAttachment } from "../js/services/backup-images.js";
+import { encodeSyncPayload, decodeSyncPayload } from "../js/services/sync-payload.js";
 import { buildExportPayload, applyRestoreTransaction, validateBackup } from "../js/services/backup.js";
 import { attachmentsRepo } from "../js/storage/repos/attachments.js";
 import { richV2, ATT } from "./slice12.payloads.js";
@@ -8,6 +9,14 @@ export async function run() {
   const bytes = new Uint8Array(100003).map((_, i) => i % 256);
   const record = { id: ATT, name: "TEST.png", mime: "image/png", size: bytes.length, blob: new Blob([bytes], { type: "image/png" }) };
   const encoded = await encodeAttachment(record);
+  const synced = JSON.parse(JSON.stringify(await encodeSyncPayload("attachments", record)));
+  check(!("blob" in synced) && typeof synced.dataBase64 === "string", "sync no convierte Blob a objeto vacío");
+  const received = decodeSyncPayload("attachments", synced);
+  check(received.blob instanceof Blob && received.blob.size === bytes.length, "sync reconstruye Blob");
+  check(new Uint8Array(await received.blob.arrayBuffer()).every((b, i) => b === bytes[i]), "sync conserva bytes entre dispositivos");
+  let rejectedBrokenSync = false;
+  try { decodeSyncPayload("attachments", { ...record, blob: {} }); } catch { rejectedBrokenSync = true; }
+  check(rejectedBrokenSync, "sync rechaza capturas sin bytes");
   const decoded = decodeAttachment(JSON.parse(JSON.stringify(encoded)));
   check(decoded.blob.type === "image/png", "MIME conservado");
   check(new Uint8Array(await decoded.blob.arrayBuffer()).every((b, i) => b === bytes[i]), "bytes conservados");
