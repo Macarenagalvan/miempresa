@@ -290,7 +290,7 @@ export async function renderNuevoTrade(ctx) {
         }, ctx.stage.id);
         persistedTrade = trade;
         await persistCaptures(trade, chosen);
-        go("trade/" + trade.id);
+        go("trade/" + trade.id + (dedicatedBacktest ? "?from=backtesting" : ""));
         return;
       }
       const trade = await createTrade({
@@ -323,7 +323,7 @@ export async function renderNuevoTrade(ctx) {
       };
       const enriched = await enrichTrade(trade.id, journal);
       await persistCaptures(enriched, chosen);
-      go("trade/" + enriched.id);
+      go("trade/" + enriched.id + (dedicatedBacktest ? "?from=backtesting" : ""));
     } catch (e) {
       if (persistedTrade) {
         err.textContent = "El registro ya se guardó. No lo vuelvas a crear. Hubo un problema con los datos adicionales o capturas: " + e.message;
