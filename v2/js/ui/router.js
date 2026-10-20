@@ -135,6 +135,14 @@ export async function paint(ctx) {
   document.title = `Maca · ${title}`;
   const heading = document.getElementById("page-title");
   if (heading) heading.textContent = title;
+  const topNew = document.getElementById("top-new-trade");
+  if (topNew) {
+    const isBacktest = parsed.name === "backtesting" ||
+      (parsed.name === "nuevo" && parsed.rest === "trade" && parsed.query.context === "BACKTEST");
+    topNew.href = isBacktest ? "#/nuevo/trade?context=BACKTEST" : "#/nuevo/trade";
+    topNew.textContent = isBacktest ? "+ Nuevo backtest" : "+ Nueva operación";
+    topNew.setAttribute("aria-label", isBacktest ? "Registrar nuevo backtest" : "Registrar nueva operación");
+  }
   setMain(nodes);
   document.querySelectorAll("[data-route]").forEach((link) => {
     link.classList.toggle("is-active", link.getAttribute("data-route") === nav);
