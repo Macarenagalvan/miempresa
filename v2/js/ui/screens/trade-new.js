@@ -41,7 +41,7 @@ export async function renderNuevoTrade(ctx) {
   const setup = setupId ? await getSetup(setupId) : null;
   const accounts = await listStageAccounts(ctx.stage.id);
   const active = await getActiveAccount();
-  const initialContext = setup ? setup.context : Context.BACKTEST;
+  const initialContext = setup ? setup.context : (dedicatedBacktest ? Context.BACKTEST : Context.LIVE);
   const suggest = [];
   const seen = new Set();
   for (const a of ROADMAP_ASSETS) {
