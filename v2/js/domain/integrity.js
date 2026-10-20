@@ -197,7 +197,7 @@ export function assertTrade(trade) {
   if (!normalizeAsset(trade.asset)) throw new Error("asset requerido");
   if (!CONTEXTS.includes(trade.context)) throw new Error("context requerido");
   if (!DIRECTIONS.includes(trade.direction)) throw new Error("direction requerido");
-  if (!Number.isFinite(Number(trade.entry))) throw new Error("entry requerido");
+  if ((trade.entry == null || trade.entry === "" || !Number.isFinite(Number(trade.entry))) && trade.isDraft !== true) throw new Error("entry requerido");
   if (!Object.values(Lifecycle).includes(trade.lifecycle)) throw new Error("lifecycle inválido");
   if (trade.context === Context.BACKTEST) {
     if (trade.accountId != null) throw new Error("BACKTEST no usa accountId");
@@ -288,6 +288,7 @@ export function isTradePnlForBalance(trade, accountId) {
     && trade.accountId === accountId
     && trade.lifecycle === Lifecycle.CLOSED
     && trade.context !== Context.BACKTEST
+    && trade.netPnl != null
     && Number.isFinite(Number(trade.netPnl)),
   );
 }
