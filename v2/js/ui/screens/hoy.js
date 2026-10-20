@@ -1,7 +1,6 @@
 import { el } from "../render.js";
 import { listStageTrades } from "../../domain/trade.js";
 import { getActiveAccount, balanceFor } from "../../domain/account.js";
-import { listStageSignals } from "../../domain/signal.js";
 import { listActiveSetups } from "../../domain/setup.js";
 import { REAL_CONTEXTS } from "../../domain/integrity.js";
 import { Lifecycle, SetupStatus } from "../../domain/enums.js";
@@ -319,13 +318,11 @@ export async function renderHoy(ctx) {
   const today = localYmd();
   const trades = await listStageTrades(ctx.stage.id, { includeVoid: false });
   const real = trades.filter((t) => REAL_CONTEXTS.includes(t.context));
-  const open = real.filter((t) => t.lifecycle === Lifecycle.OPEN);
+  const open = real.filter((t) => t.lifecycle === Lifecycle.OPEN && !t.isDraft);
   const closedToday = real.filter((t) => t.lifecycle === Lifecycle.CLOSED && isLocalDay(t.closedAt, today));
   const active = await getActiveAccount();
   const ideas = (await listActiveSetups(ctx.stage.id))
     .filter((s) => FOLLOW_STATUSES.includes(s.status));
-  const signalsToday = (await listStageSignals(ctx.stage.id))
-    .filter((s) => isLocalDay(s.printedAt, today));
 
   let accountBlock = null;
   if (active) {
@@ -366,11 +363,23 @@ export async function renderHoy(ctx) {
     el("span", { text: s.status === SetupStatus.WAITING_CONFIRMATION ? "esperando" : "siguiendo" }),
   ], "setup/" + s.id));
 
-  const signalList = signalsToday.map((s) => histRow([
-    el("strong", { text: s.asset }),
-    el("span", { text: s.direction }),
-    el("span", { text: s.disposition || "-" }),
-  ], "senal/" + s.id));
+  const summaryCards = el("div", { className: "hoy-summary", "aria-label": "Resumen operativo de la etapa" }, [
+    el("div", { className: "hoy-stat" }, [
+      el("span", { className: "stat-label", text: "Operaciones abiertas" }),
+      el("strong", { text: String(open.length) }),
+      el("span", { className: "stat-note", text: "Contextos reales y fondeados" }),
+    ]),
+    el("div", { className: "hoy-stat" }, [
+      el("span", { className: "stat-label", text: "Cerradas hoy" }),
+      el("strong", { text: String(closedToday.length) }),
+      el("span", { className: "stat-note", text: "Sin incluir backtest" }),
+    ]),
+    el("div", { className: "hoy-stat" }, [
+      el("span", { className: "stat-label", text: "Ideas en seguimiento" }),
+      el("strong", { text: String(ideas.length) }),
+      el("span", { className: "stat-note", text: "Observación o confirmación" }),
+    ]),
+  ]);
 
   const tradingBlocks = [
     el("h2", { text: "Abiertas" }),
@@ -379,8 +388,6 @@ export async function renderHoy(ctx) {
     closedToday.length ? el("div", { className: "list table-wrap" }, closedList) : null,
     ideas.length ? el("h2", { text: "Ideas en seguimiento" }) : null,
     ideas.length ? el("div", { className: "list table-wrap" }, ideaList) : null,
-    signalsToday.length ? el("h2", { text: "Señales de hoy" }) : null,
-    signalsToday.length ? el("div", { className: "list table-wrap" }, signalList) : null,
   ];
 
   return [
@@ -390,6 +397,7 @@ export async function renderHoy(ctx) {
         el("h1", { text: greetingLine(ctx.meta) }),
         el("p", { className: "meta", text: longDate() + " · Etapa " + stageName }),
         accountBlock,
+        summaryCards,
       ]),
       el("section", { className: "panel hoy-actions" }, [
         el("h2", { className: "hoy-col-title", text: "Registrar" }),
@@ -400,7 +408,7 @@ export async function renderHoy(ctx) {
         ]),
       ]),
       el("section", { className: "panel hoy-trading" }, [
-        el("h2", { className: "hoy-col-title", text: "Trading Hoy" }),
+        el("h2", { className: "hoy-col-title", text: "Actividad operativa" }),
         ...tradingBlocks,
       ]),
       el("div", { className: "hoy-day" }, [

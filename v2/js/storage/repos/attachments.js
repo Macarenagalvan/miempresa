@@ -35,7 +35,7 @@ export async function addTradeImage(tradeId, input) {
   const blob = input.blob instanceof Blob
     ? input.blob
     : (input instanceof Blob ? input : new Blob([input.bytes || input], { type: mime }));
-  const size = Number(input.size != null ? input.size : blob.size);
+  const size = blob.size;
   if (!Number.isFinite(size) || size <= 0) throw new Error("imagen vacía");
   if (size > ATTACHMENT_MAX_BYTES) throw new Error("imagen demasiado grande (máx 8 MB)");
   const record = {
@@ -43,6 +43,7 @@ export async function addTradeImage(tradeId, input) {
     entityType: "trade",
     entityId: tradeId,
     kind: "image",
+    phase: ["BEFORE", "AFTER"].includes(input.phase) ? input.phase : null,
     mime,
     name: String(input.name || "captura"),
     size,

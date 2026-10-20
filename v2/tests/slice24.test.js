@@ -126,8 +126,8 @@ async function run() {
     ...seed,
     route: { name: "trade", rest: closedRisk.id, query: {} },
   }));
-  assert("ficha muestra Risk %", /Risk % 0.5/.test(card.textContent));
-  assert("ficha muestra Risk $", /Risk \$ 50/.test(card.textContent));
+  assert("ficha muestra Risk %", /Riesgo % 0.5/.test(card.textContent));
+  assert("ficha muestra Risk $", /Riesgo monetario 50/.test(card.textContent));
   assert("ficha muestra Capturas", /Capturas \/ Imágenes/.test(card.textContent));
   assert("ficha lista las 2", card.querySelectorAll(".thumb-card").length === 2);
 

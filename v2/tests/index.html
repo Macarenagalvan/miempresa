@@ -44,6 +44,10 @@
     import { run as run24 } from "./slice24.test.js";
     import { run as run25 } from "./slice25.test.js";
     import { run as runBackupImages } from "./backup-images.test.js";
+    import { run as runBacktestingUI } from "./backtesting-ui.test.js";
+    import { run as runRrPreview } from "./rr-preview.test.js";
+    import { run as runRelease } from "./release-workflows.test.js";
+    import { run as runReleaseSync } from "./release-sync.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
@@ -73,9 +77,14 @@
       .then(() => run24())
       .then(() => run25())
       .then(() => runBackupImages())
-      .then(() => { console.log(out.textContent); })
+      .then(() => runBacktestingUI())
+      .then(() => runRrPreview())
+      .then(() => runRelease())
+      .then(() => runReleaseSync())
+      .then(() => { document.body.dataset.testStatus = "passed"; console.log(out.textContent); })
       .catch((err) => {
         out.className = "fail";
+        document.body.dataset.testStatus = "failed";
         out.textContent += "\nERROR " + err.message;
         console.error(out.textContent);
       });

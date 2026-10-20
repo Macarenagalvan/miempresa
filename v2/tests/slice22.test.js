@@ -94,9 +94,9 @@ async function run() {
     ...seed,
     route: { name: "trade", rest: raw.id, query: {} },
   }));
-  assert("recarga muestra RED", /strategy RED/.test(again.textContent));
-  assert("recarga muestra SCALP", /style SCALP/.test(again.textContent));
-  assert("recarga muestra SL", /closeType SL/.test(again.textContent));
+  assert("recarga muestra RED", /Estrategia RED/.test(again.textContent));
+  assert("recarga muestra SCALP", /Estilo SCALP/.test(again.textContent));
+  assert("recarga muestra SL", /Tipo de cierre SL/.test(again.textContent));
   assert("recarga origen intacto", /origen MT5_EA · position 20021/.test(again.textContent));
 
   const beforeCancel = await getTrade(raw.id);
@@ -122,13 +122,14 @@ async function run() {
   assert("Nueva default OPEN", nuevoOpen.querySelector('[name="lifecycle"]').value === Lifecycle.OPEN);
   assert("asset es input libre", nuevoOpen.querySelector('[name="asset"]') && nuevoOpen.querySelector('[name="asset"]').tagName === "INPUT");
   assert("sugerencias no son whitelist", Boolean(nuevoOpen.querySelector("#nuevo-asset-suggest")));
+  fill(nuevoOpen, "context", "BACKTEST");
   fill(nuevoOpen, "asset", "NZDJPY");
   fill(nuevoOpen, "direction", "SHORT");
   fill(nuevoOpen, "strategy", Strategy.RED);
   fill(nuevoOpen, "style", Style.SCALP);
   fill(nuevoOpen, "entry", "87.15");
   fill(nuevoOpen, "initialSL", "87.40");
-  const saveOpen = [...nuevoOpen.querySelectorAll("button")].find((b) => b.textContent === "Guardar operación");
+  const saveOpen = [...nuevoOpen.querySelectorAll("button")].find((b) => b.classList.contains("trade-form-submit"));
   saveOpen.click();
   let createdOpen = null;
   for (let i = 0; i < 25; i++) {
@@ -149,6 +150,7 @@ async function run() {
     ...seed,
     route: { name: "nuevo", rest: "trade", query: {} },
   }));
+  fill(nuevoClosed, "context", "BACKTEST");
   fill(nuevoClosed, "lifecycle", Lifecycle.CLOSED);
   fill(nuevoClosed, "asset", "nzdjpy");
   fill(nuevoClosed, "direction", "SHORT");
@@ -170,7 +172,7 @@ async function run() {
   fill(nuevoClosed, "closeType", CloseType.SL);
   fill(nuevoClosed, "management", "Gestión manual");
   fill(nuevoClosed, "note", "Nota manual");
-  const saveClosed = [...nuevoClosed.querySelectorAll("button")].find((b) => b.textContent === "Guardar operación");
+  const saveClosed = [...nuevoClosed.querySelectorAll("button")].find((b) => b.classList.contains("trade-form-submit"));
   saveClosed.click();
   let createdClosed = [];
   for (let i = 0; i < 25; i++) {

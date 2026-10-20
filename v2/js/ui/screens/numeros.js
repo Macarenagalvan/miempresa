@@ -4,6 +4,7 @@ import { listSignals } from "../../storage/repos/signals.js";
 import { compute, computeDesk, assetFilterOptions } from "../../domain/stats.js";
 import { Context, Strategy, Direction, BlueVariant, Disposition, Resolution, strategyLabel } from "../../domain/enums.js";
 import { SESSIONS } from "../../config.js";
+import { isTestRecord } from "../../domain/test-record.js";
 import { go } from "../router.js";
 
 function qs(query) {
@@ -40,6 +41,7 @@ function metric(label, value, kind, note) {
 export async function renderNumeros(ctx) {
   const q = ctx.route.query || {};
   const universe = q.universe || "BACKTEST";
+  const excludeTest = q.excludeTest === "1";
   const filters = {
     universe,
     context: q.context || "",
@@ -53,8 +55,10 @@ export async function renderNumeros(ctx) {
     from: q.from || "",
     to: q.to || "",
   };
-  const uni = select(universe, [["REAL", "Real"], ["DEMO", "Demo"], ["BACKTEST", "Backtest"], ["DESK", "Desk"]]);
-  const allTrades = await listTrades();
+  const uni = select(universe, [["REAL", "Real"], ["DEMO", "Demo"], ["BACKTEST", "Backtest"]]);
+  const rawTrades = await listTrades();
+  const allTrades = excludeTest ? rawTrades.filter((trade) => !isTestRecord(trade)) : rawTrades;
+  const excludedCount = excludeTest ? rawTrades.length - allTrades.length : 0;
   const allSignals = universe === "DESK" ? await listSignals() : [];
   const asset = select(filters.asset, assetFilterOptions(universe === "DESK" ? allSignals : allTrades, filters.asset, "asset"));
   asset.setAttribute("name", "asset");
@@ -116,6 +120,7 @@ export async function renderNumeros(ctx) {
   function apply() {
     go("numeros" + qs({
       universe: uni.value, context: ctxSel.value,
+      excludeTest: uni.value === "BACKTEST" && excludeTest ? "1" : "",
       asset: asset.value, strategy: strategy.value, variant: variant.value,
       direction: direction.value, session: session.value, from: from.value, to: to.value,
     }));
@@ -125,7 +130,9 @@ export async function renderNumeros(ctx) {
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: `Universo ${universe} · stage activa` }),
       el("h1", { text: "Números" }),
-      el("p", { className: "meta", text: "Real = LIVE+PROP+FUNDED. Demo aparte. Desk es otra vista. Misma stats.compute() acá." }),
+      el("p", { className: "meta", text: excludeTest
+        ? `Backtesting: ${excludedCount} registros TEST / FICTICIO excluidos de estas estadísticas.`
+        : "Real = LIVE + PROP + FUNDED. Demo y Backtesting tienen resultados separados." }),
       el("div", { className: "chips filters" }, [uni, ctxSel, asset, strategy, variant, direction, session, from, to]),
       el("div", { className: "metrics" }, [
         metric("Total Trades", stats.nClosed),

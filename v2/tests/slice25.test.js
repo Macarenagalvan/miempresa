@@ -1,3 +1,4 @@
+import { localDateTimeValue } from "../js/ui/trade-presentation.js";
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { createAccount } from "../js/domain/account.js";
 import { createTrade, createClosedTrade, enrichTrade, syncMt5Csv, findTradeByMt5Position } from "../js/domain/trade.js";
@@ -109,10 +110,11 @@ async function run() {
   const histAll = flatten(await renderHistorial({ ...ctxBase, route: { name: "historial", rest: "", query: {} } }));
   const stratSel = histAll.querySelector('select[name="strategy"]');
   assert("Historial lista GREEN_CRYPTO", optionValues(stratSel).includes(Strategy.GREEN_CRYPTO));
+  assert("Historial lista MACA", optionValues(stratSel).includes(Strategy.MACA));
   assert("Historial label GREEN CRYPTO", optionTexts(stratSel).includes("GREEN CRYPTO"));
   const histCrypto = flatten(await renderHistorial({
     ...ctxBase,
-    route: { name: "historial", rest: "", query: { strategy: Strategy.GREEN_CRYPTO } },
+    route: { name: "historial", rest: "", query: { context: "BACKTEST", strategy: Strategy.GREEN_CRYPTO } },
   }));
   assert("Historial filtra GREEN_CRYPTO", /BTCUSD/.test(histCrypto.textContent) && /GREEN CRYPTO/.test(histCrypto.textContent));
   const cryptoRows = [...histCrypto.querySelectorAll(".row.hist strong")].map((n) => n.textContent);
@@ -124,13 +126,14 @@ async function run() {
   }));
   const numStrat = numCrypto.querySelector('select[name="strategy"]');
   assert("Números lista GREEN_CRYPTO", optionValues(numStrat).includes(Strategy.GREEN_CRYPTO));
+  assert("Estadísticas lista MACA", optionValues(numStrat).includes(Strategy.MACA));
   assert("Números label GREEN CRYPTO", optionTexts(numStrat).includes("GREEN CRYPTO"));
 
   const cardCrypto = flatten(await renderTradeDetail({
     ...seed,
     route: { name: "trade", rest: crypto.id, query: {} },
   }));
-  assert("ficha muestra GREEN CRYPTO", /strategy GREEN CRYPTO/.test(cardCrypto.textContent));
+  assert("ficha muestra GREEN CRYPTO", /Estrategia GREEN CRYPTO/.test(cardCrypto.textContent));
   const editCrypto = flatten(await renderTradeDetail({
     ...seed,
     route: { name: "trade", rest: crypto.id + "/editar", query: {} },
@@ -138,6 +141,7 @@ async function run() {
   const editSel = editCrypto.querySelector('select[name="strategy"]');
   assert("editar value GREEN_CRYPTO", editSel && editSel.value === Strategy.GREEN_CRYPTO);
   assert("editar label GREEN CRYPTO", optionTexts(editSel).includes("GREEN CRYPTO"));
+  assert("editar permite MACA", optionValues(editSel).includes(Strategy.MACA));
 
   const nuevo = flatten(await renderNuevoTrade({
     ...seed,
@@ -146,6 +150,7 @@ async function run() {
   const nuevoStrat = nuevo.querySelector('select[name="strategy"]');
   assert("alta lista GREEN_CRYPTO", optionValues(nuevoStrat).includes(Strategy.GREEN_CRYPTO));
   assert("alta label GREEN CRYPTO", optionTexts(nuevoStrat).includes("GREEN CRYPTO"));
+  assert("alta permite MACA", optionValues(nuevoStrat).includes(Strategy.MACA) && optionTexts(nuevoStrat).includes("MACA"));
   const lotsInput = nuevo.querySelector('input[name="lots"]');
   assert("alta tiene Lotaje", lotsInput && lotsInput.tagName === "INPUT");
   assert("alta Lotaje vacío", lotsInput.value === "");
@@ -192,11 +197,11 @@ async function run() {
     route: { name: "trade", rest: manual.id, query: {} },
   }));
   const closedTxt = cardClosed.textContent;
-  assert("ficha CLOSED openedAt", /openedAt 2026-09-11T07:00:00.000Z/.test(closedTxt));
-  assert("ficha CLOSED closedAt", /closedAt 2026-09-11T08:00:00.000Z/.test(closedTxt));
-  assert("ficha CLOSED lots", /lots 0\.2/.test(closedTxt));
-  assert("ficha CLOSED commission", /commission -1\.2/.test(closedTxt));
-  assert("ficha CLOSED swap", /swap -0\.3/.test(closedTxt));
+  assert("ficha CLOSED openedAt", closedTxt.includes("Apertura " + localDateTimeValue(manual.openedAt).replace("T", " ")));
+  assert("ficha CLOSED closedAt", closedTxt.includes("Cierre " + localDateTimeValue(manual.closedAt).replace("T", " ")));
+  assert("ficha CLOSED lots", /Cantidad \/ lotes 0\.2/.test(closedTxt));
+  assert("ficha CLOSED commission", /Comisiones -1\.2/.test(closedTxt));
+  assert("ficha CLOSED swap", /Swap -0\.3/.test(closedTxt));
 
   const emptyLots = await createClosedTrade({
     asset: "EURUSD",
@@ -245,10 +250,10 @@ async function run() {
     ...seed,
     route: { name: "trade", rest: openLots.id, query: {} },
   }));
-  assert("ficha OPEN openedAt", /openedAt /.test(cardOpen.textContent));
-  assert("ficha OPEN lots", /lots 0\.2/.test(cardOpen.textContent));
-  assert("ficha OPEN no closedAt", !/closedAt /.test(cardOpen.textContent));
-  assert("ficha OPEN no commission", !/commission /.test(cardOpen.textContent));
+  assert("ficha OPEN openedAt", /Apertura /.test(cardOpen.textContent));
+  assert("ficha OPEN lots", /Cantidad \/ lotes 0\.2/.test(cardOpen.textContent));
+  assert("ficha OPEN no closedAt", !/Cierre /.test(cardOpen.textContent));
+  assert("ficha OPEN no commission", !/Comisiones /.test(cardOpen.textContent));
 
   let enrichLotsBlocked = "";
   try {
@@ -262,7 +267,7 @@ async function run() {
 
   const histManual = flatten(await renderHistorial({
     ...ctxBase,
-    route: { name: "historial", rest: "", query: { asset: "NZDJPY", strategy: Strategy.RED } },
+    route: { name: "historial", rest: "", query: { context: Context.BACKTEST, asset: "NZDJPY", strategy: Strategy.RED } },
   }));
   assert("Historial muestra manual NZDJPY RED", /NZDJPY/.test(histManual.textContent) && /RED/.test(histManual.textContent));
   const statsManual = compute([manual], { universe: "BACKTEST", asset: "NZDJPY", strategy: Strategy.RED });
@@ -293,7 +298,7 @@ async function run() {
     note: "mt5-enrich-final",
   });
   assert("MT5 editado RED SCALP SL", classified.strategy === Strategy.RED && classified.style === Style.SCALP && classified.initialSL === 87.05);
-  const shot = await addTradeImage(classified.id, { type: "image/png", name: "mt5-final.png", blob: pngBlob() });
+  const shot = await addTradeImage(classified.id, { type: "image/png", name: "mt5-final.png", blob: pngBlob(), phase: "BEFORE" });
   const second = await syncMt5Csv(asMt5Csv([MT5_SLICE11_ROWS.nzdjpyShort]), stage.id, src);
   const again = await getTrade(classified.id);
   const shots = await listTradeImages(again.id);
@@ -310,6 +315,7 @@ async function run() {
   const mt5AfterPatch = await getTrade(again.id);
   assert("MT5 lots intacto", mt5AfterPatch.lots === 0.1 && mt5AfterPatch.recordSource === TradeRecordSource.MT5_EA);
   assert("attachment sobrevive reimport", shots.length === 1 && shots[0].id === shot.id);
+  assert("fase de captura persiste", shots[0].phase === "BEFORE");
   const samePos = await findTradeByMt5Position(bullfy.id, "20021");
   assert("dedup por position", samePos.id === raw.id);
 
@@ -325,6 +331,7 @@ async function run() {
     ...seed,
     route: { name: "trade", rest: classified.id, query: {} },
   }));
+  assert("etiqueta antes en ficha", /ANTES · mt5-final.png/.test(cardHint.textContent));
   assert("hint imágenes locales", /Local en este dispositivo/.test(cardHint.textContent));
   assert("hint no promete cloud", !/sincroniz/i.test(cardHint.textContent));
 

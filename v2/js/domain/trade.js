@@ -70,8 +70,15 @@ export async function createTrade(input, stageId) {
     context,
     direction: input.direction || (setup && setup.direction),
     accountId,
-    openedAt: input.openedAt || now,
+    openedAt: input.isDraft === true ? (input.openedAt || null) : (input.openedAt || now),
     entry: numOrNull(input.entry),
+    isDraft: input.isDraft === true,
+    draftExit: input.isDraft === true ? numOrNull(input.exit) : null,
+    draftNetPnl: input.isDraft === true ? numOrNull(input.netPnl) : null,
+    draftClosedAt: input.isDraft === true ? (input.closedAt || null) : null,
+    draftCommission: input.isDraft === true ? numOrNull(input.commission) : null,
+    draftSwap: input.isDraft === true ? numOrNull(input.swap) : null,
+    draftCloseType: input.isDraft === true ? (input.closeType || null) : null,
     lifecycle: Lifecycle.OPEN,
     initialSL: sl,
     currentSL: sl,
@@ -150,15 +157,57 @@ export async function updateOpenTrade(id, patch) {
   return next;
 }
 
+export async function updateDraftTrade(id, patch) {
+  const current = await getTrade(id);
+  if (!current || current.lifecycle !== Lifecycle.OPEN || current.isDraft !== true) throw new Error("borrador no encontrado");
+  const next = deriveTrade({
+    ...current,
+    openedAt: patch.openedAt !== undefined ? patch.openedAt : current.openedAt,
+    entry: patch.entry !== undefined ? numOrNull(patch.entry) : current.entry,
+    draftExit: patch.exit !== undefined ? numOrNull(patch.exit) : current.draftExit,
+    draftNetPnl: patch.netPnl !== undefined ? numOrNull(patch.netPnl) : current.draftNetPnl,
+    draftClosedAt: patch.closedAt !== undefined ? patch.closedAt : current.draftClosedAt,
+    initialSL: patch.initialSL !== undefined ? numOrNull(patch.initialSL) : current.initialSL,
+    currentSL: patch.initialSL !== undefined ? numOrNull(patch.initialSL) : current.currentSL,
+    tp: patch.tp !== undefined ? numOrNull(patch.tp) : current.tp,
+    lots: patch.lots !== undefined ? parseLots(patch.lots) : current.lots,
+    updatedAt: nowIso(),
+  });
+  assertTrade(next);
+  await putTrade(next);
+  return next;
+}
+
+export async function activateDraftTrade(id) {
+  const current = await getTrade(id);
+  if (!current || current.lifecycle !== Lifecycle.OPEN || !current.isDraft) throw new Error("borrador no encontrado");
+  if (!current.openedAt) throw new Error("Completá la fecha de entrada antes de abrir la operación.");
+  const next = deriveTrade({ ...current, isDraft: false, updatedAt: nowIso() });
+  assertTrade(next);
+  await putTrade(next);
+  return next;
+}
+
 export async function closeTrade(id, input) {
   const current = await getTrade(id);
   if (!current) throw new Error("trade no existe");
   if (current.lifecycle !== Lifecycle.OPEN) throw new Error("solo se cierra un OPEN");
+  if (current.isDraft && !current.openedAt) throw new Error("Completá la fecha de entrada del borrador antes de cerrarlo.");
+  if (current.openedAt && input.closedAt && new Date(input.closedAt) < new Date(current.openedAt)) {
+    throw new Error("La fecha de cierre no puede ser anterior a la entrada.");
+  }
   const netPnl = numOrNull(input.netPnl);
   const result = deriveResult(input.closeType, netPnl, input.declaredBe);
   const next = deriveTrade({
     ...current,
     lifecycle: Lifecycle.CLOSED,
+    isDraft: false,
+    draftExit: null,
+    draftNetPnl: null,
+    draftClosedAt: null,
+    draftCommission: null,
+    draftSwap: null,
+    draftCloseType: null,
     exit: numOrNull(input.exit),
     closedAt: input.closedAt || nowIso(),
     netPnl,

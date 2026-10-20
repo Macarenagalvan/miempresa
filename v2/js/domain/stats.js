@@ -124,7 +124,7 @@ export function compute(trades, filters = {}) {
   const decided = closed.filter((t) => t.result === Result.WIN || t.result === Result.LOSS);
   const wins = closed.filter((t) => t.result === Result.WIN);
   const losses = closed.filter((t) => t.result === Result.LOSS);
-  const money = closed.filter((t) => Number.isFinite(Number(t.netPnl)));
+  const money = closed.filter((t) => t.netPnl != null && t.netPnl !== "" && Number.isFinite(Number(t.netPnl)));
   const rRows = closed
     .map((t) => ({ r: realizedR(t) }))
     .filter((row) => row.r != null && Number.isFinite(row.r));

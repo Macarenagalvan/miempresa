@@ -4,6 +4,7 @@ import { renderSenales } from "./screens/senales.js";
 import { renderSignalDetail } from "./screens/signal-detail.js";
 import { renderNuevo } from "./screens/nuevo.js";
 import { renderEstudio } from "./screens/estudio.js";
+import { renderBacktesting } from "./screens/backtesting.js";
 import { renderObservationDetail } from "./screens/observation-detail.js";
 import { renderSetupDetail } from "./screens/setup-detail.js";
 import { renderHistorial } from "./screens/historial.js";
@@ -14,6 +15,9 @@ import { renderCuentaDetail } from "./screens/cuenta-detail.js";
 import { renderFondeo } from "./screens/fondeo.js";
 import { renderChallengeDetail } from "./screens/challenge-detail.js";
 import { renderSistema } from "./screens/sistema.js";
+import { getTrade } from "../storage/repos/trades.js";
+
+let paintedPath = "";
 
 export function parseHash() {
   const raw = (location.hash || "#/hoy").replace(/^#\/?/, "");
@@ -52,6 +56,7 @@ export function routeList() {
     hoy: true,
     nuevo: true,
     historial: true,
+    backtesting: true,
     numeros: true,
     estudio: true,
     senales: true,
@@ -69,7 +74,8 @@ export async function paint(ctx) {
   let nav = parsed.name;
 
   if (parsed.name === "nuevo") {
-    title = "Nuevo";
+    title = parsed.rest === "trade" && parsed.query.context === "BACKTEST" ? "Nuevo backtest" : "Registrar";
+    if (parsed.rest === "trade" && parsed.query.context === "BACKTEST") nav = "backtesting";
     nodes = await renderNuevo(viewCtx);
   } else if (parsed.name === "setup") {
     title = "Idea";
@@ -87,13 +93,17 @@ export async function paint(ctx) {
     nodes = await renderHoy(viewCtx);
   } else if (parsed.name === "trade") {
     title = "Operación";
-    nav = "historial";
+    const trade = await getTrade(parsed.rest.split("/")[0]);
+    nav = trade && trade.context === "BACKTEST" ? "backtesting" : "historial";
     nodes = await renderTradeDetail(viewCtx);
   } else if (parsed.name === "historial") {
-    title = "Historial";
+    title = "Operaciones";
     nodes = await renderHistorial(viewCtx);
+  } else if (parsed.name === "backtesting") {
+    title = "Backtesting";
+    nodes = await renderBacktesting(viewCtx);
   } else if (parsed.name === "numeros") {
-    title = "Números";
+    title = "Estadísticas";
     nodes = await renderNumeros(viewCtx);
   } else if (parsed.name === "senales") {
     title = "Señales";
@@ -117,7 +127,7 @@ export async function paint(ctx) {
     nav = "fondeo";
     nodes = await renderChallengeDetail(viewCtx);
   } else if (parsed.name === "sistema") {
-    title = "Sistema";
+    title = "Configuración";
     nav = "sistema";
     nodes = await renderSistema(viewCtx);
   } else {
@@ -127,7 +137,21 @@ export async function paint(ctx) {
   }
 
   document.title = `Maca · ${title}`;
+  const heading = document.getElementById("page-title");
+  if (heading) heading.textContent = title;
+  const topNew = document.getElementById("top-new-trade");
+  if (topNew) {
+    const isBacktest = parsed.name === "backtesting" ||
+      (parsed.name === "trade" && nav === "backtesting") ||
+      (parsed.name === "nuevo" && parsed.rest === "trade" && parsed.query.context === "BACKTEST");
+    topNew.href = isBacktest ? "#/nuevo/trade?context=BACKTEST" : "#/nuevo/trade";
+    topNew.textContent = isBacktest ? "+ Nuevo backtest" : "+ Nueva operación";
+    topNew.setAttribute("aria-label", isBacktest ? "Registrar nuevo backtest" : "Registrar nueva operación");
+  }
   setMain(nodes);
+  const nextPath = parsed.name + "/" + parsed.rest;
+  if (paintedPath !== nextPath) window.scrollTo({ top: 0, behavior: "instant" });
+  paintedPath = nextPath;
   document.querySelectorAll("[data-route]").forEach((link) => {
     link.classList.toggle("is-active", link.getAttribute("data-route") === nav);
   });

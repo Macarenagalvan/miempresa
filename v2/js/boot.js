@@ -31,12 +31,16 @@ function warnFileProtocol() {
 
 function closeNav() {
   document.body.classList.remove("nav-open");
+  const toggle = document.getElementById("nav-toggle");
+  if (toggle) toggle.setAttribute("aria-expanded", "false");
   const backdrop = document.getElementById("nav-backdrop");
   if (backdrop) backdrop.hidden = true;
 }
 
 function openNav() {
   document.body.classList.add("nav-open");
+  const toggle = document.getElementById("nav-toggle");
+  if (toggle) toggle.setAttribute("aria-expanded", "true");
   const backdrop = document.getElementById("nav-backdrop");
   if (backdrop) backdrop.hidden = false;
 }
