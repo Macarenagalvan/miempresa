@@ -90,7 +90,7 @@ export async function paint(ctx) {
     nodes = await renderHoy(viewCtx);
   } else if (parsed.name === "trade") {
     title = "Operación";
-    nav = "historial";
+    nav = parsed.query.from === "backtesting" ? "backtesting" : "historial";
     nodes = await renderTradeDetail(viewCtx);
   } else if (parsed.name === "historial") {
     title = "Operaciones";
@@ -138,6 +138,7 @@ export async function paint(ctx) {
   const topNew = document.getElementById("top-new-trade");
   if (topNew) {
     const isBacktest = parsed.name === "backtesting" ||
+      (parsed.name === "trade" && parsed.query.from === "backtesting") ||
       (parsed.name === "nuevo" && parsed.rest === "trade" && parsed.query.context === "BACKTEST");
     topNew.href = isBacktest ? "#/nuevo/trade?context=BACKTEST" : "#/nuevo/trade";
     topNew.textContent = isBacktest ? "+ Nuevo backtest" : "+ Nueva operación";
