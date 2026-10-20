@@ -7,6 +7,8 @@ import { go } from "../router.js";
 import { Context, Direction, Strategy, Style, CloseType, BlueVariant, Lifecycle, strategyLabel } from "../../domain/enums.js";
 import { ROADMAP_ASSETS, SESSIONS } from "../../config.js";
 import { normalizeAsset } from "../../domain/integrity.js";
+import { previewTradeR } from "../../domain/trade-rr-preview.js";
+import { addTradeImage, ATTACHMENT_MAX_BYTES, IMAGE_MIMES } from "../../storage/repos/attachments.js";
 
 function select(values, current) {
   const node = el("select", { className: "input" }, values.map(([v, l]) => el("option", { value: v, text: l })));
@@ -60,6 +62,8 @@ export async function renderNuevoTrade(ctx) {
   lifecycle.setAttribute("name", "lifecycle");
   if (dedicatedBacktest) lifecycle.value = Lifecycle.CLOSED;
   const context = select(Object.values(Context).map((c) => [c, contextLabel(c)]), initialContext);
+  const contextField = field("Contexto", context);
+  contextField.hidden = dedicatedBacktest;
   if (dedicatedBacktest) {
     context.value = Context.BACKTEST;
     context.disabled = true;
@@ -74,8 +78,8 @@ export async function renderNuevoTrade(ctx) {
   variant.setAttribute("name", "variant");
   const session = select([["", "—"]].concat(SESSIONS.map((s) => [s, s])), "");
   session.setAttribute("name", "session");
-  const openedAt = el("input", { className: "input", type: "datetime-local", name: "openedAt", value: localDateTimeValue() });
-  const closedAt = el("input", { className: "input", type: "datetime-local", name: "closedAt", value: localDateTimeValue() });
+  const openedAt = el("input", { className: "input", type: "datetime-local", name: "openedAt", value: dedicatedBacktest ? "" : localDateTimeValue() });
+  const closedAt = el("input", { className: "input", type: "datetime-local", name: "closedAt", value: dedicatedBacktest ? "" : localDateTimeValue() });
   const entry = el("input", { className: "input", name: "entry", value: "" });
   const sl = el("input", { className: "input", name: "initialSL", value: "" });
   const tp = el("input", { className: "input", name: "tp", value: "" });
@@ -98,6 +102,8 @@ export async function renderNuevoTrade(ctx) {
   const accountField = field("Cuenta", accountPick);
   const hint = el("p", { className: "hint", text: "" });
   const err = el("p", { className: "err", text: "", role: "alert" });
+  const recovery = el("button", { type: "button", className: "ghost", text: "Abrir registro guardado" });
+  recovery.hidden = true;
   const closedBlock = el("div", { className: "closed-only" });
 
   function paintAccounts() {
@@ -129,6 +135,34 @@ export async function renderNuevoTrade(ctx) {
   context.addEventListener("change", paintAccounts);
   paintAccounts();
 
+  const rrPreview = el("div", { className: "trade-rr-preview", "aria-live": "polite", role: "status" }, [
+    el("div", { className: "trade-rr-item" }, [
+      el("span", { text: "RR planificado" }),
+      el("strong", { className: "trade-rr-planned", text: "—" }),
+    ]),
+    el("div", { className: "trade-rr-item" }, [
+      el("span", { text: "R realizado (precio)" }),
+      el("strong", { className: "trade-rr-realized", text: "—" }),
+    ]),
+    el("p", { className: "hint", text: "Relación precio / stop. No incluye comisiones, spread ni el resultado monetario." }),
+  ]);
+  const plannedOut = rrPreview.querySelector(".trade-rr-planned");
+  const realizedOut = rrPreview.querySelector(".trade-rr-realized");
+  const readR = () => previewTradeR({
+    direction: direction.value, entry: entry.value, sl: sl.value, tp: tp.value,
+    exit: exit.value, lifecycle: lifecycle.value, hasPartials: partials.value === "true",
+  });
+  function refreshRR() {
+    const current = readR();
+    plannedOut.textContent = current.planned == null ? "—" : current.planned.toFixed(2) + "R";
+    realizedOut.textContent = current.realized == null ? "—" : current.realized.toFixed(2) + "R";
+  }
+  [entry, sl, tp, exit, direction, lifecycle, partials].forEach((control) => {
+    control.addEventListener("input", refreshRR);
+    control.addEventListener("change", refreshRR);
+  });
+  refreshRR();
+
   closedBlock.className = "trade-form-section trade-result";
   closedBlock.append(
     el("div", { className: "trade-section-heading" }, [
@@ -147,14 +181,72 @@ export async function renderNuevoTrade(ctx) {
     const closed = lifecycle.value === Lifecycle.CLOSED;
     closedBlock.hidden = !closed;
     save.textContent = dedicatedBacktest ? "Guardar backtest" : "Guardar operación";
+    refreshRR();
   }
   lifecycle.addEventListener("change", paintLifecycle);
+
+  const capturesBefore = el("input", {
+    type: "file", className: "input", name: "capture-before",
+    accept: IMAGE_MIMES.join(","), multiple: true,
+  });
+  const capturesAfter = el("input", {
+    type: "file", className: "input", name: "capture-after",
+    accept: IMAGE_MIMES.join(","), multiple: true,
+  });
+  const captureCount = el("p", { className: "hint", text: "Elegí hasta 6 imágenes PNG, JPEG o WEBP de un máximo de 8 MB cada una." });
+  function selectedCaptures() {
+    return [
+      ...Array.from(capturesBefore.files || []).map((file) => ({ file, phase: "BEFORE" })),
+      ...Array.from(capturesAfter.files || []).map((file) => ({ file, phase: "AFTER" })),
+    ];
+  }
+  function updateCaptureCount() {
+    const chosen = selectedCaptures();
+    captureCount.textContent = chosen.length
+      ? chosen.length + " imagen(es) seleccionada(s), que se guardarán con el backtest."
+      : "Elegí hasta 6 imágenes PNG, JPEG o WEBP de un máximo de 8 MB cada una.";
+  }
+  [capturesBefore, capturesAfter].forEach((control) => control.addEventListener("change", updateCaptureCount));
+
+  function validateCaptures(chosen) {
+    if (chosen.length > 6) throw new Error("Elegí como máximo 6 capturas por backtest.");
+    for (const { file } of chosen) {
+      if (!IMAGE_MIMES.includes(file.type)) throw new Error("Las capturas deben ser PNG, JPEG o WEBP.");
+      if (!file.size || file.size > ATTACHMENT_MAX_BYTES) {
+        throw new Error("Cada captura debe pesar entre 1 byte y 8 MB.");
+      }
+    }
+  }
+  async function persistCaptures(trade, chosen) {
+    for (const { file, phase } of chosen) {
+      await addTradeImage(trade.id, {
+        blob: file, name: file.name, mime: file.type, size: file.size, phase,
+      });
+    }
+  }
+
+  const evidence = dedicatedBacktest ? formSection(
+    "4. Capturas del gráfico",
+    "Podés seleccionar varias imágenes. Se guardarán con el registro y podrás consultarlas desde su ficha.",
+    [
+      field("Antes / contexto", capturesBefore),
+      field("Después / resultado", capturesAfter),
+      el("div", { className: "trade-field-wide" }, [captureCount]),
+    ],
+    "trade-evidence"
+  ) : null;
 
   const save = el("button", { type: "button", text: "Guardar operación", className: "trade-form-submit" });
   paintLifecycle();
   save.addEventListener("click", async () => {
+    if (save.disabled) return;
+    save.disabled = true;
     err.textContent = "";
+    let persistedTrade = null;
     try {
+      const chosen = dedicatedBacktest ? selectedCaptures() : [];
+      validateCaptures(chosen);
+      if (dedicatedBacktest && !openedAt.value) throw new Error("Elegí la fecha y hora histórica de entrada.");
       const assetVal = normalizeAsset(asset.value);
       if (!assetVal) throw new Error("asset requerido");
       if (context.value !== Context.BACKTEST && !accountPick.value) {
@@ -162,7 +254,7 @@ export async function renderNuevoTrade(ctx) {
       }
       const openedIso = openedAt.value ? new Date(openedAt.value).toISOString() : undefined;
       if (lifecycle.value === Lifecycle.CLOSED) {
-        if (!closedAt.value) throw new Error("closedAt requerido");
+        if (!closedAt.value) throw new Error("Ingresá la fecha y hora de cierre.");
         if (!exit.value) throw new Error("exit requerido");
         if (net.value === "") throw new Error("netPnl requerido");
         const closedIso = new Date(closedAt.value).toISOString();
@@ -182,7 +274,7 @@ export async function renderNuevoTrade(ctx) {
           entry: entry.value,
           initialSL: sl.value,
           tp: tp.value,
-          rrPlanned: rr.value,
+          rrPlanned: dedicatedBacktest && readR().planned != null ? readR().planned : rr.value,
           exit: exit.value,
           netPnl: net.value,
           commission: comm.value,
@@ -196,6 +288,8 @@ export async function renderNuevoTrade(ctx) {
           riskMoney: riskMoney.value,
           lots: lots.value,
         }, ctx.stage.id);
+        persistedTrade = trade;
+        await persistCaptures(trade, chosen);
         go("trade/" + trade.id);
         return;
       }
@@ -214,22 +308,31 @@ export async function renderNuevoTrade(ctx) {
         riskMoney: riskMoney.value,
         lots: lots.value,
       }, ctx.stage.id);
+      persistedTrade = trade;
       const journal = {
         strategy: strategy.value,
         style: style.value || null,
         variant: variant.value || null,
         session: session.value || null,
         tp: tp.value,
-        rrPlanned: rr.value,
+        rrPlanned: dedicatedBacktest && readR().planned != null ? readR().planned : rr.value,
         management: mgmt.value || null,
         note: note.value || null,
         riskPercent: riskPct.value,
         riskMoney: riskMoney.value,
       };
       const enriched = await enrichTrade(trade.id, journal);
+      await persistCaptures(enriched, chosen);
       go("trade/" + enriched.id);
     } catch (e) {
-      err.textContent = e.message;
+      if (persistedTrade) {
+        err.textContent = "El registro ya se guardó. No lo vuelvas a crear. Hubo un problema con los datos adicionales o capturas: " + e.message;
+        recovery.hidden = false;
+        recovery.addEventListener("click", () => go("trade/" + persistedTrade.id), { once: true });
+      } else {
+        err.textContent = e.message;
+        save.disabled = false;
+      }
     }
   });
 
@@ -272,7 +375,7 @@ export async function renderNuevoTrade(ctx) {
         field("Activo / símbolo", asset),
         field("Dirección", direction),
         field("Estado", lifecycle),
-        field("Contexto", context),
+        contextField,
         accountField,
         field("Fecha y hora de entrada", openedAt),
       ]),
@@ -283,11 +386,14 @@ export async function renderNuevoTrade(ctx) {
         field("Take Profit (TP)", tp),
         field("Lotaje / cantidad", lots),
         field("Riesgo monetario", riskMoney),
+        dedicatedBacktest ? el("div", { className: "trade-field-wide" }, [rrPreview]) : null,
       ]),
       closedBlock,
+      evidence,
       extra,
       hint,
       err,
+      recovery,
       el("div", { className: "trade-form-footer" }, [
         el("button", {
           type: "button", className: "ghost",
