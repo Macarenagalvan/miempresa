@@ -127,6 +127,8 @@ export async function paint(ctx) {
   }
 
   document.title = `Maca · ${title}`;
+  const heading = document.getElementById("page-title");
+  if (heading) heading.textContent = title;
   setMain(nodes);
   document.querySelectorAll("[data-route]").forEach((link) => {
     link.classList.toggle("is-active", link.getAttribute("data-route") === nav);
