@@ -4,6 +4,7 @@ import { compute, realizedR } from "../../domain/stats.js";
 import { Context, Lifecycle } from "../../domain/enums.js";
 import { isTestRecord } from "../../domain/test-record.js";
 import { go } from "../router.js";
+import { stateBadge } from "../trade-presentation.js";
 
 function fmtR(value) {
   return value == null || !Number.isFinite(Number(value))
@@ -31,7 +32,7 @@ function tradeRow(trade) {
     el("span", { className: "bt-row-date", text: day }),
     el("strong", { text: trade.asset }),
     el("span", { text: trade.direction }),
-    el("span", { className: "bt-row-status", text: status }),
+    stateBadge(trade),
     el("span", { className: "bt-row-r", text: value }),
   ]);
 }

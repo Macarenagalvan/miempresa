@@ -19,7 +19,8 @@ export function decodeAttachment(record) {
     throw new Error(`La captura ${record.name || record.id} no contiene su imagen. El respaldo antiguo no permite recuperarla.`);
   }
   const encoded = record.dataBase64;
-  if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) {
+  // Avoid repeating groups across millions of characters: the old pattern could overflow the regexp stack.
+  if (encoded.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(encoded)) {
     throw new Error(`La captura ${record.name || record.id} tiene contenido inválido.`);
   }
   const binary = atob(encoded);

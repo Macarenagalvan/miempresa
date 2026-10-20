@@ -58,10 +58,11 @@ export async function renderNuevoTrade(ctx) {
     autocomplete: "off",
   });
   const assetList = el("datalist", { id: "nuevo-asset-suggest" }, suggest.map((s) => el("option", { value: s })));
-  const lifecycle = select([[Lifecycle.OPEN, "OPEN"], [Lifecycle.CLOSED, "CLOSED"]], Lifecycle.OPEN);
+  const lifecycle = select([["DRAFT", "BORRADOR · Completar después"], [Lifecycle.OPEN, "OPEN · Abierta"], [Lifecycle.CLOSED, "CLOSED · Cerrada"]], Lifecycle.OPEN);
   lifecycle.setAttribute("name", "lifecycle");
   if (dedicatedBacktest) lifecycle.value = Lifecycle.CLOSED;
   const context = select(Object.values(Context).map((c) => [c, contextLabel(c)]), initialContext);
+  context.name = "context";
   const contextField = field("Contexto", context);
   contextField.hidden = dedicatedBacktest;
   if (dedicatedBacktest) {
@@ -99,6 +100,7 @@ export async function renderNuevoTrade(ctx) {
   const partials = select([["false", "No"], ["true", "Sí"]], "false");
   partials.setAttribute("name", "hasPartials");
   const accountPick = el("select", { className: "input" });
+  accountPick.name = "accountId";
   const accountField = field("Cuenta", accountPick);
   const hint = el("p", { className: "hint", text: "" });
   const err = el("p", { className: "err", text: "", role: "alert" });
@@ -180,7 +182,9 @@ export async function renderNuevoTrade(ctx) {
   function paintLifecycle() {
     const closed = lifecycle.value === Lifecycle.CLOSED;
     closedBlock.hidden = !closed;
-    save.textContent = dedicatedBacktest ? "Guardar backtest / borrador" : "Guardar operación / borrador";
+    const ready = Boolean(entry.value.trim()) && Boolean(openedAt.value)
+      && (closed ? Boolean(exit.value.trim()) && Boolean(net.value.trim()) && Boolean(closedAt.value) : lifecycle.value === Lifecycle.OPEN);
+    save.textContent = ready ? (dedicatedBacktest ? "Guardar backtest" : "Guardar operación") : "Guardar borrador";
     refreshRR();
   }
   lifecycle.addEventListener("change", paintLifecycle);
@@ -237,6 +241,7 @@ export async function renderNuevoTrade(ctx) {
   ) : null;
 
   const save = el("button", { type: "button", text: "Guardar operación", className: "trade-form-submit" });
+  [entry, openedAt, exit, net, closedAt].forEach(control => control.addEventListener("input", paintLifecycle));
   paintLifecycle();
   save.addEventListener("click", async () => {
     if (save.disabled) return;
@@ -253,7 +258,8 @@ export async function renderNuevoTrade(ctx) {
         throw new Error("elegí una Account compatible o creá una en Cuentas");
       }
       const openedIso = openedAt.value ? new Date(openedAt.value).toISOString() : undefined;
-      const completeClose = lifecycle.value === Lifecycle.CLOSED && Boolean(entry.value.trim()) && Boolean(exit.value.trim()) && Boolean(net.value.trim()) && Boolean(closedAt.value);
+      const completeOpen = lifecycle.value === Lifecycle.OPEN && Boolean(entry.value.trim()) && Boolean(openedAt.value);
+      const completeClose = lifecycle.value === Lifecycle.CLOSED && Boolean(openedAt.value) && Boolean(entry.value.trim()) && Boolean(exit.value.trim()) && Boolean(net.value.trim()) && Boolean(closedAt.value);
       if (completeClose) {
         if (!closedAt.value) throw new Error("Ingresá la fecha y hora de cierre.");
         if (!exit.value) throw new Error("exit requerido");
@@ -295,7 +301,7 @@ export async function renderNuevoTrade(ctx) {
         return;
       }
       const trade = await createTrade({
-        isDraft: true,
+        isDraft: !completeOpen,
         exit: exit.value,
         netPnl: net.value,
         commission: comm.value,
@@ -380,6 +386,7 @@ export async function renderNuevoTrade(ctx) {
         el("p", { className: "hint", text: dedicatedBacktest
           ? "Guardá una operación simulada del pasado. No modifica cuentas ni saldos reales."
           : "Registrá los datos básicos ahora. Podés completar el análisis en detalles adicionales." }),
+        el("p", { className: "hint", text: "Si faltan datos de ejecución, se guarda como BORRADOR y queda fuera de las operaciones abiertas y los resultados." }),
         ...refs,
       ]),
       formSection("1. Identificación", "Seleccioná el mercado, la dirección y el estado de la operación.", [

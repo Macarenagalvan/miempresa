@@ -178,10 +178,24 @@ export async function updateDraftTrade(id, patch) {
   return next;
 }
 
+export async function activateDraftTrade(id) {
+  const current = await getTrade(id);
+  if (!current || current.lifecycle !== Lifecycle.OPEN || !current.isDraft) throw new Error("borrador no encontrado");
+  if (!current.openedAt) throw new Error("Completá la fecha de entrada antes de abrir la operación.");
+  const next = deriveTrade({ ...current, isDraft: false, updatedAt: nowIso() });
+  assertTrade(next);
+  await putTrade(next);
+  return next;
+}
+
 export async function closeTrade(id, input) {
   const current = await getTrade(id);
   if (!current) throw new Error("trade no existe");
   if (current.lifecycle !== Lifecycle.OPEN) throw new Error("solo se cierra un OPEN");
+  if (current.isDraft && !current.openedAt) throw new Error("Completá la fecha de entrada del borrador antes de cerrarlo.");
+  if (current.openedAt && input.closedAt && new Date(input.closedAt) < new Date(current.openedAt)) {
+    throw new Error("La fecha de cierre no puede ser anterior a la entrada.");
+  }
   const netPnl = numOrNull(input.netPnl);
   const result = deriveResult(input.closeType, netPnl, input.declaredBe);
   const next = deriveTrade({

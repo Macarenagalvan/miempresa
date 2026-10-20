@@ -318,7 +318,7 @@ export async function renderHoy(ctx) {
   const today = localYmd();
   const trades = await listStageTrades(ctx.stage.id, { includeVoid: false });
   const real = trades.filter((t) => REAL_CONTEXTS.includes(t.context));
-  const open = real.filter((t) => t.lifecycle === Lifecycle.OPEN);
+  const open = real.filter((t) => t.lifecycle === Lifecycle.OPEN && !t.isDraft);
   const closedToday = real.filter((t) => t.lifecycle === Lifecycle.CLOSED && isLocalDay(t.closedAt, today));
   const active = await getActiveAccount();
   const ideas = (await listActiveSetups(ctx.stage.id))

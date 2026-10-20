@@ -1,5 +1,6 @@
 import { nowIso } from "../domain/ids.js";
-import { projectMetaForSync, applyRemoteMeta } from "../domain/sync-meta.js";
+import { applyRemoteMeta } from "../domain/sync-meta.js";
+import { encodeSyncPayload, decodeSyncPayload } from "./sync-payload.js";
 import { getMeta, putMeta } from "../storage/repos/meta.js";
 import { repoFor } from "../storage/repos/collections.js";
 import { getLedgerEntry, putLedgerEntry } from "../storage/repos/sync-ledger.js";
@@ -7,10 +8,6 @@ import { getConflict, putConflict, listConflicts } from "../storage/repos/sync-c
 import { withApplyLock } from "./sync-apply.js";
 import { pullCloudRecords, pushCloudRecord } from "./sync-cloud.js";
 import { ensureDeviceState, isOnline, patchSyncState } from "./sync-engine.js";
-
-function payloadFor(entityType, record) {
-  return entityType === "meta" ? projectMetaForSync(record) : record;
-}
 
 async function readLocalRecord(entityType, entityId) {
   if (entityType === "meta") return getMeta();
@@ -25,7 +22,7 @@ async function writeLocalRecord(entityType, payload) {
   }
   const repo = repoFor(entityType);
   if (!repo) throw new Error("store desconocido: " + entityType);
-  return repo.put(payload);
+  return repo.put(decodeSyncPayload(entityType, payload));
 }
 
 async function deleteLocalRecord(entityType, entityId) {
@@ -70,7 +67,7 @@ export async function resolveConflictKeepLocal(entityType, entityId) {
   const ledger = await getLedgerEntry(entityType, entityId);
   const local = await readLocalRecord(entityType, entityId);
   const tombstone = localTombstoneIntent(ledger, local, conflict);
-  const payload = tombstone ? {} : payloadFor(entityType, local || conflict.localPayload || {});
+  const payload = tombstone ? {} : await encodeSyncPayload(entityType, local || conflict.localPayload || {});
   const cloud = await findCloudRow(entityType, entityId);
   const expected = cloud ? Number(cloud.revision) : 0;
   if (cloud) {

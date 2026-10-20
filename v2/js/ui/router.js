@@ -15,6 +15,9 @@ import { renderCuentaDetail } from "./screens/cuenta-detail.js";
 import { renderFondeo } from "./screens/fondeo.js";
 import { renderChallengeDetail } from "./screens/challenge-detail.js";
 import { renderSistema } from "./screens/sistema.js";
+import { getTrade } from "../storage/repos/trades.js";
+
+let paintedPath = "";
 
 export function parseHash() {
   const raw = (location.hash || "#/hoy").replace(/^#\/?/, "");
@@ -90,7 +93,8 @@ export async function paint(ctx) {
     nodes = await renderHoy(viewCtx);
   } else if (parsed.name === "trade") {
     title = "Operación";
-    nav = parsed.query.from === "backtesting" ? "backtesting" : "historial";
+    const trade = await getTrade(parsed.rest.split("/")[0]);
+    nav = trade && trade.context === "BACKTEST" ? "backtesting" : "historial";
     nodes = await renderTradeDetail(viewCtx);
   } else if (parsed.name === "historial") {
     title = "Operaciones";
@@ -138,13 +142,16 @@ export async function paint(ctx) {
   const topNew = document.getElementById("top-new-trade");
   if (topNew) {
     const isBacktest = parsed.name === "backtesting" ||
-      (parsed.name === "trade" && parsed.query.from === "backtesting") ||
+      (parsed.name === "trade" && nav === "backtesting") ||
       (parsed.name === "nuevo" && parsed.rest === "trade" && parsed.query.context === "BACKTEST");
     topNew.href = isBacktest ? "#/nuevo/trade?context=BACKTEST" : "#/nuevo/trade";
     topNew.textContent = isBacktest ? "+ Nuevo backtest" : "+ Nueva operación";
     topNew.setAttribute("aria-label", isBacktest ? "Registrar nuevo backtest" : "Registrar nueva operación");
   }
   setMain(nodes);
+  const nextPath = parsed.name + "/" + parsed.rest;
+  if (paintedPath !== nextPath) window.scrollTo({ top: 0, behavior: "instant" });
+  paintedPath = nextPath;
   document.querySelectorAll("[data-route]").forEach((link) => {
     link.classList.toggle("is-active", link.getAttribute("data-route") === nav);
   });

@@ -37,7 +37,7 @@ async function closed(stageId, input) {
 async function run() {
   const seed = await ensureJournalSeed();
   const { stage } = seed;
-  const ctxBase = { ...seed, route: { name: "historial", rest: "", query: {} } };
+  const ctxBase = { ...seed, route: { name: "historial", rest: "", query: { context: "BACKTEST",} } };
 
   const nzd1 = await closed(stage.id, {
     asset: "NZDJPY", direction: "SHORT", strategy: Strategy.RED,
@@ -77,7 +77,7 @@ async function run() {
 
   const histNzd = flatten(await renderHistorial({
     ...seed,
-    route: { name: "historial", rest: "", query: { asset: "NZDJPY" } },
+    route: { name: "historial", rest: "", query: { context: "BACKTEST", asset: "NZDJPY" } },
   }));
   const histRows = [...histNzd.querySelectorAll("button.row.hist")];
   const histAssets = histRows.map((row) => (row.querySelector("strong") || {}).textContent);
@@ -86,7 +86,7 @@ async function run() {
 
   const histRed = flatten(await renderHistorial({
     ...seed,
-    route: { name: "historial", rest: "", query: { asset: "NZDJPY", strategy: Strategy.RED } },
+    route: { name: "historial", rest: "", query: { context: "BACKTEST", asset: "NZDJPY", strategy: Strategy.RED } },
   }));
   const histRedRows = [...histRed.querySelectorAll("button.row.hist")];
   const histRedAssets = histRedRows.map((row) => (row.querySelector("strong") || {}).textContent);

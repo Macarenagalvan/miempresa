@@ -26,11 +26,11 @@ async function run() {
   assert("saludo contextual", text.includes(greet) && /Buen( día|as tardes|as noches)/.test(greet));
   assert("muestra etapa", text.includes("Etapa ") && Boolean(seed.stage && seed.stage.name && text.includes(seed.stage.name)));
   assert("sin cuenta no inventa balance", !text.includes("Abrir Cuentas") && !text.includes("Todavía no hay una cuenta activa."));
-  assert("columna Trading Hoy", text.includes("Trading Hoy"));
+  assert("columna operativa", Boolean(host.querySelector(".hoy-trading")) && text.includes("Abiertas"));
   assert("columna Mi Día", text.includes("Mi Día"));
   assert("empty abiertas honesto", text.includes("No hay operaciones Real abiertas."));
   assert("no pinta cierres ficticios", !text.includes("Cierres de hoy"));
-  assert("no pinta ideas ficticias", !text.includes("Ideas en seguimiento"));
+  assert("contador de ideas vacío honesto", [...host.querySelectorAll(".hoy-stat")].some(n => n.textContent.includes("Ideas en seguimiento") && n.querySelector("strong").textContent === "0"));
   assert("no pinta señales ficticias", !text.includes("Señales de hoy"));
   assert("tareas vacías", text.includes("No tenés tareas pendientes."));
   assert("no olvidar vacío", text.includes("Nada anotado por ahora."));

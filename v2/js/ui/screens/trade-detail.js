@@ -2,7 +2,9 @@ import { el } from "../render.js";
 import { field } from "../forms/observation.js";
 import { getTrade } from "../../storage/repos/trades.js";
 import { getSetup } from "../../storage/repos/setups.js";
-import { updateOpenTrade, updateDraftTrade, closeTrade, voidTrade, enrichTrade } from "../../domain/trade.js";
+import { updateOpenTrade, updateDraftTrade, activateDraftTrade, closeTrade, voidTrade, enrichTrade } from "../../domain/trade.js";
+import { localDateTimeValue, stateBadge, tradeSection } from "../trade-presentation.js";
+import { getAccount } from "../../storage/repos/accounts.js";
 import { asrForTrade, asrStatusLabel, createAsr, updateAsr } from "../../domain/asr.js";
 import { CloseType, VoidReason, Lifecycle, Strategy, Style, BlueVariant, strategyLabel } from "../../domain/enums.js";
 import { SESSIONS } from "../../config.js";
@@ -45,6 +47,7 @@ function metaLine(label, value) {
 
 async function renderCard(trade, setup, asr) {
   const images = await listTradeImages(trade.id);
+  const account = trade.accountId ? await getAccount(trade.accountId) : null;
   const err = el("p", { className: "err", text: "" });
   const sl = el("input", { className: "input", value: trade.currentSL ?? "" });
   const mgmt = el("textarea", { className: "input", rows: "3" });
@@ -61,6 +64,13 @@ async function renderCard(trade, setup, asr) {
     }));
   }
   if (trade.lifecycle === Lifecycle.OPEN) {
+    if (trade.isDraft) actions.push(el("button", {
+      type: "button", text: "Marcar como abierta",
+      onclick: async () => {
+        try { await activateDraftTrade(trade.id); go("trade/" + trade.id); }
+        catch (e) { err.textContent = e.message; }
+      },
+    }));
     const save = el("button", { type: "button", text: "Guardar gestión" });
     save.addEventListener("click", async () => {
       try {
@@ -101,32 +111,43 @@ async function renderCard(trade, setup, asr) {
   }
 
   return [
-    el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: `${trade.isDraft ? "BORRADOR" : trade.lifecycle} · ${trade.context}` }),
+    el("section", { className: "panel trade-detail" }, [
+      el("div", { className: "trade-detail-top" }, [
+        stateBadge(trade),
+        el("a", { href: trade.context === "BACKTEST" ? "#/backtesting" : "#/historial", text: trade.context === "BACKTEST" ? "← Backtesting" : "← Operaciones" }),
+      ]),
+      el("p", { className: "kicker", text: trade.context }),
       el("h1", { text: `${trade.asset} ${trade.direction}` }),
-      el("p", { className: "meta", text: `entry ${trade.entry ?? "—"} · strategy ${strategyLabel(trade.strategy)} · style ${trade.style || "—"}` }),
-      trade.lifecycle === Lifecycle.CLOSED ? metaLine("exit", trade.exit) : null,
-      metaLine("variant", trade.variant),
-      metaLine("session", trade.session),
-      trade.note ? el("p", { className: "meta", text: `note ${trade.note}` }) : null,
-      trade.closeType ? el("p", { className: "meta", text: `closeType ${trade.closeType}` }) : null,
-      el("p", { className: "meta", text: `account ${trade.accountId || "—"} · broker ${trade.brokerSymbol || "—"}` }),
-      el("p", { className: "meta origen", text: origenLine(trade) }),
-      metaLine("openedAt", trade.openedAt),
-      trade.lifecycle === Lifecycle.CLOSED ? metaLine("closedAt", trade.closedAt) : null,
-      metaLine("lots", trade.lots),
-      trade.lifecycle === Lifecycle.CLOSED ? metaLine("commission", trade.commission) : null,
-      trade.lifecycle === Lifecycle.CLOSED ? metaLine("swap", trade.swap) : null,
-      setup ? el("p", { className: "meta", text: `plannedEntry ${setup.plannedEntry ?? "—"} ≠ actual ${trade.entry}` }) : null,
-      el("p", { className: "meta", text: `initialSL ${trade.initialSL ?? "—"} · currentSL ${trade.currentSL ?? "—"}` }),
+      trade.isDraft && trade.lifecycle !== Lifecycle.VOID ? el("p", { className: "draft-notice", text: "Este borrador no cuenta como operación abierta ni como resultado. Completá sus datos y marcá la apertura o registrá el cierre." }) : null,
+      el("div", { className: "trade-facts" }, [
+      metaLine("Entrada", trade.entry),
+      trade.lifecycle === Lifecycle.CLOSED ? metaLine("Salida", trade.exit) : null,
+      metaLine("Estrategia", strategyLabel(trade.strategy)),
+      metaLine("Estilo", trade.style),
+      metaLine("Variante", trade.variant),
+      metaLine("Sesión", trade.session),
+      metaLine("Cuenta", account ? account.name : "Sin cuenta · histórico"),
+      metaLine("Símbolo broker", trade.brokerSymbol),
+      metaLine("Apertura", localDateTimeValue(trade.openedAt).replace("T", " ")),
+      trade.lifecycle === Lifecycle.CLOSED ? metaLine("Cierre", localDateTimeValue(trade.closedAt).replace("T", " ")) : null,
+      metaLine("Cantidad / lotes", trade.lots),
+      metaLine("SL inicial", trade.initialSL),
+      metaLine("SL actual", trade.currentSL),
       metaLine("TP", trade.tp),
-      metaLine("RR planned", trade.rrPlanned),
-      metaLine("Risk %", trade.riskPercent),
-      metaLine("Risk $", trade.riskMoney),
-      el("p", { className: "meta", text: rLabel }),
-      trade.result ? el("p", { className: "meta", text: `${trade.result} · netPnl ${trade.netPnl}` }) : null,
+      metaLine("RR planificado", trade.rrPlanned),
+      metaLine("Riesgo %", trade.riskPercent),
+      metaLine("Riesgo monetario", trade.riskMoney),
+      trade.lifecycle === Lifecycle.CLOSED ? metaLine("Comisiones", trade.commission) : null,
+      trade.lifecycle === Lifecycle.CLOSED ? metaLine("Swap", trade.swap) : null,
+      trade.closeType ? metaLine("Tipo de cierre", trade.closeType) : null,
+      ]),
+      trade.note ? el("p", { className: "meta", text: `Notas: ${trade.note}` }) : null,
+      el("p", { className: "meta origen", text: origenLine(trade) }),
+      setup ? el("p", { className: "meta", text: `plannedEntry ${setup.plannedEntry ?? "—"} ≠ actual ${trade.entry}` }) : null,
+      el("p", { className: "meta", text: rLabel + " · basado en precios, sin costes" }),
+      trade.result ? el("p", { className: "trade-result-summary", text: `${trade.result} · Resultado neto ${trade.netPnl}` }) : null,
       asrLabel ? el("p", { className: "meta", text: asrLabel }) : null,
-      trade.lifecycle === Lifecycle.OPEN ? field("currentSL", sl) : null,
+      trade.lifecycle === Lifecycle.OPEN ? field("Stop Loss actual", sl) : null,
       trade.lifecycle === Lifecycle.OPEN
         ? field("Hubo cierres parciales", partials)
         : el("p", { className: "meta", text: `Hubo cierres parciales: ${trade.hasPartials === true ? "Sí" : "No"}` }),
@@ -210,11 +231,11 @@ function renderEdit(trade) {
   const entryActual = el("input", { className: "input", name: "entryActual", value: trade.entry ?? "", readonly: true });
   const exitActual = el("input", { className: "input", name: "exitActual", value: trade.exit ?? "", readonly: true });
   const draft = trade.isDraft === true;
-  const entryEdit = el("input", { className: "input", value: trade.entry ?? "" });
-  const exitEdit = el("input", { className: "input", value: trade.draftExit ?? "" });
-  const netEdit = el("input", { className: "input", value: trade.draftNetPnl ?? "" });
-  const openedEdit = el("input", { className: "input", type: "datetime-local", value: trade.openedAt ? trade.openedAt.slice(0,16) : "" });
-  const closedEdit = el("input", { className: "input", type: "datetime-local", value: trade.draftClosedAt ? trade.draftClosedAt.slice(0,16) : "" });
+  const entryEdit = el("input", { className: "input", name: "entry", value: trade.entry ?? "" });
+  const exitEdit = el("input", { className: "input", name: "exit", value: trade.draftExit ?? "" });
+  const netEdit = el("input", { className: "input", name: "netPnl", value: trade.draftNetPnl ?? "" });
+  const openedEdit = el("input", { className: "input", name: "openedAt", type: "datetime-local", value: localDateTimeValue(trade.openedAt) });
+  const closedEdit = el("input", { className: "input", name: "closedAt", type: "datetime-local", value: localDateTimeValue(trade.draftClosedAt) });
   const strategy = enumSelect(Object.values(Strategy), trade.strategy, "strategy", null, strategyLabel);
   const style = enumSelect(Object.values(Style), trade.style, "style", "—");
   const variant = enumSelect(Object.values(BlueVariant), trade.variant, "variant", "—");
@@ -234,6 +255,8 @@ function renderEdit(trade) {
   const err = el("p", { className: "err", text: "" });
   const save = el("button", { type: "button", text: "Guardar cambios" });
   save.addEventListener("click", async () => {
+    if (save.disabled) return;
+    save.disabled = true;
     err.textContent = "";
     try {
       const patch = {
@@ -251,11 +274,16 @@ function renderEdit(trade) {
         hasPartials: partials.value === "true",
       };
       if (trade.lifecycle === Lifecycle.CLOSED) patch.closeType = closeType.value;
-      if (draft) await updateDraftTrade(trade.id, { entry: entryEdit.value, exit: exitEdit.value, netPnl: netEdit.value, openedAt: openedEdit.value ? new Date(openedEdit.value).toISOString() : null, closedAt: closedEdit.value ? new Date(closedEdit.value).toISOString() : null });
+      if (draft) await updateDraftTrade(trade.id, {
+        entry: entryEdit.value, exit: exitEdit.value, netPnl: netEdit.value,
+        openedAt: openedEdit.value === localDateTimeValue(trade.openedAt) ? trade.openedAt : openedEdit.value ? new Date(openedEdit.value).toISOString() : null,
+        closedAt: closedEdit.value === localDateTimeValue(trade.draftClosedAt) ? trade.draftClosedAt : closedEdit.value ? new Date(closedEdit.value).toISOString() : null,
+      });
       const next = await enrichTrade(trade.id, patch);
       go("trade/" + next.id);
     } catch (e) {
       err.textContent = e.message;
+      save.disabled = false;
     }
   });
   const cancel = el("button", {
@@ -268,35 +296,44 @@ function renderEdit(trade) {
     el("p", { className: "kicker", text: "Editar operación" }),
     el("h1", { text: `${trade.asset} ${trade.direction}` }),
     el("p", { className: "meta origen", text: origenLine(trade) }),
-    el("p", { className: "hint", text: "Origen, cuenta, Entry y Exit son datos de ejecución y no se editan acá." }),
-    draft ? field("Entrada (borrador)", entryEdit) : field("Entry (solo lectura)", entryActual),
+    stateBadge(trade),
+    el("p", { className: "hint", text: draft ? "Completá el borrador a tu ritmo. Guardar cambios no lo convierte en una operación ejecutada." : "Los precios y las fechas de ejecución se conservan. Podés completar el análisis y la gestión." }),
+    tradeSection("1. Ejecución", [
+    draft ? field("Entrada (borrador)", entryEdit) : field("Entrada (solo lectura)", entryActual),
     draft ? field("Fecha de entrada", openedEdit) : null,
     draft ? field("Salida prevista/observada (borrador)", exitEdit) : null,
     draft ? field("PnL (borrador)", netEdit) : null,
     draft ? field("Fecha de cierre (borrador)", closedEdit) : null,
-    trade.lifecycle === Lifecycle.CLOSED ? field("Exit (solo lectura)", exitActual) : null,
-    field("Strategy", strategy),
-    field("Style", style),
-    field("Variant", variant),
-    field("Session", session),
-    field("Initial SL", sl),
+    trade.lifecycle === Lifecycle.CLOSED ? field("Salida (solo lectura)", exitActual) : null,
+    ]),
+    tradeSection("2. Plan y riesgo", [
+    field("SL inicial", sl),
     field("TP", tp),
-    field("RR planned", rr),
+    field("RR planificado", rr),
     field("Riesgo %", riskPct),
     field("Riesgo $ / €", riskMoney),
-    field("Management", mgmt),
-    field("Note", note),
     field("Hubo cierres parciales", partials),
+    ]),
+    tradeSection("3. Clasificación", [
+    field("Estrategia", strategy),
+    field("Estilo", style),
+    field("Variante", variant),
+    field("Sesión", session),
+    ]),
+    el("details", { className: "trade-extra" }, [
+      el("summary", { text: "Gestión y notas" }),
+      field("Gestión", mgmt), field("Notas y aprendizaje", note),
+    ]),
   ];
-  if (trade.lifecycle === Lifecycle.CLOSED) nodes.push(field("Close type", closeType));
+  if (trade.lifecycle === Lifecycle.CLOSED) nodes.push(field("Tipo de cierre", closeType));
   nodes.push(err);
   nodes.push(el("div", { className: "row-actions" }, [save, cancel]));
-  return [el("section", { className: "panel form" }, nodes)];
+  return [el("section", { className: "panel form trade-form" }, nodes)];
 }
 
 function renderClose(trade) {
   const exit = el("input", { className: "input", value: trade.draftExit ?? "" });
-  const closedAt = el("input", { className: "input", type: "datetime-local", value: trade.draftClosedAt ? trade.draftClosedAt.slice(0,16) : "" });
+  const closedAt = el("input", { className: "input", type: "datetime-local", value: localDateTimeValue(trade.draftClosedAt) });
   const net = el("input", { className: "input", value: trade.draftNetPnl ?? "" });
   const comm = el("input", { className: "input", value: trade.draftCommission ?? "" });
   const swap = el("input", { className: "input", value: trade.draftSwap ?? "" });
@@ -325,19 +362,23 @@ function renderClose(trade) {
     } catch (e) { err.textContent = e.message; }
   });
   return [
-    el("section", { className: "panel" }, [
+    el("section", { className: "panel form trade-form" }, [
       el("h1", { text: "Cerrar operación" }),
-      field("exit", exit),
-      field("closedAt", closedAt),
-      field("netPnl", net),
+      stateBadge(trade),
+      tradeSection("Resultado y costes", [
+      field("Precio de salida", exit),
+      field("Fecha y hora de cierre", closedAt),
+      field("Resultado neto", net),
       field("comisión", comm),
       field("swap", swap),
       field("motivo de cierre", closeType),
       field("Hubo cierres parciales", partials),
       field("gestión (nota)", mgmt),
+      ]),
       el("p", { className: "hint", text: "netPnl es el número de performance. commission/swap se guardan; no se vuelven a restar." }),
       err,
       save,
+      el("button", { type: "button", className: "ghost", text: "Cancelar", onclick: () => go("trade/" + trade.id) }),
     ]),
   ];
 }

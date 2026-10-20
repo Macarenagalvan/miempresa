@@ -1,3 +1,4 @@
+import { localDateTimeValue } from "../js/ui/trade-presentation.js";
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { createAccount } from "../js/domain/account.js";
 import { createTrade, createClosedTrade, enrichTrade, syncMt5Csv, findTradeByMt5Position } from "../js/domain/trade.js";
@@ -113,7 +114,7 @@ async function run() {
   assert("Historial label GREEN CRYPTO", optionTexts(stratSel).includes("GREEN CRYPTO"));
   const histCrypto = flatten(await renderHistorial({
     ...ctxBase,
-    route: { name: "historial", rest: "", query: { strategy: Strategy.GREEN_CRYPTO } },
+    route: { name: "historial", rest: "", query: { context: "BACKTEST", strategy: Strategy.GREEN_CRYPTO } },
   }));
   assert("Historial filtra GREEN_CRYPTO", /BTCUSD/.test(histCrypto.textContent) && /GREEN CRYPTO/.test(histCrypto.textContent));
   const cryptoRows = [...histCrypto.querySelectorAll(".row.hist strong")].map((n) => n.textContent);
@@ -132,7 +133,7 @@ async function run() {
     ...seed,
     route: { name: "trade", rest: crypto.id, query: {} },
   }));
-  assert("ficha muestra GREEN CRYPTO", /strategy GREEN CRYPTO/.test(cardCrypto.textContent));
+  assert("ficha muestra GREEN CRYPTO", /Estrategia GREEN CRYPTO/.test(cardCrypto.textContent));
   const editCrypto = flatten(await renderTradeDetail({
     ...seed,
     route: { name: "trade", rest: crypto.id + "/editar", query: {} },
@@ -196,11 +197,11 @@ async function run() {
     route: { name: "trade", rest: manual.id, query: {} },
   }));
   const closedTxt = cardClosed.textContent;
-  assert("ficha CLOSED openedAt", /openedAt 2026-09-11T07:00:00.000Z/.test(closedTxt));
-  assert("ficha CLOSED closedAt", /closedAt 2026-09-11T08:00:00.000Z/.test(closedTxt));
-  assert("ficha CLOSED lots", /lots 0\.2/.test(closedTxt));
-  assert("ficha CLOSED commission", /commission -1\.2/.test(closedTxt));
-  assert("ficha CLOSED swap", /swap -0\.3/.test(closedTxt));
+  assert("ficha CLOSED openedAt", closedTxt.includes("Apertura " + localDateTimeValue(manual.openedAt).replace("T", " ")));
+  assert("ficha CLOSED closedAt", closedTxt.includes("Cierre " + localDateTimeValue(manual.closedAt).replace("T", " ")));
+  assert("ficha CLOSED lots", /Cantidad \/ lotes 0\.2/.test(closedTxt));
+  assert("ficha CLOSED commission", /Comisiones -1\.2/.test(closedTxt));
+  assert("ficha CLOSED swap", /Swap -0\.3/.test(closedTxt));
 
   const emptyLots = await createClosedTrade({
     asset: "EURUSD",
@@ -249,10 +250,10 @@ async function run() {
     ...seed,
     route: { name: "trade", rest: openLots.id, query: {} },
   }));
-  assert("ficha OPEN openedAt", /openedAt /.test(cardOpen.textContent));
-  assert("ficha OPEN lots", /lots 0\.2/.test(cardOpen.textContent));
-  assert("ficha OPEN no closedAt", !/closedAt /.test(cardOpen.textContent));
-  assert("ficha OPEN no commission", !/commission /.test(cardOpen.textContent));
+  assert("ficha OPEN openedAt", /Apertura /.test(cardOpen.textContent));
+  assert("ficha OPEN lots", /Cantidad \/ lotes 0\.2/.test(cardOpen.textContent));
+  assert("ficha OPEN no closedAt", !/Cierre /.test(cardOpen.textContent));
+  assert("ficha OPEN no commission", !/Comisiones /.test(cardOpen.textContent));
 
   let enrichLotsBlocked = "";
   try {
