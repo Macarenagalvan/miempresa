@@ -57,7 +57,14 @@ export function clearSavedSupabaseConfig() {
 
 export function assertClientKeySafe(key) {
   const value = String(key || "");
-  if (FORBIDDEN_KEY_RE.test(value)) {
+  let privilegedJwt = false;
+  if (value.split(".").length === 3) {
+    try {
+      const payload = JSON.parse(atob(value.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      privilegedJwt = payload.role !== "anon";
+    } catch (_) { privilegedJwt = true; }
+  }
+  if (FORBIDDEN_KEY_RE.test(value) || value.startsWith("sb_secret_") || privilegedJwt) {
     throw new Error("esa key no puede usarse en el browser");
   }
   return true;

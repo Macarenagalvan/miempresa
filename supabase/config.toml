@@ -1,0 +1,3 @@
+[functions.maca-backtesting]
+# OAuth JWT is verified in the handler, including issuer, audience and client.
+verify_jwt = false

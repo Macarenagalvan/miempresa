@@ -194,9 +194,10 @@ export function parseLots(raw) {
 export function assertTrade(trade) {
   if (!trade || !trade.id) throw new Error("trade.id requerido");
   if (!trade.stageId) throw new Error("trade.stageId requerido");
-  if (!normalizeAsset(trade.asset)) throw new Error("asset requerido");
+  const incompleteImport = trade.isDraft === true && trade.context === Context.BACKTEST && trade.sourceRef?.integration === "CHATGPT";
+  if (!normalizeAsset(trade.asset) && !incompleteImport) throw new Error("asset requerido");
   if (!CONTEXTS.includes(trade.context)) throw new Error("context requerido");
-  if (!DIRECTIONS.includes(trade.direction)) throw new Error("direction requerido");
+  if (!DIRECTIONS.includes(trade.direction) && !(incompleteImport && trade.direction == null)) throw new Error("direction requerido");
   if ((trade.entry == null || trade.entry === "" || !Number.isFinite(Number(trade.entry))) && trade.isDraft !== true) throw new Error("entry requerido");
   if (!Object.values(Lifecycle).includes(trade.lifecycle)) throw new Error("lifecycle inválido");
   if (trade.context === Context.BACKTEST) {

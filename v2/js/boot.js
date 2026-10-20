@@ -8,7 +8,8 @@ import {
   bindNetworkSync,
   syncNow,
 } from "./services/sync-engine.js";
-import { paint, currentRoute, routeList } from "./ui/router.js";
+import { paint, parseHash, currentRoute, routeList } from "./ui/router.js";
+import { bindBacktestingSync } from "./ui/backtesting-sync.js";
 import { applyIdentity } from "./ui/identity.js";
 
 function retireLegacyWorkers() {
@@ -77,6 +78,7 @@ export async function boot() {
   const ctx = await ensureJournalSeed();
   applyIdentity(ctx.meta, ctx.stage);
   bindNetworkSync();
+  bindBacktestingSync(parseHash, () => paint(ctx));
   syncNow({ reason: "boot" }).catch(() => {});
   await paint(ctx);
   window.addEventListener("hashchange", () => {

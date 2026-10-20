@@ -58,6 +58,7 @@ export async function renderBacktesting(ctx) {
       el("div", { className: "row-actions" }, [
         el("button", { type: "button", text: "+ Registrar backtest", onclick: action }),
         el("button", { type: "button", className: "ghost", text: "Ver estadísticas", onclick: () => go("numeros?universe=BACKTEST&excludeTest=1") }),
+        el("a", { href: new URL("../../../integration.html", import.meta.url).href, text: "Integración con ChatGPT" }),
       ]),
       el("div", { className: "bt-summary" }, [
         summary("Registros", genuine.length, "Pruebas históricas"),
