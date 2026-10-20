@@ -22,11 +22,12 @@ export async function renderNuevo(ctx) {
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: "Nuevo" }),
       el("h1", { text: "¿Qué querés registrar?" }),
-      el("p", { className: "hint", text: "Tres entradas distintas. Ninguna abre un wizard." }),
-      el("div", { className: "choice-grid" }, [
+      el("p", { className: "hint", text: "Elegí qué querés guardar. Backtesting tiene su propio espacio, separado del trading real." }),
+      el("div", { className: "choice-grid register-grid" }, [
         choice("Nota", "Algo que vi o aprendí del mercado.", "nuevo/observacion", ICONS.note),
         choice("Idea", "Una oportunidad que estoy siguiendo.", "nuevo/setup", ICONS.idea),
         choice("Operación", "Un trade que ejecuté o quiero registrar.", "nuevo/trade", ICONS.trade),
+        choice("Backtesting", "Una operación histórica que quiero probar y analizar.", "backtesting", ICONS.trade),
       ]),
     ]),
   ];
