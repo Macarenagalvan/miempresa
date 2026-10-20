@@ -99,3 +99,52 @@ button.bt-row:hover,button.bt-row:focus-visible { border-color:var(--accent);bac
   .bt-row-status { justify-self:end; }
   .bt-row-r { grid-column:2; }
 }
+
+/* Registration: make a long vertical form scannable on desktop and mobile. */
+.panel.form.trade-form {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: clamp(18px, 2.5vw, 30px);
+}
+.trade-form-intro { margin-bottom: 22px; }
+.trade-form-intro h1 { font-size: clamp(22px, 2.7vw, 29px); margin-bottom: 8px; }
+.trade-form-intro > .hint { max-width: 68ch; line-height: 1.5; }
+.trade-form-section { padding: 20px 0; border-top: 1px solid var(--line); }
+.trade-section-heading { margin-bottom: 14px; }
+.trade-section-heading h2 { margin: 0 0 5px; font-size: 16px; letter-spacing: -.01em; }
+.trade-section-heading .hint { margin: 0; }
+.trade-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 18px;
+  align-items: start;
+}
+.trade-form .field { min-width: 0; margin: 7px 0; }
+.trade-form .field[hidden], .trade-form [hidden] { display: none !important; }
+.trade-form .field span { color: var(--muted); font-size: 12px; }
+.trade-form .field .input { width: 100%; }
+.trade-form .field textarea.input { min-height: 96px; }
+.trade-field-wide { grid-column: 1 / -1; }
+.trade-extra { margin-top: 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--bg); padding: 0 16px; }
+.trade-extra > summary {
+  padding: 15px 2px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+}
+.trade-extra[open] { padding-bottom: 16px; }
+.trade-extra[open] > summary { border-bottom: 1px solid var(--line); }
+.trade-extra > .hint { margin: 12px 0 10px; }
+.trade-form-footer { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.trade-form-footer button { min-height: 42px; }
+button.trade-form-submit { min-width: 175px; }
+.trade-form > .err:empty { min-height: 0; margin: 0; }
+.trade-form > .hint { line-height: 1.5; }
+@media (max-width: 650px) {
+  .trade-fields-grid { grid-template-columns: 1fr; gap: 0; }
+  .panel.form.trade-form { padding: 17px 16px; }
+  .trade-form-footer { align-items: stretch; flex-direction: column-reverse; }
+  .trade-form-footer button { width: 100%; }
+  .trade-extra { padding-left: 12px; padding-right: 12px; }
+}
