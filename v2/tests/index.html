@@ -48,6 +48,7 @@
     import { run as runRrPreview } from "./rr-preview.test.js";
     import { run as runRelease } from "./release-workflows.test.js";
     import { run as runReleaseSync } from "./release-sync.test.js";
+    import { run as runBacktestImport } from "./backtest-import.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
@@ -81,6 +82,7 @@
       .then(() => runRrPreview())
       .then(() => runRelease())
       .then(() => runReleaseSync())
+      .then(() => runBacktestImport())
       .then(() => { document.body.dataset.testStatus = "passed"; console.log(out.textContent); })
       .catch((err) => {
         out.className = "fail";

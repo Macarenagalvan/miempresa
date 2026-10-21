@@ -211,6 +211,9 @@ function renderCaptures(trade, images, err) {
 }
 
 function origenLine(trade) {
+  if (trade.sourceRef?.kind === "BACKTEST_JSON") {
+    return `origen JSON · ${trade.sourceRef.importId} · resultado declarado: ${trade.sourceRef.declaredResult || "sin completar"}`;
+  }
   const pos = trade.sourceRef && trade.sourceRef.mt5Position;
   if (trade.recordSource === "MT5_EA") {
     return `origen MT5_EA · position ${pos || "—"}`;
@@ -231,6 +234,9 @@ function renderEdit(trade) {
   const entryActual = el("input", { className: "input", name: "entryActual", value: trade.entry ?? "", readonly: true });
   const exitActual = el("input", { className: "input", name: "exitActual", value: trade.exit ?? "", readonly: true });
   const draft = trade.isDraft === true;
+  const importedDraft = draft && trade.context === "BACKTEST" && trade.sourceRef?.kind === "BACKTEST_JSON";
+  const assetEdit = el("input", { className: "input", name: "asset", value: trade.asset || "" });
+  const directionEdit = enumSelect(["LONG", "SHORT"], trade.direction, "direction", "Sin completar");
   const entryEdit = el("input", { className: "input", name: "entry", value: trade.entry ?? "" });
   const exitEdit = el("input", { className: "input", name: "exit", value: trade.draftExit ?? "" });
   const netEdit = el("input", { className: "input", name: "netPnl", value: trade.draftNetPnl ?? "" });
@@ -275,6 +281,7 @@ function renderEdit(trade) {
       };
       if (trade.lifecycle === Lifecycle.CLOSED) patch.closeType = closeType.value;
       if (draft) await updateDraftTrade(trade.id, {
+        ...(importedDraft ? { asset: assetEdit.value, direction: directionEdit.value } : {}),
         entry: entryEdit.value, exit: exitEdit.value, netPnl: netEdit.value,
         openedAt: openedEdit.value === localDateTimeValue(trade.openedAt) ? trade.openedAt : openedEdit.value ? new Date(openedEdit.value).toISOString() : null,
         closedAt: closedEdit.value === localDateTimeValue(trade.draftClosedAt) ? trade.draftClosedAt : closedEdit.value ? new Date(closedEdit.value).toISOString() : null,
@@ -299,6 +306,8 @@ function renderEdit(trade) {
     stateBadge(trade),
     el("p", { className: "hint", text: draft ? "Completá el borrador a tu ritmo. Guardar cambios no lo convierte en una operación ejecutada." : "Los precios y las fechas de ejecución se conservan. Podés completar el análisis y la gestión." }),
     tradeSection("1. Ejecución", [
+    importedDraft ? field("Activo", assetEdit) : null,
+    importedDraft ? field("Dirección", directionEdit) : null,
     draft ? field("Entrada (borrador)", entryEdit) : field("Entrada (solo lectura)", entryActual),
     draft ? field("Fecha de entrada", openedEdit) : null,
     draft ? field("Salida prevista/observada (borrador)", exitEdit) : null,
