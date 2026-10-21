@@ -101,6 +101,29 @@ export async function run() {
   await putTrade(manual);
   const manualFile = raw(); manualFile.importId = "manual-json-test"; manualFile.backtest.entry = 103;
   await rejects(() => importBacktest(JSON.stringify(manualFile), stage.id), "Duplicó backtest manual");
+  // VOID is audit-only for every duplicate path.
+  for (const mode of ["IMPORT_ID", "STORED_SIGNATURE", "CURRENT_SIGNATURE"]) {
+    const file = raw(); file.importId = "void-regression-" + mode;
+    file.backtest.entry = 120 + ["IMPORT_ID", "STORED_SIGNATURE", "CURRENT_SIGNATURE"].indexOf(mode);
+    const previous = await importBacktest(JSON.stringify(file), stage.id);
+    const voided = { ...previous, lifecycle: "VOID", voidedAt: new Date().toISOString(), voidReason: "DUPLICATE" };
+    if (mode === "STORED_SIGNATURE") voided.entry += 10;
+    if (mode === "CURRENT_SIGNATURE") voided.sourceRef = null;
+    await putTrade(voided);
+    const auditTrade = JSON.stringify(await getTrade(voided.id));
+    const auditLedger = JSON.stringify(await getLedgerEntry("trades", voided.id));
+    if (mode !== "IMPORT_ID") file.importId += "-new";
+    const text = JSON.stringify(file);
+    const attempts = await Promise.allSettled([importBacktest(text, stage.id), importBacktest(text, stage.id)]);
+    assert(attempts.filter(r => r.status === "fulfilled").length === 1, "Reimportación VOID concurrente incorrecta: " + mode);
+    const replacement = attempts.find(r => r.status === "fulfilled").value;
+    assert(replacement.id !== previous.id, "Reactivó registro anulado");
+    assert(attempts.find(r => r.status === "rejected").reason.code === "BACKTEST_DUPLICATE", "No bloqueó duplicado activo");
+    file.importId += "-content";
+    await rejects(() => importBacktest(JSON.stringify(file), stage.id), "No bloqueó firma activa tras VOID");
+    assert(JSON.stringify(await getTrade(voided.id)) === auditTrade, "Modificó auditoría VOID");
+    assert(JSON.stringify(await getLedgerEntry("trades", voided.id)) === auditLedger, "Modificó ledger VOID");
+  }
   await closeDb(); await openDb();
   assert((await getTrade(trade.id)).note === trade.note, "No persistió tras reabrir");
   const after = await listTrades();

@@ -73,12 +73,23 @@ export async function run() {
     await putTrade({ ...t, lifecycle: "VOID", voidedAt: new Date().toISOString(), voidReason: "DUPLICATE",
       sourceRef: { ...t.sourceRef, signature: JSON.stringify([t.asset, t.direction, null, t.entry, t.initialSL, t.tp, null, null, null]) } });
   }
+  const audit = await snapshot();
+  for (const i of [0, 3]) {
+    const replacement = await saveBacktestFile(bundles[i], stage.id, true);
+    check(replacement.id !== trades[i].id, "Reutilizó ID del registro anulado");
+    trades[i] = replacement;
+  }
+  const priorRows = JSON.parse(audit), currentRows = JSON.parse(await snapshot());
+  for (let s = 0; s < priorRows.length; s++) for (const row of priorRows[s]) {
+    check(JSON.stringify(currentRows[s].find(r => r.id === row.id)) === JSON.stringify(row), "Cambió auditoría, captura o ledger existente");
+  }
+  check((await listTrades()).length === before.length + 6, "No añadió exactamente dos reemplazos");
   const unchanged = await snapshot();
   for (let i = 0; i < 4; i++) {
     let error;
     try { await saveBacktestFile(bundles[i], stage.id, true); } catch (e) { error = e; }
     check(error?.code === "BACKTEST_DUPLICATE" && error.reason === "IMPORT_ID" && error.tradeId === trades[i].id, "No identificó importId existente");
-    check(error.message.includes("anulado") === [0, 3].includes(i), "No distingue registro anulado");
+    check(!error.message.includes("anulado"), "El duplicado debe ser el registro activo");
   }
   check(await snapshot() === unchanged, "Reimportar modificó datos o ledger");
   const widget = backtestImporter(stage.id); document.body.append(widget.button, widget.panel); widget.button.click();
@@ -91,5 +102,5 @@ export async function run() {
   check(await snapshot() === unchanged, "Rechazo desde UI modificó datos");
   widget.button.remove(); widget.panel.remove();
   for (const old of before) check(JSON.stringify(await getTrade(old.id)) === JSON.stringify(old), "Modificó registro previo");
-  console.log("Cuatro ZIP: importación secuencial, identidad incompleta, reimportación anulada y enlace al original OK");
+  console.log("Cuatro ZIP: reimportación de dos anulados, auditoría intacta y bloqueo/enlace a duplicados activos OK");
 }

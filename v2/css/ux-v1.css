@@ -192,6 +192,7 @@ button.trade-form-submit { min-width: 175px; }
 .draft-notice { padding:12px 15px; border-left:3px solid #e4c487; color:#e4c487; background:#e4c48708; font-size:13px; line-height:1.6; }
 .trade-result-summary { font:600 20px var(--font-num); padding:12px 0; }
 .trade-detail .captures { border-top:1px solid var(--line); padding-top:20px; margin-top:24px; }
+.thumb { display:block; max-width:100%; height:auto; }
 .trade-detail .input { max-width:100%; }
 .row-actions { gap:10px; flex-wrap:wrap; }
 .trade-form .row-actions { margin-top:20px; justify-content:flex-end; }
