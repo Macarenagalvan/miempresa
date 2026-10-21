@@ -10,9 +10,6 @@ export function backtestImporter(stageId) {
   const panel = el("section", { className: "panel", hidden: true, "aria-label": "Importar backtest" }, [
     el("h2", { text: "Importar backtest" }),
     el("p", { className: "hint", text: "Elegí un JSON (máximo 64 KB) o un ZIP (máximo 25 MB) con el JSON y hasta 8 capturas PNG, JPG o WEBP. Revisá los datos y las imágenes antes de confirmar. Seleccionar el archivo no guarda nada." }),
-    el("p", {}, [el("a", { href: new URL("../../../docs/backtest-example.json", import.meta.url).href, download: "backtest-example.json", text: "Descargar ejemplo JSON" })]),
-    el("p", {}, [el("a", { href: new URL("../../../docs/IMPORTAR-BACKTEST-ZIP.md", import.meta.url).href, target: "_blank", rel: "noopener", text: "Formato del ZIP y límites" })]),
-    el("p", {}, [el("a", { href: new URL("../../../docs/backtest-example.zip", import.meta.url).href, download: "backtest-example.zip", text: "Descargar ejemplo ZIP ficticio" })]),
     file, error, preview,
   ]);
   let selection = 0;

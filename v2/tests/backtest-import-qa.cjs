@@ -25,17 +25,26 @@ const server = http.createServer((req, res) => {
       const page = await context.newPage(); page.setDefaultTimeout(15000);
       const errors = []; page.on('pageerror', e => errors.push(e.message));
       await page.goto('http://127.0.0.1:8098/miempresa/index.html#/backtesting');
-      await page.getByRole('button', { name: 'Importar backtest', exact: true }).click();
       const panel = page.getByRole('region', { name: 'Importar backtest', exact: true });
+      if (await panel.isVisible()) throw new Error('Formulario abierto al entrar en Backtesting');
+      await page.getByRole('button', { name: 'Importar backtest', exact: true }).click();
+      if (!await panel.isVisible()) throw new Error('El botón no abre el formulario');
+      if (await panel.locator('a').count()) throw new Error('Enlaces de documentación visibles en el formulario');
+      await panel.getByRole('button', { name: 'Cerrar importación', exact: true }).click();
+      if (await panel.isVisible()) throw new Error('Cerrar importación no oculta el formulario');
+      await page.reload();
+      await page.getByRole('button', { name: 'Importar backtest', exact: true }).waitFor();
+      if (await panel.isVisible()) throw new Error('Formulario abierto tras recargar');
+      await page.getByRole('button', { name: 'Importar backtest', exact: true }).click();
       const useZip = process.env.QA_IMPORT_ZIP === '1';
       const source = fs.readFileSync(path.join(root, useZip ? 'docs/backtest-example.zip' : 'docs/backtest-example.json'));
       const upload = { name: useZip ? 'backtest.zip' : 'backtest.json', mimeType: useZip ? 'application/zip' : 'application/json', buffer: source };
       const count = () => page.evaluate(async () => (await import('./v2/js/storage/repos/trades.js')).countTrades());
       const initial = await count();
       const expectedImages = useZip ? 3 : 0;
-      const href = await panel.getByRole('link', { name: 'Descargar ejemplo JSON' }).getAttribute('href');
-      if (!href.includes('/miempresa/docs/')) throw new Error('Ruta del ejemplo no respeta subdirectorio');
-      if ((await context.request.get(href)).status() !== 200) throw new Error('Ejemplo no disponible');
+      for (const name of ['backtest-example.json', 'backtest-example.zip', 'IMPORTAR-BACKTEST.md', 'IMPORTAR-BACKTEST-ZIP.md']) {
+        if ((await context.request.get('http://127.0.0.1:8098/miempresa/docs/' + name)).status() !== 200) throw new Error('Documentación/ejemplo no conservado: ' + name);
+      }
       await panel.locator('input[type=file]').setInputFiles(upload);
       await panel.getByRole('heading', { name: /Vista previa/ }).waitFor();
       if (await count() !== initial) throw new Error('Selección guardó datos');
