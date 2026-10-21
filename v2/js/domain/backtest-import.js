@@ -4,6 +4,7 @@ import { createId, nowIso } from "./ids.js";
 import { openDb } from "../storage/db.js";
 import { STORES } from "../config.js";
 import { buildTradeImage } from "../storage/repos/attachments.js";
+import { isTestRecord } from "./test-record.js";
 
 export const MAX_BACKTEST_BYTES = 65536;
 const fields = ["asset", "direction", "openedAt", "closedAt", "entry", "initialSL", "tp", "exit", "netPnl", "strategy", "result", "note"];
@@ -47,8 +48,23 @@ export function parseBacktest(text) {
   const missing = fields.filter(k => k !== "note" && (b[k] == null || b[k] === "" || (k === "strategy" && b[k] === "UNCLASSIFIED"))).map(k => labels[k]);
   return { importId: raw.importId, backtest: b, missing };
 }
+function hasIdentity(b) {
+  return typeof b.asset === "string" && b.asset.trim() !== "" &&
+    ["LONG", "SHORT"].includes(b.direction) && typeof b.openedAt === "string" &&
+    Number.isFinite(Date.parse(b.openedAt)) && Number.isFinite(b.entry) && b.entry > 0;
+}
 function signature(b) {
+  if (!hasIdentity(b)) return null;
   return JSON.stringify([normalizeAsset(b.asset), b.direction || null, b.openedAt || null, b.entry ?? null, b.initialSL ?? null, b.tp ?? null, b.closedAt || b.draftClosedAt || null, b.exit ?? b.draftExit ?? null, b.netPnl ?? b.draftNetPnl ?? null]);
+}
+function storedSignature(sourceRef) {
+  if (sourceRef?.kind !== "BACKTEST_JSON") return null;
+  try {
+    const values = JSON.parse(sourceRef.signature);
+    if (!Array.isArray(values) || values.length !== 9) return null;
+    const [asset, direction, openedAt, entry] = values;
+    return hasIdentity({ asset, direction, openedAt, entry }) ? sourceRef.signature : null;
+  } catch { return null; }
 }
 export function buildImportedBacktest(preview, stageId, forceDraft = false) {
   const { backtest: b, importId, missing } = preview;
@@ -90,8 +106,11 @@ export async function importBacktest(text, stageId, forceDraft = false, images =
     scan.onsuccess = () => {
       try {
         const duplicate = scan.result.some(t => t.context === Context.BACKTEST && (
-          (t.sourceRef?.kind === "BACKTEST_JSON" && (t.sourceRef.importId === preview.importId || t.sourceRef.signature === trade.sourceRef.signature))
-          || signature(t) === trade.sourceRef.signature
+          // File identity remains authoritative, including after edits or test marking.
+          (t.sourceRef?.kind === "BACKTEST_JSON" && t.sourceRef.importId === preview.importId)
+          || (!isTestRecord(t) && !isTestRecord(trade) && trade.sourceRef.signature !== null && (
+            storedSignature(t.sourceRef) === trade.sourceRef.signature || signature(t) === trade.sourceRef.signature
+          ))
         ));
         if (duplicate) { failure = new Error("Este backtest ya existe. No se importó ni se sobrescribió ningún registro."); tx.abort(); return; }
         store.add(trade);

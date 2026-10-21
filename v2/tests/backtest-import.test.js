@@ -59,6 +59,39 @@ export async function run() {
   const closed = await closeTrade(draft.id, { exit: 110, closedAt: "2025-03-02T11:00:00Z", netPnl: 10, closeType: "MANUAL" });
   assert(closed.lifecycle === "CLOSED" && !closed.isDraft, "No se pudo completar");
   await rejects(() => importBacktest(JSON.stringify(partial), stage.id), "Reimportó borrador editado");
+  // Empty and partial drafts are not evidence of duplicate content, even with legacy signatures.
+  const legacy = { ...draft, id: crypto.randomUUID(), sourceRef: { ...draft.sourceRef,
+    importId: "legacy-empty-draft", signature: JSON.stringify(["", null, null, null, null, null, null, null, null]) } };
+  await putTrade(legacy);
+  const legacyBefore = JSON.stringify(await getTrade(legacy.id));
+  const anotherPartial = { ...partial, importId: "another-empty-draft" };
+  const empty = await importBacktest(JSON.stringify(anotherPartial), stage.id);
+  assert(empty.sourceRef.signature === null, "Firmó un borrador sin identidad");
+  await rejects(() => importBacktest(JSON.stringify(anotherPartial), stage.id), "Reimportó ID de borrador vacío");
+  for (const key of ["asset", "direction", "openedAt", "entry"]) {
+    const incomplete = raw(); incomplete.importId = "missing-identity-" + key;
+    incomplete.backtest[key] = null;
+    const first = await importBacktest(JSON.stringify(incomplete), stage.id);
+    assert(first.sourceRef.signature === null, "Firmó sin " + key);
+    incomplete.importId += "-second";
+    await importBacktest(JSON.stringify(incomplete), stage.id);
+  }
+  assert(JSON.stringify(await getTrade(legacy.id)) === legacyBefore, "Modificó borrador legado");
+  const fixture = { ...trade, id: crypto.randomUUID(), entry: 104, note: "TEST / FICTICIO", sourceRef: null };
+  await putTrade(fixture);
+  const fixtureBefore = JSON.stringify(await getTrade(fixture.id));
+  const realFile = raw(); realFile.importId = "real-after-fixture"; realFile.backtest.entry = 104;
+  await importBacktest(JSON.stringify(realFile), stage.id);
+  assert(JSON.stringify(await getTrade(fixture.id)) === fixtureBefore, "Modificó registro ficticio");
+  const testFile = raw(); testFile.importId = "imported-test-fixture"; testFile.backtest.note = "TEST / FICTICIO";
+  await importBacktest(JSON.stringify(testFile), stage.id);
+  await rejects(() => importBacktest(JSON.stringify(testFile), stage.id), "Ignoró importId de registro ficticio");
+  const forced = raw(); forced.importId = "identified-forced-draft"; forced.backtest.entry = 105;
+  const forcedDraft = await importBacktest(JSON.stringify(forced), stage.id, true);
+  forced.importId = "identified-forced-copy";
+  await rejects(() => importBacktest(JSON.stringify(forced), stage.id), "Duplicó borrador con identidad suficiente");
+  await updateDraftTrade(forcedDraft.id, { entry: 106 });
+  await rejects(() => importBacktest(JSON.stringify(forced), stage.id), "Perdió firma original tras editar");
   await rejects(() => assertTrade({ ...draft, isDraft: false }), "Admitió registro activo sin activo/dirección");
   await rejects(() => assertTrade({ ...draft, context: "LIVE", accountId: "test-account" }), "Relajó validación real");
   const concurrent = raw(); concurrent.importId = "concurrent-json-test"; concurrent.backtest.entry = 102;
