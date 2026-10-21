@@ -3,6 +3,7 @@ import { assertTrade, normalizeAsset, deriveResult, computeRrRealized, incomplet
 import { createId, nowIso } from "./ids.js";
 import { openDb } from "../storage/db.js";
 import { STORES } from "../config.js";
+import { buildTradeImage } from "../storage/repos/attachments.js";
 
 export const MAX_BACKTEST_BYTES = 65536;
 const fields = ["asset", "direction", "openedAt", "closedAt", "entry", "initialSL", "tp", "exit", "netPnl", "strategy", "result", "note"];
@@ -74,25 +75,35 @@ export function buildImportedBacktest(preview, stageId, forceDraft = false) {
   return trade;
 }
 // Scan and add share one transaction: simultaneous tabs cannot both insert.
-export async function importBacktest(text, stageId, forceDraft = false) {
+export async function importBacktest(text, stageId, forceDraft = false, images = []) {
   const preview = parseBacktest(text);
   const trade = buildImportedBacktest(preview, stageId, forceDraft);
+  const captures = images.map(image => buildTradeImage(trade.id, image));
   const db = await openDb();
   await new Promise((resolve, reject) => {
-    const tx = db.transaction([STORES.trades, STORES.syncLedger], "readwrite");
+    const tx = db.transaction([STORES.trades, STORES.syncLedger, ...(captures.length ? [STORES.attachments] : [])], "readwrite");
     const store = tx.objectStore(STORES.trades);
     let failure;
     tx.oncomplete = resolve;
     tx.onabort = tx.onerror = () => reject(failure || tx.error || new Error("No se pudo guardar el backtest."));
     const scan = store.getAll();
     scan.onsuccess = () => {
-      const duplicate = scan.result.some(t => t.context === Context.BACKTEST && (
-        (t.sourceRef?.kind === "BACKTEST_JSON" && (t.sourceRef.importId === preview.importId || t.sourceRef.signature === trade.sourceRef.signature))
-        || signature(t) === trade.sourceRef.signature
-      ));
-      if (duplicate) { failure = new Error("Este backtest ya existe. No se importó ni se sobrescribió ningún registro."); tx.abort(); return; }
-      store.add(trade);
-      tx.objectStore(STORES.syncLedger).put({ id: STORES.trades + "::" + trade.id, entityType: STORES.trades, entityId: trade.id, cloudRevision: 0, dirty: true, tombstone: false, localChangedAt: trade.updatedAt });
+      try {
+        const duplicate = scan.result.some(t => t.context === Context.BACKTEST && (
+          (t.sourceRef?.kind === "BACKTEST_JSON" && (t.sourceRef.importId === preview.importId || t.sourceRef.signature === trade.sourceRef.signature))
+          || signature(t) === trade.sourceRef.signature
+        ));
+        if (duplicate) { failure = new Error("Este backtest ya existe. No se importó ni se sobrescribió ningún registro."); tx.abort(); return; }
+        store.add(trade);
+        for (const capture of captures) {
+          tx.objectStore(STORES.attachments).add(capture);
+          tx.objectStore(STORES.syncLedger).put({ id: STORES.attachments + "::" + capture.id, entityType: STORES.attachments, entityId: capture.id, cloudRevision: 0, dirty: true, tombstone: false, localChangedAt: capture.createdAt });
+        }
+        tx.objectStore(STORES.syncLedger).put({ id: STORES.trades + "::" + trade.id, entityType: STORES.trades, entityId: trade.id, cloudRevision: 0, dirty: true, tombstone: false, localChangedAt: trade.updatedAt });
+      } catch (error) {
+        failure = error;
+        tx.abort();
+      }
     };
   });
   // Existing sync, if enabled, picks up the ordinary local ledger entry.
