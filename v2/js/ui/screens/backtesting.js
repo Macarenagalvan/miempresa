@@ -1,3 +1,4 @@
+import { backtestImporter } from "../backtest-import.js";
 import { el } from "../render.js";
 import { listStageTrades } from "../../domain/trade.js";
 import { compute, realizedR } from "../../domain/stats.js";
@@ -30,8 +31,8 @@ function tradeRow(trade) {
     "aria-label": `Abrir backtest ${trade.asset} ${trade.direction}, ${day}`,
   }, [
     el("span", { className: "bt-row-date", text: day }),
-    el("strong", { text: trade.asset }),
-    el("span", { text: trade.direction }),
+    el("strong", { text: trade.asset || "Activo pendiente" }),
+    el("span", { text: trade.direction || "Dirección pendiente" }),
     stateBadge(trade),
     el("span", { className: "bt-row-r", text: value }),
   ]);
@@ -44,6 +45,7 @@ export async function renderBacktesting(ctx) {
   const test = trades.filter(isTestRecord);
   const genuine = trades.filter((trade) => !isTestRecord(trade));
   const stats = compute(genuine, { universe: "BACKTEST", stageId: ctx.stage.id });
+  const importer = backtestImporter(ctx.stage.id);
   const action = () => go("nuevo/trade?context=BACKTEST");
   const qa = test.length ? el("details", { className: "bt-test-fold" }, [
     el("summary", { text: `Datos de prueba (${test.length}) · excluidos del resumen` }),
@@ -57,6 +59,7 @@ export async function renderBacktesting(ctx) {
       el("p", { className: "hint", text: "Registrá pruebas históricas sin mezclarlas con operaciones ejecutadas ni afectar el saldo de ninguna cuenta." }),
       el("div", { className: "row-actions" }, [
         el("button", { type: "button", text: "+ Registrar backtest", onclick: action }),
+        importer.button,
         el("button", { type: "button", className: "ghost", text: "Ver estadísticas", onclick: () => go("numeros?universe=BACKTEST&excludeTest=1") }),
       ]),
       el("div", { className: "bt-summary" }, [
@@ -65,6 +68,7 @@ export async function renderBacktesting(ctx) {
         summary("Expectativa", fmtR(stats.expectancyR), `Calculada con ${stats.nR} R válidos`),
       ]),
     ]),
+    importer.panel,
     el("section", { className: "panel bt-register" }, [
       el("div", { className: "bt-section-heading" }, [
         el("div", {}, [
@@ -81,7 +85,7 @@ export async function renderBacktesting(ctx) {
           el("button", { type: "button", text: "Registrar primer backtest", onclick: action }),
         ]),
       qa,
-      el("p", { className: "hint", text: "Nota: esto es registro manual. La importación masiva de archivos de backtesting todavía no está implementada." }),
+      el("p", { className: "hint", text: "Podés registrar backtests manualmente o importar un archivo JSON con vista previa." }),
     ]),
   ];
 }

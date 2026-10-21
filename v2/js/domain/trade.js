@@ -162,6 +162,10 @@ export async function updateDraftTrade(id, patch) {
   if (!current || current.lifecycle !== Lifecycle.OPEN || current.isDraft !== true) throw new Error("borrador no encontrado");
   const next = deriveTrade({
     ...current,
+    ...(current.context === Context.BACKTEST && current.sourceRef?.kind === "BACKTEST_JSON" ? {
+      asset: patch.asset !== undefined ? normalizeAsset(patch.asset) : current.asset,
+      direction: patch.direction !== undefined ? (patch.direction || null) : current.direction,
+    } : {}),
     openedAt: patch.openedAt !== undefined ? patch.openedAt : current.openedAt,
     entry: patch.entry !== undefined ? numOrNull(patch.entry) : current.entry,
     draftExit: patch.exit !== undefined ? numOrNull(patch.exit) : current.draftExit,

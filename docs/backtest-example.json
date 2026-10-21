@@ -1,0 +1,19 @@
+{
+  "format": "maca-backtest",
+  "version": 1,
+  "importId": "ejemplo-eurusd-20250910-long-01",
+  "backtest": {
+    "asset": "EURUSD",
+    "direction": "LONG",
+    "openedAt": "2025-09-10T10:00:00+02:00",
+    "closedAt": "2025-09-10T11:00:00+02:00",
+    "entry": 1.17,
+    "initialSL": 1.169,
+    "tp": 1.172,
+    "exit": 1.172,
+    "netPnl": 20,
+    "strategy": "MACA",
+    "result": "WIN",
+    "note": "EJEMPLO FICTICIO. Entrada tras confirmación. Revisar contexto y agregar capturas."
+  }
+}
