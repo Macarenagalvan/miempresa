@@ -25,10 +25,8 @@ function readMime(input) {
   return String((input && (input.type || input.mime)) || "");
 }
 
-export async function addTradeImage(tradeId, input) {
+export function buildTradeImage(tradeId, input) {
   if (!tradeId) throw new Error("tradeId requerido");
-  const trade = await getTrade(tradeId);
-  if (!trade) throw new Error("trade no existe");
   if (!input) throw new Error("imagen requerida");
   const mime = readMime(input);
   if (!IMAGE_MIMES.includes(mime)) throw new Error("solo PNG, JPEG o WEBP");
@@ -50,6 +48,14 @@ export async function addTradeImage(tradeId, input) {
     createdAt: nowIso(),
     blob,
   };
+  return record;
+}
+
+export async function addTradeImage(tradeId, input) {
+  if (!tradeId) throw new Error("tradeId requerido");
+  const trade = await getTrade(tradeId);
+  if (!trade) throw new Error("trade no existe");
+  const record = buildTradeImage(tradeId, input);
   await attachmentsRepo.put(record);
   return record;
 }

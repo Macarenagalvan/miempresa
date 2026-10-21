@@ -58,3 +58,7 @@ Se usa la base local IndexedDB actual, sin nueva base, credenciales, infraestruc
 ## Pedido reutilizable para ChatGPT
 
 “Generá un archivo JSON UTF-8 descargable siguiendo el contrato maca-backtest versión 1 de este documento, con un solo backtest. Conservá un importId estable para el mismo análisis. Usá null en los datos desconocidos; no inventes fechas, zona horaria, precios ni PnL. Conservá el análisis y observaciones en note. No incluyas cuentas, contexto, credenciales, imágenes ni campos adicionales.”
+
+## Capturas incluidas en un ZIP
+
+También podés importar este mismo JSON junto con imágenes en un ZIP. El formato del JSON no cambia: seguí el [formato ZIP documentado](IMPORTAR-BACKTEST-ZIP.md).
