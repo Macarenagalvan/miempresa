@@ -50,6 +50,7 @@
     import { run as runReleaseSync } from "./release-sync.test.js";
     import { run as runBacktestImport } from "./backtest-import.test.js";
     import { run as runBacktestZip } from "./backtest-zip.test.js";
+    import { run as runFourZips } from "./backtest-four-zips.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
@@ -85,6 +86,7 @@
       .then(() => runReleaseSync())
       .then(() => runBacktestImport())
       .then(() => runBacktestZip())
+      .then(() => runFourZips())
       .then(() => { document.body.dataset.testStatus = "passed"; console.log(out.textContent); })
       .catch((err) => {
         out.className = "fail";

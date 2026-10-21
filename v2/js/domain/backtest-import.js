@@ -105,14 +105,25 @@ export async function importBacktest(text, stageId, forceDraft = false, images =
     const scan = store.getAll();
     scan.onsuccess = () => {
       try {
-        const duplicate = scan.result.some(t => t.context === Context.BACKTEST && (
+        const duplicate = scan.result.find(t => t.context === Context.BACKTEST && (
           // File identity remains authoritative, including after edits or test marking.
           (t.sourceRef?.kind === "BACKTEST_JSON" && t.sourceRef.importId === preview.importId)
           || (!isTestRecord(t) && !isTestRecord(trade) && trade.sourceRef.signature !== null && (
             storedSignature(t.sourceRef) === trade.sourceRef.signature || signature(t) === trade.sourceRef.signature
           ))
         ));
-        if (duplicate) { failure = new Error("Este backtest ya existe. No se importó ni se sobrescribió ningún registro."); tx.abort(); return; }
+        if (duplicate) {
+          const sameImportId = duplicate.sourceRef?.kind === "BACKTEST_JSON" && duplicate.sourceRef.importId === preview.importId;
+          failure = new Error((duplicate.voidedAt
+            ? "Este backtest ya existe como registro anulado y por eso no aparece en el historial habitual. "
+            : "Este backtest ya existe. ") + (sameImportId
+            ? "Coincide el importId del archivo. "
+            : "Coinciden los datos identificatorios completos. ") + "No se importó ni se sobrescribió ningún registro.");
+          failure.code = "BACKTEST_DUPLICATE";
+          failure.tradeId = duplicate.id;
+          failure.reason = sameImportId ? "IMPORT_ID" : "CONTENT";
+          tx.abort(); return;
+        }
         store.add(trade);
         for (const capture of captures) {
           tx.objectStore(STORES.attachments).add(capture);

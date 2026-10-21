@@ -42,7 +42,13 @@ export function backtestImporter(stageId) {
             el("button", { type: "button", text: "Abrir registro y agregar capturas", onclick: () => go("trade/" + trade.id + "?from=backtesting") }),
             el("button", { type: "button", className: "ghost", text: "Ver historial", onclick: () => go("backtesting") }),
           );
-        } catch (e) { error.textContent = e.message; save.disabled = false; }
+        } catch (e) {
+          error.textContent = e.message;
+          if (e.code === "BACKTEST_DUPLICATE" && e.tradeId) error.append(
+            el("a", { href: "#/trade/" + encodeURIComponent(e.tradeId) + "?from=backtesting", text: " Abrir registro existente" }),
+          );
+          save.disabled = false;
+        }
         finally { saving = false; file.disabled = false; }
       });
       preview.append(
