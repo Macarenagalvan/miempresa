@@ -38,6 +38,7 @@ export const MT5_SOURCE_TIMEZONES = Object.freeze([
 ]);
 
 export const MT5_BROKER_SYMBOL_MAP = Object.freeze({
+  NDXUSD: "NAS100",
   EURUSD: "EURUSD",
   EURUSDC: "EURUSD",
   "EURUSD.C": "EURUSD",
