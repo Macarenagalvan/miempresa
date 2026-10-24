@@ -1,3 +1,4 @@
+import { label } from "../journal-insights.js";
 import { el } from "../render.js";
 import { field } from "../forms/observation.js";
 import { getSetup } from "../../storage/repos/setups.js";
@@ -17,7 +18,7 @@ function select(values, current) {
 }
 
 function contextLabel(ctx) {
-  return ctx === Context.PROP_CHALLENGE ? "PROP" : ctx;
+  return label(ctx);
 }
 
 function localDateTimeValue(date = new Date()) {
@@ -41,7 +42,7 @@ export async function renderNuevoTrade(ctx) {
   const setup = setupId ? await getSetup(setupId) : null;
   const accounts = await listStageAccounts(ctx.stage.id);
   const active = await getActiveAccount();
-  const initialContext = setup ? setup.context : (dedicatedBacktest ? Context.BACKTEST : Context.LIVE);
+  const initialContext = setup ? setup.context : (dedicatedBacktest ? Context.BACKTEST : (active?.context || accounts[0]?.context || Context.LIVE));
   const suggest = [];
   const seen = new Set();
   for (const a of ROADMAP_ASSETS) {
@@ -58,7 +59,7 @@ export async function renderNuevoTrade(ctx) {
     autocomplete: "off",
   });
   const assetList = el("datalist", { id: "nuevo-asset-suggest" }, suggest.map((s) => el("option", { value: s })));
-  const lifecycle = select([["DRAFT", "BORRADOR · Completar después"], [Lifecycle.OPEN, "OPEN · Abierta"], [Lifecycle.CLOSED, "CLOSED · Cerrada"]], Lifecycle.OPEN);
+  const lifecycle = select([["DRAFT", "Borrador · completar después"], [Lifecycle.OPEN, "Abierta"], [Lifecycle.CLOSED, "Cerrada"]], Lifecycle.OPEN);
   lifecycle.setAttribute("name", "lifecycle");
   if (dedicatedBacktest) lifecycle.value = Lifecycle.CLOSED;
   const context = select(Object.values(Context).map((c) => [c, contextLabel(c)]), initialContext);
@@ -69,7 +70,7 @@ export async function renderNuevoTrade(ctx) {
     context.value = Context.BACKTEST;
     context.disabled = true;
   }
-  const direction = select(Object.values(Direction).map((d) => [d, d]), setup ? setup.direction : Direction.LONG);
+  const direction = select(Object.values(Direction).map((d) => [d, label(d)]), setup ? setup.direction : Direction.LONG);
   direction.setAttribute("name", "direction");
   const strategy = select(Object.values(Strategy).map((s) => [s, strategyLabel(s)]), setup ? setup.strategy : Strategy.UNCLASSIFIED);
   strategy.setAttribute("name", "strategy");
@@ -120,18 +121,18 @@ export async function renderNuevoTrade(ctx) {
     }
     accountPick.disabled = false;
     const compatible = accounts.filter((a) => a.context === ctxVal);
-    accountPick.append(el("option", { value: "", text: compatible.length ? "elegí account" : "no hay account compatible" }));
+    accountPick.append(el("option", { value: "", text: compatible.length ? "Elegí una cuenta" : "No hay cuentas de este tipo" }));
     for (const a of compatible) {
       accountPick.append(el("option", { value: a.id, text: `${a.name} · ${contextLabel(a.context)}` }));
     }
-    const pre = visibleActiveAccount(active, ctxVal);
+    const pre = visibleActiveAccount(active, ctxVal) || (compatible.length === 1 ? compatible[0] : null);
     if (pre && compatible.some((a) => a.id === pre.id)) {
       accountPick.value = pre.id;
-      hint.textContent = `Account activa preseleccionada (${pre.name}). Podés cambiarla.`;
+      hint.textContent = `Cuenta activa preseleccionada (${pre.name}). Podés cambiarla.`;
     } else if (!compatible.length) {
-      hint.textContent = `Falta una Account ${contextLabel(ctxVal)} activa. Creala en Cuentas.`;
+      hint.textContent = `Falta una cuenta ${contextLabel(ctxVal)} activa. Creala en Cuentas.`;
     } else {
-      hint.textContent = "Elegí Account. No se asigna en silencio.";
+      hint.textContent = "Elegí la cuenta a la que pertenece esta operación.";
     }
   }
   context.addEventListener("change", paintAccounts);
@@ -207,13 +208,13 @@ export async function renderNuevoTrade(ctx) {
   function updateCaptureCount() {
     const chosen = selectedCaptures();
     captureCount.textContent = chosen.length
-      ? chosen.length + " imagen(es) seleccionada(s), que se guardarán con el backtest."
+      ? chosen.length + " imagen(es) seleccionada(s), que se guardarán con la operación."
       : "Elegí hasta 6 imágenes PNG, JPEG o WEBP de un máximo de 8 MB cada una.";
   }
   [capturesBefore, capturesAfter].forEach((control) => control.addEventListener("change", updateCaptureCount));
 
   function validateCaptures(chosen) {
-    if (chosen.length > 6) throw new Error("Elegí como máximo 6 capturas por backtest.");
+    if (chosen.length > 6) throw new Error("Elegí como máximo 6 capturas por operación.");
     for (const { file } of chosen) {
       if (!IMAGE_MIMES.includes(file.type)) throw new Error("Las capturas deben ser PNG, JPEG o WEBP.");
       if (!file.size || file.size > ATTACHMENT_MAX_BYTES) {
@@ -229,7 +230,7 @@ export async function renderNuevoTrade(ctx) {
     }
   }
 
-  const evidence = dedicatedBacktest ? formSection(
+  const evidence = formSection(
     "4. Capturas del gráfico",
     "Podés seleccionar varias imágenes. Se guardarán con el registro y podrás consultarlas desde su ficha.",
     [
@@ -238,7 +239,7 @@ export async function renderNuevoTrade(ctx) {
       el("div", { className: "trade-field-wide" }, [captureCount]),
     ],
     "trade-evidence"
-  ) : null;
+  );
 
   const save = el("button", { type: "button", text: "Guardar operación", className: "trade-form-submit" });
   [entry, openedAt, exit, net, closedAt].forEach(control => control.addEventListener("input", paintLifecycle));
@@ -249,7 +250,7 @@ export async function renderNuevoTrade(ctx) {
     err.textContent = "";
     let persistedTrade = null;
     try {
-      const chosen = dedicatedBacktest ? selectedCaptures() : [];
+      const chosen = selectedCaptures();
       validateCaptures(chosen);
 
       const assetVal = normalizeAsset(asset.value);
@@ -389,6 +390,7 @@ export async function renderNuevoTrade(ctx) {
         el("p", { className: "hint", text: "Si faltan datos de ejecución, se guarda como BORRADOR y queda fuera de las operaciones abiertas y los resultados." }),
         ...refs,
       ]),
+      el("nav", {className:"journal-steps", "aria-label":"Pasos del registro"}, ["1. Setup y cuenta", "2. Entrada y riesgo", "3. Cierre", "4. Capturas"].map((text,i)=>el("button",{type:"button",className:"ghost",text,onclick:()=>document.querySelectorAll(".trade-form > .trade-form-section")[i]?.scrollIntoView({behavior:"smooth",block:"start"})}))),
       formSection("1. Identificación", "Seleccioná el mercado, la dirección y el estado de la operación.", [
         field("Activo / símbolo", asset),
         field("Dirección", direction),
@@ -404,7 +406,7 @@ export async function renderNuevoTrade(ctx) {
         field("Take Profit (TP)", tp),
         field("Lotaje / cantidad", lots),
         field("Riesgo monetario", riskMoney),
-        dedicatedBacktest ? el("div", { className: "trade-field-wide" }, [rrPreview]) : null,
+        el("div", { className: "trade-field-wide" }, [rrPreview]),
       ]),
       closedBlock,
       evidence,

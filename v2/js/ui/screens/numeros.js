@@ -1,3 +1,6 @@
+import { listStageAccounts, getActiveAccount } from "../../domain/account.js";
+import { field } from "../forms/observation.js";
+import { resultCharts, label } from "../journal-insights.js";
 import { el } from "../render.js";
 import { listTrades } from "../../storage/repos/trades.js";
 import { listSignals } from "../../storage/repos/signals.js";
@@ -22,7 +25,7 @@ function select(current, options) {
 }
 
 function fmt(value, kind) {
-  if (value == null) return "n/a";
+  if (value == null) return "—";
   if (value === Number.POSITIVE_INFINITY) return "∞";
   if (kind === "pct") return (value * 100).toFixed(1) + "%";
   if (kind === "r") return Number(value).toFixed(2);
@@ -40,12 +43,16 @@ function metric(label, value, kind, note) {
 
 export async function renderNumeros(ctx) {
   const q = ctx.route.query || {};
-  const universe = q.universe || "BACKTEST";
+  const accounts = await listStageAccounts(ctx.stage.id, {includeArchived:true});
+  const active = await getActiveAccount();
+  const defaultAccount = active || accounts[0];
+  const selectedId = q.account === "all" ? "" : (q.account || (!q.universe ? defaultAccount?.id : "") || "");
+  const universe = q.universe || ((accounts.find(a=>a.id===selectedId)||defaultAccount)?.context === "DEMO" ? "DEMO" : "REAL");
   const excludeTest = q.excludeTest === "1";
   const filters = {
     universe,
     context: q.context || "",
-    accountId: q.account || "",
+    accountId: selectedId,
     stageId: ctx.stage.id,
     asset: q.asset || "",
     strategy: q.strategy || "",
@@ -55,14 +62,14 @@ export async function renderNumeros(ctx) {
     from: q.from || "",
     to: q.to || "",
   };
-  const uni = select(universe, [["REAL", "Real"], ["DEMO", "Demo"], ["BACKTEST", "Backtest"]]);
+  const uni = select(universe, [["REAL", "Operado · propias y fondeo"], ["DEMO", "Demo"], ["BACKTEST", "Backtest"]]);
   const rawTrades = await listTrades();
   const allTrades = excludeTest ? rawTrades.filter((trade) => !isTestRecord(trade)) : rawTrades;
   const excludedCount = excludeTest ? rawTrades.length - allTrades.length : 0;
   const allSignals = universe === "DESK" ? await listSignals() : [];
-  const asset = select(filters.asset, assetFilterOptions(universe === "DESK" ? allSignals : allTrades, filters.asset, "asset"));
+  const asset = select(filters.asset, assetFilterOptions(universe === "DESK" ? allSignals : allTrades, filters.asset, "Todos los activos"));
   asset.setAttribute("name", "asset");
-  const direction = select(filters.direction, [["", "dir"], ...Object.values(Direction).map((d) => [d, d])]);
+  const direction = select(filters.direction, [["", "Todas"], ...Object.values(Direction).map((d) => [d, label(d)])]);
   const from = el("input", { className: "input slim", type: "date", value: filters.from });
   const to = el("input", { className: "input slim", type: "date", value: filters.to });
   if (universe === "DESK") {
@@ -88,7 +95,7 @@ export async function renderNumeros(ctx) {
     return [
       el("section", { className: "panel" }, [
         el("p", { className: "kicker", text: "Universo Desk · stage activa" }),
-        el("h1", { text: "Números" }),
+        el("h1", { text: "Estadísticas" }),
         el("p", { className: "meta", text: "Métricas teóricas del aviso. No es WR/PnL de Trades." }),
         el("div", { className: "chips filters" }, [uni, asset, direction, disp, reso, from, to]),
         el("div", { className: "metrics" }, [
@@ -111,44 +118,54 @@ export async function renderNumeros(ctx) {
       ]),
     ];
   }
+  const compatible = accounts.filter(a => universe === "DEMO" ? a.context === "DEMO" : universe === "REAL" ? a.context !== "DEMO" : false);
+  if (filters.accountId && !compatible.some(a=>a.id===filters.accountId)) filters.accountId = "";
+  const accountSel=select(filters.accountId || "all", [["all","Todas las cuentas"], ...compatible.map(a=>[a.id,a.name])]);
+  accountSel.setAttribute("aria-label", "Cuenta de estadísticas");
+  const currencies=[...new Set(compatible.filter(a=>!filters.accountId||a.id===filters.accountId).map(a=>a.currency))];
+  const mixed=currencies.length>1 && universe!=="BACKTEST";
+  const currency=universe==="BACKTEST"?"simulado":currencies[0]||"";
   const stats = compute(allTrades, filters);
-  const ctxSel = select(filters.context, [["", "context"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"], [Context.DEMO, "DEMO"], [Context.BACKTEST, "BACKTEST"]]);
-  const strategy = select(filters.strategy, [["", "strategy"], ...Object.values(Strategy).map((s) => [s, strategyLabel(s)])]);
+  if(mixed)for(const k of ['netPnl','profitFactorUsd','expectancyUsd','maxDrawdown'])stats[k]=null;
+  const ctxSel = select(filters.context, [["", "Todos los tipos"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"], [Context.DEMO, "DEMO"], [Context.BACKTEST, "BACKTEST"]]);
+  const strategy = select(filters.strategy, [["", "Todas"], ...Object.values(Strategy).map((s) => [s, label(strategyLabel(s))])]);
   strategy.setAttribute("name", "strategy");
-  const variant = select(filters.variant, [["", "variant"], ...Object.values(BlueVariant).map((v) => [v, v])]);
+  const variant = select(filters.variant, [["", "Todas"], ...Object.values(BlueVariant).map((v) => [v, v])]);
   const session = select(filters.session, [["", "sesión"], ...SESSIONS.map((s) => [s, s])]);
   function apply() {
     go("numeros" + qs({
-      universe: uni.value, context: ctxSel.value,
+      universe: uni.value, context: uni.value === universe ? ctxSel.value : "", account: uni.value === universe ? accountSel.value : "all",
       excludeTest: uni.value === "BACKTEST" && excludeTest ? "1" : "",
       asset: asset.value, strategy: strategy.value, variant: variant.value,
       direction: direction.value, session: session.value, from: from.value, to: to.value,
     }));
   }
-  [uni, ctxSel, asset, strategy, variant, direction, session, from, to].forEach((n) => n.addEventListener("change", apply));
+  [uni, accountSel, ctxSel, asset, strategy, variant, direction, session, from, to].forEach((n) => n.addEventListener("change", apply));
   return [
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: `Universo ${universe} · stage activa` }),
-      el("h1", { text: "Números" }),
+      el("p", { className: "kicker", text: universe === "BACKTEST" ? "Pruebas históricas" : "Tus operaciones ejecutadas" }),
+      el("h1", { text: "Estadísticas" }),
       el("p", { className: "meta", text: excludeTest
         ? `Backtesting: ${excludedCount} registros TEST / FICTICIO excluidos de estas estadísticas.`
-        : "Real = LIVE + PROP + FUNDED. Demo y Backtesting tienen resultados separados." }),
-      el("div", { className: "chips filters" }, [uni, ctxSel, asset, strategy, variant, direction, session, from, to]),
+        : mixed ? "Elegí una cuenta para ver importes: hay monedas distintas y no se suman entre sí." : "Resultados de operaciones cerradas. Los borradores y las operaciones anuladas no cuentan." }),
+      el("div", { className: "journal-stat-filters" }, [field("Resultados",uni),field("Cuenta",accountSel),field("Tipo de cuenta",ctxSel),field("Activo",asset),field("Estrategia",strategy),field("Variante",variant),field("Dirección",direction),field("Sesión",session),field("Desde",from),field("Hasta",to)]),
+      el("button", {type:"button",className:"ghost",text:"Limpiar filtros",onclick:()=>go("numeros")}),
       el("div", { className: "metrics" }, [
-        metric("Total Trades", stats.nClosed),
-        metric("Wins", stats.nWins),
-        metric("Losses", stats.nLosses),
-        metric("BE", stats.nBe),
-        metric("Win Rate", stats.winRate, "pct", `n decided ${stats.nDecided}`),
-        metric("Net PnL", stats.netPnl, "n", `n money ${stats.nMoney}`),
-        metric("Profit Factor $", stats.profitFactorUsd, "n", `n money ${stats.nMoney}`),
-        metric("Expectancy $", stats.expectancyUsd, "n", `n money ${stats.nMoney}`),
-        metric("Expectancy R", stats.expectancyR, "r", `R metrics · n=${stats.nR}`),
-        metric("Max Drawdown $", stats.maxDrawdown),
-        metric("Max consec Wins", stats.maxConsecWins),
-        metric("Max consec Losses", stats.maxConsecLosses),
+        metric("Operaciones cerradas", stats.nClosed),
+        metric("Ganadas", stats.nWins),
+        metric("Perdidas", stats.nLosses),
+        metric("En equilibrio", stats.nBe),
+        metric("Porcentaje de acierto", stats.winRate, "pct", `${stats.nDecided} ganadas o perdidas`),
+        metric("Resultado neto", stats.netPnl, "n", `${stats.nMoney} operaciones · ${currency}`),
+        metric("Factor de beneficio", stats.profitFactorUsd, "n", `${stats.nMoney} operaciones · ${currency}`),
+        metric("Promedio por operación", stats.expectancyUsd, "n", `${stats.nMoney} operaciones · ${currency}`),
+        metric("Promedio en R", stats.expectancyR, "r", `${stats.nR} con riesgo conocido`),
+        metric("Caída máxima al cierre", stats.maxDrawdown),
+        metric("Máx. ganadas seguidas", stats.maxConsecWins),
+        metric("Máx. perdidas seguidas", stats.maxConsecLosses),
       ]),
-      el("p", { className: "hint", text: "Expectancy R = mean(R) sobre U_R. Average R no se muestra aparte. Parciales fuera de U_R." }),
+      !mixed ? resultCharts(allTrades, filters, currency) : null,
+      el("p", { className: "hint", text: "R mide el resultado respecto del riesgo inicial. Si falta ese dato, se muestra —; no impide calcular el saldo ni el resultado neto." }),
     ]),
   ];
 }

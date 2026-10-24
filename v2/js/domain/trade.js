@@ -340,8 +340,8 @@ export async function importClosedMt5Trade(draft, stageId) {
     closedAt: draft.closedAt,
     exit: numOrNull(draft.exit),
     closeType: "UNKNOWN",
-    commission: null,
-    swap: null,
+    commission: numOrNull(draft.commission),
+    swap: numOrNull(draft.swap),
     netPnl: numOrNull(draft.netPnl),
     result: draft.result,
     management: null,
@@ -445,6 +445,12 @@ export async function syncMt5Csv(text, stageId, opts = {}) {
         brokerSymbol: mapped.brokerSymbol || (row.rec && row.rec.Activo),
       });
       continue;
+    }
+    const detail = opts.htmlDetails?.[mapped.draft.sourceRef.mt5Position];
+    if (detail) {
+      mapped.draft.commission = detail.commission;
+      mapped.draft.swap = detail.swap;
+      mapped.draft.sourceRef = {...mapped.draft.sourceRef, mt5AccountLogin: detail.sourceLogin, htmlEvidence: detail};
     }
     const existing = await findTradeByMt5Position(account.id, mapped.draft.sourceRef.mt5Position);
     if (existing) {

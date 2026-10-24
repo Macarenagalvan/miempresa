@@ -116,7 +116,7 @@ async function run() {
     route: { name: "numeros", rest: "", query: { universe: "BACKTEST", asset: "NZDJPY" } },
   }));
   assert("Números UI NZDJPY seleccionado", numNzd.querySelector('[name="asset"]').value === "NZDJPY");
-  const totalMetric = [...numNzd.querySelectorAll(".metric")].find((m) => /Total Trades/.test(m.textContent));
+  const totalMetric = [...numNzd.querySelectorAll(".metric")].find((m) => /Operaciones cerradas/.test(m.textContent));
   const totalN = totalMetric && totalMetric.querySelector("strong") ? Number(totalMetric.querySelector("strong").textContent) : 0;
   assert("Números UI Total Trades NZDJPY", Number.isFinite(totalN) && totalN >= 2);
 

@@ -15,7 +15,7 @@ export function tradeState(trade) {
 export function stateBadge(trade) {
   const state = tradeState(trade);
   return el("span", { className: "state-badge state-" + state.toLowerCase(), text: ({
-    DRAFT: "BORRADOR", OPEN: "OPEN · Abierta", CLOSED: "CLOSED · Cerrada", VOID: "VOID · Anulada",
+    DRAFT: "BORRADOR", OPEN: "Abierta", CLOSED: "Cerrada", VOID: "Anulada",
   })[state] || state });
 }
 

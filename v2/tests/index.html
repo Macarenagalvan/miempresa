@@ -51,6 +51,7 @@
     import { run as runBacktestImport } from "./backtest-import.test.js";
     import { run as runBacktestZip } from "./backtest-zip.test.js";
     import { run as runFourZips } from "./backtest-four-zips.test.js";
+    import { run as runMt5Html } from "./mt5-html.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
@@ -87,6 +88,7 @@
       .then(() => runBacktestImport())
       .then(() => runBacktestZip())
       .then(() => runFourZips())
+      .then(() => runMt5Html())
       .then(() => { document.body.dataset.testStatus = "passed"; console.log(out.textContent); })
       .catch((err) => {
         out.className = "fail";
