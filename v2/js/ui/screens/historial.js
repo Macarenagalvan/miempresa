@@ -1,3 +1,4 @@
+import { uiLabel } from '../labels.js';
 import { money, label, link } from "../journal-insights.js";
 import { el } from "../render.js";
 import { listStageTrades } from "../../domain/trade.js";
@@ -49,16 +50,16 @@ export async function renderHistorial(ctx) {
     asrByTrade[row.tradeId] = row;
   }
   const pendingCount = rows.filter((t) => isAsrPending(t, asrByTrade[t.id])).length;
-  const ctxSel = select(q.context === Context.BACKTEST ? Context.BACKTEST : filters.context, [["", "todos los contextos"], [Context.BACKTEST, "BACKTEST"], [Context.DEMO, "DEMO"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"]]);
+  const ctxSel = select(q.context === Context.BACKTEST ? Context.BACKTEST : filters.context, [["", "Todos los tipos"], [Context.BACKTEST, "BACKTEST"], [Context.DEMO, "DEMO"], [Context.LIVE, "Cuenta propia"], [Context.PROP_CHALLENGE, "Evaluación"], [Context.FUNDED, "Fondeada"]]);
   const accSel = select(filters.accountId, [["", "todas las cuentas"], ...accounts.map((a) => [a.id, a.name])]);
   const asset = select(filters.asset, assetFilterOptions(q.context === Context.BACKTEST ? allTrades.filter(t => t.context === Context.BACKTEST) : raw, filters.asset, "activo"));
   asset.setAttribute("name", "asset");
-  const strategy = select(filters.strategy, [["", "estrategia"], ...Object.values(Strategy).map((s) => [s, strategyLabel(s)])]);
+  const strategy = select(filters.strategy, [["", "estrategia"], ...Object.values(Strategy).map((s) => [s, uiLabel(strategyLabel(s))])]);
   strategy.setAttribute("name", "strategy");
   const variant = select(filters.variant, [["", "variante"], ...Object.values(BlueVariant).map((v) => [v, v])]);
-  const direction = select(filters.direction, [["", "dir"], ...Object.values(Direction).map((d) => [d, d])]);
+  const direction = select(filters.direction, [["", "Dirección"], ...Object.values(Direction).map((d) => [d, uiLabel(d)])]);
   const session = select(filters.session, [["", "sesión"], ...SESSIONS.map((s) => [s, s])]);
-  const lifecycle = select(q.lifecycle, [["", "Borradores y operaciones"], ["DRAFT", "BORRADOR"], [Lifecycle.OPEN, "OPEN · Abiertas"], [Lifecycle.CLOSED, "CLOSED · Cerradas"], [Lifecycle.VOID, "VOID · Anuladas"]]);
+  const lifecycle = select(q.lifecycle, [["", "Borradores y operaciones"], ["DRAFT", "BORRADOR"], [Lifecycle.OPEN, "Abiertas"], [Lifecycle.CLOSED, "Cerradas"], [Lifecycle.VOID, "Anuladas"]]);
   const from = el("input", { className: "input slim", type: "date", value: filters.from });
   const to = el("input", { className: "input slim", type: "date", value: filters.to });
   function apply() {

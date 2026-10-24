@@ -1,3 +1,4 @@
+import { uiLabel } from '../labels.js';
 import { accountOverview, link, label, money } from "../journal-insights.js";
 import { el } from "../render.js";
 import { deletableRow } from '../delete-button.js';
@@ -93,7 +94,7 @@ function renderNueva(ctx) {
       el("h1", { text: "Nueva cuenta" }),
       field("nombre", name),
       field("tipo", context),
-      field("moneda", currency),
+      field("Moneda", currency),
       field("capital inicial", initial),
       el("p", { className: "hint", text: "Ingresá el capital de partida, no el saldo después de operar. Los resultados se sumarán al registrar o importar operaciones." }),
       err,

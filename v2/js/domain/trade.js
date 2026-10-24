@@ -345,7 +345,7 @@ export async function importClosedMt5Trade(draft, stageId) {
     netPnl: numOrNull(draft.netPnl),
     result: draft.result,
     management: null,
-    hasPartials: false,
+    hasPartials: draft.hasPartials === true,
     executionQuality: null,
     note: null,
     importBatchId: draft.importBatchId || null,

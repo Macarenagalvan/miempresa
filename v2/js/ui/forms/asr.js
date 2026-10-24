@@ -1,3 +1,4 @@
+import { uiLabel } from '../labels.js';
 import { WouldDoSame, ErrorTag } from "../../domain/enums.js";
 import { el } from "../render.js";
 import { field } from "./observation.js";
@@ -25,7 +26,7 @@ export function asrFields(asr) {
   conclusion.value = (asr && asr.conclusion) || "";
   const errorTag = select(
     asr && asr.errorTag,
-    Object.values(ErrorTag).map((t) => [t, t]),
+    Object.values(ErrorTag).map((t) => [t, uiLabel(t)]),
     "Sin etiqueta",
   );
   const processNote = el("textarea", { className: "input", rows: "2" });
