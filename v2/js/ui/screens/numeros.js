@@ -1,3 +1,4 @@
+import { uiLabel } from '../labels.js';
 import { listStageAccounts, getActiveAccount } from "../../domain/account.js";
 import { field } from "../forms/observation.js";
 import { resultCharts, label } from "../journal-insights.js";
@@ -83,8 +84,8 @@ export async function renderNumeros(ctx) {
       to: filters.to,
     };
     const desk = computeDesk(allSignals, deskFilters);
-    const disp = select(deskFilters.disposition, [["", "disposition"], ...Object.values(Disposition).map((d) => [d, d])]);
-    const reso = select(deskFilters.resolution, [["", "resolution"], ...Object.values(Resolution).map((d) => [d, d])]);
+    const disp = select(deskFilters.disposition, [["", "disposition"], ...Object.values(Disposition).map((d) => [d, uiLabel(d)])]);
+    const reso = select(deskFilters.resolution, [["", "resolution"], ...Object.values(Resolution).map((d) => [d, uiLabel(d)])]);
     function applyDesk() {
       go("numeros" + qs({
         universe: uni.value, asset: asset.value, direction: direction.value,
@@ -127,7 +128,7 @@ export async function renderNumeros(ctx) {
   const currency=universe==="BACKTEST"?"simulado":currencies[0]||"";
   const stats = compute(allTrades, filters);
   if(mixed)for(const k of ['netPnl','profitFactorUsd','expectancyUsd','maxDrawdown'])stats[k]=null;
-  const ctxSel = select(filters.context, [["", "Todos los tipos"], [Context.LIVE, "LIVE"], [Context.PROP_CHALLENGE, "PROP"], [Context.FUNDED, "FUNDED"], [Context.DEMO, "DEMO"], [Context.BACKTEST, "BACKTEST"]]);
+  const ctxSel = select(filters.context, [["", "Todos los tipos"], [Context.LIVE, "Cuenta propia"], [Context.PROP_CHALLENGE, "Evaluación"], [Context.FUNDED, "Fondeada"], [Context.DEMO, "DEMO"], [Context.BACKTEST, "BACKTEST"]]);
   const strategy = select(filters.strategy, [["", "Todas"], ...Object.values(Strategy).map((s) => [s, label(strategyLabel(s))])]);
   strategy.setAttribute("name", "strategy");
   const variant = select(filters.variant, [["", "Todas"], ...Object.values(BlueVariant).map((v) => [v, v])]);

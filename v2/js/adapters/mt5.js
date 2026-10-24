@@ -286,7 +286,7 @@ export function toTradeDraft(rec, opts = {}) {
       strategy: "UNCLASSIFIED",
       style: null,
       variant: null,
-      hasPartials: false,
+      hasPartials: /^MACA_AUTO_V1\|/.test(rec.Notas||'') && /\|partials=1(?:\||$)/.test(rec.Notas),
       rrPlanned,
       sourceRrFinal,
       riskMoney,

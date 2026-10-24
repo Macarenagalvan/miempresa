@@ -1,3 +1,4 @@
+import { uiLabel } from '../labels.js';
 import { el } from "../render.js";
 import { deletableRow } from '../delete-button.js';
 import { field } from "../forms/observation.js";
@@ -21,7 +22,7 @@ export async function renderFondeo(ctx) {
       const item = el("button", { type: "button", className: "row hist" }, [
         el("strong", { text: ch.firm }),
         el("span", { className: "num", text: String(ch.size) }),
-        el("span", { text: ch.status }),
+        el("span", { text: uiLabel(ch.status) }),
         el("span", { text: `${accs.length} cta` }),
         el("span", { className: "num", text: paid ? `${paid} ${ch.currency}` : "—" }),
       ]);
@@ -29,18 +30,18 @@ export async function renderFondeo(ctx) {
       return deletableRow(item,'challenge',ch,'fondeo');
     }))
     : [el("div", { className: "empty-block" }, [
-      el("p", { className: "empty", text: "Todavía no cargaste un challenge." }),
-      el("button", { type: "button", className: "ghost", text: "Nuevo challenge", onclick: () => go("fondeo/nuevo") }),
+      el("p", { className: "empty", text: "Todavía no cargaste un fondeo." }),
+      el("button", { type: "button", className: "ghost", text: "Nuevo fondeo", onclick: () => go("fondeo/nuevo") }),
     ])];
   const costBits = Object.entries(summary.costByCurrency).map(([c, n]) => `${n} ${c}`).join(" · ") || "—";
   const payBits = Object.entries(summary.payoutByCurrency).map(([c, n]) => `${n} ${c}`).join(" · ") || "—";
   return [
     el("section", { className: "panel" }, [
       el("h1", { text: "Fondeo" }),
-      el("p", { className: "meta", text: `${summary.nChallenges} challenges · costo ${costBits} · payouts ${payBits}` }),
-      el("p", { className: "hint", text: "Un challenge no es una cuenta. Acá se registra el fondeo, no el trading." }),
+      el("p", { className: "meta", text: `${summary.nChallenges} fondeos · costo ${costBits} · cobros ${payBits}` }),
+      el("p", { className: "hint", text: "Acá registrás la evaluación, su costo y los cobros. Las operaciones se consultan en la cuenta vinculada." }),
       el("div", { className: "row-actions" }, [
-        el("button", { type: "button", text: "Nuevo challenge", onclick: () => go("fondeo/nuevo") }),
+        el("button", { type: "button", text: "Nuevo fondeo", onclick: () => go("fondeo/nuevo") }),
       ]),
       el("div", { className: "list table-wrap" }, list),
     ]),
@@ -53,10 +54,10 @@ function renderNuevo(ctx) {
   const size = el("input", { className: "input", value: "" });
   const cost = el("input", { className: "input", value: "" });
   const currency = el("select", { className: "input" }, Object.values(Currency).map((c) => el("option", { value: c, text: c })));
-  const status = el("select", { className: "input" }, Object.values(ChallengeStatus).map((s) => el("option", { value: s, text: s })));
+  const status = el("select", { className: "input" }, Object.values(ChallengeStatus).map((s) => el("option", { value: s, text: uiLabel(s) })));
   const format = el("input", { className: "input", value: "" });
   const err = el("p", { className: "err", text: "" });
-  const save = el("button", { type: "button", text: "Crear challenge" });
+  const save = el("button", { type: "button", text: "Crear fondeo" });
   save.addEventListener("click", async () => {
     err.textContent = "";
     try {
@@ -74,15 +75,15 @@ function renderNuevo(ctx) {
   });
   return [
     el("section", { className: "panel form" }, [
-      el("h1", { text: "Nuevo challenge" }),
-      field("firma", firm),
-      field("comprado", purchasedAt),
-      field("size", size),
-      field("costo", cost),
-      field("moneda", currency),
-      field("status", status),
-      field("formato (opcional)", format),
-      el("p", { className: "hint", text: "No crea Account. El costo no es un Movement ni un LOSS." }),
+      el("h1", { text: "Nuevo fondeo" }),
+      field("Firma", firm),
+      field("Fecha de compra", purchasedAt),
+      field("Tamaño de cuenta", size),
+      field("Costo", cost),
+      field("Moneda", currency),
+      field("Estado", status),
+      field("Formato (opcional)", format),
+      el("p", { className: "hint", text: "Después podés vincular una cuenta. El costo del fondeo se registra separado del resultado de tus operaciones." }),
       err,
       el("div", { className: "row-actions" }, [
         save,

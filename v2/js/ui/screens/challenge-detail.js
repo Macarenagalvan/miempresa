@@ -1,3 +1,4 @@
+import { uiLabel } from '../labels.js';
 import { el } from "../render.js";
 import { deleteButton, deletableRow } from '../delete-button.js';
 import { field } from "../forms/observation.js";
@@ -17,7 +18,7 @@ export async function renderChallengeDetail(ctx) {
   const id = ctx.route.rest;
   const ch = id ? await getChallenge(id) : null;
   if (!ch) {
-    return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Challenge no encontrado." })])];
+    return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Fondeo no encontrado." })])];
   }
   const accounts = await accountsForChallenge(ch.id);
   const payouts = await listChallengePayouts(ch.id);
@@ -28,13 +29,13 @@ export async function renderChallengeDetail(ctx) {
   const err = el("p", { className: "err", text: "" });
 
   const firm = el("input", { className: "input", value: ch.firm });
-  const status = el("select", { className: "input" }, Object.values(ChallengeStatus).map((s) => el("option", { value: s, text: s })));
+  const status = el("select", { className: "input" }, Object.values(ChallengeStatus).map((s) => el("option", { value: s, text: uiLabel(s) })));
   status.value = ch.status;
   const failReason = el("input", { className: "input", value: ch.failReason || "" });
   const target = el("input", { className: "input", value: ch.profitTargetPct ?? "" });
   const maxDd = el("input", { className: "input", value: ch.maxDrawdownPct ?? "" });
   const daily = el("input", { className: "input", value: ch.maxDailyLossPct ?? "" });
-  const save = el("button", { type: "button", text: "Guardar challenge" });
+  const save = el("button", { type: "button", text: "Guardar fondeo" });
   save.addEventListener("click", async () => {
     err.textContent = "";
     try {
@@ -54,11 +55,11 @@ export async function renderChallengeDetail(ctx) {
     el("option", { value: "", text: "cuenta existente" }),
     ...unlinkable.filter((a) => a.challengeId !== ch.id).map((a) => el("option", { value: a.id, text: `${a.name} · ${a.context === AccountContext.PROP_CHALLENGE ? "PROP" : a.context}` })),
   ]);
-  const linkBtn = el("button", { type: "button", text: "Vincular account" });
+  const linkBtn = el("button", { type: "button", text: "Vincular cuenta" });
   linkBtn.addEventListener("click", async () => {
     err.textContent = "";
     try {
-      if (!pick.value) throw new Error("elegí una account");
+      if (!pick.value) throw new Error("elegí una cuenta");
       await linkAccountToChallenge(pick.value, ch.id);
       go("challenge/" + ch.id);
     } catch (e) { err.textContent = e.message; }
@@ -66,11 +67,11 @@ export async function renderChallengeDetail(ctx) {
 
   const newName = el("input", { className: "input", value: "" });
   const newCtx = el("select", { className: "input" }, [
-    el("option", { value: "PROP", text: "PROP" }),
-    el("option", { value: "FUNDED", text: "FUNDED" }),
+    el("option", { value: "PROP", text: "Evaluación de fondeo" }),
+    el("option", { value: "FUNDED", text: "Fondeada" }),
   ]);
   const newAmt = el("input", { className: "input", value: String(ch.size) });
-  const createLinked = el("button", { type: "button", className: "ghost", text: "Crear account vinculada" });
+  const createLinked = el("button", { type: "button", className: "ghost", text: "Crear cuenta vinculada" });
   createLinked.addEventListener("click", async () => {
     err.textContent = "";
     try {
@@ -87,9 +88,9 @@ export async function renderChallengeDetail(ctx) {
 
   const pAmount = el("input", { className: "input", value: "" });
   const pDate = el("input", { className: "input", type: "date", value: new Date().toISOString().slice(0, 10) });
-  const pKind = el("select", { className: "input" }, Object.values(PayoutKind).map((k) => el("option", { value: k, text: k })));
+  const pKind = el("select", { className: "input" }, Object.values(PayoutKind).map((k) => el("option", { value: k, text: uiLabel(k) })));
   const pNote = el("input", { className: "input", value: "" });
-  const addPay = el("button", { type: "button", text: "Registrar payout" });
+  const addPay = el("button", { type: "button", text: "Registrar cobro" });
   addPay.addEventListener("click", async () => {
     err.textContent = "";
     try {
@@ -115,20 +116,20 @@ export async function renderChallengeDetail(ctx) {
       row.addEventListener("click", () => go("cuenta/" + a.id));
       return deletableRow(row,'account',a,'challenge/'+ch.id);
     })
-    : [el("p", { className: "empty", text: "0 accounts vinculadas." })];
+    : [el("p", { className: "empty", text: "No hay cuentas vinculadas." })];
 
   const payList = payouts.length
     ? payouts.map((p) => {
       const live = isPayoutLive(p);
       const line = el("div", { className: "row hist" }, [
         el("span", { text: p.date }),
-        el("span", { text: p.kind }),
+        el("span", { text: uiLabel(p.kind) }),
         el("span", { text: `${p.amount} ${p.currency}` }),
-        el("span", { text: live ? "vive" : "VOID" }),
+        el("span", { text: live ? "Registrado" : "Anulado" }),
         el("span", { className: "clip", text: p.note || "" }),
       ]);
       if (live) {
-        const vb = el("button", { type: "button", className: "ghost", text: "VOID" });
+        const vb = el("button", { type: "button", className: "ghost", text: "Anular" });
         vb.addEventListener("click", async () => {
           try { await voidPayout(p.id, VoidReason.ACCIDENT); go("challenge/" + ch.id); }
           catch (e) { err.textContent = e.message; }
@@ -137,27 +138,27 @@ export async function renderChallengeDetail(ctx) {
       }
       return line;
     })
-    : [el("p", { className: "empty", text: "0 payouts." })];
+    : [el("p", { className: "empty", text: "No hay cobros registrados." })];
 
   const rules = [
-    ch.profitTargetPct != null ? `target ${ch.profitTargetPct}%` : null,
-    ch.maxDrawdownPct != null ? `maxDD ${ch.maxDrawdownPct}%` : null,
-    ch.maxDailyLossPct != null ? `daily ${ch.maxDailyLossPct}%` : null,
-  ].filter(Boolean).join(" · ") || "n/a — sin dato de equity intradía";
+    ch.profitTargetPct != null ? `Objetivo ${ch.profitTargetPct}%` : null,
+    ch.maxDrawdownPct != null ? `Pérdida máxima ${ch.maxDrawdownPct}%` : null,
+    ch.maxDailyLossPct != null ? `Pérdida diaria ${ch.maxDailyLossPct}%` : null,
+  ].filter(Boolean).join(" · ") || "Sin dato de saldo intradía";
 
   return [
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: `${ch.status} · ${ch.currency}` }),
+      el("p", { className: "kicker", text: `${uiLabel(ch.status)} · ${ch.currency}` }),
       el("h1", { text: ch.firm }),
-      el("p", { className: "meta", text: `size ${ch.size} · costo ${ch.cost} ${ch.currency} · compra ${ch.purchasedAt}` }),
-      el("p", { className: "meta", text: `payouts ${paid} ${ch.currency} · maxStage ${ch.maxStageReached}` }),
+      el("p", { className: "meta", text: `Tamaño ${ch.size} · costo ${ch.cost} ${ch.currency} · compra ${ch.purchasedAt}` }),
+      el("p", { className: "meta", text: `Cobros ${paid} ${ch.currency} · fase máxima alcanzada ${ch.maxStageReached}` }),
       el("p", { className: "hint", text: `Reglas: ${rules}` }),
-      field("firma", firm),
-      field("status", status),
-      field("failReason", failReason),
-      field("profitTargetPct", target),
-      field("maxDrawdownPct", maxDd),
-      field("maxDailyLossPct", daily),
+      field("Firma", firm),
+      field("Estado", status),
+      field("Motivo de cierre", failReason),
+      field("Objetivo de beneficio (%)", target),
+      field("Pérdida máxima (%)", maxDd),
+      field("Pérdida diaria máxima (%)", daily),
       err,
       el("div", { className: "row-actions" }, [
         save,
@@ -166,7 +167,7 @@ export async function renderChallengeDetail(ctx) {
       ]),
     ]),
     el("section", { className: "panel" }, [
-      el("h2", { text: "Accounts" }),
+      el("h2", { text: "Cuentas vinculadas" }),
       el("div", { className: "list" }, accList),
       field("vincular existente", pick),
       linkBtn,
@@ -174,14 +175,14 @@ export async function renderChallengeDetail(ctx) {
       field("tipo", newCtx),
       field("capital inicial", newAmt),
       createLinked,
-      el("p", { className: "hint", text: "Cambiar status del challenge no transforma el tipo de la account." }),
+      el("p", { className: "hint", text: "El estado del fondeo y el tipo de la cuenta se administran por separado." }),
     ]),
     el("section", { className: "panel" }, [
-      el("h2", { text: "Payouts" }),
-      el("p", { className: "hint", text: "No es WIN. No mueve accountBalance. Si sale de MT5, Movement WITHDRAWAL aparte." }),
-      field("amount", pAmount),
+      el("h2", { text: "Cobros" }),
+      el("p", { className: "hint", text: "Los cobros de fondeo se registran aparte. Si retiraste dinero de la cuenta MT5, registrá también el retiro en esa cuenta." }),
+      field("Monto", pAmount),
       field("fecha", pDate),
-      field("kind", pKind),
+      field("Tipo de cobro", pKind),
       field("nota", pNote),
       addPay,
       el("div", { className: "list" }, payList),

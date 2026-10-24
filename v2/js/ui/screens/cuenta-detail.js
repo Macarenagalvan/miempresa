@@ -1,3 +1,4 @@
+import { uiLabel } from '../labels.js';
 import { el } from "../render.js";
 import { deleteButton } from '../delete-button.js';
 import { field } from "../forms/observation.js";
@@ -15,11 +16,11 @@ import { listTrades } from "../../storage/repos/trades.js";
 import { go } from "../router.js";
 
 function contextLabel(ctx) {
-  return ctx === "PROP_CHALLENGE" ? "PROP" : ctx;
+  return uiLabel(ctx);
 }
 
 function typeLabel(type) {
-  return type === MovementType.FEE_EXTERNAL ? "FEE" : type;
+  return uiLabel(type);
 }
 
 export async function renderCuentaDetail(ctx) {
@@ -50,15 +51,15 @@ export async function renderCuentaDetail(ctx) {
   actions.push(el("button", { type: "button", className: "ghost", text: "Volver", onclick: () => go("cuentas") }));
 
   const type = el("select", { className: "input" }, [
-    el("option", { value: "DEPOSIT", text: "DEPOSIT" }),
-    el("option", { value: "WITHDRAWAL", text: "WITHDRAWAL" }),
-    el("option", { value: "FEE", text: "FEE" }),
-    el("option", { value: "ADJUSTMENT", text: "ADJUSTMENT" }),
+    el("option", { value: "DEPOSIT", text: "Depósito" }),
+    el("option", { value: "WITHDRAWAL", text: "Retiro" }),
+    el("option", { value: "FEE", text: "Comisión" }),
+    el("option", { value: "ADJUSTMENT", text: "Ajuste" }),
   ]);
   const amount = el("input", { className: "input", value: "" });
   const date = el("input", { className: "input", type: "date", value: new Date().toISOString().slice(0, 10) });
   const note = el("input", { className: "input", value: "" });
-  const add = el("button", { type: "button", text: "Agregar movement" });
+  const add = el("button", { type: "button", text: "Agregar movimiento" });
   add.addEventListener("click", async () => {
     err.textContent = "";
     try {
@@ -90,11 +91,11 @@ export async function renderCuentaDetail(ctx) {
         el("span", { text: m.date }),
         el("span", { text: typeLabel(m.type) }),
         el("span", { text: String(m.amount) }),
-        el("span", { text: live ? "vive" : "VOID" }),
+        el("span", { text: live ? "Registrado" : "Anulado" }),
         el("span", { className: "clip", text: m.note || "" }),
       ]);
       if (live) {
-        const voidBtn = el("button", { type: "button", className: "ghost", text: "VOID" });
+        const voidBtn = el("button", { type: "button", className: "ghost", text: "Anular" });
         voidBtn.addEventListener("click", async () => {
           try {
             await voidMovement(m.id, VoidReason.ACCIDENT);
@@ -109,7 +110,7 @@ export async function renderCuentaDetail(ctx) {
 
   return [
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: `${contextLabel(account.context)} · ${account.status}` }),
+      el("p", { className: "kicker", text: `${contextLabel(account.context)} · ${uiLabel(account.status)}` }),
       el("h1", { text: account.name }),
       el("p", { className: "meta", text: `${account.currency} · inicial ${account.initialAmount} · saldo ${bal}` }),
       isActive ? el("p", { className: "meta", text: "Cuenta activa" }) : null,
@@ -120,17 +121,17 @@ export async function renderCuentaDetail(ctx) {
     ]),
     account.status === AccountStatus.ACTIVE
       ? el("section", { className: "panel" }, [
-        el("h2", { text: "Nuevo movement" }),
+        el("h2", { text: "Nuevo movimiento" }),
         field("tipo", type),
-        field("monto (positivo; ADJUSTMENT puede ser negativo)", amount),
+        field("Monto (positivo; un ajuste puede ser negativo)", amount),
         field("fecha", date),
         field("nota", note),
-        el("p", { className: "hint", text: "DEPOSIT suma. WITHDRAWAL y FEE restan. ADJUSTMENT usa el signo que escribas." }),
+        el("p", { className: "hint", text: "Los depósitos suman; los retiros y las comisiones restan. Los ajustes usan el signo que escribas." }),
         add,
       ])
       : null,
     el("section", { className: "panel" }, [
-      el("h2", { text: "Movements" }),
+      el("h2", { text: "Movimientos" }),
       el("div", { className: "list" }, rows),
     ]),
   ];
