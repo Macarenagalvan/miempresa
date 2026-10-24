@@ -1,0 +1,25 @@
+/* Familiar dark journal palette and task-first navigation. */
+:root{--bg:#0d0f12;--sidebar:#13161a;--panel:#15191f;--elev:#1a1e24;--line:#2a313b;--line-strong:#36404d;--text:#e8edf2;--muted:#a5afbd;--accent:#68adff;--accent-soft:#142b46;--win:#57d5a1;--loss:#ff8585;--focus:#68adff;--sidebar-w:224px}
+.content{max-width:1520px;width:100%;margin:0 auto;padding:28px 32px}
+.panel{border-radius:12px;padding:24px}.panel h1{font-size:27px}.panel h2{font-size:18px}.panel .hint{line-height:1.6}
+.journal-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:22px}.journal-heading .input{max-width:360px}
+.journal-heading h1{margin:6px 0}.journal-actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.journal-link{display:inline-flex;align-items:center;padding:10px 15px;border:1px solid var(--line-strong);border-radius:8px;color:var(--text);text-decoration:none;font-weight:500;background:var(--elev)}
+.journal-link:first-child{color:var(--accent);border-color:#345e89;background:var(--accent-soft)}.journal-link:hover{border-color:var(--accent)}
+.journal-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.journal-kpis .metric{padding:18px;min-width:0}.journal-kpis .num{font-size:clamp(18px,2vw,27px);overflow-wrap:anywhere}
+.journal-kpis>strong{background:var(--elev);padding:16px;border-radius:8px}.journal-kpis small{display:block;line-height:1.5}
+.journal-chart{margin:18px 0 0;background:var(--bg);border:1px solid var(--line)}.journal-chart svg{display:block;color:var(--accent);width:100%;height:210px}.journal-chart-labels{display:flex;justify-content:space-between;gap:16px;font-size:12px;color:var(--muted)}
+.journal-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.journal-two>.panel{margin:0}.journal-analysis{margin-top:24px}.journal-analysis>.journal-two{margin-top:18px}
+.journal-bar{display:grid;grid-template-columns:minmax(80px,1fr) minmax(60px,2fr) auto;gap:14px;align-items:center;margin:20px 0;font-size:13px}.journal-bar progress{width:100%;height:9px;accent-color:var(--accent)}
+.journal-stat-filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:24px 0 12px}.journal-stat-filters .field{min-width:0;margin:0}.journal-stat-filters select,.journal-stat-filters input{width:100%;min-width:0}
+.journal-office>summary{cursor:pointer;padding:20px;border:1px solid var(--line);border-radius:10px;margin:20px 0;background:var(--panel)}
+.journal-confirm{display:flex;align-items:center;gap:12px;margin:16px 0;line-height:1.5}.journal-confirm input{width:18px;height:18px;flex-shrink:0;accent-color:var(--accent)}
+.journal-table{width:100%;border-collapse:collapse}.journal-table td,.journal-table th{padding:12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}.journal-table th{font-size:12px;color:var(--muted)}
+.journal-guide{padding-left:24px;color:var(--muted);line-height:1.9;margin:20px 0}.journal-steps{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.journal-steps button{flex:1;min-width:130px}.trade-form-section{scroll-margin-top:24px}
+.journal-hist-head{display:grid;grid-template-columns:90px 80px 70px minmax(140px,1fr) 80px 70px 120px 65px 130px;gap:8px;padding:12px;font-size:11px;color:var(--muted)}
+.historial-count{margin:18px 0}.historial-header+.journal-actions{margin-top:8px}.row.hist{font-size:13px}
+.metrics{grid-template-columns:repeat(4,minmax(0,1fr))}.metrics .metric{min-width:0}.metrics .num{overflow-wrap:anywhere}
+button:disabled{opacity:.45;cursor:not-allowed}.journal-chart circle:hover{r:6}.form textarea{min-width:0}
+@media(max-width:1200px){.journal-stat-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.journal-hist-head{display:none}.content{padding:24px}.journal-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.content{padding:16px}.panel{padding:18px}.journal-heading{flex-direction:column;align-items:stretch;gap:12px}.journal-heading .input{max-width:none}.journal-two{grid-template-columns:1fr}.journal-stat-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.journal-kpis{gap:8px}.journal-kpis .metric{padding:12px}.journal-kpis .num{font-size:19px}.journal-chart{padding:14px}.journal-chart-labels{flex-wrap:wrap}.journal-chart svg{height:170px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.journal-bar{grid-template-columns:85px minmax(35px,1fr) auto;gap:7px;font-size:11px}.journal-actions .journal-link{flex:1;justify-content:center;min-width:130px}.top-heading .top-eyebrow{display:none}}
+@media(min-width:1201px){.journal-hist-head,button.row.hist.journal-history-row{grid-template-columns:90px 75px 85px minmax(140px,1fr) 70px 65px 112px 45px 135px;gap:8px;padding:12px}.journal-history-row .num{white-space:nowrap}}

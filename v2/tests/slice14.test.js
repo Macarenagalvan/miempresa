@@ -22,7 +22,7 @@ async function run() {
   const greet = greetingLine(seed.meta);
 
   assert("Hoy renderiza escritorio", Boolean(host.querySelector(".hoy-desk")) && Boolean(host.querySelector(".hoy-ident")) && Boolean(host.querySelector(".hoy-day")));
-  assert("kicker Trading Office", Boolean(host.querySelector(".kicker") && host.querySelector(".kicker").textContent === "Trading Office"));
+  assert("kicker Trading Office", Boolean(host.querySelector(".identity-band .kicker") && host.querySelector(".identity-band .kicker").textContent === "Trading Office"));
   assert("saludo contextual", text.includes(greet) && /Buen( día|as tardes|as noches)/.test(greet));
   assert("muestra etapa", text.includes("Etapa ") && Boolean(seed.stage && seed.stage.name && text.includes(seed.stage.name)));
   assert("sin cuenta no inventa balance", !text.includes("Abrir Cuentas") && !text.includes("Todavía no hay una cuenta activa."));

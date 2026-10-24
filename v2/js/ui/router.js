@@ -17,6 +17,9 @@ import { renderChallengeDetail } from "./screens/challenge-detail.js";
 import { renderSistema } from "./screens/sistema.js";
 import { getTrade } from "../storage/repos/trades.js";
 
+import { renderImportar } from "./screens/importar.js";
+import { renderPractice } from "./screens/practice.js";
+
 let paintedPath = "";
 
 export function parseHash() {
@@ -53,7 +56,7 @@ export function currentRoute() {
 
 export function routeList() {
   return {
-    hoy: true,
+    hoy: true, importar: true, practica: true,
     nuevo: true,
     historial: true,
     backtesting: true,
@@ -73,7 +76,11 @@ export async function paint(ctx) {
   let nodes;
   let nav = parsed.name;
 
-  if (parsed.name === "nuevo") {
+  if (parsed.name === "importar") {
+    title = "Importar operaciones"; nodes = await renderImportar(viewCtx);
+  } else if (parsed.name === "practica") {
+    title = "Mi plan y rutina"; nodes = await renderPractice(viewCtx);
+  } else if (parsed.name === "nuevo") {
     title = parsed.rest === "trade" && parsed.query.context === "BACKTEST" ? "Nuevo backtest" : "Registrar";
     if (parsed.rest === "trade" && parsed.query.context === "BACKTEST") nav = "backtesting";
     nodes = await renderNuevo(viewCtx);

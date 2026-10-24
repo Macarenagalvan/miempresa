@@ -91,7 +91,7 @@ async function renderCard(trade, setup, asr) {
   if (trade.lifecycle === Lifecycle.CLOSED) {
     actions.push(el("button", {
       type: "button",
-      text: asr ? "Ver / editar ASR" : "Hacer ASR",
+      text: asr ? "Ver / editar revisión" : "Revisar operación",
       onclick: () => go("trade/" + trade.id + "/asr"),
     }));
   }
@@ -395,7 +395,7 @@ function renderClose(trade) {
 function renderAsr(trade, asr) {
   const form = asrFields(asr);
   const err = el("p", { className: "err", text: "" });
-  const save = el("button", { type: "button", text: "Guardar ASR" });
+  const save = el("button", { type: "button", text: "Guardar revisión" });
   save.addEventListener("click", async () => {
     err.textContent = "";
     try {
@@ -409,9 +409,9 @@ function renderAsr(trade, asr) {
   });
   return [
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: asr ? "Ver / editar ASR" : "Hacer ASR" }),
+      el("p", { className: "kicker", text: asr ? "Ver / editar revisión" : "Revisar operación" }),
       el("h1", { text: `${trade.asset} ${trade.direction}` }),
-      el("p", { className: "hint", text: "wouldDoSame + conclusion. El resto es opcional." }),
+      el("p", { className: "hint", text: "Indicá si repetirías la operación y qué aprendiste. Los demás campos son opcionales." }),
       ...form.nodes,
       err,
       el("div", { className: "row-actions" }, [

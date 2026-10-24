@@ -41,7 +41,7 @@ export async function run() {
   check((await getTrade(draft.id)).lifecycle==="VOID", "CLOSED pasa a VOID");
   const cancelled=await createTrade({asset:"XAUUSD",direction:"LONG",isDraft:true},seed.stage.id);
   const voided=await voidTrade(cancelled.id,"TEST");
-  check(voided.lifecycle==="VOID" && stateBadge(voided).textContent.includes("VOID"), "Borrador anulado muestra VOID");
+  check(voided.lifecycle==="VOID" && stateBadge(voided).textContent.includes("Anulada"), "Borrador anulado muestra VOID");
 
   const live=await createAccount({name:"TEST release LIVE",context:"LIVE",currency:"USD",initialAmount:1000},seed.stage.id);
   const demo=await createAccount({name:"TEST release DEMO",context:"DEMO",currency:"USD",initialAmount:2000},seed.stage.id);

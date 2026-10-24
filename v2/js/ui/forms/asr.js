@@ -15,9 +15,9 @@ export function asrFields(asr) {
   const would = select(
     asr && asr.wouldDoSame,
     [
-      [WouldDoSame.YES, "YES"],
-      [WouldDoSame.NO, "NO"],
-      [WouldDoSame.PARTLY, "PARTLY"],
+      [WouldDoSame.YES, "Sí"],
+      [WouldDoSame.NO, "No"],
+      [WouldDoSame.PARTLY, "En parte"],
     ],
     "elegir",
   );
@@ -26,7 +26,7 @@ export function asrFields(asr) {
   const errorTag = select(
     asr && asr.errorTag,
     Object.values(ErrorTag).map((t) => [t, t]),
-    "sin tag",
+    "Sin etiqueta",
   );
   const processNote = el("textarea", { className: "input", rows: "2" });
   processNote.value = (asr && asr.processNote) || "";
@@ -40,7 +40,7 @@ export function asrFields(asr) {
     nodes: [
       field("¿Lo haría igual?", would),
       field("Conclusión", conclusion),
-      field("errorTag (opcional)", errorTag),
+      field("Tipo de error (opcional)", errorTag),
       field("Proceso", processNote),
       field("Ejecución", executionNote),
       field("Riesgo", riskNote),

@@ -1,3 +1,4 @@
+import { accountOverview } from "../journal-insights.js";
 import { el } from "../render.js";
 import { listStageTrades } from "../../domain/trade.js";
 import { getActiveAccount, balanceFor } from "../../domain/account.js";
@@ -391,7 +392,8 @@ export async function renderHoy(ctx) {
   ];
 
   return [
-    el("div", { className: "hoy-desk" }, [
+    await accountOverview(ctx, true),
+    el("details", { className: "journal-office" }, [el("summary", {text:"Mi escritorio · tareas, notas, calendario e ideas"}), el("div", { className: "hoy-desk" }, [
       el("section", { className: "panel identity-band hoy-ident" }, [
         el("p", { className: "kicker", text: "Trading Office" }),
         el("h1", { text: greetingLine(ctx.meta) }),
@@ -418,7 +420,7 @@ export async function renderHoy(ctx) {
         await buildCalCard(ctx),
         await buildShortcutsCard(ctx),
       ]),
-    ]),
+    ])]),
   ];
 }
 
