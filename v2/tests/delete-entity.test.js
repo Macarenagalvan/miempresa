@@ -1,0 +1,41 @@
+import {ensureJournalSeed} from '../js/domain/stage.js';
+import {createAccount,setActiveAccount} from '../js/domain/account.js';
+import {createChallenge} from '../js/domain/challenge.js';
+import {createClosedTrade} from '../js/domain/trade.js';
+import {createMovement} from '../js/domain/movement.js';
+import {createPayout} from '../js/domain/payout.js';
+import {addTradeImage} from '../js/storage/repos/attachments.js';
+import {createRepo} from '../js/storage/repos/base.js';
+import {previewDeletion,deleteEntity} from '../js/domain/delete-entity.js';
+export async function run(){
+ let n=0;const check=(v,m)=>{if(!v)throw Error('Borrado: '+m);n++;};const repo=s=>createRepo(s);
+ const {stage}=await ensureJournalSeed();
+ const ch=await createChallenge({firm:'TEST borrar fondeo',size:5000,cost:50,currency:'USD'},stage.id);
+ const a=await createAccount({name:'TEST borrar cuenta',currency:'USD',context:'PROP_CHALLENGE',initialAmount:5000,challengeId:ch.id},stage.id);
+ const keep=await createAccount({name:'TEST conservar',currency:'USD',context:'LIVE',initialAmount:1000},stage.id);
+ const t=await createClosedTrade({accountId:a.id,context:a.context,asset:'EURUSD',direction:'LONG',entry:100,initialSL:95,exit:110,netPnl:10,openedAt:'2026-10-01T10:00:00Z',closedAt:'2026-10-01T11:00:00Z'},stage.id);
+ const image=await addTradeImage(t.id,{blob:new Blob(['test'],{type:'image/png'}),type:'image/png'});
+ const pay=await createPayout({challengeId:ch.id,accountId:a.id,amount:100},stage.id);
+ await repo('asrs').put({id:'delete-test-asr',tradeId:t.id});await repo('signals').put({id:'delete-test-signal',tradeId:t.id});
+ await setActiveAccount(a.id);
+ const stale=await previewDeletion('account',a.id);
+ const movement=await createMovement({accountId:a.id,type:'DEPOSIT',amount:20,date:'2026-10-01'},stage.id);
+ let rejected=false;try{await deleteEntity('account',a.id,false,stale.signature);}catch{rejected=true;}
+ check(rejected,'cambio posterior exige nueva confirmación');check(Boolean(await repo('trades').get(t.id)),'rechazo no borra datos');
+ const p=await previewDeletion('account',a.id);check(p.counts.trades===1&&p.counts.attachments===1&&p.counts.movements===1,'resumen de impacto');
+ await deleteEntity('account',a.id,false,p.signature);
+ for(const [s,id] of [['accounts',a.id],['trades',t.id],['movements',movement.id],['asrs','delete-test-asr'],['attachments',image.id]])check(!await repo(s).get(id),'elimina '+s);
+ check((await repo('signals').get('delete-test-signal')).tradeId===null,'desvincula aviso');
+ check((await repo('payouts').get(pay.id)).accountId===null,'conserva cobro sin cuenta huérfana');
+ check(!(await repo('meta').get('singleton')).activeAccountId,'limpia cuenta activa');
+ check(Boolean(await repo('accounts').get(keep.id)),'otra cuenta intacta');check(Boolean(await repo('challenges').get(ch.id)),'fondeo intacto');
+ check((await repo('syncLedger').get('trades::'+t.id)).tombstone,'borrado pendiente de sincronizar');
+ const linked=await createAccount({name:'TEST conservar vinculada',currency:'USD',context:'PROP_CHALLENGE',initialAmount:5000,challengeId:ch.id},stage.id);
+ const pc=await previewDeletion('challenge',ch.id);await deleteEntity('challenge',ch.id,false,pc.signature);
+ check((await repo('accounts').get(linked.id)).challengeId===null,'borrar fondeo conserva cuenta por defecto');check(!await repo('payouts').get(pay.id),'borra cobros del fondeo');
+ const ch2=await createChallenge({firm:'TEST cascada',size:5000,cost:50,currency:'USD'},stage.id);
+ const a2=await createAccount({name:'TEST cascada',currency:'USD',context:'PROP_CHALLENGE',initialAmount:5000,challengeId:ch2.id},stage.id);
+ const cascade=await previewDeletion('challenge',ch2.id,true);await deleteEntity('challenge',ch2.id,true,cascade.signature);
+ check(!await repo('accounts').get(a2.id)&&!await repo('challenges').get(ch2.id),'opción explícita elimina cuentas vinculadas');
+ document.getElementById('out').textContent+='\nBorrado: '+n+' tests OK';
+}

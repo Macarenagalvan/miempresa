@@ -1,4 +1,5 @@
 import { el } from './render.js';
+import { deleteButton } from './delete-button.js';
 import { listStageAccounts, accountBalance, getActiveAccount, setActiveAccount } from '../domain/account.js';
 import { listTrades } from '../storage/repos/trades.js';
 import { listMovements } from '../storage/repos/movements.js';
@@ -52,6 +53,7 @@ export async function accountOverview(ctx, compact=false){
   el('div',{className:'journal-actions'},[link('+ Nueva operación','nuevo/trade'),link('Importar informe de MT5','importar'),link('Ver historial','historial'+(selected?'?account='+selected.id:'')),link('Ver estadísticas','numeros'+(selected?'?account='+selected.id+'&universe='+(selected.context==='DEMO'?'DEMO':'REAL'):''))]),
  ]);
  if(!selected){intro.append(el('p',{className:'empty',text:'Creá tu cuenta con el capital inicial. Después podés registrar una operación o importar el informe HTML de MT5.'}));return intro;}
+ intro.querySelector('.journal-actions').append(deleteButton('account',selected,ctx.route.name));
  const own=trades.filter(t=>t.accountId===selected.id&&t.stageId===ctx.stage.id&&!t.isDraft&&t.lifecycle!=='VOID');
  const stats=compute(own,{universe:selected.context==='DEMO'?'DEMO':'REAL',accountId:selected.id});
  intro.append(el('div',{className:'journal-kpis'},[kpi('Saldo actual',money(accountBalance(selected,movements,trades),selected.currency),'Inicial: '+money(selected.initialAmount,selected.currency)),kpi('Resultado neto',money(stats.netPnl,selected.currency),'Operaciones cerradas · todo el historial'),kpi('Operaciones cerradas',String(stats.nClosed),stats.nWins+' ganadas · '+stats.nLosses+' perdidas'),kpi('Porcentaje de acierto',stats.winRate==null?'—':(stats.winRate*100).toFixed(1)+'%','Ganadas / ganadas y perdidas')]));
