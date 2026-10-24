@@ -1,4 +1,5 @@
 import { el } from "../render.js";
+import { deleteButton, deletableRow } from '../delete-button.js';
 import { field } from "../forms/observation.js";
 import { AccountContext, ChallengeStatus, Currency, PayoutKind, VoidReason } from "../../domain/enums.js";
 import { getChallenge } from "../../storage/repos/challenges.js";
@@ -112,7 +113,7 @@ export async function renderChallengeDetail(ctx) {
         el("span", { text: a.currency }),
       ]);
       row.addEventListener("click", () => go("cuenta/" + a.id));
-      return row;
+      return deletableRow(row,'account',a,'challenge/'+ch.id);
     })
     : [el("p", { className: "empty", text: "0 accounts vinculadas." })];
 
@@ -160,6 +161,7 @@ export async function renderChallengeDetail(ctx) {
       err,
       el("div", { className: "row-actions" }, [
         save,
+        deleteButton('challenge',ch,'fondeo'),
         el("button", { type: "button", className: "ghost", text: "Volver", onclick: () => go("fondeo") }),
       ]),
     ]),

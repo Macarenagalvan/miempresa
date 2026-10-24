@@ -1,4 +1,5 @@
 import { el } from '../render.js';
+import { deleteButton } from '../delete-button.js';
 import { field } from '../forms/observation.js';
 import { decodeMt5File, parseMt5Html } from '../../adapters/mt5-html.js';
 import { parseMt5Csv } from '../../adapters/mt5.js';
@@ -69,6 +70,6 @@ export async function renderImportar(ctx){
  return [el('section',{className:'panel form'},[el('p',{className:'kicker',text:'MT5 → Journal → Resultados'}),el('h1',{text:'Importar operaciones'}),el('p',{className:'meta',text:'Subí el informe HTML de MT5 directamente. También podés usar el CSV del exportador MACA.'}),
   el('ol',{className:'journal-guide'},[el('li',{text:'En MT5: Historial → Todo el historial → Informe HTML.'}),el('li',{text:'Elegí aquí la cuenta y el horario del servidor del broker.'}),el('li',{text:'Seleccioná el archivo, revisá las posiciones y confirmá.'})]),
   !accounts.length?el('p',{},[el('span',{text:'Todavía no tenés una cuenta. '}),link('Crear cuenta','cuentas/nueva')]):null,
-  field('1. Cuenta destino',account),field('2. Zona horaria de MT5',zone),el('p',{className:'hint',text:'Es el horario del servidor, no el de tu computadora. Queda recordado para la última cuenta importada.'}),field('3. Informe HTML o archivo CSV',file),err,preview,confirm,
+  field('1. Cuenta destino',account),deleteButton('account',()=>accounts.find(a=>a.id===account.value),'importar'),field('2. Zona horaria de MT5',zone),el('p',{className:'hint',text:'Es el horario del servidor, no el de tu computadora. Queda recordado para la última cuenta importada.'}),field('3. Informe HTML o archivo CSV',file),err,preview,confirm,
   link('Respaldos y exportación','sistema')])];
 }

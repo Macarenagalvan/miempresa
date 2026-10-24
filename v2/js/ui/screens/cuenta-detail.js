@@ -1,4 +1,5 @@
 import { el } from "../render.js";
+import { deleteButton } from '../delete-button.js';
 import { field } from "../forms/observation.js";
 import { AccountStatus, MovementType, VoidReason } from "../../domain/enums.js";
 import {
@@ -33,7 +34,7 @@ export async function renderCuentaDetail(ctx) {
   const active = await getActiveAccount();
   const isActive = active && active.id === account.id;
   const err = el("p", { className: "err", text: "" });
-  const actions = [];
+  const actions = [deleteButton('account',account,'cuentas')];
   if (account.status === AccountStatus.ACTIVE) {
     if (!isActive) {
       actions.push(el("button", { type: "button", text: "Marcar activa", onclick: async () => {

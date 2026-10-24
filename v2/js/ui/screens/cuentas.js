@@ -1,5 +1,6 @@
 import { accountOverview, link, label, money } from "../journal-insights.js";
 import { el } from "../render.js";
+import { deletableRow } from '../delete-button.js';
 import { field } from "../forms/observation.js";
 import { AccountContext, Currency } from "../../domain/enums.js";
 import {
@@ -24,7 +25,7 @@ function contextLabel(ctx) {
 
 export async function renderCuentas(ctx) {
   if (ctx.route.rest === "nueva") return renderNueva(ctx);
-  const rows = await listStageAccounts(ctx.stage.id);
+  const rows = await listStageAccounts(ctx.stage.id, {includeArchived:true});
   const active = await getActiveAccount();
   const movements = await listMovements();
   const trades = await listTrades();
@@ -37,10 +38,10 @@ export async function renderCuentas(ctx) {
         el("span", { text: contextLabel(a.context) }),
         el("span", { text: a.currency }),
         el("span", { className: "num", text: money(bal, a.currency) }),
-        el("span", { text: isOn ? "activa" : "" }),
+        el("span", { text: a.status==='ARCHIVED' ? 'Archivada' : isOn ? "activa" : "" }),
       ]);
       item.addEventListener("click", () => go("cuenta/" + a.id));
-      return item;
+      return deletableRow(item,'account',a,'cuentas');
     })
     : [el("div", { className: "empty-block" }, [
       el("p", { className: "empty", text: "Todavía no agregaste una cuenta." }),

@@ -1,4 +1,5 @@
 import { el } from "../render.js";
+import { deletableRow } from '../delete-button.js';
 import { field } from "../forms/observation.js";
 import { ChallengeStatus, Currency } from "../../domain/enums.js";
 import { createChallenge, listStageChallenges, accountsForChallenge } from "../../domain/challenge.js";
@@ -25,7 +26,7 @@ export async function renderFondeo(ctx) {
         el("span", { className: "num", text: paid ? `${paid} ${ch.currency}` : "—" }),
       ]);
       item.addEventListener("click", () => go("challenge/" + ch.id));
-      return item;
+      return deletableRow(item,'challenge',ch,'fondeo');
     }))
     : [el("div", { className: "empty-block" }, [
       el("p", { className: "empty", text: "Todavía no cargaste un challenge." }),
