@@ -1,4 +1,5 @@
 import { createId, nowIso } from "./ids.js";
+import { assertExecution } from "./execution.js";
 import { Context, Lifecycle, Strategy, Style, BlueVariant, CloseType, TradeRecordSource } from "./enums.js";
 import {
   assertTrade,
@@ -35,7 +36,7 @@ export const TRADE_JOURNAL_FIELDS = Object.freeze([
 const JOURNAL_FIELD_SET = new Set(TRADE_JOURNAL_FIELDS);
 
 function numOrNull(v) {
-  if (v === "" || v == null) return null;
+  if (v == null || String(v).trim() === "") return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
@@ -133,6 +134,15 @@ function applyJournalField(next, field, raw) {
   }
 }
 
+export function applyJournalPatch(current, patch) {
+  assertJournalPatch(patch);
+  const next = { ...current };
+  for (const field of TRADE_JOURNAL_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(patch, field)) applyJournalField(next, field, patch[field]);
+  }
+  return next;
+}
+
 export async function enrichTrade(id, patch) {
   const current = await getTrade(id);
   if (!current) throw new Error("trade no existe");
@@ -194,6 +204,9 @@ export async function createClosedTrade(input, stageId) {
   const snap = snapshotFromSetup(setup);
   const now = nowIso();
   const context = input.context || (setup && setup.context) || Context.BACKTEST;
+  assertExecution({ ...input, asset: input.asset || setup?.asset, direction: input.direction || setup?.direction,
+    openedAt: input.openedAt || (context === Context.BACKTEST ? null : now),
+    closedAt: input.closedAt || (context === Context.BACKTEST ? null : now) });
   let account = null;
   let accountId = null;
   if (context === Context.BACKTEST) {

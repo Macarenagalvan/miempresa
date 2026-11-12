@@ -2,8 +2,9 @@ import { el } from "../render.js";
 import { field } from "../forms/observation.js";
 import { getTrade } from "../../storage/repos/trades.js";
 import { getSetup } from "../../storage/repos/setups.js";
-import { updateOpenTrade, updateDraftTrade, activateDraftTrade, closeTrade, voidTrade, enrichTrade } from "../../domain/trade.js";
-import { localDateTimeValue, stateBadge, tradeSection } from "../trade-presentation.js";
+import { updateOpenTrade, completeDraftTrade, activateDraftTrade, closeTrade, voidTrade, enrichTrade } from "../../domain/trade.js";
+import { choiceButtons } from "../forms/choice-buttons.js";
+import { localDateTimeValue, localDateTimeIso, stateBadge, tradeSection } from "../trade-presentation.js";
 import { getAccount } from "../../storage/repos/accounts.js";
 import { asrForTrade, asrStatusLabel, createAsr, updateAsr } from "../../domain/asr.js";
 import { CloseType, VoidReason, Lifecycle, Strategy, Style, BlueVariant, strategyLabel } from "../../domain/enums.js";
@@ -33,7 +34,7 @@ export async function renderTradeDetail(ctx) {
   }
   const setup = trade.setupId ? await getSetup(trade.setupId) : null;
   const asr = await asrForTrade(trade.id);
-  if (closeMode) return renderClose(trade);
+  if (closeMode) return trade.isDraft ? renderEdit(trade, "CLOSED") : renderClose(trade);
   if (voidMode) return renderVoid(trade);
   if (asrMode) return renderAsr(trade, asr);
   if (editMode) return renderEdit(trade);
@@ -230,10 +231,12 @@ function enumSelect(values, current, name, emptyLabel, labelFn) {
   return node;
 }
 
-function renderEdit(trade) {
+function renderEdit(trade, target = "DRAFT") {
   const entryActual = el("input", { className: "input", name: "entryActual", value: trade.entry ?? "", readonly: true });
   const exitActual = el("input", { className: "input", name: "exitActual", value: trade.exit ?? "", readonly: true });
   const draft = trade.isDraft === true;
+  const completion = enumSelect(["DRAFT", "OPEN", "CLOSED"], target, "completion", null,
+    value => ({ DRAFT: "Conservar borrador", OPEN: "Marcar abierta", CLOSED: "Completar y cerrar" })[value]);
   const importedDraft = draft && trade.context === "BACKTEST" && trade.sourceRef?.kind === "BACKTEST_JSON";
   const assetEdit = el("input", { className: "input", name: "asset", value: trade.asset || "" });
   const directionEdit = enumSelect(["LONG", "SHORT"], trade.direction, "direction", "Sin completar");
@@ -280,12 +283,17 @@ function renderEdit(trade) {
         hasPartials: partials.value === "true",
       };
       if (trade.lifecycle === Lifecycle.CLOSED) patch.closeType = closeType.value;
-      if (draft) await updateDraftTrade(trade.id, {
+      if (draft) {
+        const next = await completeDraftTrade(trade.id, {
+        expectedUpdatedAt: trade.updatedAt,
         ...(importedDraft ? { asset: assetEdit.value, direction: directionEdit.value } : {}),
         entry: entryEdit.value, exit: exitEdit.value, netPnl: netEdit.value,
-        openedAt: openedEdit.value === localDateTimeValue(trade.openedAt) ? trade.openedAt : openedEdit.value ? new Date(openedEdit.value).toISOString() : null,
-        closedAt: closedEdit.value === localDateTimeValue(trade.draftClosedAt) ? trade.draftClosedAt : closedEdit.value ? new Date(closedEdit.value).toISOString() : null,
-      });
+        openedAt: localDateTimeIso(openedEdit.value, trade.openedAt),
+        closedAt: localDateTimeIso(closedEdit.value, trade.draftClosedAt),
+        }, patch, completion.value);
+        go("trade/" + next.id);
+        return;
+      }
       const next = await enrichTrade(trade.id, patch);
       go("trade/" + next.id);
     } catch (e) {
@@ -304,10 +312,12 @@ function renderEdit(trade) {
     el("h1", { text: `${trade.asset} ${trade.direction}` }),
     el("p", { className: "meta origen", text: origenLine(trade) }),
     stateBadge(trade),
+    draft ? field("Guardar como", choiceButtons(completion, "Estado del borrador")) : null,
+    el("p", { className: "hint", text: "Las horas se interpretan en la zona del dispositivo: " + Intl.DateTimeFormat().resolvedOptions().timeZone }),
     el("p", { className: "hint", text: draft ? "Completá el borrador a tu ritmo. Guardar cambios no lo convierte en una operación ejecutada." : "Los precios y las fechas de ejecución se conservan. Podés completar el análisis y la gestión." }),
     tradeSection("1. Ejecución", [
     importedDraft ? field("Activo", assetEdit) : null,
-    importedDraft ? field("Dirección", directionEdit) : null,
+    importedDraft ? field("Dirección", choiceButtons(directionEdit, "Dirección")) : null,
     draft ? field("Entrada (borrador)", entryEdit) : field("Entrada (solo lectura)", entryActual),
     draft ? field("Fecha de entrada", openedEdit) : null,
     draft ? field("Salida prevista/observada (borrador)", exitEdit) : null,
@@ -327,7 +337,7 @@ function renderEdit(trade) {
     field("Estrategia", strategy),
     field("Estilo", style),
     field("Variante", variant),
-    field("Sesión", session),
+    field("Sesión", choiceButtons(session, "Sesión")),
     ]),
     el("details", { className: "trade-extra" }, [
       el("summary", { text: "Gestión y notas" }),
@@ -354,11 +364,13 @@ function renderClose(trade) {
   const err = el("p", { className: "err", text: "" });
   const save = el("button", { type: "button", text: "Cerrar" });
   save.addEventListener("click", async () => {
+    if (save.disabled) return;
+    save.disabled = true;
     err.textContent = "";
     try {
       await closeTrade(trade.id, {
         exit: exit.value,
-        closedAt: closedAt.value ? new Date(closedAt.value).toISOString() : undefined,
+        closedAt: localDateTimeIso(closedAt.value, trade.draftClosedAt),
         netPnl: net.value,
         commission: comm.value,
         swap: swap.value,
@@ -368,7 +380,7 @@ function renderClose(trade) {
         hasPartials: partials.value === "true",
       });
       go("trade/" + trade.id);
-    } catch (e) { err.textContent = e.message; }
+    } catch (e) { err.textContent = e.message; save.disabled = false; }
   });
   return [
     el("section", { className: "panel form trade-form" }, [
@@ -380,7 +392,7 @@ function renderClose(trade) {
       field("Resultado neto", net),
       field("comisión", comm),
       field("swap", swap),
-      field("motivo de cierre", closeType),
+      field("motivo de cierre", choiceButtons(closeType, "Motivo de cierre")),
       field("Hubo cierres parciales", partials),
       field("gestión (nota)", mgmt),
       ]),

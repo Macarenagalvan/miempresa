@@ -37,7 +37,7 @@ async function run() {
   const seed = await ensureJournalSeed();
   const { stage } = seed;
 
-  const legacy = await createTrade({
+  const legacy = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD",
     direction: "LONG",
     entry: 1.1,
@@ -46,7 +46,7 @@ async function run() {
   assertTrade(legacy);
   assert("assertTrade legacy OK", true);
 
-  const openRisk = await createTrade({
+  const openRisk = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "NZDJPY",
     direction: "SHORT",
     entry: 87.1,

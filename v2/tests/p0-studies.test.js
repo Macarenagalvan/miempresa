@@ -1,0 +1,135 @@
+import { ensureJournalSeed } from "../js/domain/stage.js";
+import { createTrade, createClosedTrade, completeDraftTrade, closeTrade, activateDraftTrade } from "../js/domain/trade.js";
+import { saveStudy, createObservation } from "../js/domain/observation.js";
+import { getObservation, listObservations } from "../js/storage/repos/observations.js";
+import { getTrade, listTrades, putTrade } from "../js/storage/repos/trades.js";
+import { addTradeImage, listByEntity, listTradeImages } from "../js/storage/repos/attachments.js";
+import { getLedgerEntry } from "../js/storage/repos/sync-ledger.js";
+import { compute, computeStudies } from "../js/domain/stats.js";
+import { parseBacktest, importBacktest } from "../js/domain/backtest-import.js";
+import { validDay, validInstant } from "../js/domain/execution.js";
+import { validateBackup, buildExportPayload, applyRestoreTransaction } from "../js/services/backup.js";
+import { encodeSyncPayload, decodeSyncPayload } from "../js/services/sync-payload.js";
+import { renderNuevoTrade } from "../js/ui/screens/trade-new.js";
+import { renderTradeDetail } from "../js/ui/screens/trade-detail.js";
+import { renderStudy } from "../js/ui/screens/study.js";
+import { renderNumeros } from "../js/ui/screens/numeros.js";
+import { localDateTimeValue } from "../js/ui/trade-presentation.js";
+import { richV2 } from "./slice12.payloads.js";
+
+export async function run() {
+  // This suite runs only in the QA runner's isolated browser context.
+  const fixture = richV2(); fixture.attachments = [];
+  await applyRestoreTransaction(fixture);
+  let n = 0;
+  const check = (ok, text) => { if (!ok) throw new Error("P0: " + text); n++; };
+  const rejects = async (fn, text) => { let failed=false;try {await fn();}catch {failed=true;}check(failed,text); };
+  const host = nodes => { const h=document.createElement("div");h.append(...nodes);return h; };
+  const settle = async fn => {for(let i=0;i<100;i++){if(await fn())return;await new Promise(r=>setTimeout(r,10));}throw new Error("P0: guardado no terminó");};
+  const seed = await ensureJournalSeed();
+  const base = { context:"BACKTEST",asset:"MNQ",direction:"LONG",entry:100,exit:110,netPnl:20,
+    openedAt:"2026-09-01T08:00:37.000Z",closedAt:"2026-09-01T09:00:42.000Z" };
+  check(!validDay("2026-02-30") && validDay("2024-02-29"), "días reales");
+  check(!validInstant("2026-02-30T08:00:00Z") && !validInstant("2026-09-01T08:00:00"), "ISO válido y con zona");
+  check(!validInstant("2026-09-01T24:00:00Z"), "no normaliza una hora inválida al día siguiente");
+  await rejects(()=>createClosedTrade({...base,openedAt:null},seed.stage.id),"sin fecha de entrada no inventa hoy");
+  await rejects(()=>createClosedTrade({...base,closedAt:null},seed.stage.id),"sin fecha de cierre no inventa hoy");
+  await rejects(()=>createClosedTrade({...base,closedAt:"2026-08-01T00:00:00Z"},seed.stage.id),"orden temporal");
+  await rejects(()=>createTrade({...base,openedAt:null},seed.stage.id),"histórico OPEN exige fecha");
+  const open = await createTrade(base,seed.stage.id);
+  const futureOpen = await createTrade({...base, openedAt:"2026-12-01T10:00:00Z"},seed.stage.id);
+  check(futureOpen.lifecycle==="OPEN", "OPEN no valida campos de cierre ocultos");
+  await rejects(()=>closeTrade(open.id,{exit:110,netPnl:20}),"cierre histórico sin fecha bloqueado");
+
+  const beforeTrades=(await listTrades()).length;
+  const beforeObs=(await listObservations()).length;
+  const input={asset:"MNQ",date:"2026-09-01",note:"Análisis sin ejecución",bias:"NEUTRAL",studyOutcome:"NO_TRADE",session:"NEW_YORK"};
+  await rejects(()=>saveStudy({...input,date:""},seed.stage.id),"estudio no inventa fecha");
+  await rejects(()=>saveStudy(input,seed.stage.id,[new Blob([],{type:"image/png"})]),"captura inválida no guarda estudio parcial");
+  check((await listObservations()).length===beforeObs,"fallos no crearon observaciones");
+  const bytes=new Uint8Array([137,80,78,71,1,2,3]);
+  const study=await saveStudy(input,seed.stage.id,[new File([bytes],"p0.png",{type:"image/png"})]);
+  check((await listTrades()).length===beforeTrades,"estudio no crea trade");
+  check(!("openedAt" in study)&&!("netPnl" in study)&&!("lifecycle" in study),"sin ejecución ficticia");
+  check((await getLedgerEntry("observations",study.id))?.dirty,"estudio pendiente de sync");
+  const studyImages=await listByEntity("observation",study.id);
+  check(studyImages.length===1,"captura vinculada al estudio");
+  check((await getLedgerEntry("attachments",studyImages[0].id))?.dirty,"captura pendiente de sync");
+  const encoded=await encodeSyncPayload("attachments",studyImages[0]);
+  check(decodeSyncPayload("attachments",JSON.parse(JSON.stringify(encoded))).blob.size===bytes.length,"captura compatible con sync");
+  check((await encodeSyncPayload("observations",study)).studyOutcome==="NO_TRADE","clasificación compatible con sync");
+  const edited=await saveStudy({...input,note:"Aprendizaje actualizado"},seed.stage.id,[],study.id);
+  check(edited.id===study.id&&edited.createdAt===study.createdAt,"editar conserva identidad");
+  check((await listByEntity("observation",study.id)).length===1,"editar conserva captura");
+  const legacy=await createObservation({asset:"MNQ",date:"2026-09-01",note:"Nota antigua"},seed.stage.id);
+  check(!("studyOutcome" in legacy),"no clasifica históricos automáticamente");
+  const studyStats=computeStudies([study,{...study,id:"taken",studyOutcome:"TRADE_TAKEN"},legacy]);
+  check(studyStats.total===3&&studyStats.classified===2&&studyStats.noTradeRate===0.5&&studyStats.unclassified===1,"denominador explícito de estudios");
+
+  const draft=await createTrade({asset:"MNQ",direction:"LONG",isDraft:true,note:"Nota histórica intacta",sourceRef:{kind:"BACKTEST_JSON",importId:"p0-old-draft"}},seed.stage.id);
+  await addTradeImage(draft.id,new Blob([bytes],{type:"image/png"}));
+  const snapshot=JSON.stringify(await getTrade(draft.id));
+  await rejects(()=>completeDraftTrade(draft.id,{...base,closedAt:null},{strategy:"UNCLASSIFIED"},"CLOSED"),"cierre incompleto rechazado");
+  check(JSON.stringify(await getTrade(draft.id))===snapshot,"fallo atómico conserva borrador completo");
+  await rejects(()=>completeDraftTrade(draft.id,{...base,expectedUpdatedAt:"stale"},{strategy:"UNCLASSIFIED"},"CLOSED"),"rechaza formulario obsoleto");
+  const closed=await completeDraftTrade(draft.id,base,{strategy:"UNCLASSIFIED"},"CLOSED");
+  check(closed.id===draft.id&&closed.note===draft.note&&closed.createdAt===draft.createdAt,"completar conserva ID notas origen");
+  check(closed.sourceRef.importId==="p0-old-draft"&&(await listTradeImages(draft.id)).length===1,"conserva importId y capturas");
+  check(!closed.isDraft&&closed.lifecycle==="CLOSED"&&closed.result==="WIN"&&closed.rrRealized===null,"cierre sin SL TP ni estrategia calculable");
+  await rejects(()=>completeDraftTrade(draft.id,base,{strategy:"UNCLASSIFIED"},"CLOSED"),"doble cierre no duplica");
+  const invalidDraft={...draft,id:crypto.randomUUID(),openedAt:"not-a-date",entry:100};
+  await putTrade(invalidDraft);
+  await rejects(()=>activateDraftTrade(invalidDraft.id),"no activa fecha inválida heredada");
+
+  const raw={format:"maca-backtest",version:1,importId:"p0-minimum-import",backtest:{...base}};
+  delete raw.backtest.context;
+  const preview=parseBacktest(JSON.stringify(raw));
+  await rejects(()=>parseBacktest(JSON.stringify({...raw,backtest:{...raw.backtest,openedAt:"2026-09-01T24:00:00Z"}})),"importación valida hora antes de normalizar");
+  check(preview.missing.length===0&&preview.backtest.result==="WIN","importador mismo mínimo; resultado derivado");
+  raw.backtest.entry=101;
+  const imported=await importBacktest(JSON.stringify(raw),seed.stage.id);
+  const manual=await createClosedTrade({...base,entry:101},seed.stage.id);
+  check(!imported.isDraft && !manual.isDraft, "ambos registros completos sin borrador");
+  for(const key of ["lifecycle","result","strategy","initialSL","tp"]) check((imported[key]??null)===(manual[key]??null),"paridad import/manual "+key);
+  const dataset=[{...closed,id:"w1"},{...closed,id:"w2"},{...closed,id:"l",result:"LOSS",netPnl:-10},{...closed,id:"be",result:"BE",netPnl:0},
+    {...closed,id:"draft",isDraft:true},{...closed,id:"void",lifecycle:"VOID"},{...closed,id:"qa",note:"TEST / FICTICIO"},
+    {...closed,id:"live",context:"LIVE"},{...closed,id:"demo",context:"DEMO"}];
+  const stats=compute(dataset,{universe:"BACKTEST"});
+  check(stats.nClosed===4&&stats.nBe===1&&Math.abs(stats.winRate-2/3)<1e-9,"winrate 66.7% excluye borrador/VOID/TEST");
+  check(compute(dataset,{universe:"REAL"}).nClosed===1&&compute(dataset,{universe:"DEMO"}).nClosed===1,"universos separados");
+  check(compute([]).winRate===null&&compute([]).expectancyR===null,"ausencias no son ceros");
+
+  const form=host(await renderNuevoTrade({...seed,route:{rest:"trade",query:{mode:"simulated",context:"BACKTEST"}}}));
+  check(form.querySelector('[name="openedAt"]').value===""&&form.querySelector('[name="closedAt"]').value==="","simulado histórico sin hoy automático");
+  check(form.querySelector('[aria-label="Carga rápida"]').querySelectorAll("button").length===3,"tres botones de carga rápida");
+  check([...form.querySelector('[name="context"]').options].map(o=>o.value).join(',')==='BACKTEST,DEMO',"simulado no ofrece cuenta real");
+  const realForm=host(await renderNuevoTrade({...seed,route:{rest:"trade",query:{mode:"real"}}}));
+  check(![...realForm.querySelector('[name="context"]').options].some(o=>['DEMO','BACKTEST'].includes(o.value)),"real no ofrece contextos simulados");
+  form.querySelector('[name="asset"]').value="MNQ";
+  const count=(await listTrades()).length;
+  form.querySelector('.trade-form-submit').click();
+  await settle(()=>form.querySelector('[role="alert"]').textContent.length>0);
+  check((await listTrades()).length===count,"guardar incompleto no crea borrador silencioso");
+  const studyForm=host(await renderStudy(seed));
+  check(!studyForm.querySelector('[name="openedAt"]')&&!studyForm.querySelector('[name="entry"]'),"estudio solo campos necesarios");
+  const editable=await createTrade({...base,isDraft:true,note:"segundos intactos"},seed.stage.id);
+  const editor=host(await renderTradeDetail({...seed,route:{rest:editable.id+"/cerrar"}}));
+  check(editor.querySelector('[name="openedAt"]')&&editor.querySelector('[name="completion"]').value==="CLOSED","cierre borrador muestra entrada en misma pantalla");
+  check(editor.querySelector('[name="openedAt"]').value===localDateTimeValue(base.openedAt),"hora visible local");
+  editor.querySelector('[name="completion"]').value="DRAFT";
+  [...editor.querySelectorAll('button')].find(b=>b.textContent==='Guardar cambios').click();
+  await settle(()=>location.hash.includes(editable.id));
+  check((await getTrade(editable.id)).openedAt===base.openedAt,"guardar sin editar conserva segundos e instante");
+  const a=host(await renderNumeros({...seed,route:{query:{universe:"BACKTEST"}}}));
+  const b=host(await renderNumeros({...seed,route:{query:{universe:"BACKTEST",excludeTest:"1"}}}));
+  check(a.querySelector('.metrics').textContent===b.querySelector('.metrics').textContent,"estadísticas iguales por ambas rutas");
+
+  const exported=JSON.parse(JSON.stringify(await buildExportPayload()));
+  check(validateBackup(exported).ok,"backup con modelo aditivo válido: " + validateBackup(exported).errors.join("; "));
+  await applyRestoreTransaction(exported);
+  check((await getObservation(study.id)).studyOutcome==="NO_TRADE","restore conserva clasificación");
+  const restored=(await listByEntity("observation",study.id))[0];
+  check(new Uint8Array(await restored.blob.arrayBuffer()).every((v,i)=>v===bytes[i]),"restore conserva bytes de estudio");
+  check((await getTrade(draft.id)).note===draft.note,"restore conserva nota de borrador completado");
+  document.getElementById("out").textContent+=`\nP0 studies: ${n} tests OK\n`;
+}

@@ -205,12 +205,12 @@ async function run() {
   const realStats = compute(await listTrades(), { universe: "REAL", stageId: stage.id, accountId: live.id });
   assert("stats Real incluyen import", realStats.nClosed === 3 && realStats.netPnl === 24.6 - 19.5);
 
-  const bt = await createTrade({ asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1 }, stage.id);
-  await closeTrade(bt.id, { exit: 1.2, netPnl: 999, closeType: "MANUAL" });
-  const demoTrade = await createTrade({
+  const bt = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z", asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1 }, stage.id);
+  await closeTrade(bt.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.2, netPnl: 999, closeType: "MANUAL" });
+  const demoTrade = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "DEMO", direction: "LONG", entry: 1.1, accountId: demo.id,
   }, stage.id);
-  await closeTrade(demoTrade.id, { exit: 1.2, netPnl: 50, closeType: "MANUAL" });
+  await closeTrade(demoTrade.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.2, netPnl: 50, closeType: "MANUAL" });
   const realAfter = compute(await listTrades(), { universe: "REAL", stageId: stage.id, accountId: live.id });
   const demoStats = compute(await listTrades(), { universe: "DEMO", stageId: stage.id, accountId: demo.id });
   const liveIds = new Set((await listTrades()).filter((t) => t.accountId === live.id).map((t) => t.id));

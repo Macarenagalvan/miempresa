@@ -1,4 +1,8 @@
 import { label } from "../journal-insights.js";
+import { choiceButtons } from "../forms/choice-buttons.js";
+import { quickRegister } from "../quick-register.js";
+import { assertExecution } from "../../domain/execution.js";
+import { localDateTimeIso } from "../trade-presentation.js";
 import { el } from "../render.js";
 import { field } from "../forms/observation.js";
 import { getSetup } from "../../storage/repos/setups.js";
@@ -38,11 +42,13 @@ function formSection(title, description, children, extra = "") {
 
 export async function renderNuevoTrade(ctx) {
   const setupId = ctx.route.rest.startsWith("trade/") ? ctx.route.rest.slice("trade/".length) : "";
-  const dedicatedBacktest = !setupId && ctx.route.query && ctx.route.query.context === Context.BACKTEST;
+  const mode = ctx.route.query?.mode;
+  const dedicatedBacktest = !setupId && ctx.route.query && ctx.route.query.context === Context.BACKTEST && mode !== "simulated";
   const setup = setupId ? await getSetup(setupId) : null;
   const accounts = await listStageAccounts(ctx.stage.id);
   const active = await getActiveAccount();
-  const initialContext = setup ? setup.context : (dedicatedBacktest ? Context.BACKTEST : (active?.context || accounts[0]?.context || Context.LIVE));
+  const initialContext = setup ? setup.context : (dedicatedBacktest || mode === "simulated" ? (ctx.route.query?.context === "DEMO" ? Context.DEMO : Context.BACKTEST) : mode === "real" ? (accounts.find(a => a.context !== "DEMO")?.context || Context.LIVE) : (active?.context || accounts[0]?.context || Context.LIVE));
+  const historical = () => context.value === Context.BACKTEST;
   const suggest = [];
   const seen = new Set();
   for (const a of ROADMAP_ASSETS) {
@@ -61,10 +67,11 @@ export async function renderNuevoTrade(ctx) {
   const assetList = el("datalist", { id: "nuevo-asset-suggest" }, suggest.map((s) => el("option", { value: s })));
   const lifecycle = select([["DRAFT", "Borrador · completar después"], [Lifecycle.OPEN, "Abierta"], [Lifecycle.CLOSED, "Cerrada"]], Lifecycle.OPEN);
   lifecycle.setAttribute("name", "lifecycle");
-  if (dedicatedBacktest) lifecycle.value = Lifecycle.CLOSED;
-  const context = select(Object.values(Context).map((c) => [c, contextLabel(c)]), initialContext);
+  if (initialContext === Context.BACKTEST) lifecycle.value = Lifecycle.CLOSED;
+  const contexts = mode === "simulated" ? [Context.BACKTEST, Context.DEMO] : mode === "real" ? [Context.LIVE, Context.PROP_CHALLENGE, Context.FUNDED] : Object.values(Context);
+  const context = select(contexts.map((c) => [c, contextLabel(c)]), initialContext);
   context.name = "context";
-  const contextField = field("Contexto", context);
+  const contextField = field("Contexto", choiceButtons(context, "Contexto"));
   contextField.hidden = dedicatedBacktest;
   if (dedicatedBacktest) {
     context.value = Context.BACKTEST;
@@ -80,8 +87,9 @@ export async function renderNuevoTrade(ctx) {
   variant.setAttribute("name", "variant");
   const session = select([["", "—"]].concat(SESSIONS.map((s) => [s, s])), "");
   session.setAttribute("name", "session");
-  const openedAt = el("input", { className: "input", type: "datetime-local", name: "openedAt", value: dedicatedBacktest ? "" : localDateTimeValue() });
-  const closedAt = el("input", { className: "input", type: "datetime-local", name: "closedAt", value: dedicatedBacktest ? "" : localDateTimeValue() });
+  const openedAt = el("input", { className: "input", type: "datetime-local", name: "openedAt", value: historical() ? "" : localDateTimeValue() });
+  const closedAt = el("input", { className: "input", type: "datetime-local", name: "closedAt", value: historical() ? "" : localDateTimeValue() });
+  context.addEventListener("change", () => { openedAt.value = ""; closedAt.value = ""; });
   const entry = el("input", { className: "input", name: "entry", value: "" });
   const sl = el("input", { className: "input", name: "initialSL", value: "" });
   const tp = el("input", { className: "input", name: "tp", value: "" });
@@ -176,19 +184,18 @@ export async function renderNuevoTrade(ctx) {
       field("Fecha y hora de cierre", closedAt),
       field("Precio de salida", exit),
       field("Resultado neto (moneda de la cuenta o simulado)", net),
-      field("Tipo de cierre", closeType),
+      field("Tipo de cierre", choiceButtons(closeType, "Tipo de cierre")),
     ]),
   );
 
   function paintLifecycle() {
     const closed = lifecycle.value === Lifecycle.CLOSED;
     closedBlock.hidden = !closed;
-    const ready = Boolean(entry.value.trim()) && Boolean(openedAt.value)
-      && (closed ? Boolean(exit.value.trim()) && Boolean(net.value.trim()) && Boolean(closedAt.value) : lifecycle.value === Lifecycle.OPEN);
-    save.textContent = ready ? (dedicatedBacktest ? "Guardar backtest" : "Guardar operación") : "Guardar borrador";
+    save.textContent = lifecycle.value === "DRAFT" ? "Guardar borrador" : (historical() ? "Guardar backtest" : "Guardar operación");
     refreshRR();
   }
   lifecycle.addEventListener("change", paintLifecycle);
+  context.addEventListener("change", paintLifecycle);
 
   const capturesBefore = el("input", {
     type: "file", className: "input", name: "capture-before",
@@ -242,6 +249,9 @@ export async function renderNuevoTrade(ctx) {
   );
 
   const save = el("button", { type: "button", text: "Guardar operación", className: "trade-form-submit" });
+  const draftSave = el("button", { type: "button", className: "ghost", text: "Guardar borrador", onclick: () => {
+    lifecycle.value = "DRAFT"; lifecycle.dispatchEvent(new Event("change")); save.click();
+  } });
   [entry, openedAt, exit, net, closedAt].forEach(control => control.addEventListener("input", paintLifecycle));
   paintLifecycle();
   save.addEventListener("click", async () => {
@@ -258,14 +268,18 @@ export async function renderNuevoTrade(ctx) {
       if (context.value !== Context.BACKTEST && !accountPick.value) {
         throw new Error("elegí una Account compatible o creá una en Cuentas");
       }
-      const openedIso = openedAt.value ? new Date(openedAt.value).toISOString() : undefined;
+      const openedIso = localDateTimeIso(openedAt.value);
+      assertExecution({ asset: assetVal, direction: direction.value, openedAt: openedIso,
+        entry: entry.value, exit: exit.value, netPnl: net.value, initialSL: sl.value, tp: tp.value,
+        closedAt: localDateTimeIso(closedAt.value) },
+        { closed: lifecycle.value === Lifecycle.CLOSED, draft: lifecycle.value === "DRAFT" });
       const completeOpen = lifecycle.value === Lifecycle.OPEN && Boolean(entry.value.trim()) && Boolean(openedAt.value);
       const completeClose = lifecycle.value === Lifecycle.CLOSED && Boolean(openedAt.value) && Boolean(entry.value.trim()) && Boolean(exit.value.trim()) && Boolean(net.value.trim()) && Boolean(closedAt.value);
       if (completeClose) {
         if (!closedAt.value) throw new Error("Ingresá la fecha y hora de cierre.");
         if (!exit.value) throw new Error("exit requerido");
         if (net.value === "") throw new Error("netPnl requerido");
-        const closedIso = new Date(closedAt.value).toISOString();
+        const closedIso = localDateTimeIso(closedAt.value);
         if (openedIso && closedIso < openedIso) throw new Error("closedAt no puede ser anterior a openedAt");
         const trade = await createClosedTrade({
           asset: assetVal,
@@ -298,7 +312,7 @@ export async function renderNuevoTrade(ctx) {
         }, ctx.stage.id);
         persistedTrade = trade;
         await persistCaptures(trade, chosen);
-        go("trade/" + trade.id + (dedicatedBacktest ? "?from=backtesting" : ""));
+        go("trade/" + trade.id + (historical() ? "?from=backtesting" : ""));
         return;
       }
       const trade = await createTrade({
@@ -308,7 +322,7 @@ export async function renderNuevoTrade(ctx) {
         commission: comm.value,
         swap: swap.value,
         closeType: closeType.value,
-        closedAt: closedAt.value ? new Date(closedAt.value).toISOString() : null,
+        closedAt: localDateTimeIso(closedAt.value),
         asset: assetVal,
         brokerSymbol: broker.value,
         context: context.value,
@@ -341,7 +355,7 @@ export async function renderNuevoTrade(ctx) {
       };
       const enriched = await enrichTrade(trade.id, journal);
       await persistCaptures(enriched, chosen);
-      go("trade/" + enriched.id + (dedicatedBacktest ? "?from=backtesting" : ""));
+      go("trade/" + enriched.id + (historical() ? "?from=backtesting" : ""));
     } catch (e) {
       if (persistedTrade) {
         err.textContent = "El registro ya se guardó. No lo vuelvas a crear. Hubo un problema con los datos adicionales o capturas: " + e.message;
@@ -367,9 +381,10 @@ export async function renderNuevoTrade(ctx) {
       field("Estrategia", strategy),
       field("Estilo", style),
       field("Variante", variant),
-      field("Sesión", session),
       field("Símbolo del broker", broker),
       field("Riesgo (%)", riskPct),
+      field("Lotaje / cantidad", lots),
+      field("Riesgo monetario", riskMoney),
       field("RR planificado", rr),
       field("Comisiones", comm),
       field("Swap", swap),
@@ -382,19 +397,21 @@ export async function renderNuevoTrade(ctx) {
   return [
     el("section", { className: "panel form trade-form" }, [
       el("div", { className: "trade-form-intro" }, [
+        quickRegister(),
         el("p", { className: "kicker", text: dedicatedBacktest ? "Backtesting / Registro histórico" : "Journal / Registro" }),
         el("h1", { text: dedicatedBacktest ? "Registrar backtest" : (setup ? "Operación desde idea" : "Registrar operación") }),
         el("p", { className: "hint", text: dedicatedBacktest
           ? "Guardá una operación simulada del pasado. No modifica cuentas ni saldos reales."
           : "Registrá los datos básicos ahora. Podés completar el análisis en detalles adicionales." }),
-        el("p", { className: "hint", text: "Si faltan datos de ejecución, se guarda como BORRADOR y queda fuera de las operaciones abiertas y los resultados." }),
+        el("p", { className: "hint", text: "Si faltan datos, usá Guardar borrador. No cuenta como ejecución. Horas en " + Intl.DateTimeFormat().resolvedOptions().timeZone + "." }),
         ...refs,
       ]),
       el("nav", {className:"journal-steps", "aria-label":"Pasos del registro"}, ["1. Setup y cuenta", "2. Entrada y riesgo", "3. Cierre", "4. Capturas"].map((text,i)=>el("button",{type:"button",className:"ghost",text,onclick:()=>document.querySelectorAll(".trade-form > .trade-form-section")[i]?.scrollIntoView({behavior:"smooth",block:"start"})}))),
       formSection("1. Identificación", "Seleccioná el mercado, la dirección y el estado de la operación.", [
         field("Activo / símbolo", asset),
-        field("Dirección", direction),
-        field("Estado", lifecycle),
+        field("Dirección", choiceButtons(direction, "Dirección")),
+        field("Estado", choiceButtons(lifecycle, "Estado")),
+        field("Sesión", choiceButtons(session, "Sesión")),
         contextField,
         accountField,
         field("Fecha y hora de entrada", openedAt),
@@ -404,8 +421,6 @@ export async function renderNuevoTrade(ctx) {
         field("Entrada", entry),
         field("Stop Loss (SL)", sl),
         field("Take Profit (TP)", tp),
-        field("Lotaje / cantidad", lots),
-        field("Riesgo monetario", riskMoney),
         el("div", { className: "trade-field-wide" }, [rrPreview]),
       ]),
       closedBlock,
@@ -418,9 +433,10 @@ export async function renderNuevoTrade(ctx) {
         el("button", {
           type: "button", className: "ghost",
           text: dedicatedBacktest ? "Volver a Backtesting" : "Volver a Operaciones",
-          onclick: () => go(dedicatedBacktest ? "backtesting" : "historial"),
+          onclick: () => go(historical() ? "backtesting" : "historial"),
         }),
         save,
+        draftSave,
       ]),
     ]),
   ];

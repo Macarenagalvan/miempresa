@@ -91,7 +91,7 @@ async function run() {
     && accsAfter.find((a) => a.id === fundedAcc.id).context === "FUNDED");
   assert("maxStageReached no baja", afterStatus.maxStageReached >= 2);
 
-  const trade = await createTrade({
+  const trade = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1,
   }, stage.id);
   assert("Trade no necesita challengeId", trade.challengeId == null);

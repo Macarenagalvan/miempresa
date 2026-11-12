@@ -1,4 +1,8 @@
 import { createId, nowIso } from "./ids.js";
+import { assertExecution } from "./execution.js";
+import { applyJournalPatch } from "./trade-journal.js";
+import { withStores, requestToPromise } from "../storage/db.js";
+import { STORES } from "../config.js";
 import { Context, Lifecycle, Strategy, TradeRecordSource } from "./enums.js";
 import {
   assertTrade,
@@ -17,7 +21,7 @@ import { lockSetupOnTrade } from "./setup.js";
 import { parseMt5Csv, toTradeDraft, dedupKey } from "../adapters/mt5.js";
 
 function numOrNull(v) {
-  if (v === "" || v == null) return null;
+  if (v == null || String(v).trim() === "") return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
@@ -51,6 +55,8 @@ export async function createTrade(input, stageId) {
   const sl = numOrNull(input.initialSL);
   const now = nowIso();
   const context = input.context || (setup && setup.context) || Context.BACKTEST;
+  assertExecution({ ...input, asset: input.asset || setup?.asset, direction: input.direction || setup?.direction,
+    openedAt: input.openedAt || (context === Context.BACKTEST || input.isDraft ? null : now) }, { closed: false, draft: input.isDraft === true });
   let account = null;
   let accountId = null;
   if (context === Context.BACKTEST) {
@@ -70,7 +76,7 @@ export async function createTrade(input, stageId) {
     context,
     direction: input.direction || (setup && setup.direction),
     accountId,
-    openedAt: input.isDraft === true ? (input.openedAt || null) : (input.openedAt || now),
+    openedAt: input.openedAt || (input.isDraft === true || context === Context.BACKTEST ? null : now),
     entry: numOrNull(input.entry),
     isDraft: input.isDraft === true,
     draftExit: input.isDraft === true ? numOrNull(input.exit) : null,
@@ -186,16 +192,65 @@ export async function activateDraftTrade(id) {
   const current = await getTrade(id);
   if (!current || current.lifecycle !== Lifecycle.OPEN || !current.isDraft) throw new Error("borrador no encontrado");
   if (!current.openedAt) throw new Error("Completá la fecha de entrada antes de abrir la operación.");
+  assertExecution(current, { closed: false });
   const next = deriveTrade({ ...current, isDraft: false, updatedAt: nowIso() });
   assertTrade(next);
   await putTrade(next);
   return next;
 }
 
+// One transaction preserves the original identity, notes, images and sync revision.
+export async function completeDraftTrade(id, input, journal, target = "DRAFT") {
+  if (!["DRAFT", "OPEN", "CLOSED"].includes(target)) throw new Error("Estado inválido.");
+  const result = await withStores([STORES.trades, STORES.syncLedger], "readwrite", async tx => {
+    const store = tx.objectStore(STORES.trades);
+    const current = await requestToPromise(store.get(id));
+    if (!current || current.lifecycle !== Lifecycle.OPEN || !current.isDraft) throw new Error("El borrador cambió. Volvé a abrirlo.");
+    if (input.expectedUpdatedAt && input.expectedUpdatedAt !== current.updatedAt) throw new Error("El borrador cambió en otra pantalla. Volvé a abrirlo.");
+    let next = applyJournalPatch(current, journal);
+    for (const key of ["asset", "direction", "openedAt", "entry"]) {
+      if (input[key] !== undefined) next[key] = key === "entry" ? numOrNull(input[key]) : input[key];
+    }
+    next.asset = normalizeAsset(next.asset);
+    const execution = { ...next, initialSL: journal.initialSL ?? next.initialSL, tp: journal.tp ?? next.tp,
+      entry: input.entry ?? next.entry, exit: input.exit, closedAt: input.closedAt, netPnl: input.netPnl };
+    assertExecution(execution, { closed: target === "CLOSED", draft: target === "DRAFT" });
+    next.isDraft = target === "DRAFT";
+    next.lifecycle = target === "CLOSED" ? Lifecycle.CLOSED : Lifecycle.OPEN;
+    if (target === "CLOSED") {
+      next.exit = numOrNull(input.exit);
+      next.closedAt = input.closedAt;
+      next.netPnl = numOrNull(input.netPnl);
+      next.closeType = current.draftCloseType || "UNKNOWN";
+      next.commission = current.draftCommission ?? null;
+      next.swap = current.draftSwap ?? null;
+      next.result = deriveResult(next.closeType, next.netPnl, next.closeType === "BE");
+    }
+    next.draftExit = target !== "CLOSED" ? numOrNull(input.exit) : null;
+    next.draftClosedAt = target !== "CLOSED" ? (input.closedAt || null) : null;
+    next.draftNetPnl = target !== "CLOSED" ? numOrNull(input.netPnl) : null;
+    if (target === "CLOSED") for (const key of ["draftCommission", "draftSwap", "draftCloseType"]) next[key] = null;
+    next.updatedAt = nowIso();
+    next = deriveTrade(next);
+    assertTrade(next);
+    const ledger = tx.objectStore(STORES.syncLedger);
+    const ledgerId = STORES.trades + "::" + id;
+    const old = await requestToPromise(ledger.get(ledgerId));
+    store.put(next);
+    ledger.put({ ...old, id: ledgerId, entityType: STORES.trades, entityId: id, cloudRevision: old?.cloudRevision || 0,
+      dirty: true, tombstone: false, localChangedAt: next.updatedAt });
+    return next;
+  });
+  import("../services/sync-engine.js").then(m => m.scheduleSync()).catch(() => {});
+  return result;
+}
+
 export async function closeTrade(id, input) {
   const current = await getTrade(id);
   if (!current) throw new Error("trade no existe");
   if (current.lifecycle !== Lifecycle.OPEN) throw new Error("solo se cierra un OPEN");
+  assertExecution({ ...current, ...input, openedAt: current.openedAt,
+    closedAt: input.closedAt || (current.context === Context.BACKTEST ? null : nowIso()) });
   if (current.isDraft && !current.openedAt) throw new Error("Completá la fecha de entrada del borrador antes de cerrarlo.");
   if (current.openedAt && input.closedAt && new Date(input.closedAt) < new Date(current.openedAt)) {
     throw new Error("La fecha de cierre no puede ser anterior a la entrada.");

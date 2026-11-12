@@ -5,6 +5,8 @@ import { renderNuevoSetup } from "./setup-new.js";
 import { renderNuevoTrade } from "./trade-new.js";
 import { go } from "../router.js";
 import { icon, ICONS } from "../identity.js";
+import { quickRegister } from "../quick-register.js";
+import { renderStudy } from "./study.js";
 
 function choice(title, line, path, pathIcon) {
   return el("button", { type: "button", className: "choice", onclick: () => go(path) }, [
@@ -15,6 +17,7 @@ function choice(title, line, path, pathIcon) {
 }
 
 export async function renderNuevo(ctx) {
+  if (ctx.route.rest === "estudio") return renderStudy(ctx);
   if (ctx.route.rest === "observacion") return renderNuevaObservacion(ctx);
   if (ctx.route.rest === "setup" || ctx.route.rest.startsWith("setup/")) return renderNuevoSetup(ctx);
   if (ctx.route.rest === "trade" || ctx.route.rest.startsWith("trade/")) return renderNuevoTrade(ctx);
@@ -22,13 +25,12 @@ export async function renderNuevo(ctx) {
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: "Nuevo" }),
       el("h1", { text: "¿Qué querés registrar?" }),
-      el("p", { className: "hint", text: "Elegí qué querés guardar. Backtesting tiene su propio espacio, separado del trading real." }),
-      el("div", { className: "choice-grid register-grid" }, [
+      quickRegister(),
+      el("p", { className: "hint", text: "Estudios, simulaciones y operaciones reales se registran y cuentan por separado." }),
+      el("details", {}, [el("summary", { text: "Notas e ideas" }), el("div", { className: "choice-grid register-grid" }, [
         choice("Nota", "Algo que vi o aprendí del mercado.", "nuevo/observacion", ICONS.note),
         choice("Idea", "Una oportunidad que estoy siguiendo.", "nuevo/setup", ICONS.idea),
-        choice("Operación", "Un trade que ejecuté o quiero registrar.", "nuevo/trade", ICONS.trade),
-        choice("Backtesting", "Una operación histórica que quiero probar y analizar.", "backtesting", ICONS.trade),
-      ]),
+      ])]),
     ]),
   ];
 }

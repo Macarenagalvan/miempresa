@@ -60,6 +60,10 @@ export async function addTradeImage(tradeId, input) {
   return record;
 }
 
+export function buildObservationImage(observationId, input) {
+  return { ...buildTradeImage(observationId, input), entityType: "observation" };
+}
+
 export async function removeAttachment(id) {
   if (!id) throw new Error("attachment id requerido");
   await attachmentsRepo.delete(id);

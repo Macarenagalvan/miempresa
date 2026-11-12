@@ -49,7 +49,7 @@ export async function renderNumeros(ctx) {
   const defaultAccount = active || accounts[0];
   const selectedId = q.account === "all" ? "" : (q.account || (!q.universe ? defaultAccount?.id : "") || "");
   const universe = q.universe || ((accounts.find(a=>a.id===selectedId)||defaultAccount)?.context === "DEMO" ? "DEMO" : "REAL");
-  const excludeTest = q.excludeTest === "1";
+  const excludeTest = true;
   const filters = {
     universe,
     context: q.context || "",
@@ -146,9 +146,8 @@ export async function renderNumeros(ctx) {
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: universe === "BACKTEST" ? "Pruebas históricas" : "Tus operaciones ejecutadas" }),
       el("h1", { text: "Estadísticas" }),
-      el("p", { className: "meta", text: excludeTest
-        ? `Backtesting: ${excludedCount} registros TEST / FICTICIO excluidos de estas estadísticas.`
-        : mixed ? "Elegí una cuenta para ver importes: hay monedas distintas y no se suman entre sí." : "Resultados de operaciones cerradas. Los borradores y las operaciones anuladas no cuentan." }),
+      el("p", { className: "meta", text: "Resultados de operaciones cerradas. Estudios, borradores, anulados y TEST / FICTICIO no cuentan." }),
+      mixed ? el("p", { className: "hint", text: "Elegí una cuenta para ver importes: hay monedas distintas y no se suman entre sí." }) : null,
       el("div", { className: "journal-stat-filters" }, [field("Resultados",uni),field("Cuenta",accountSel),field("Tipo de cuenta",ctxSel),field("Activo",asset),field("Estrategia",strategy),field("Variante",variant),field("Dirección",direction),field("Sesión",session),field("Desde",from),field("Hasta",to)]),
       el("button", {type:"button",className:"ghost",text:"Limpiar filtros",onclick:()=>go("numeros")}),
       el("div", { className: "metrics" }, [
@@ -156,7 +155,7 @@ export async function renderNumeros(ctx) {
         metric("Ganadas", stats.nWins),
         metric("Perdidas", stats.nLosses),
         metric("En equilibrio", stats.nBe),
-        metric("Porcentaje de acierto", stats.winRate, "pct", `${stats.nDecided} ganadas o perdidas`),
+        metric("Porcentaje de acierto", stats.winRate, "pct", `WIN / (WIN + LOSS): ${stats.nWins}/${stats.nDecided}; BE excluido`),
         metric("Resultado neto", stats.netPnl, "n", `${stats.nMoney} operaciones · ${currency}`),
         metric("Factor de beneficio", stats.profitFactorUsd, "n", `${stats.nMoney} operaciones · ${currency}`),
         metric("Promedio por operación", stats.expectancyUsd, "n", `${stats.nMoney} operaciones · ${currency}`),

@@ -36,7 +36,7 @@ async function run() {
   );
   const src = { accountId: live.id, context: live.context, timeZone: tz };
 
-  const openLegacy = await createTrade({
+  const openLegacy = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD",
     context: "BACKTEST",
     direction: "LONG",

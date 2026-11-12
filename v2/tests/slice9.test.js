@@ -106,7 +106,7 @@ async function run() {
   assert("relación opcional Setup", linkedSetup.setupId === setup.id && linkedSetup.tradeId == null);
   assert("Setup.deskSignalId recíproco", setupAfter.deskSignalId === linkedSetup.id);
 
-  const trade = await createTrade({
+  const trade = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1,
   }, stage.id);
   const linkedTrade = await updateSignalFollowup(created["none-open-long"].id, { tradeId: trade.id });
@@ -134,7 +134,7 @@ async function run() {
   assert("Hit Rate según fórmula Frozen", deskFresh.hitRate === 3 / 5);
   assert("Resolution Rate según fórmula Frozen", deskFresh.resolutionRate === 6 / 8);
 
-  const closed = await closeTrade(trade.id, { exit: 1.12, netPnl: 25, closeType: "TP" });
+  const closed = await closeTrade(trade.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.12, netPnl: 25, closeType: "TP" });
   const tradeStats = compute(await listTrades(), { universe: "BACKTEST", stageId: stage.id });
   const deskAfter = computeDesk(fixtureRows, { stageId: stage.id });
   assert("Desk stats aisladas de Trade stats", deskAfter.printed === deskFresh.printed && tradeStats.nClosed >= 1);

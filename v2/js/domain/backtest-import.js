@@ -5,10 +5,10 @@ import { openDb } from "../storage/db.js";
 import { STORES } from "../config.js";
 import { buildTradeImage } from "../storage/repos/attachments.js";
 import { isTestRecord } from "./test-record.js";
+import { assertExecution, missingExecution, validInstant } from "./execution.js";
 
 export const MAX_BACKTEST_BYTES = 65536;
 const fields = ["asset", "direction", "openedAt", "closedAt", "entry", "initialSL", "tp", "exit", "netPnl", "strategy", "result", "note"];
-const labels = { asset: "activo", direction: "dirección", openedAt: "fecha de entrada", closedAt: "fecha de cierre", entry: "entrada", initialSL: "SL", tp: "TP", exit: "salida", netPnl: "PnL", strategy: "estrategia", result: "resultado" };
 function object(value) { return value && typeof value === "object" && !Array.isArray(value); }
 export function parseBacktest(text) {
   if (typeof text !== "string" || new TextEncoder().encode(text).length > MAX_BACKTEST_BYTES) throw new Error("El archivo supera 64 KB.");
@@ -37,7 +37,7 @@ export function parseBacktest(text) {
   if (b.result && !["WIN", "LOSS", "BE"].includes(b.result)) throw new Error("result debe ser WIN, LOSS o BE.");
   for (const key of ["openedAt", "closedAt"]) {
     if (!b[key]) continue;
-    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:\d{2})$/.test(b[key]) || !Number.isFinite(Date.parse(b[key]))) throw new Error(key + ": usá fecha ISO con zona horaria.");
+    if (!validInstant(b[key])) throw new Error(key + ": usá fecha ISO válida con zona horaria.");
     const datePart = b[key].slice(0,10);
     if (new Date(datePart + "T00:00:00Z").toISOString().slice(0,10) !== datePart) throw new Error(key + ": fecha inexistente.");
     b[key] = new Date(b[key]).toISOString();
@@ -45,7 +45,9 @@ export function parseBacktest(text) {
   if (b.openedAt && b.closedAt && b.closedAt < b.openedAt) throw new Error("El cierre no puede ser anterior a la entrada.");
   if (b.entry != null && b.initialSL != null && b.direction && (b.direction === "LONG" ? b.initialSL >= b.entry : b.initialSL <= b.entry)) throw new Error("El SL debe estar del lado de riesgo de la entrada.");
   if (b.netPnl != null && b.result && deriveResult("UNKNOWN", b.netPnl, false) !== b.result) throw new Error("El resultado no coincide con el signo del PnL.");
-  const missing = fields.filter(k => k !== "note" && (b[k] == null || b[k] === "" || (k === "strategy" && b[k] === "UNCLASSIFIED"))).map(k => labels[k]);
+  assertExecution(b, { draft: true });
+  if (b.netPnl != null) b.result = deriveResult("UNKNOWN", b.netPnl, false);
+  const missing = missingExecution(b);
   return { importId: raw.importId, backtest: b, missing };
 }
 function hasIdentity(b) {

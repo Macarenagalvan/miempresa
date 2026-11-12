@@ -3,6 +3,7 @@ import { updateObservation, archiveObservation } from "../../domain/observation.
 import { el } from "../render.js";
 import { assetPicker, coreFields, optionalFields, field } from "../forms/observation.js";
 import { go } from "../router.js";
+import { renderStudy } from "./study.js";
 
 export async function renderObservationDetail(ctx) {
   const id = ctx.route.rest;
@@ -10,6 +11,7 @@ export async function renderObservationDetail(ctx) {
   if (!obs || obs.archived) {
     return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Nota no encontrada." })])];
   }
+  if (obs.studyOutcome) return renderStudy(ctx, obs);
 
   const state = { asset: obs.asset };
   const pickerHost = el("div");

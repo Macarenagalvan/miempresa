@@ -20,14 +20,14 @@ function assert(name, cond, detail = "") {
 }
 
 async function closedTrade(stageId, extra = {}) {
-  const open = await createTrade({
+  const open = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: extra.asset || "EURUSD",
     context: "BACKTEST",
     direction: extra.direction || "LONG",
     entry: extra.entry || 1.1,
     initialSL: extra.initialSL || 1.09,
   }, stageId);
-  return closeTrade(open.id, {
+  return closeTrade(open.id, { closedAt: "2026-11-01T11:00:00.000Z",
     exit: extra.exit || 1.12,
     netPnl: extra.netPnl == null ? 20 : extra.netPnl,
     closeType: extra.closeType || "TP",
@@ -62,7 +62,7 @@ async function run() {
   }
   assert("sigue habiendo uno", (await listAsrs()).filter((row) => row.tradeId === lonely.id).length === 1);
 
-  const open = await createTrade({
+  const open = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1,
   }, stage.id);
   try {

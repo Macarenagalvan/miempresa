@@ -12,6 +12,16 @@ export function tradeState(trade) {
   return trade.lifecycle === "VOID" ? "VOID" : trade.isDraft ? "DRAFT" : trade.lifecycle;
 }
 
+export function localDateTimeIso(value, original = null) {
+  if (value === localDateTimeValue(original)) return original;
+  if (!value) return null;
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime()) || localDateTimeValue(date) !== value.slice(0, 16)) {
+    throw new Error("Fecha u hora local inválida. Revisá también el cambio de horario de verano.");
+  }
+  return date.toISOString();
+}
+
 export function stateBadge(trade) {
   const state = tradeState(trade);
   return el("span", { className: "state-badge state-" + state.toLowerCase(), text: ({

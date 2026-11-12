@@ -20,7 +20,7 @@ function assert(name, cond, detail = "") {
 async function run() {
   const { stage } = await ensureJournalSeed();
 
-  const bt = await createTrade({
+  const bt = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1,
   }, stage.id);
   assert("BACKTEST sigue sin account", bt.accountId == null && bt.context === "BACKTEST");
@@ -31,32 +31,32 @@ async function run() {
   const fundedAcc = await createAccount({ name: "Funded", context: "FUNDED", currency: "USD", initialAmount: 50000 }, stage.id);
 
   try {
-    await createTrade({ asset: "EURUSD", context: "DEMO", direction: "LONG", entry: 1.1 }, stage.id);
+    await createTrade({ openedAt: "2026-01-01T10:00:00.000Z", asset: "EURUSD", context: "DEMO", direction: "LONG", entry: 1.1 }, stage.id);
     assert("DEMO exige Account", false);
   } catch (e) {
     assert("DEMO exige Account", /accountId/.test(e.message));
   }
   try {
-    await createTrade({ asset: "EURUSD", context: "LIVE", direction: "LONG", entry: 1.1 }, stage.id);
+    await createTrade({ openedAt: "2026-01-01T10:00:00.000Z", asset: "EURUSD", context: "LIVE", direction: "LONG", entry: 1.1 }, stage.id);
     assert("LIVE exige Account", false);
   } catch (e) {
     assert("LIVE exige Account", /accountId/.test(e.message));
   }
   try {
-    await createTrade({ asset: "EURUSD", context: "PROP_CHALLENGE", direction: "LONG", entry: 1.1 }, stage.id);
+    await createTrade({ openedAt: "2026-01-01T10:00:00.000Z", asset: "EURUSD", context: "PROP_CHALLENGE", direction: "LONG", entry: 1.1 }, stage.id);
     assert("PROP exige Account", false);
   } catch (e) {
     assert("PROP exige Account", /accountId/.test(e.message));
   }
   try {
-    await createTrade({ asset: "EURUSD", context: "FUNDED", direction: "LONG", entry: 1.1 }, stage.id);
+    await createTrade({ openedAt: "2026-01-01T10:00:00.000Z", asset: "EURUSD", context: "FUNDED", direction: "LONG", entry: 1.1 }, stage.id);
     assert("FUNDED exige Account", false);
   } catch (e) {
     assert("FUNDED exige Account", /accountId/.test(e.message));
   }
 
   try {
-    await createTrade({
+    await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
       asset: "EURUSD", context: "LIVE", direction: "LONG", entry: 1.1, accountId: demoAcc.id,
     }, stage.id);
     assert("mismatch context/account rechazado", false);
@@ -72,7 +72,7 @@ async function run() {
   const archived = await createAccount({ name: "Vieja", context: "LIVE", currency: "EUR", initialAmount: 10 }, stage.id);
   await archiveAccount(archived.id);
   try {
-    await createTrade({
+    await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
       asset: "EURUSD", context: "LIVE", direction: "LONG", entry: 1.1, accountId: archived.id,
     }, stage.id);
     assert("Account archivada no válida", false);
@@ -80,7 +80,7 @@ async function run() {
     assert("Account archivada no válida", /archivada/.test(e.message));
   }
 
-  const liveOpen = await createTrade({
+  const liveOpen = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "LIVE", direction: "LONG", entry: 1.12,
     accountId: liveAcc.id, brokerSymbol: "EURUSDc",
   }, stage.id);
@@ -91,7 +91,7 @@ async function run() {
   const setup = await createSetup({
     asset: "EURUSD", context: "PROP_CHALLENGE", direction: "LONG",
   }, stage.id);
-  const propOpen = await createTrade({
+  const propOpen = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "PROP_CHALLENGE", direction: "LONG",
     entry: 1.13, accountId: propAcc.id, setupId: setup.id,
   }, stage.id);
@@ -107,7 +107,7 @@ async function run() {
   const tradesAll = await listTrades();
   assert("OPEN no entra al balance", accountBalance(liveAcc, movs0, tradesAll) === 2000);
 
-  const liveClosed = await closeTrade(liveOpen.id, {
+  const liveClosed = await closeTrade(liveOpen.id, { closedAt: "2026-11-01T11:00:00.000Z",
     exit: 1.14, netPnl: 80, commission: -2, swap: 0, closeType: "TP",
   });
   assert("netPnl no se re-resta", liveClosed.netPnl === 80 && liveClosed.commission === -2);
@@ -122,20 +122,20 @@ async function run() {
   const propBal = accountBalance(propAcc, await listAccountMovements(propAcc.id), await listTrades());
   assert("Payout no afecta balance por sí mismo", propBal === 50000 && pay.amount === 500);
 
-  const btClosed = await closeTrade(bt.id, { exit: 1.12, netPnl: 999, closeType: "TP" });
+  const btClosed = await closeTrade(bt.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.12, netPnl: 999, closeType: "TP" });
   const liveStill = accountBalance(liveAcc, await listAccountMovements(liveAcc.id), await listTrades());
   assert("BACKTEST no afecta Account balance", liveStill === 2100 && btClosed.netPnl === 999);
   assert("otro Account no afecta balance", accountBalance(demoAcc, await listAccountMovements(demoAcc.id), await listTrades()) === 1000);
 
-  const demoT = await createTrade({
+  const demoT = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "DEMO", direction: "SHORT", entry: 1.1, accountId: demoAcc.id,
   }, stage.id);
-  await closeTrade(demoT.id, { exit: 1.09, netPnl: 15, closeType: "TP" });
+  await closeTrade(demoT.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.09, netPnl: 15, closeType: "TP" });
 
-  const fundedT = await createTrade({
+  const fundedT = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "XAUUSD", context: "FUNDED", direction: "LONG", entry: 2400, accountId: fundedAcc.id,
   }, stage.id);
-  await closeTrade(fundedT.id, { exit: 2410, netPnl: 40, closeType: "TP" });
+  await closeTrade(fundedT.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 2410, netPnl: 40, closeType: "TP" });
 
   const all = await listTrades();
   const realStats = compute(all, { universe: "REAL", stageId: stage.id });
@@ -155,10 +155,10 @@ async function run() {
   const afterVoid = accountBalance(liveAcc, await listAccountMovements(liveAcc.id), await listTrades());
   assert("VOID sale del balance", afterVoid === 2020 && voided.lifecycle === "VOID");
 
-  const live2 = await createTrade({
+  const live2 = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "LIVE", direction: "LONG", entry: 1.1, accountId: liveAcc.id,
   }, stage.id);
-  const closed2 = await closeTrade(live2.id, { exit: 1.11, netPnl: 10, closeType: "TP" });
+  const closed2 = await closeTrade(live2.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.11, netPnl: 10, closeType: "TP" });
   const beforeAmend = accountBalance(liveAcc, await listAccountMovements(liveAcc.id), await listTrades());
   await amendClosedTrade(closed2.id, { netPnl: 25 });
   const afterAmend = accountBalance(liveAcc, await listAccountMovements(liveAcc.id), await listTrades());

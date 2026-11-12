@@ -168,7 +168,7 @@ async function run() {
     closedAt: "2026-09-11T08:00:00.000Z",
     entry: 87.15,
     exit: 87.42,
-    initialSL: 87.05,
+    initialSL: 87.45,
     tp: 86.80,
     rrPlanned: 1.5,
     riskPercent: 0.5,
@@ -185,7 +185,7 @@ async function run() {
   assert("manual nace CLOSED", manual.lifecycle === Lifecycle.CLOSED && manual.strategy === Strategy.RED);
   assert("manual no pasó por OPEN", manual.openedAt && manual.closedAt && manual.exit === 87.42);
   const manualReload = await getTrade(manual.id);
-  assert("reload manual strategy/style/SL", manualReload.strategy === Strategy.RED && manualReload.style === Style.SCALP && manualReload.initialSL === 87.05);
+  assert("reload manual strategy/style/SL", manualReload.strategy === Strategy.RED && manualReload.style === Style.SCALP && manualReload.initialSL === 87.45);
   assert("reload manual risk/mgmt/note", manualReload.riskPercent === 0.5 && manualReload.riskMoney === 50 && manualReload.management === "parcial en 0.5R" && manualReload.note === "manual-closed-final");
   assert("reload manual costs/partials", manualReload.commission === -1.2 && manualReload.swap === -0.3 && manualReload.hasPartials === true && manualReload.closeType === CloseType.SL);
   assert("reload manual TP/RR", manualReload.tp === 86.80 && manualReload.rrPlanned === 1.5);
@@ -237,7 +237,7 @@ async function run() {
   }
   assert("lots inválido rechazado", lotsInvalid === "lots inválido");
 
-  const openLots = await createTrade({
+  const openLots = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "NZDJPY",
     direction: "SHORT",
     entry: 87.15,
@@ -335,7 +335,7 @@ async function run() {
   assert("hint imágenes locales", /Local en este dispositivo/.test(cardHint.textContent));
   assert("hint no promete cloud", !/sincroniz/i.test(cardHint.textContent));
 
-  const openCrypto = await createTrade({
+  const openCrypto = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "BTCUSD",
     direction: "SHORT",
     entry: 67000,

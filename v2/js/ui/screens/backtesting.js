@@ -6,6 +6,9 @@ import { Context, Lifecycle } from "../../domain/enums.js";
 import { isTestRecord } from "../../domain/test-record.js";
 import { go } from "../router.js";
 import { stateBadge } from "../trade-presentation.js";
+import { quickRegister } from "../quick-register.js";
+import { listActiveObservations } from "../../domain/observation.js";
+import { computeStudies } from "../../domain/stats.js";
 
 function fmtR(value) {
   return value == null || !Number.isFinite(Number(value))
@@ -39,6 +42,8 @@ function tradeRow(trade) {
 }
 
 export async function renderBacktesting(ctx) {
+  const studies = await listActiveObservations(ctx.stage.id);
+  const studyStats = computeStudies(studies, { stageId: ctx.stage.id });
   const trades = (await listStageTrades(ctx.stage.id, { includeVoid: false }))
     .filter((trade) => trade.context === Context.BACKTEST)
     .sort((a, b) => String(b.closedAt || b.openedAt || "").localeCompare(String(a.closedAt || a.openedAt || "")));
@@ -56,6 +61,7 @@ export async function renderBacktesting(ctx) {
     el("section", { className: "panel bt-hero" }, [
       el("p", { className: "kicker", text: "Práctica y análisis histórico" }),
       el("h1", { text: "Backtesting" }),
+      quickRegister(),
       el("p", { className: "hint", text: "Registrá pruebas históricas sin mezclarlas con operaciones ejecutadas ni afectar el saldo de ninguna cuenta." }),
       el("div", { className: "row-actions" }, [
         el("button", { type: "button", text: "+ Registrar backtest", onclick: action }),
@@ -69,6 +75,12 @@ export async function renderBacktesting(ctx) {
       ]),
     ]),
     importer.panel,
+    el("section", { className: "panel" }, [
+      el("h2", { text: "Estudios" }),
+      el("p", { text: `${studyStats.total} estudios · ${studyStats.noTrade} NO TRADE · ${studyStats.unclassified} sin clasificar` }),
+      el("p", { className: "hint", text: `NO TRADE / estudios clasificados: ${studyStats.noTradeRate == null ? "—" : (studyStats.noTradeRate * 100).toFixed(1) + "%"} (${studyStats.noTrade}/${studyStats.classified}). No incluye operaciones ni estudios sin clasificar.` }),
+      ...studies.filter(o => !isTestRecord(o)).map(o => el("button", { type: "button", className: "row", text: `${o.date} · ${o.asset} · ${o.studyOutcome || "Sin clasificar"}`, onclick: () => go("observacion/" + o.id) })),
+    ]),
     el("section", { className: "panel bt-register" }, [
       el("div", { className: "bt-section-heading" }, [
         el("div", {}, [

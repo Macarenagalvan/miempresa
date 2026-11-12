@@ -1,6 +1,7 @@
 import { Context, Lifecycle, Result, Disposition, Resolution } from "./enums.js";
 import { computeRrRealized, hasPartialsRecorded, isDeskResolved, normalizeAsset, universeContexts } from "./integrity.js";
 import { filterSignals } from "./signal.js";
+import { isTestRecord } from "./test-record.js";
 
 export function realizedR(trade) {
   if (!trade || trade.lifecycle !== Lifecycle.CLOSED) return null;
@@ -33,6 +34,7 @@ export function filterTrades(trades, filters = {}) {
   const from = filters.from || "";
   const to = filters.to || "";
   return (trades || []).filter((t) => {
+    if (filters.excludeTest !== false && isTestRecord(t)) return false;
     if (filters.stageId && t.stageId !== filters.stageId) return false;
     if (filters.universe) {
       const allowed = universeContexts(filters.universe);
@@ -119,6 +121,7 @@ export function compute(trades, filters = {}) {
   const scoped = filterTrades(trades, { ...applied, includeVoid: false });
   const closed = scoped.filter((t) => (
     t.lifecycle === Lifecycle.CLOSED
+    && t.isDraft !== true
     && (t.result === Result.WIN || t.result === Result.LOSS || t.result === Result.BE)
   ));
   const decided = closed.filter((t) => t.result === Result.WIN || t.result === Result.LOSS);
@@ -167,6 +170,17 @@ export function compute(trades, filters = {}) {
     maxConsecWins: nClosed ? maxConsecWins : null,
     maxConsecLosses: nClosed ? maxConsecLosses : null,
   };
+}
+
+export function computeStudies(observations, filters = {}) {
+  const rows = (observations || []).filter(o => !o.archived && !isTestRecord(o)
+    && (!filters.stageId || o.stageId === filters.stageId)
+    && (!filters.asset || normalizeAsset(o.asset) === normalizeAsset(filters.asset))
+    && (!filters.from || o.date >= filters.from) && (!filters.to || o.date <= filters.to));
+  const classified = rows.filter(o => ["NO_TRADE", "TRADE_TAKEN"].includes(o.studyOutcome));
+  const noTrade = classified.filter(o => o.studyOutcome === "NO_TRADE").length;
+  return { total: rows.length, classified: classified.length, unclassified: rows.length - classified.length,
+    noTrade, noTradeRate: classified.length ? noTrade / classified.length : null };
 }
 
 export function computeDesk(signals, filters = {}) {

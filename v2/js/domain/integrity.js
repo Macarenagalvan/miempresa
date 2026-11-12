@@ -76,6 +76,8 @@ export function assertObservation(obs) {
   if (obs.session && !["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"].includes(obs.session)) {
     throw new Error("session inválida");
   }
+  if (obs.studyOutcome != null && !["NO_TRADE", "TRADE_TAKEN"].includes(obs.studyOutcome)) throw new Error("studyOutcome inválido");
+  if (obs.bias != null && !["LONG", "SHORT", "NEUTRAL"].includes(obs.bias)) throw new Error("bias inválido");
 }
 
 export function computePlannedRr(direction, entry, sl, tp) {

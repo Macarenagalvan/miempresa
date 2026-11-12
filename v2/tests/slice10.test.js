@@ -136,7 +136,7 @@ async function run() {
   assert("stats Desk con import RGM", desk.printed >= 4);
 
   await createSetup({ asset: "EURUSD", context: "LIVE", direction: "LONG" }, stage.id);
-  await createTrade({ asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1 }, stage.id);
+  await createTrade({ openedAt: "2026-01-01T10:00:00.000Z", asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1 }, stage.id);
   const afterManual = await ingestRgmPayload(RGM_SLICE10_LINES.resolvedTp, stage.id, src);
   assert("reimport no crea Setup/Trade extra", afterManual.status === "duplicate");
 

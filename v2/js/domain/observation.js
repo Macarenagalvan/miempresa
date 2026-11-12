@@ -1,5 +1,8 @@
 import { createId, nowIso } from "./ids.js";
 import { assertObservation, normalizeAsset } from "./integrity.js";
+import { validDay } from "./execution.js";
+import { withStores, requestToPromise } from "../storage/db.js";
+import { buildObservationImage } from "../storage/repos/attachments.js";
 import {
   getObservation,
   putObservation,
@@ -88,4 +91,36 @@ export async function listActiveObservations(stageId, asset) {
       if (a.date !== b.date) return a.date < b.date ? 1 : -1;
       return a.createdAt < b.createdAt ? 1 : -1;
     });
+}
+
+export async function saveStudy(input, stageId, images = [], id = null) {
+  if (!validDay(input.date)) throw new Error("Ingresá una fecha de sesión válida.");
+  if (!["NO_TRADE", "TRADE_TAKEN"].includes(input.studyOutcome)) throw new Error("Elegí el resultado del estudio.");
+  if (input.bias && !["LONG", "SHORT", "NEUTRAL"].includes(input.bias)) throw new Error("Sesgo inválido.");
+  if (images.length > 6) throw new Error("Elegí como máximo 6 capturas por guardado.");
+  const recordId = id || createId();
+  const captures = images.map(image => buildObservationImage(recordId, image));
+  const result = await withStores(["observations", "attachments", "syncLedger"], "readwrite", async tx => {
+    const observations = tx.objectStore("observations");
+    const previous = id ? await requestToPromise(observations.get(id)) : null;
+    if (id && (!previous || previous.stageId !== stageId || previous.archived)) throw new Error("Estudio no disponible.");
+    if (input.expectedUpdatedAt && input.expectedUpdatedAt !== previous?.updatedAt) throw new Error("El estudio cambió. Volvé a abrirlo antes de guardar.");
+    const now = nowIso();
+    const record = { ...emptyOptionals(), ...previous, id: recordId, stageId, recordSource: "MANUAL", context: "BACKTEST",
+      asset: normalizeAsset(input.asset), date: input.date, note: String(input.note || "").trim(),
+      studyOutcome: input.studyOutcome, bias: input.bias || null, session: input.session || null,
+      archived: false, archivedAt: null, createdAt: previous?.createdAt || now, updatedAt: now };
+    assertObservation(record);
+    const ledger = tx.objectStore("syncLedger");
+    for (const [entityType, row] of [["observations", record], ...captures.map(c => ["attachments", c])]) {
+      const key = entityType + "::" + row.id;
+      const old = await requestToPromise(ledger.get(key));
+      tx.objectStore(entityType).put(row);
+      ledger.put({ ...old, id: key, entityType, entityId: row.id, cloudRevision: old?.cloudRevision || 0,
+        dirty: true, tombstone: false, localChangedAt: now });
+    }
+    return record;
+  });
+  import("../services/sync-engine.js").then(m => m.scheduleSync()).catch(() => {});
+  return result;
 }

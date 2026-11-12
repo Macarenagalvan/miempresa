@@ -22,7 +22,7 @@ function assert(name, cond, detail = "") {
 async function run() {
   const { stage } = await ensureJournalSeed();
 
-  const direct = await createTrade({
+  const direct = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD",
     context: "BACKTEST",
     direction: "LONG",
@@ -33,7 +33,7 @@ async function run() {
   assert("OPEN sin SL incompleto R", direct.incompleteForR === true && direct.lifecycle === "OPEN");
 
   try {
-    await createTrade({
+    await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
       asset: "EURUSD",
       context: "LIVE",
       direction: "LONG",
@@ -60,7 +60,7 @@ async function run() {
   const unlocked = await getSetup(setup.id);
   assert("eval editable antes del trade", !unlocked.validationLockedAt);
 
-  const t1 = await createTrade({
+  const t1 = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: setup.asset,
     context: setup.context,
     direction: setup.direction,
@@ -84,43 +84,43 @@ async function run() {
   assert("currentSL no pisa initialSL", moved.initialSL === 1.09 && moved.currentSL === 1.095);
   assert("parcial no crea trade nuevo", (await listStageTrades(stage.id, { setupId: setup.id })).length === 1);
 
-  const closed = await closeTrade(t1.id, { exit: 1.13, netPnl: 30, closeType: "TP" });
+  const closed = await closeTrade(t1.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.13, netPnl: 30, closeType: "TP" });
   assert("cierre WIN", closed.result === "WIN" && closed.lifecycle === "CLOSED");
   assert("texto management no marca parciales", closed.hasPartials === false);
   assert("texto parcial no anula R", Math.abs(closed.rrRealized - ((1.13 - 1.105) / (1.105 - 1.09))) < 1e-9);
 
-  const cleanR = await createTrade({
+  const cleanR = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.105, initialSL: 1.09,
   }, stage.id);
-  const closedClean = await closeTrade(cleanR.id, { exit: 1.13, netPnl: 25, closeType: "TP" });
+  const closedClean = await closeTrade(cleanR.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.13, netPnl: 25, closeType: "TP" });
   assert("R por precio sin parciales", Math.abs(closedClean.rrRealized - ((1.13 - 1.105) / (1.105 - 1.09))) < 1e-9);
   assert("hasPartials default false", closedClean.hasPartials === false);
 
-  const flagOnly = await createTrade({
+  const flagOnly = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.105, initialSL: 1.09,
     hasPartials: true, management: "gestion simple",
   }, stage.id);
-  const closedFlag = await closeTrade(flagOnly.id, { exit: 1.13, netPnl: 25, closeType: "TP" });
+  const closedFlag = await closeTrade(flagOnly.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.13, netPnl: 25, closeType: "TP" });
   assert("hasPartials true anula R", closedFlag.hasPartials === true && closedFlag.rrRealized == null);
 
-  const lossT = await createTrade({
+  const lossT = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1, initialSL: 1.09, setupId: setup.id,
   }, stage.id);
-  const lost = await closeTrade(lossT.id, { exit: 1.09, netPnl: -12, closeType: "SL" });
+  const lost = await closeTrade(lossT.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.09, netPnl: -12, closeType: "SL" });
   assert("LOSS", lost.result === "LOSS");
 
-  const beT = await createTrade({
+  const beT = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.1, initialSL: 1.09, setupId: setup.id,
   }, stage.id);
-  const be = await closeTrade(beT.id, { exit: 1.1, netPnl: 0.4, closeType: "BE", declaredBe: true });
+  const be = await closeTrade(beT.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.1, netPnl: 0.4, closeType: "BE", declaredBe: true });
   assert("BE declarado no por aproximación", be.result === "BE" && be.netPnl === 0.4);
   assert("signo 0 es BE", deriveResult("MANUAL", 0) === "BE");
   assert("0.01 no es BE", deriveResult("MANUAL", 0.01) === "WIN");
 
-  const noR = await createTrade({
+  const noR = await createTrade({ openedAt: "2026-01-01T10:00:00.000Z",
     asset: "EURUSD", context: "BACKTEST", direction: "LONG", entry: 1.2,
   }, stage.id);
-  const closedNoR = await closeTrade(noR.id, { exit: 1.21, netPnl: 5, closeType: "MANUAL" });
+  const closedNoR = await closeTrade(noR.id, { closedAt: "2026-11-01T11:00:00.000Z", exit: 1.21, netPnl: 5, closeType: "MANUAL" });
   assert("R n/a sin initialSL", closedNoR.rrRealized == null && computeRrRealized(closedNoR) == null);
 
   const listed = await listStageTrades(stage.id, { setupId: setup.id });

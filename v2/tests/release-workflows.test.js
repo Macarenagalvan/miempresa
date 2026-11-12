@@ -71,9 +71,9 @@ export async function run() {
     await settled(()=>location.hash.includes(result.id));
     return {form,trade:await getTrade(result.id)};
   }
-  const incomplete=await saveForm({context:"BACKTEST"},{asset:"NAS100"});
+  const incomplete=await saveForm({context:"BACKTEST"},{asset:"NAS100",lifecycle:"DRAFT"});
   check(incomplete.trade.isDraft && incomplete.trade.openedAt===null, "UI histórico incompleto no inventa fecha");
-  const open=await saveForm({}, {context:"LIVE",accountId:live.id,asset:"EURUSD",entry:"100",lifecycle:"OPEN"});
+  const open=await saveForm({}, {context:"LIVE",accountId:live.id,asset:"EURUSD",entry:"100",openedAt:"2026-09-10T10:00",lifecycle:"OPEN"});
   check(!open.trade.isDraft && open.trade.lifecycle==="OPEN", "UI OPEN completo no es borrador");
   const explicit=await saveForm({context:"BACKTEST"},{asset:"EURUSD",entry:"100",openedAt:"2026-09-10T10:00",lifecycle:"DRAFT"});
   check(explicit.trade.isDraft, "UI borrador explícito conserva estado");

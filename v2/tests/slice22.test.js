@@ -123,6 +123,7 @@ async function run() {
   assert("asset es input libre", nuevoOpen.querySelector('[name="asset"]') && nuevoOpen.querySelector('[name="asset"]').tagName === "INPUT");
   assert("sugerencias no son whitelist", Boolean(nuevoOpen.querySelector("#nuevo-asset-suggest")));
   fill(nuevoOpen, "context", "BACKTEST");
+  fill(nuevoOpen, "openedAt", "2026-09-11T09:40");
   fill(nuevoOpen, "asset", "NZDJPY");
   fill(nuevoOpen, "direction", "SHORT");
   fill(nuevoOpen, "strategy", Strategy.RED);
