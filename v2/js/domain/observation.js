@@ -94,8 +94,8 @@ export async function listActiveObservations(stageId, asset) {
 }
 
 export async function saveStudy(input, stageId, images = [], id = null) {
-  if (!validDay(input.date)) throw new Error("Ingresá una fecha de sesión válida.");
-  if (!["NO_TRADE", "TRADE_TAKEN"].includes(input.studyOutcome)) throw new Error("Elegí el resultado del estudio.");
+  if (input.date != null && input.date !== "" && !validDay(input.date)) throw new Error("Ingresá una fecha de sesión válida.");
+  if (!["NO_TRADE", "TRADE_TAKEN", "UNREVIEWED"].includes(input.studyOutcome)) throw new Error("Elegí el resultado del estudio.");
   if (input.bias && !["LONG", "SHORT", "NEUTRAL"].includes(input.bias)) throw new Error("Sesgo inválido.");
   if (images.length > 6) throw new Error("Elegí como máximo 6 capturas por guardado.");
   const recordId = id || createId();
@@ -105,9 +105,10 @@ export async function saveStudy(input, stageId, images = [], id = null) {
     const previous = id ? await requestToPromise(observations.get(id)) : null;
     if (id && (!previous || previous.stageId !== stageId || previous.archived)) throw new Error("Estudio no disponible.");
     if (input.expectedUpdatedAt && input.expectedUpdatedAt !== previous?.updatedAt) throw new Error("El estudio cambió. Volvé a abrirlo antes de guardar.");
+    if (!previous?.recovery && !validDay(input.date)) throw new Error("Ingresá una fecha de sesión válida.");
     const now = nowIso();
-    const record = { ...emptyOptionals(), ...previous, id: recordId, stageId, recordSource: "MANUAL", context: "BACKTEST",
-      asset: normalizeAsset(input.asset), date: input.date, note: String(input.note || "").trim(),
+    const record = { ...emptyOptionals(), ...previous, id: recordId, stageId, recordSource: previous?.recordSource || "MANUAL", context: "BACKTEST",
+      asset: normalizeAsset(input.asset), date: input.date || null, note: String(input.note || "").trim(),
       studyOutcome: input.studyOutcome, bias: input.bias || null, session: input.session || null,
       archived: false, archivedAt: null, createdAt: previous?.createdAt || now, updatedAt: now };
     assertObservation(record);

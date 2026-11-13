@@ -11,6 +11,7 @@ export function localModeState(state) {
 export function isSyncPaused(state) { return state?.modeVersion !== 2 || state.paused !== false; }
 export async function assertModeInTransaction(tx, expected) {
   const state = await requestToPromise(tx.objectStore('syncState').get(SYNC_STATE_ID));
+  if (state?.localOnlyRecovery) throw new Error('La recuperación histórica requiere modo local. Sincronización de vínculos aún no habilitada.');
   if (isSyncPaused(state)) throw new Error(PAUSED_LABEL);
   if (expected && state.modeEpoch !== expected.modeEpoch) throw new Error('La sincronización cambió durante la operación. Volvé a revisar los pendientes.');
   return state;

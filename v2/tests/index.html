@@ -57,6 +57,7 @@
     import { run as runP0 } from "./p0-studies.test.js";
     import { run as runP01 } from "./p01-security.test.js";
     import { run as runP02 } from "./p02-local-mode.test.js";
+    import { run as runP03 } from "./p03-historical-study.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
@@ -99,6 +100,7 @@
       .then(() => runP0())
       .then(() => runP01())
       .then(() => runP02())
+      .then(() => runP03())
       .then(() => { document.body.dataset.testStatus = "passed"; console.log(out.textContent); })
       .catch((err) => {
         out.className = "fail";

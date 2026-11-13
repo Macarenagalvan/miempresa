@@ -1,3 +1,4 @@
+import { isHistoricalPending } from '../domain/historical-study.js';
 import { el } from "./render.js";
 
 export function localDateTimeValue(value) {
@@ -9,6 +10,8 @@ export function localDateTimeValue(value) {
 }
 
 export function tradeState(trade) {
+  if (trade.studyConversion) return "STUDY_SOURCE";
+  if (isHistoricalPending(trade)) return "HISTORICAL_REVIEW";
   return trade.lifecycle === "VOID" ? "VOID" : trade.isDraft ? "DRAFT" : trade.lifecycle;
 }
 
@@ -25,7 +28,7 @@ export function localDateTimeIso(value, original = null) {
 export function stateBadge(trade) {
   const state = tradeState(trade);
   return el("span", { className: "state-badge state-" + state.toLowerCase(), text: ({
-    DRAFT: "BORRADOR", OPEN: "Abierta", CLOSED: "Cerrada", VOID: "Anulada",
+    STUDY_SOURCE: "ORIGINAL VINCULADO", HISTORICAL_REVIEW: "PENDIENTE DE CLASIFICAR", DRAFT: "BORRADOR", OPEN: "Abierta", CLOSED: "Cerrada", VOID: "Anulada",
   })[state] || state });
 }
 

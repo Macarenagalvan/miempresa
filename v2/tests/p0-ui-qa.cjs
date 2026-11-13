@@ -50,7 +50,7 @@ async function isolated(browser, options = {}) {
         let opens = 0, deletes = 0, blocked = 0;
         indexedDB.open = (...args) => { opens++; return open(...args); };
         indexedDB.deleteDatabase = (...args) => { deletes++; return remove(...args); };
-        for (const name of ['slice0', 'slice13', 'slice20', 'p0-studies', 'p01-security', 'p02-local-mode']) {
+        for (const name of ['slice0', 'slice13', 'slice20', 'p0-studies', 'p01-security', 'p02-local-mode', 'p03-historical-study']) {
           try { const mod = await import('/v2/tests/' + name + '.test.js'); await mod.run(); }
           catch (e) { if (e.message.includes('Pruebas bloqueadas')) blocked++; else throw e; }
         }
@@ -58,7 +58,7 @@ async function isolated(browser, options = {}) {
         const value = await new Promise(resolve => { const r = verify.transaction('sentinel').objectStore('sentinel').get('key'); r.onsuccess = () => resolve(r.result); });
         verify.close(); return { opens, deletes, blocked, value };
       });
-      assert.deepEqual(result, { opens: 0, deletes: 0, blocked: 6, value: 'synthetic-preserve' });
+      assert.deepEqual(result, { opens: 0, deletes: 0, blocked: 7, value: 'synthetic-preserve' });
       report.isolation.push({ host, passed: true, ...result });
       await context.close();
     }
@@ -72,6 +72,7 @@ async function isolated(browser, options = {}) {
     assert.equal(report.suite, 'passed', log.slice(-1500));
     await suite.close();
     report.localMode = await require('./p02-browser-qa.cjs')({ browser, isolated, root, output, fs, path });
+    report.historicalRecovery = await require('./p03-browser-qa.cjs')({ browser, isolated, output, fs, path });
 
     if (process.env.BACKUP_PATH) {
       const bytes = await fs.readFile(process.env.BACKUP_PATH);

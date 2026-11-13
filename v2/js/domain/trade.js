@@ -190,7 +190,7 @@ export async function updateDraftTrade(id, patch) {
 
 export async function activateDraftTrade(id) {
   const current = await getTrade(id);
-  if (!current || current.lifecycle !== Lifecycle.OPEN || !current.isDraft) throw new Error("borrador no encontrado");
+  if (!current || current.studyConversion || current.lifecycle !== Lifecycle.OPEN || !current.isDraft) throw new Error("borrador no encontrado");
   if (!current.openedAt) throw new Error("Completá la fecha de entrada antes de abrir la operación.");
   assertExecution(current, { closed: false });
   const next = deriveTrade({ ...current, isDraft: false, updatedAt: nowIso() });
@@ -205,7 +205,7 @@ export async function completeDraftTrade(id, input, journal, target = "DRAFT") {
   const result = await withStores([STORES.trades, STORES.syncLedger], "readwrite", async tx => {
     const store = tx.objectStore(STORES.trades);
     const current = await requestToPromise(store.get(id));
-    if (!current || current.lifecycle !== Lifecycle.OPEN || !current.isDraft) throw new Error("El borrador cambió. Volvé a abrirlo.");
+    if (!current || current.studyConversion || current.lifecycle !== Lifecycle.OPEN || !current.isDraft) throw new Error("El borrador cambió. Volvé a abrirlo.");
     if (input.expectedUpdatedAt && input.expectedUpdatedAt !== current.updatedAt) throw new Error("El borrador cambió en otra pantalla. Volvé a abrirlo.");
     let next = applyJournalPatch(current, journal);
     for (const key of ["asset", "direction", "openedAt", "entry"]) {
@@ -523,7 +523,7 @@ export async function syncMt5Csv(text, stageId, opts = {}) {
 export async function listStageTrades(stageId, opts = {}) {
   const all = await listTrades();
   return all
-    .filter((t) => t.stageId === stageId)
+    .filter((t) => !t.studyConversion && t.stageId === stageId)
     .filter((t) => !opts.context || t.context === opts.context)
     .filter((t) => !opts.accountId || t.accountId === opts.accountId)
     .filter((t) => opts.includeVoid || t.lifecycle !== Lifecycle.VOID)

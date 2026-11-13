@@ -485,8 +485,9 @@ function reviewKey(ledger, conflicts) {
 export async function prepareSyncResume() {
   await ensureDeviceState();
   const owner = await assertSyncOwner(null, { allowPaused: true });
-  return withStores(['syncState', 'syncLedger', 'syncConflicts'], 'readonly', async tx => {
+  return withStores(['syncState', 'syncLedger', 'syncConflicts', 'observations'], 'readonly', async tx => {
     const state = await requestToPromise(tx.objectStore('syncState').get(SYNC_STATE_ID));
+    if ((await requestToPromise(tx.objectStore('observations').getAll())).some(o => o.recovery)) throw new Error('Los históricos recuperados se conservan en modo local. La sincronización de estos vínculos aún no está habilitada.');
     const ledger = await requestToPromise(tx.objectStore('syncLedger').getAll());
     const conflicts = await requestToPromise(tx.objectStore('syncConflicts').getAll());
     return { owner, modeEpoch: state.modeEpoch, pending: ledger.filter(r => r.dirty).length,
@@ -496,9 +497,10 @@ export async function prepareSyncResume() {
 export async function resumeSync(review) {
   if (!review?.owner) throw new Error('Revisá cuenta, proyecto y pendientes antes de reactivar.');
   await assertSyncOwner(review.owner, { allowPaused: true });
-  await withStores(['syncState', 'syncLedger', 'syncConflicts'], 'readwrite', async tx => {
+  await withStores(['syncState', 'syncLedger', 'syncConflicts', 'observations'], 'readwrite', async tx => {
     const store = tx.objectStore('syncState');
     const state = await requestToPromise(store.get(SYNC_STATE_ID));
+    if ((await requestToPromise(tx.objectStore('observations').getAll())).some(o => o.recovery)) throw new Error('Los históricos recuperados se conservan en modo local. La sincronización de estos vínculos aún no está habilitada.');
     const ledger = await requestToPromise(tx.objectStore('syncLedger').getAll());
     const conflicts = await requestToPromise(tx.objectStore('syncConflicts').getAll());
     if (authGeneration() !== review.owner.generation || state.modeEpoch !== review.modeEpoch || state.ownerUserId !== review.owner.userId || state.ownerProject !== review.owner.project || reviewKey(ledger, conflicts) !== review.reviewKey) throw new Error('Los datos o la pausa cambiaron. Revisá los pendientes de nuevo.');

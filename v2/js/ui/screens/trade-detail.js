@@ -1,4 +1,6 @@
 import { el } from "../render.js";
+import { isHistoricalPending } from '../../domain/historical-study.js';
+import { renderHistoricalTrade } from './historical-recovery.js';
 import { field } from "../forms/observation.js";
 import { getTrade } from "../../storage/repos/trades.js";
 import { getSetup } from "../../storage/repos/setups.js";
@@ -33,6 +35,7 @@ export async function renderTradeDetail(ctx) {
     return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Operación no encontrada." })])];
   }
   const setup = trade.setupId ? await getSetup(trade.setupId) : null;
+  if (trade.studyConversion || (isHistoricalPending(trade) && !editMode)) return renderHistoricalTrade(ctx, trade);
   const asr = await asrForTrade(trade.id);
   if (closeMode) return trade.isDraft ? renderEdit(trade, "CLOSED") : renderClose(trade);
   if (voidMode) return renderVoid(trade);

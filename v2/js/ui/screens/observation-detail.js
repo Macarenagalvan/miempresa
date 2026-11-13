@@ -8,10 +8,10 @@ import { renderStudy } from "./study.js";
 export async function renderObservationDetail(ctx) {
   const id = ctx.route.rest;
   const obs = id ? await getObservation(id) : null;
-  if (!obs || obs.archived) {
+  if (!obs || (obs.archived && !obs.recovery)) {
     return [el("section", { className: "panel" }, [el("p", { className: "empty", text: "Nota no encontrada." })])];
   }
-  if (obs.studyOutcome) return renderStudy(ctx, obs);
+  if (obs.studyOutcome || obs.recovery) return renderStudy(ctx, obs);
 
   const state = { asset: obs.asset };
   const pickerHost = el("div");

@@ -68,3 +68,9 @@ export async function removeAttachment(id) {
   if (!id) throw new Error("attachment id requerido");
   await attachmentsRepo.delete(id);
 }
+
+export async function listStudyImages(observation) {
+  const own = await listByEntity('observation', observation.id);
+  const source = await Promise.all((observation.recovery?.attachmentIds || []).map(id => attachmentsRepo.get(id)));
+  return [...source.filter(Boolean), ...own];
+}

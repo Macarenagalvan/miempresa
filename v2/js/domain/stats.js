@@ -34,6 +34,7 @@ export function filterTrades(trades, filters = {}) {
   const from = filters.from || "";
   const to = filters.to || "";
   return (trades || []).filter((t) => {
+    if (t.studyConversion) return false;
     if (filters.excludeTest !== false && isTestRecord(t)) return false;
     if (filters.stageId && t.stageId !== filters.stageId) return false;
     if (filters.universe) {
@@ -173,7 +174,7 @@ export function compute(trades, filters = {}) {
 }
 
 export function computeStudies(observations, filters = {}) {
-  const rows = (observations || []).filter(o => !o.archived && !isTestRecord(o)
+  const rows = (observations || []).filter(o => !o.archived && (!o.context || o.context === "BACKTEST") && !isTestRecord(o)
     && (!filters.stageId || o.stageId === filters.stageId)
     && (!filters.asset || normalizeAsset(o.asset) === normalizeAsset(filters.asset))
     && (!filters.from || o.date >= filters.from) && (!filters.to || o.date <= filters.to));

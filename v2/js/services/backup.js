@@ -32,6 +32,7 @@ import {
 import { Context } from "../domain/enums.js";
 import { encodeAttachment, decodeAttachment } from "./backup-images.js";
 import { ensureDeviceState, isRestoreBlocked } from "./sync-engine.js";
+import { recoveryErrors } from '../domain/recovery-integrity.js';
 
 const V1_MESSAGE = "Este archivo pertenece a Journal V1 y no puede restaurarse en Journal V2.";
 
@@ -280,6 +281,7 @@ export function validateBackup(payload) {
     if (!att || att.id == null || att.id === "") pushError(errors, "attachments: id faltante");
     runAssert(() => decodeAttachment(att), errors);
   }
+  errors.push(...recoveryErrors({ trades, observations, attachments }));
 
   return {
     ok: errors.length === 0,

@@ -71,12 +71,12 @@ export function assertObservation(obs) {
   if (!obs.stageId) throw new Error("observation.stageId requerido");
   const asset = normalizeAsset(obs.asset);
   if (!asset) throw new Error("asset requerido");
-  if (!obs.note || !String(obs.note).trim()) throw new Error("note requerido");
-  if (!obs.date || !/^\d{4}-\d{2}-\d{2}$/.test(obs.date)) throw new Error("date inválida");
+  if (!obs.recovery && (!obs.note || !String(obs.note).trim())) throw new Error("note requerido");
+  if (!(obs.recovery && obs.date == null) && (!obs.date || !/^\d{4}-\d{2}-\d{2}$/.test(obs.date))) throw new Error("date inválida");
   if (obs.session && !["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"].includes(obs.session)) {
     throw new Error("session inválida");
   }
-  if (obs.studyOutcome != null && !["NO_TRADE", "TRADE_TAKEN"].includes(obs.studyOutcome)) throw new Error("studyOutcome inválido");
+  if (obs.studyOutcome != null && !["NO_TRADE", "TRADE_TAKEN", "UNREVIEWED"].includes(obs.studyOutcome)) throw new Error("studyOutcome inválido");
   if (obs.bias != null && !["LONG", "SHORT", "NEUTRAL"].includes(obs.bias)) throw new Error("bias inválido");
 }
 

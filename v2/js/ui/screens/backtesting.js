@@ -1,3 +1,4 @@
+import { isHistoricalPending, historicalDate, studyOutcomeLabel } from '../../domain/historical-study.js';
 import { backtestImporter } from "../backtest-import.js";
 import { el } from "../render.js";
 import { listStageTrades } from "../../domain/trade.js";
@@ -24,7 +25,7 @@ function summary(label, value, note) {
 }
 
 function tradeRow(trade) {
-  const day = String(trade.closedAt || trade.openedAt || "").slice(0, 10) || "Sin fecha";
+  const day = historicalDate(trade).date || "Sin fecha histórica";
   const status = trade.isDraft === true ? "Borrador" : (trade.lifecycle === Lifecycle.CLOSED ? (trade.result || "Cerrado") : "En curso");
   const value = trade.lifecycle === Lifecycle.CLOSED ? fmtR(realizedR(trade)) : "Pendiente";
   return el("button", {
@@ -49,6 +50,9 @@ export async function renderBacktesting(ctx) {
     .sort((a, b) => String(b.closedAt || b.openedAt || "").localeCompare(String(a.closedAt || a.openedAt || "")));
   const test = trades.filter(isTestRecord);
   const genuine = trades.filter((trade) => !isTestRecord(trade));
+  const pending = genuine.filter(isHistoricalPending);
+  const drafts = genuine.filter(t => t.isDraft && !isHistoricalPending(t));
+  const executed = genuine.filter(t => !t.isDraft);
   const stats = compute(genuine, { universe: "BACKTEST", stageId: ctx.stage.id });
   const importer = backtestImporter(ctx.stage.id);
   const action = () => go("nuevo/trade?context=BACKTEST");
@@ -76,21 +80,28 @@ export async function renderBacktesting(ctx) {
     ]),
     importer.panel,
     el("section", { className: "panel" }, [
-      el("h2", { text: "Estudios" }),
+      el("h2", { text: "Estudios históricos" }),
       el("p", { text: `${studyStats.total} estudios · ${studyStats.noTrade} NO TRADE · ${studyStats.unclassified} sin clasificar` }),
       el("p", { className: "hint", text: `NO TRADE / estudios clasificados: ${studyStats.noTradeRate == null ? "—" : (studyStats.noTradeRate * 100).toFixed(1) + "%"} (${studyStats.noTrade}/${studyStats.classified}). No incluye operaciones ni estudios sin clasificar.` }),
-      ...studies.filter(o => !isTestRecord(o)).map(o => el("button", { type: "button", className: "row", text: `${o.date} · ${o.asset} · ${o.studyOutcome || "Sin clasificar"}`, onclick: () => go("observacion/" + o.id) })),
+      ...studies.filter(o => !isTestRecord(o)).map(o => el("button", { type: "button", className: "row", text: `${o.date || "Fecha desconocida"} · ${o.asset} · ${studyOutcomeLabel(o.studyOutcome)}`, onclick: () => go("observacion/" + o.id) })),
     ]),
+    el('section', { className: 'panel bt-pending' }, [
+      el('h2', { text: 'Registros antiguos pendientes de clasificar' }),
+      el('p', { className: 'hint', text: 'Revisalos uno por uno. No se convierten automáticamente. Los datos parciales o conflictos requieren revisión; SIN EVALUAR no significa NO TRADE.' }),
+      ...pending.map(tradeRow),
+      !pending.length ? el('p', { text: 'No hay históricos pendientes de clasificar.' }) : null,
+    ]),
+    drafts.length ? el('section', { className: 'panel' }, [el('h2', { text: 'Borradores de operaciones simuladas' }), ...drafts.map(tradeRow)]) : null,
     el("section", { className: "panel bt-register" }, [
       el("div", { className: "bt-section-heading" }, [
         el("div", {}, [
-          el("h2", { text: "Historial de backtests" }),
+          el("h2", { text: "Operaciones simuladas ejecutadas" }),
           el("p", { className: "hint", text: "Abrí un registro para editarlo, revisar la operación y adjuntar capturas del gráfico." }),
         ]),
         el("button", { type: "button", className: "ghost", text: "Nuevo backtest", onclick: action }),
       ]),
-      genuine.length
-        ? el("div", { className: "bt-list" }, genuine.map(tradeRow))
+      executed.length
+        ? el("div", { className: "bt-list" }, executed.map(tradeRow))
         : el("div", { className: "empty-block" }, [
           el("p", { className: "empty", text: "Todavía no tenés backtests registrados." }),
           el("p", { className: "hint", text: "Empezá con el activo y la dirección. Podés guardar un borrador y completar fechas, precios y resultado después." }),
