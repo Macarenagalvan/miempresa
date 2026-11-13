@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { parseBacktest, importBacktest } from "../js/domain/backtest-import.js";
 import { listTrades, getTrade, putTrade } from "../js/storage/repos/trades.js";
 import { getLedgerEntry } from "../js/storage/repos/sync-ledger.js";

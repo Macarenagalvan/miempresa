@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { createObservation } from "../js/domain/observation.js";
 import {

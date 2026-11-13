@@ -1,3 +1,4 @@
+import './test-safety.js';
 import {ensureJournalSeed} from '../js/domain/stage.js';
 import {createAccount} from '../js/domain/account.js';
 import {getMeta} from '../js/storage/repos/meta.js';

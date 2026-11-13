@@ -1,4 +1,5 @@
-import { SCHEMA_VERSION, DB_VERSION, STORES, META_ID, INITIAL_STAGE_NAME } from "../js/config.js";
+import './test-safety.js';
+import { SCHEMA_VERSION, DB_VERSION, DB_NAME, STORES, META_ID, INITIAL_STAGE_NAME } from "../js/config.js";
 import { listStoreNames, closeDb, resetOpenCache, openDb } from "../js/storage/db.js";
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { getMeta, putMeta } from "../js/storage/repos/meta.js";
@@ -64,7 +65,7 @@ async function resetDb() {
   await closeDb();
   resetOpenCache();
   await new Promise((resolve, reject) => {
-    const req = indexedDB.deleteDatabase("JournalV2");
+    const req = indexedDB.deleteDatabase(DB_NAME);
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error || new Error("no se pudo borrar JournalV2"));
     req.onblocked = () => resolve();

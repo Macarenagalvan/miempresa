@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { createDeskSignalFromFixture, ingestRgmPayload, syncRgmJsonl, listStageSignals, findSignalByRgmId } from "../js/domain/signal.js";
 import { ingestPrint, applyResolution, parseRgmJsonl, DEFAULT_RGM_SOURCE_ASSET, DEFAULT_RGM_SOURCE_CONTEXT } from "../js/adapters/rgm.js";

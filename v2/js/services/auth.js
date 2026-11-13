@@ -8,16 +8,20 @@ import {
 
 const FORBIDDEN_KEY_RE = new RegExp("service" + "_" + "role|secret[_-]?key", "i");
 
+let generation = 0;
+export function authGeneration() { return generation; }
 let injectedClient = null;
 let cachedClient = null;
 let lastError = null;
 
 export function setAuthClient(client) {
+  generation++;
   injectedClient = client;
   cachedClient = null;
 }
 
 export function resetAuthRuntime() {
+  generation++;
   injectedClient = null;
   cachedClient = null;
   lastError = null;
@@ -41,6 +45,7 @@ export function readSupabaseConfig() {
 }
 
 export function saveSupabaseConfig({ url, publishableKey }) {
+  generation++;
   const nextUrl = String(url || "").trim();
   const nextKey = String(publishableKey || "").trim();
   assertClientKeySafe(nextKey);
@@ -50,6 +55,7 @@ export function saveSupabaseConfig({ url, publishableKey }) {
 }
 
 export function clearSavedSupabaseConfig() {
+  generation++;
   localStorage.removeItem(SUPABASE_LS_URL);
   localStorage.removeItem(SUPABASE_LS_KEY);
   cachedClient = null;
@@ -135,6 +141,7 @@ export async function restoreAuthSession() {
 }
 
 export async function signInWithPassword(email, password) {
+  generation++;
   const cfg = readSupabaseConfig();
   if (!configReady(cfg)) {
     return { ok: false, state: await getAuthState() };
@@ -164,6 +171,7 @@ export async function signInWithPassword(email, password) {
 }
 
 export async function signOut() {
+  generation++;
   const client = await getAuthClient();
   if (client && client.auth && typeof client.auth.signOut === "function") {
     await client.auth.signOut();

@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { createChallenge, updateChallenge, linkAccountToChallenge, accountsForChallenge } from "../js/domain/challenge.js";
 import { createPayout, voidPayout, listChallengePayouts } from "../js/domain/payout.js";

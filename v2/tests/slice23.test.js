@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { createClosedTrade, enrichTrade } from "../js/domain/trade.js";
 import { getTrade } from "../js/storage/repos/trades.js";

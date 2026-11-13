@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { renderHoy } from "../js/ui/screens/hoy.js";
 import { greetingLine } from "../js/ui/identity.js";

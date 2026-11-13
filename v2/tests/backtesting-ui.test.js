@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { renderBacktesting } from "../js/ui/screens/backtesting.js";
 import { renderNuevoTrade } from "../js/ui/screens/trade-new.js";

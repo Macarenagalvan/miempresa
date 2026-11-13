@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { createAccount, setActiveAccount, archiveAccount, accountBalance, visibleActiveAccount, getActiveAccount } from "../js/domain/account.js";
 import { createMovement, listAccountMovements } from "../js/domain/movement.js";

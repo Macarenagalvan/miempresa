@@ -1,3 +1,4 @@
+import './test-safety.js';
 import {parseMt5Html,decodeMt5File} from '../js/adapters/mt5-html.js';
 import {parseMt5Csv} from '../js/adapters/mt5.js';
 

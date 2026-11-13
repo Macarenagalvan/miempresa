@@ -1,4 +1,5 @@
-export const DB_NAME = "JournalV2";
+import { journalDatabaseName } from './runtime-isolation.js';
+export const DB_NAME = journalDatabaseName;
 export const DB_VERSION = 3;
 export const SCHEMA_VERSION = 3;
 export const JOURNAL_EDITION = "v2";

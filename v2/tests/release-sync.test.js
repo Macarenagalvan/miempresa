@@ -1,3 +1,5 @@
+import { testIdentity } from './sync-test-identity.js';
+import './test-safety.js';
 import { closeDb, resetOpenCache } from "../js/storage/db.js";
 import { DB_NAME } from "../js/config.js";
 import { addTradeImage, attachmentsRepo, ATTACHMENT_MAX_BYTES } from "../js/storage/repos/attachments.js";
@@ -16,6 +18,7 @@ async function freshDevice() {
     req.onblocked=()=>reject(new Error("Base de prueba bloqueada"));
   });
   setOnlineOverride(true);
+  await testIdentity();
 }
 
 export async function run() {

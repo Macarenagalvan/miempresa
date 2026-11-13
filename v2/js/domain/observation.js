@@ -117,7 +117,7 @@ export async function saveStudy(input, stageId, images = [], id = null) {
       const old = await requestToPromise(ledger.get(key));
       tx.objectStore(entityType).put(row);
       ledger.put({ ...old, id: key, entityType, entityId: row.id, cloudRevision: old?.cloudRevision || 0,
-        dirty: true, tombstone: false, localChangedAt: now });
+        localVersion: createId(), dirty: true, tombstone: false, localChangedAt: now });
     }
     return record;
   });

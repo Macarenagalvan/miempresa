@@ -1,3 +1,4 @@
+import { bindSyncOwner, assertSyncOwner } from '../../services/sync-owner.js';
 import { el } from "../render.js";
 import {
   getAuthState,
@@ -41,12 +42,17 @@ export async function buildSincronizacionPanel() {
   const snap = await getSyncSnapshot();
   const online = isOnline();
   const syncState = snap.state;
+  let ownerReady = false;
+  let ownerError = '';
+  if (state.status === 'signed_in') {
+    try { await assertSyncOwner(); ownerReady = true; } catch (e) { ownerError = e.message; }
+  }
   const err = el("p", {
     className: "err sync-err",
-    text: state.status === "error" ? (state.error || "") : (syncState.lastError || ""),
+    text: ownerError || (state.status === "error" ? (state.error || "") : (syncState.lastError || "")),
   });
   const statusLine = el("p", { className: "sync-status", text: authLabel(state) });
-  const engineLine = el("p", { className: "sync-engine-status", text: syncStatusLabel(snap, state, online) });
+  const engineLine = el("p", { className: "sync-engine-status", text: ownerError ? "Sincronización bloqueada · datos locales conservados" : syncStatusLabel(snap, state, online) });
   const hint = el("p", {
     className: "hint",
     text: state.status === "missing_config"
@@ -57,7 +63,7 @@ export async function buildSincronizacionPanel() {
   });
 
   const syncNowBtn = el("button", { type: "button", className: "ghost sync-now", text: "Sincronizar ahora" });
-  const canSync = state.status === "signed_in" && syncState.enabled && online && !snap.conflicts.length;
+  const canSync = ownerReady && state.status === "signed_in" && syncState.enabled && online && !snap.conflicts.length;
   syncNowBtn.disabled = !canSync;
   syncNowBtn.addEventListener("click", async () => {
     err.textContent = "";
@@ -89,10 +95,16 @@ export async function buildSincronizacionPanel() {
       await refreshSyncPanel(outBtn);
     });
     children.push(el("div", { className: "row-actions" }, [outBtn, syncNowBtn]));
+    if (!ownerReady && !syncState.ownerUserId && (!syncState.userId || syncState.userId === state.userId)) {
+      children.push(el('p', { className: 'hint', text: 'Confirmá que los datos de este navegador pertenecen a ' + state.email + ' y al proyecto configurado. Esta confirmación no sube ni borra registros.' }));
+      const confirm = el('button', { type: 'button', text: 'Confirmar pertenencia de este Journal' });
+      confirm.onclick = async () => { try { await bindSyncOwner(); await refreshSyncPanel(confirm); } catch (e) { err.textContent = e.message; } };
+      children.push(confirm);
+    }
     if (!syncState.enabled) {
       const count = await countLocalSyncable();
       let cloudEmpty = true;
-      if (online) {
+      if (online && ownerReady) {
         try {
           const rows = await pullCloudRecords();
           cloudEmpty = await cloudLooksEmpty(rows);
@@ -102,7 +114,7 @@ export async function buildSincronizacionPanel() {
         }
       }
       const uploadBtn = el("button", { type: "button", className: "sync-upload", text: "Subir este Journal a la nube" });
-      uploadBtn.disabled = !online || !cloudEmpty || count === 0;
+      uploadBtn.disabled = !ownerReady || !online || !cloudEmpty || count === 0;
       uploadBtn.addEventListener("click", async () => {
         err.textContent = "";
         try {
@@ -150,7 +162,8 @@ export async function buildSincronizacionPanel() {
     for (const row of snap.conflicts) {
       const keepBtn = el("button", { type: "button", className: "ghost sync-keep-local", text: "Conservar local" });
       const cloudBtn = el("button", { type: "button", className: "ghost sync-use-cloud", text: "Usar versión de la nube" });
-      keepBtn.disabled = !online;
+      keepBtn.disabled = !ownerReady || !online;
+      cloudBtn.disabled = !ownerReady;
       keepBtn.addEventListener("click", async () => {
         err.textContent = "";
         keepBtn.disabled = true;

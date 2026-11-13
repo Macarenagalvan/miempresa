@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import {
   addOfficeNote,
@@ -50,6 +51,8 @@ async function run() {
   assert("lista activas incluye altas", listed.some((n) => n.id === created.id) && listed.some((n) => n.id === multi.id));
 
   const beforeEdit = created.updatedAt;
+  // This assertion measures timestamps, not the sync version token: cross a clock tick.
+  while (new Date().toISOString() === beforeEdit) await new Promise(resolve => setTimeout(resolve, 1));
   const edited = await updateOfficeNote(created.id, { text: "Preguntar al vet por las vacunas" });
   assert("edita texto", edited.text === "Preguntar al vet por las vacunas");
   assert("updatedAt cambia", edited.updatedAt !== beforeEdit && edited.createdAt === created.createdAt);

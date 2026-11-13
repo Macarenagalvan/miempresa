@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { encodeAttachment, decodeAttachment } from "../js/services/backup-images.js";
 import { encodeSyncPayload, decodeSyncPayload } from "../js/services/sync-payload.js";
 import { buildExportPayload, applyRestoreTransaction, validateBackup } from "../js/services/backup.js";

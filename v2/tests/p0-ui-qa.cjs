@@ -7,6 +7,7 @@ const output = process.env.QA_OUTPUT || path.resolve(root, '../p0-qa');
 const origin = 'https://journal.test';
 async function isolated(browser, options = {}) {
   const context = await browser.newContext(options);
+  await context.addInitScript(marker => { globalThis.__JOURNAL_QA__ = marker; }, require('node:crypto').randomUUID());
   await context.route('**/*', async route => {
     const url = new URL(route.request().url());
     if (url.origin !== origin) return route.abort();
@@ -21,8 +22,46 @@ async function isolated(browser, options = {}) {
 (async () => {
   await fs.mkdir(output, {recursive:true});
   const browser = await chromium.launch({headless:true,...(process.env.BROWSER_PATH ? {executablePath:process.env.BROWSER_PATH} : {})});
-  const report = { suite: null, restore: null, devices: [] };
+  const report = { suite: null, restore: null, isolation: [], devices: [] };
   try {
+    // A production-shaped origin and even a forged marker must never run tests.
+    // Both contexts are disposable; the sentinel is synthetic, not user data.
+    for (const [host, marker] of [['production.example.test', true], ['journal.test', false]]) {
+      const context = await browser.newContext();
+      if (marker) await context.addInitScript(() => { globalThis.__JOURNAL_QA__ = 'forged-qa-marker-123456'; });
+      await context.route('**/*', async route => {
+        const url = new URL(route.request().url());
+        if (url.hostname !== host) return route.abort();
+        let file = path.resolve(root, '.' + decodeURIComponent(url.pathname));
+        if (!file.startsWith(root + path.sep)) return route.abort();
+        if (url.pathname.endsWith('/')) file = path.join(file, 'index.html');
+        try { await route.fulfill({ status: 200, body: await fs.readFile(file), contentType: path.extname(file) === '.js' ? 'text/javascript' : 'text/html' }); }
+        catch { await route.fulfill({ status: 404, body: '' }); }
+      });
+      const page = await context.newPage();
+      await page.goto('https://' + host + '/v2/README.md');
+      const result = await page.evaluate(async () => {
+        const open = indexedDB.open.bind(indexedDB), remove = indexedDB.deleteDatabase.bind(indexedDB);
+        const db = await new Promise((resolve, reject) => {
+          const r = open('JournalV2', 3); r.onupgradeneeded = () => r.result.createObjectStore('sentinel'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error);
+        });
+        await new Promise((resolve, reject) => { const tx = db.transaction('sentinel', 'readwrite'); tx.objectStore('sentinel').put('synthetic-preserve', 'key'); tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); });
+        db.close();
+        let opens = 0, deletes = 0, blocked = 0;
+        indexedDB.open = (...args) => { opens++; return open(...args); };
+        indexedDB.deleteDatabase = (...args) => { deletes++; return remove(...args); };
+        for (const name of ['slice0', 'slice13', 'slice20', 'p0-studies', 'p01-security']) {
+          try { const mod = await import('/v2/tests/' + name + '.test.js'); await mod.run(); }
+          catch (e) { if (e.message.includes('Pruebas bloqueadas')) blocked++; else throw e; }
+        }
+        const verify = await new Promise(resolve => { const r = open('JournalV2'); r.onsuccess = () => resolve(r.result); });
+        const value = await new Promise(resolve => { const r = verify.transaction('sentinel').objectStore('sentinel').get('key'); r.onsuccess = () => resolve(r.result); });
+        verify.close(); return { opens, deletes, blocked, value };
+      });
+      assert.deepEqual(result, { opens: 0, deletes: 0, blocked: 5, value: 'synthetic-preserve' });
+      report.isolation.push({ host, passed: true, ...result });
+      await context.close();
+    }
     const suite = await isolated(browser, {timezoneId:'Europe/Rome'});
     const test = await suite.newPage();
     await test.goto(origin + '/v2/tests/');

@@ -1,3 +1,4 @@
+import './test-safety.js';
 import {
   JOURNAL_EDITION,
   SCHEMA_VERSION,

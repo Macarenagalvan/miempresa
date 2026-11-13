@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { readBacktestFile, saveBacktestFile, inspectZip, crc32, ZIP_LIMITS } from "../js/services/backtest-zip.js";
 import { fixtures } from "./backtest-zip.fixtures.js";
 import { ensureJournalSeed } from "../js/domain/stage.js";

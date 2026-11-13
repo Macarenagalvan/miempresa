@@ -238,7 +238,7 @@ export async function completeDraftTrade(id, input, journal, target = "DRAFT") {
     const old = await requestToPromise(ledger.get(ledgerId));
     store.put(next);
     ledger.put({ ...old, id: ledgerId, entityType: STORES.trades, entityId: id, cloudRevision: old?.cloudRevision || 0,
-      dirty: true, tombstone: false, localChangedAt: next.updatedAt });
+      localVersion: createId(), dirty: true, tombstone: false, localChangedAt: next.updatedAt });
     return next;
   });
   import("../services/sync-engine.js").then(m => m.scheduleSync()).catch(() => {});

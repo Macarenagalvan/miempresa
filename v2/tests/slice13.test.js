@@ -1,3 +1,4 @@
+import './test-safety.js';
 import {
   DB_NAME,
   SCHEMA_VERSION,

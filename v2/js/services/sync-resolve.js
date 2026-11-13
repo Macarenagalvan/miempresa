@@ -1,35 +1,10 @@
+import { assertSyncOwner } from './sync-owner.js';
+import { syncSnapshot, acknowledgePush, applyCloudVersion } from '../storage/sync-version.js';
 import { nowIso } from "../domain/ids.js";
-import { applyRemoteMeta } from "../domain/sync-meta.js";
 import { encodeSyncPayload, decodeSyncPayload } from "./sync-payload.js";
-import { getMeta, putMeta } from "../storage/repos/meta.js";
-import { repoFor } from "../storage/repos/collections.js";
-import { getLedgerEntry, putLedgerEntry } from "../storage/repos/sync-ledger.js";
 import { getConflict, putConflict, listConflicts } from "../storage/repos/sync-conflicts.js";
-import { withApplyLock } from "./sync-apply.js";
 import { pullCloudRecords, pushCloudRecord } from "./sync-cloud.js";
 import { ensureDeviceState, isOnline, patchSyncState } from "./sync-engine.js";
-
-async function readLocalRecord(entityType, entityId) {
-  if (entityType === "meta") return getMeta();
-  const repo = repoFor(entityType);
-  return repo ? repo.get(entityId) : null;
-}
-
-async function writeLocalRecord(entityType, payload) {
-  if (entityType === "meta") {
-    const local = await getMeta();
-    return putMeta(applyRemoteMeta(local, payload));
-  }
-  const repo = repoFor(entityType);
-  if (!repo) throw new Error("store desconocido: " + entityType);
-  return repo.put(decodeSyncPayload(entityType, payload));
-}
-
-async function deleteLocalRecord(entityType, entityId) {
-  if (entityType === "meta") return;
-  const repo = repoFor(entityType);
-  if (repo) await repo.delete(entityId);
-}
 
 async function findCloudRow(entityType, entityId) {
   const rows = await pullCloudRecords();
@@ -59,13 +34,13 @@ function localTombstoneIntent(ledger, local, conflict) {
 }
 
 export async function resolveConflictKeepLocal(entityType, entityId) {
+  const owner = await assertSyncOwner();
   const conflict = await getConflict(entityType, entityId);
   if (!conflict) return { ok: false, reason: "missing" };
   if (conflict.resolvedAt) return { ok: false, reason: "already_resolved" };
   if (!isOnline()) return { ok: false, reason: "offline" };
   const state = await ensureDeviceState();
-  const ledger = await getLedgerEntry(entityType, entityId);
-  const local = await readLocalRecord(entityType, entityId);
+  const { entry: ledger, local } = await syncSnapshot(entityType, entityId);
   const tombstone = localTombstoneIntent(ledger, local, conflict);
   const payload = tombstone ? {} : await encodeSyncPayload(entityType, local || conflict.localPayload || {});
   const cloud = await findCloudRow(entityType, entityId);
@@ -88,20 +63,9 @@ export async function resolveConflictKeepLocal(entityType, entityId) {
     deviceId: state.deviceId,
   });
   if (response && response.ok) {
-    await withApplyLock(async () => {
-      if (tombstone) await deleteLocalRecord(entityType, entityId);
-      else if (local || conflict.localPayload) {
-        await writeLocalRecord(entityType, local || conflict.localPayload);
-      }
-    });
-    await putLedgerEntry({
-      entityType,
-      entityId,
-      cloudRevision: Number(response.revision),
-      dirty: false,
-      tombstone,
-      localChangedAt: nowIso(),
-    });
+    await assertSyncOwner(owner);
+    // The sent snapshot is already local. Never write it over a newer edit.
+    if (ledger) await acknowledgePush(ledger, response.revision);
     await closeConflict(conflict, "keep_local", {
       cloudRevision: Number(response.revision),
       cloudPayload: payload,
@@ -128,6 +92,8 @@ export async function resolveConflictKeepLocal(entityType, entityId) {
 }
 
 export async function resolveConflictUseCloud(entityType, entityId) {
+  const owner = await assertSyncOwner();
+  const { entry: expected } = await syncSnapshot(entityType, entityId);
   const conflict = await getConflict(entityType, entityId);
   if (!conflict) return { ok: false, reason: "missing" };
   if (conflict.resolvedAt) return { ok: false, reason: "already_resolved" };
@@ -141,18 +107,9 @@ export async function resolveConflictUseCloud(entityType, entityId) {
     if (live) cloud = live;
   }
   const tombstone = Boolean(cloud.tombstone);
-  await withApplyLock(async () => {
-    if (tombstone) await deleteLocalRecord(entityType, entityId);
-    else if (cloud.payload) await writeLocalRecord(entityType, cloud.payload);
-  });
-  await putLedgerEntry({
-    entityType,
-    entityId,
-    cloudRevision: Number(cloud.revision || conflict.cloudRevision || 0),
-    dirty: false,
-    tombstone,
-    localChangedAt: nowIso(),
-  });
+  await assertSyncOwner(owner);
+  const applied = await applyCloudVersion(entityType, entityId, tombstone ? null : decodeSyncPayload(entityType, cloud.payload), tombstone, expected, cloud.revision || conflict.cloudRevision || 0);
+  if (!applied) return { ok: false, reason: 'stale_local' };
   await closeConflict(conflict, "use_cloud", {
     cloudRevision: Number(cloud.revision || conflict.cloudRevision || 0),
     cloudPayload: tombstone ? {} : (cloud.payload || {}),

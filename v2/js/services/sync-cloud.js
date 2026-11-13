@@ -1,4 +1,5 @@
-import { getAuthClient } from "./auth.js";
+import { assertSyncOwner } from './sync-owner.js';
+import { getAuthClient, readSupabaseConfig } from "./auth.js";
 
 let injected = null;
 
@@ -22,40 +23,40 @@ function mapRow(row) {
   };
 }
 
-export async function pullCloudRecords() {
-  if (injected && typeof injected.pullRecords === "function") {
-    const rows = await injected.pullRecords();
-    return Array.isArray(rows) ? rows.map(mapRow) : [];
-  }
+// Capture a token and URL for this request. A session switch cannot retarget it.
+async function requestCloud(owner, endpoint, body) {
+  const cfg = readSupabaseConfig();
   const client = await getAuthClient();
-  if (!client || typeof client.from !== "function") {
-    throw new Error("cliente de sync no disponible");
-  }
-  const { data, error } = await client
-    .from("journal_sync_records")
-    .select("entity_type, entity_id, payload, revision, tombstone, updated_at, updated_by_device");
-  if (error) throw new Error(error.message || "no se pudo leer la nube");
-  return (data || []).map(mapRow);
-}
-
-export async function pushCloudRecord(input) {
-  if (injected && typeof injected.pushRecord === "function") {
-    return injected.pushRecord(input);
-  }
-  const client = await getAuthClient();
-  if (!client || typeof client.rpc !== "function") {
-    throw new Error("cliente de sync no disponible");
-  }
-  const { data, error } = await client.rpc("journal_sync_push", {
-    p_entity_type: input.entityType,
-    p_entity_id: input.entityId,
-    p_payload: input.payload,
-    p_expected_revision: input.expectedRevision,
-    p_tombstone: Boolean(input.tombstone),
-    p_device_id: input.deviceId,
+  const { data, error } = await client.auth.getSession();
+  const session = data?.session;
+  if (error || !session?.access_token || session.user?.id !== owner.userId || new URL(cfg.url).origin !== owner.project) throw new Error('La sesión cambió antes de sincronizar.');
+  await assertSyncOwner(owner);
+  const response = await fetch(owner.project + '/rest/v1/' + endpoint, {
+    method: body ? 'POST' : 'GET',
+    headers: { apikey: cfg.publishableKey, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+    ...(body ? { body: JSON.stringify(body) } : {}),
   });
-  if (error) throw new Error(error.message || "no se pudo empujar");
-  return data;
+  if (!response.ok) throw new Error('Supabase rechazó la sincronización (' + response.status + ').');
+  return response.json();
+}
+export async function pullCloudRecords() {
+  const owner = await assertSyncOwner();
+  const rows = injected && typeof injected.pullRecords === 'function'
+    ? await injected.pullRecords()
+    : await requestCloud(owner, 'journal_sync_records?select=entity_type,entity_id,payload,revision,tombstone,updated_at,updated_by_device');
+  await assertSyncOwner(owner);
+  return (rows || []).map(mapRow);
+}
+export async function pushCloudRecord(input) {
+  const owner = await assertSyncOwner();
+  const result = injected && typeof injected.pushRecord === 'function'
+    ? await injected.pushRecord(input)
+    : await requestCloud(owner, 'rpc/journal_sync_push', {
+      p_entity_type: input.entityType, p_entity_id: input.entityId, p_payload: input.payload,
+      p_expected_revision: input.expectedRevision, p_tombstone: Boolean(input.tombstone), p_device_id: input.deviceId,
+    });
+  await assertSyncOwner(owner);
+  return result;
 }
 
 export function createMemoryCloud(initial = []) {

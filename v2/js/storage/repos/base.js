@@ -1,13 +1,23 @@
 import { PRODUCT_SYNC_STORES } from "../../config.js";
-import { withStore, requestToPromise } from "../db.js";
+import { withStore, withStores, requestToPromise } from "../db.js";
 import { isApplying } from "../../services/sync-apply.js";
 
-async function trackMutation(storeName, id, tombstone) {
-  if (isApplying()) return;
-  if (!PRODUCT_SYNC_STORES.includes(storeName) || id == null || id === "") return;
-  const { noteLocalMutation } = await import("../../services/sync-engine.js");
-  await noteLocalMutation(storeName, id, { tombstone: Boolean(tombstone) });
+import { dirtyVersion } from '../sync-version.js';
+
+async function writeVersion(storeName, id, record, tombstone) {
+  const tracked = PRODUCT_SYNC_STORES.includes(storeName) && !isApplying();
+  await withStores(tracked ? [storeName, 'syncLedger'] : [storeName], 'readwrite', async tx => {
+    const store = tx.objectStore(storeName);
+    if (tracked) {
+      const ledger = tx.objectStore('syncLedger');
+      const old = await requestToPromise(ledger.get(storeName + '::' + id));
+      ledger.put(dirtyVersion(storeName, id, old, tombstone));
+    }
+    if (tombstone) store.delete(id); else store.put(record);
+  });
+  if (tracked) import('../../services/sync-engine.js').then(m => m.scheduleSync()).catch(() => {});
 }
+
 
 export function createRepo(storeName) {
   return {
@@ -16,8 +26,7 @@ export function createRepo(storeName) {
       return withStore(storeName, "readonly", (store) => requestToPromise(store.get(id)));
     },
     async put(record) {
-      await withStore(storeName, "readwrite", (store) => requestToPromise(store.put(record)));
-      if (record && record.id != null) await trackMutation(storeName, record.id, false);
+      await writeVersion(storeName, record.id, record, false);
       return record;
     },
     async getAll() {
@@ -27,8 +36,7 @@ export function createRepo(storeName) {
       return withStore(storeName, "readonly", (store) => requestToPromise(store.count()));
     },
     async delete(id) {
-      await withStore(storeName, "readwrite", (store) => requestToPromise(store.delete(id)));
-      await trackMutation(storeName, id, true);
+      await writeVersion(storeName, id, null, true);
     },
   };
 }

@@ -128,9 +128,9 @@ export async function importBacktest(text, stageId, forceDraft = false, images =
         store.add(trade);
         for (const capture of captures) {
           tx.objectStore(STORES.attachments).add(capture);
-          tx.objectStore(STORES.syncLedger).put({ id: STORES.attachments + "::" + capture.id, entityType: STORES.attachments, entityId: capture.id, cloudRevision: 0, dirty: true, tombstone: false, localChangedAt: capture.createdAt });
+          tx.objectStore(STORES.syncLedger).put({ id: STORES.attachments + "::" + capture.id, entityType: STORES.attachments, entityId: capture.id, cloudRevision: 0, localVersion: createId(), dirty: true, tombstone: false, localChangedAt: capture.createdAt });
         }
-        tx.objectStore(STORES.syncLedger).put({ id: STORES.trades + "::" + trade.id, entityType: STORES.trades, entityId: trade.id, cloudRevision: 0, dirty: true, tombstone: false, localChangedAt: trade.updatedAt });
+        tx.objectStore(STORES.syncLedger).put({ id: STORES.trades + "::" + trade.id, entityType: STORES.trades, entityId: trade.id, cloudRevision: 0, localVersion: createId(), dirty: true, tombstone: false, localChangedAt: trade.updatedAt });
       } catch (error) {
         failure = error;
         tx.abort();

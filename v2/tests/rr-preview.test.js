@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { previewTradeR } from "../js/domain/trade-rr-preview.js";
 import { Direction, Lifecycle } from "../js/domain/enums.js";
 

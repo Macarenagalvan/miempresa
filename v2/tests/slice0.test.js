@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { DB_NAME, V1_DB_NAME, STORES, JOURNAL_EDITION, SCHEMA_VERSION } from "../js/config.js";
 import { openDb, listStoreNames } from "../js/storage/db.js";
 import { ensureJournalSeed } from "../js/domain/stage.js";

@@ -1,3 +1,4 @@
+import { createId } from './ids.js';
 import { withStores, requestToPromise } from '../storage/db.js';
 import { PRODUCT_SYNC_STORES } from '../config.js';
 
@@ -25,7 +26,7 @@ export async function deleteEntity(kind,id,linked,expectedSignature){
   const data=await snapshot(tx),p=plan(data,kind,id,linked);
   if(!expectedSignature||p.signature!==expectedSignature)throw new Error('Los datos cambiaron. Cerrá la confirmación y volvé a pulsar Borrar para revisar el resumen actualizado.');
   const now=new Date().toISOString();
-  function track(entityType,record,tombstone){if(!PRODUCT_SYNC_STORES.includes(entityType))return;const id=entityType+'::'+record.id,old=data.syncLedger.find(e=>e.id===id);tx.objectStore('syncLedger').put({id,entityType,entityId:String(record.id),cloudRevision:Number(old?.cloudRevision||0),dirty:true,tombstone,localChangedAt:now});}
+  function track(entityType,record,tombstone){if(!PRODUCT_SYNC_STORES.includes(entityType))return;const id=entityType+'::'+record.id,old=data.syncLedger.find(e=>e.id===id);tx.objectStore('syncLedger').put({id,entityType,entityId:String(record.id),cloudRevision:Number(old?.cloudRevision||0),localVersion:createId(),dirty:true,tombstone,localChangedAt:now});}
   for(const [s,rows] of Object.entries(p.deleted))for(const row of rows){tx.objectStore(s).delete(row.id);track(s,row,true);}
   for(const [s,rows] of Object.entries(p.updates))for(const row of rows){const next=s==='meta'?row:{...row,updatedAt:now};tx.objectStore(s).put(next);track(s,next,false);}
   return p.counts;

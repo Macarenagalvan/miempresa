@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { readBacktestFile, saveBacktestFile, crc32 } from "../js/services/backtest-zip.js";
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { listTrades, getTrade, putTrade } from "../js/storage/repos/trades.js";

@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { compute, filterTrades, realizedR } from "../js/domain/stats.js";
 import { computeRrRealized, hasPartialsRecorded } from "../js/domain/integrity.js";
 import {

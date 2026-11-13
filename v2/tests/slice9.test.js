@@ -1,3 +1,4 @@
+import './test-safety.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import * as signalApi from "../js/domain/signal.js";
 import { createDeskSignalFromFixture, updateSignalFollowup, listStageSignals, filterSignals, loadSlice9Fixtures } from "../js/domain/signal.js";
