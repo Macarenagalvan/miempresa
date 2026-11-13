@@ -1,3 +1,4 @@
+import { localModeState, assertModeInTransaction } from './sync-mode.js';
 import { getAuthState, readSupabaseConfig, authGeneration } from './auth.js';
 import { withStores, requestToPromise } from '../storage/db.js';
 import { SYNC_STATE_ID } from '../config.js';
@@ -14,10 +15,18 @@ function checkOwner(state, identity) {
   if (!state?.ownerUserId || !state?.ownerProject) denied('confirmá la pertenencia de este Journal antes de conectarlo.');
   if (state.ownerUserId !== identity.userId || state.ownerProject !== identity.project) denied('este Journal pertenece a otra cuenta o proyecto. Los datos locales se conservan.');
 }
-export async function assertSyncOwner(expected = null) {
+export async function assertSyncOwner(expected = null, { allowPaused = false } = {}) {
   const identity = await currentIdentity();
   if (expected && (identity.userId !== expected.userId || identity.project !== expected.project || identity.generation !== expected.generation)) denied('la sesión cambió durante la operación.');
-  await withStores(['syncState'], 'readonly', async tx => checkOwner(await requestToPromise(tx.objectStore('syncState').get(SYNC_STATE_ID)), identity));
+  await withStores(['syncState'], 'readwrite', async tx => {
+    const store = tx.objectStore('syncState');
+    const old = await requestToPromise(store.get(SYNC_STATE_ID));
+    checkOwner(old, identity);
+    const state = localModeState(old);
+    if (state !== old) store.put(state);
+    if (!allowPaused) await assertModeInTransaction(tx, expected);
+    identity.modeEpoch = state.modeEpoch;
+  });
   return identity;
 }
 // Only explicit initial upload/confirmation or a genuinely empty device may bind.
@@ -32,5 +41,5 @@ export async function bindSyncOwner() {
     if (state.userId && state.userId !== identity.userId) denied('la cuenta anterior no coincide. No se transfieren registros.');
     store.put({ ...state, ownerUserId: identity.userId, ownerProject: identity.project, userId: identity.userId });
   });
-  return assertSyncOwner(identity);
+  return assertSyncOwner(identity, { allowPaused: true });
 }

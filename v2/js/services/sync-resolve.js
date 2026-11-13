@@ -6,24 +6,24 @@ import { getConflict, putConflict, listConflicts } from "../storage/repos/sync-c
 import { pullCloudRecords, pushCloudRecord } from "./sync-cloud.js";
 import { ensureDeviceState, isOnline, patchSyncState } from "./sync-engine.js";
 
-async function findCloudRow(entityType, entityId) {
-  const rows = await pullCloudRecords();
+async function findCloudRow(entityType, entityId, owner) {
+  const rows = await pullCloudRecords(owner);
   return rows.find((row) => row.entityType === entityType && row.entityId === entityId) || null;
 }
 
-async function closeConflict(conflict, resolution, extra = {}) {
+async function closeConflict(conflict, resolution, extra = {}, owner) {
   await putConflict({
     ...conflict,
     ...extra,
     resolvedAt: nowIso(),
     resolution,
-  });
+  }, owner);
   const open = (await listConflicts()).filter((row) => !row.resolvedAt);
   await patchSyncState({
     status: open.length ? "conflict" : "idle",
     lastError: null,
     lastSyncAt: nowIso(),
-  });
+  }, owner);
 }
 
 function localTombstoneIntent(ledger, local, conflict) {
@@ -43,7 +43,7 @@ export async function resolveConflictKeepLocal(entityType, entityId) {
   const { entry: ledger, local } = await syncSnapshot(entityType, entityId);
   const tombstone = localTombstoneIntent(ledger, local, conflict);
   const payload = tombstone ? {} : await encodeSyncPayload(entityType, local || conflict.localPayload || {});
-  const cloud = await findCloudRow(entityType, entityId);
+  const cloud = await findCloudRow(entityType, entityId, owner);
   const expected = cloud ? Number(cloud.revision) : 0;
   if (cloud) {
     await putConflict({
@@ -52,7 +52,7 @@ export async function resolveConflictKeepLocal(entityType, entityId) {
       cloudPayload: cloud.payload,
       resolvedAt: null,
       resolution: null,
-    });
+    }, owner);
   }
   const response = await pushCloudRecord({
     entityType,
@@ -61,16 +61,16 @@ export async function resolveConflictKeepLocal(entityType, entityId) {
     expectedRevision: expected,
     tombstone,
     deviceId: state.deviceId,
-  });
+  }, owner);
   if (response && response.ok) {
     await assertSyncOwner(owner);
     // The sent snapshot is already local. Never write it over a newer edit.
-    if (ledger) await acknowledgePush(ledger, response.revision);
+    if (ledger) await acknowledgePush(ledger, response.revision, owner);
     await closeConflict(conflict, "keep_local", {
       cloudRevision: Number(response.revision),
       cloudPayload: payload,
       localPayload: payload,
-    });
+    }, owner);
     return { ok: true, revision: Number(response.revision), resolution: "keep_local" };
   }
   const kind = response && response.kind;
@@ -84,8 +84,8 @@ export async function resolveConflictKeepLocal(entityType, entityId) {
       incomingExpected: expected,
       resolvedAt: null,
       resolution: null,
-    });
-    await patchSyncState({ status: "conflict", lastError: null });
+    }, owner);
+    await patchSyncState({ status: "conflict", lastError: null }, owner);
     return { ok: false, reason: "stale", kind };
   }
   return { ok: false, reason: "push_rejected" };
@@ -103,16 +103,16 @@ export async function resolveConflictUseCloud(entityType, entityId) {
     tombstone: false,
   };
   if (isOnline()) {
-    const live = await findCloudRow(entityType, entityId);
+    const live = await findCloudRow(entityType, entityId, owner);
     if (live) cloud = live;
   }
   const tombstone = Boolean(cloud.tombstone);
   await assertSyncOwner(owner);
-  const applied = await applyCloudVersion(entityType, entityId, tombstone ? null : decodeSyncPayload(entityType, cloud.payload), tombstone, expected, cloud.revision || conflict.cloudRevision || 0);
+  const applied = await applyCloudVersion(entityType, entityId, tombstone ? null : decodeSyncPayload(entityType, cloud.payload), tombstone, expected, cloud.revision || conflict.cloudRevision || 0, owner);
   if (!applied) return { ok: false, reason: 'stale_local' };
   await closeConflict(conflict, "use_cloud", {
     cloudRevision: Number(cloud.revision || conflict.cloudRevision || 0),
     cloudPayload: tombstone ? {} : (cloud.payload || {}),
-  });
+  }, owner);
   return { ok: true, resolution: "use_cloud", revision: Number(cloud.revision || 0) };
 }

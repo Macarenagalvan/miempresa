@@ -1,10 +1,11 @@
+import { localModeState, isSyncPaused, PAUSED_LABEL, withSyncStores, assertModeInTransaction } from './sync-mode.js';
 import { assertSyncOwner, bindSyncOwner } from './sync-owner.js';
-import { dirtyVersion, syncSnapshot, acknowledgePush, applyCloudVersion } from '../storage/sync-version.js';
+import { dirtyVersion, sameVersion, syncSnapshot, acknowledgePush, applyCloudVersion } from '../storage/sync-version.js';
 import { withStores, requestToPromise } from '../storage/db.js';
 import {
   EXPORT_COLLECTIONS,
+  DB_NAME,
   INITIAL_STAGE_NAME,
-  META_ID,
   PRODUCT_SYNC_STORES,
   SCHEMA_VERSION,
   SYNC_DEBOUNCE_MS,
@@ -15,11 +16,11 @@ import { createId, nowIso } from "../domain/ids.js";
 import { encodeSyncPayload, decodeSyncPayload } from "./sync-payload.js";
 import { getMeta } from "../storage/repos/meta.js";
 import { repoFor, countCollection } from "../storage/repos/collections.js";
-import { getLedgerEntry, putLedgerEntry, listLedger } from "../storage/repos/sync-ledger.js";
+import { getLedgerEntry, listLedger } from "../storage/repos/sync-ledger.js";
 import { getConflict, putConflict, listConflicts } from "../storage/repos/sync-conflicts.js";
-import { withApplyLock, isApplying } from "./sync-apply.js";
+import { isApplying } from "./sync-apply.js";
 import { pullCloudRecords, pushCloudRecord } from "./sync-cloud.js";
-import { configReady, getAuthState } from "./auth.js";
+import { configReady, getAuthState, authGeneration } from "./auth.js";
 
 let debounceTimer = null;
 let inflight = null;
@@ -27,6 +28,13 @@ let queued = false;
 let listeners = [];
 let lastCloudCache = [];
 let onlineOverride = null;
+const modeChannel = typeof BroadcastChannel === 'function' ? new BroadcastChannel(DB_NAME + ':sync-mode') : null;
+if (modeChannel) modeChannel.onmessage = () => {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = null; queued = false;
+  emit();
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('journal-sync-mode'));
+};
 
 export function setOnlineOverride(value) {
   onlineOverride = value;
@@ -79,20 +87,23 @@ export async function ensureDeviceState() {
   return withStores(['syncState'], 'readwrite', async tx => {
     const store = tx.objectStore('syncState');
     const existing = await requestToPromise(store.get(SYNC_STATE_ID));
-    if (existing?.deviceId) return existing;
-    const next = { ...defaultState(), ...existing };
+    if (existing?.deviceId) { const next = localModeState(existing); if (next !== existing) store.put(next); return next; }
+    const next = localModeState({ ...defaultState(), ...existing });
     if (!next.deviceId) next.deviceId = createId();
     store.put(next); return next;
   });
 }
 
-export async function patchSyncState(patch) {
+export async function patchSyncState(patch, owner = null) {
   await ensureDeviceState();
   const next = await withStores(['syncState'], 'readwrite', async tx => {
     const store = tx.objectStore('syncState');
     const current = await requestToPromise(store.get(SYNC_STATE_ID));
+    if (owner) await assertModeInTransaction(tx, owner);
     const value = { ...current, ...patch, id: SYNC_STATE_ID, deviceId: current.deviceId,
-      ownerUserId: current.ownerUserId, ownerProject: current.ownerProject };
+      ownerUserId: current.ownerUserId, ownerProject: current.ownerProject,
+      modeVersion: current.modeVersion, paused: current.paused, modeEpoch: current.modeEpoch };
+    if (isSyncPaused(current)) { value.enabled = false; value.status = 'paused'; value.lastError = null; }
     store.put(value); return value;
   });
   emit();
@@ -109,6 +120,7 @@ export async function getSyncSnapshot() {
 
 export function syncStatusLabel(snapshot, auth, online) {
   const state = snapshot && snapshot.state ? snapshot.state : {};
+  if (isSyncPaused(state)) return PAUSED_LABEL;
   if (state.status === "syncing") return "Sincronizando…";
   if (snapshot && snapshot.conflicts && snapshot.conflicts.length) return "Conflicto";
   if (state.status === "error" && state.lastError) return "Error";
@@ -174,7 +186,7 @@ async function resolveIncomingIdentity(entityType, payload) {
       if (other) {
         const ledger = await getLedgerEntry("signals", other.id);
         if (ledger && ledger.dirty) return { action: "conflict", local: other };
-        await withApplyLock(async () => { await repo.delete(other.id); });
+        return { action: 'apply', replaceId: other.id };
       }
     }
   }
@@ -186,7 +198,7 @@ async function resolveIncomingIdentity(entityType, payload) {
       if (other) {
         const ledger = await getLedgerEntry("trades", other.id);
         if (ledger && ledger.dirty) return { action: "conflict", local: other };
-        await withApplyLock(async () => { await repo.delete(other.id); });
+        return { action: 'apply', replaceId: other.id };
       }
     }
   }
@@ -196,13 +208,13 @@ async function resolveIncomingIdentity(entityType, payload) {
     if (other) {
       const ledger = await getLedgerEntry("asrs", other.id);
       if (ledger && ledger.dirty) return { action: "conflict", local: other };
-      await withApplyLock(async () => { await repo.delete(other.id); });
+      return { action: 'apply', replaceId: other.id };
     }
   }
   return { action: "apply", record: payload };
 }
 
-async function openConflict(entityType, entityId, cloud, localPayload, expected) {
+async function openConflict(entityType, entityId, cloud, localPayload, expected, owner) {
   await putConflict({
     entityType,
     entityId,
@@ -212,11 +224,11 @@ async function openConflict(entityType, entityId, cloud, localPayload, expected)
     incomingExpected: expected,
     createdAt: nowIso(),
     resolvedAt: null,
-  });
-  await patchSyncState({ status: "conflict", lastError: null });
+  }, owner);
+  await patchSyncState({ status: "conflict", lastError: null }, owner);
 }
 
-async function applyCloudRow(cloud) {
+async function applyCloudRow(cloud, owner) {
   const entityType = cloud.entityType;
   const entityId = cloud.entityId;
   const { entry: ledger, local } = await syncSnapshot(entityType, entityId);
@@ -224,11 +236,11 @@ async function applyCloudRow(cloud) {
 
   if (cloud.tombstone) {
     if (ledger && ledger.dirty && local) {
-      await openConflict(entityType, entityId, cloud, local, ledger.cloudRevision);
+      await openConflict(entityType, entityId, cloud, local, ledger.cloudRevision, owner);
       return "conflict";
     }
-    if (!await applyCloudVersion(entityType, entityId, null, true, ledger, cloudRev)) {
-      await openConflict(entityType, entityId, cloud, await readLocalRecord(entityType, entityId), ledger?.cloudRevision || 0);
+    if (!await applyCloudVersion(entityType, entityId, null, true, ledger, cloudRev, owner)) {
+      await openConflict(entityType, entityId, cloud, await readLocalRecord(entityType, entityId), ledger?.cloudRevision || 0, owner);
       return 'conflict';
     }
     return "tombstone";
@@ -237,11 +249,11 @@ async function applyCloudRow(cloud) {
   if (!ledger) {
     const ident = await resolveIncomingIdentity(entityType, cloud.payload);
     if (ident.action === "conflict") {
-      await openConflict(entityType, entityId, cloud, ident.local, 0);
+      await openConflict(entityType, entityId, cloud, ident.local, 0, owner);
       return "conflict";
     }
-    if (!await applyCloudVersion(entityType, entityId, decodeSyncPayload(entityType, cloud.payload), false, ledger, cloudRev)) {
-      await openConflict(entityType, entityId, cloud, await readLocalRecord(entityType, entityId), ledger?.cloudRevision || 0);
+    if (!await applyCloudVersion(entityType, entityId, decodeSyncPayload(entityType, cloud.payload), false, ledger, cloudRev, owner, ident.replaceId)) {
+      await openConflict(entityType, entityId, cloud, await readLocalRecord(entityType, entityId), ledger?.cloudRevision || 0, owner);
       return 'conflict';
     }
     return "apply";
@@ -252,11 +264,11 @@ async function applyCloudRow(cloud) {
   if (!ledger.dirty && cloudRev > Number(ledger.cloudRevision || 0)) {
     const ident = await resolveIncomingIdentity(entityType, cloud.payload);
     if (ident.action === "conflict") {
-      await openConflict(entityType, entityId, cloud, ident.local, ledger.cloudRevision);
+      await openConflict(entityType, entityId, cloud, ident.local, ledger.cloudRevision, owner);
       return "conflict";
     }
-    if (!await applyCloudVersion(entityType, entityId, decodeSyncPayload(entityType, cloud.payload), false, ledger, cloudRev)) {
-      await openConflict(entityType, entityId, cloud, await readLocalRecord(entityType, entityId), ledger?.cloudRevision || 0);
+    if (!await applyCloudVersion(entityType, entityId, decodeSyncPayload(entityType, cloud.payload), false, ledger, cloudRev, owner, ident.replaceId)) {
+      await openConflict(entityType, entityId, cloud, await readLocalRecord(entityType, entityId), ledger?.cloudRevision || 0, owner);
       return 'conflict';
     }
     return "apply";
@@ -265,19 +277,19 @@ async function applyCloudRow(cloud) {
   if (ledger.dirty && Number(ledger.cloudRevision || 0) === cloudRev) return "keep_dirty";
 
   if (ledger.dirty && Number(ledger.cloudRevision || 0) !== cloudRev) {
-    await openConflict(entityType, entityId, cloud, local, ledger.cloudRevision);
+    await openConflict(entityType, entityId, cloud, local, ledger.cloudRevision, owner);
     return "conflict";
   }
   return "noop";
 }
 
-export async function pullNow() {
-  const owner = await assertSyncOwner();
-  const rows = await pullCloudRecords();
+export async function pullNow(expected) {
+  const owner = await assertSyncOwner(expected);
+  const rows = await pullCloudRecords(owner);
   lastCloudCache = rows.slice();
   const results = [];
-  for (const row of rows) { await assertSyncOwner(owner); results.push(await applyCloudRow(row)); }
-  await patchSyncState({ lastPullAt: nowIso() });
+  for (const row of rows) { await assertSyncOwner(owner); results.push(await applyCloudRow(row, owner)); }
+  await patchSyncState({ lastPullAt: nowIso() }, owner);
   return { rows, results };
 }
 
@@ -290,8 +302,8 @@ function sortDirty(entries) {
   });
 }
 
-export async function pushDirty() {
-  const owner = await assertSyncOwner();
+export async function pushDirty(expected) {
+  const owner = await assertSyncOwner(expected);
   const state = await ensureDeviceState();
   const dirty = sortDirty((await listLedger()).filter((row) => row.dirty));
   const results = [];
@@ -316,10 +328,10 @@ export async function pushDirty() {
       expectedRevision: Number(entry.cloudRevision || 0),
       tombstone: Boolean(entry.tombstone),
       deviceId: state.deviceId,
-    });
+    }, owner);
     await assertSyncOwner(owner);
     if (response && response.ok) {
-      await acknowledgePush(entry, response.revision);
+      await acknowledgePush(entry, response.revision, owner);
       results.push({ id: entry.id, status: "pushed", revision: response.revision });
       continue;
     }
@@ -328,13 +340,13 @@ export async function pushDirty() {
       await openConflict(entry.entityType, entry.entityId, {
         revision: response.cloud_revision || entry.cloudRevision,
         payload: response.cloud_payload || {},
-      }, local, entry.cloudRevision);
+      }, local, entry.cloudRevision, owner);
       results.push({ id: entry.id, status: "conflict" });
       continue;
     }
     throw new Error("push rechazado");
   }
-  await patchSyncState({ lastPushAt: nowIso() });
+  await patchSyncState({ lastPushAt: nowIso() }, owner);
   return results;
 }
 
@@ -344,21 +356,17 @@ export async function countLocalSyncable() {
   return total;
 }
 
-export async function markAllLocalDirty() {
-  const meta = await getMeta();
-  if (meta) {
-    await putLedgerEntry({
-      entityType: "meta", entityId: META_ID, cloudRevision: 0, localVersion: createId(), dirty: true, tombstone: false, localChangedAt: nowIso(),
-    });
-  }
-  for (const name of EXPORT_COLLECTIONS) {
-    const rows = await repoFor(name).getAll();
-    for (const row of rows) {
-      await putLedgerEntry({
-        entityType: name, entityId: row.id, cloudRevision: 0, localVersion: createId(), dirty: true, tombstone: false, localChangedAt: nowIso(),
-      });
+export async function markAllLocalDirty(expected) {
+  const owner = await assertSyncOwner(expected);
+  await withSyncStores(['meta', ...EXPORT_COLLECTIONS, 'syncLedger'], owner, async tx => {
+    for (const name of ['meta', ...EXPORT_COLLECTIONS]) {
+      for (const row of await requestToPromise(tx.objectStore(name).getAll())) {
+        const ledger = tx.objectStore('syncLedger');
+        const old = await requestToPromise(ledger.get(name + '::' + row.id));
+        ledger.put(dirtyVersion(name, row.id, old));
+      }
     }
-  }
+  });
 }
 
 export async function cloudLooksEmpty(rows) {
@@ -387,6 +395,7 @@ export async function isVirginLocalSeed() {
 }
 
 export async function bootstrapFromCloudIfEmpty() {
+  if (isSyncPaused(await ensureDeviceState())) return { applied: false, reason: "paused" };
   const auth = await getAuthState();
   if (auth.status !== "signed_in" || !configReady()) return { applied: false, reason: "no_auth" };
   if (!(await isLocalJournalEmpty())) return { applied: false, reason: "local_present" };
@@ -396,53 +405,111 @@ export async function bootstrapFromCloudIfEmpty() {
   }
   await ensureDeviceState();
   await bindSyncOwner();
-  const pulled = await pullNow();
+  const owner = await assertSyncOwner();
+  const pulled = await pullNow(owner);
   if (await cloudLooksEmpty(pulled.rows)) return { applied: false, reason: "cloud_empty" };
   await patchSyncState({
     enabled: true, pendingBootstrap: false, lastSyncAt: nowIso(), status: "idle", lastError: null,
-  });
+  }, owner);
   return { applied: true, reason: "pulled" };
 }
 
 export async function discardVirginSeedIfCloudHasJournal() {
   const state = await ensureDeviceState();
-  if (!state.pendingBootstrap || !(await isVirginLocalSeed()) || !isOnline()) {
+  if (isSyncPaused(state) || !state.pendingBootstrap || !(await isVirginLocalSeed()) || !isOnline()) {
     return { discarded: false };
   }
   await bindSyncOwner();
-  const pulled = await pullCloudRecords();
+  const owner = await assertSyncOwner();
+  const pulled = await pullCloudRecords(owner);
   if (await cloudLooksEmpty(pulled)) return { discarded: false };
-  await withApplyLock(async () => {
-    const stages = await repoFor("stages").getAll();
-    for (const stage of stages) await repoFor("stages").delete(stage.id);
-  });
+  const seedIds = (await repoFor('stages').getAll()).map(row => row.id);
+  const seeds = await Promise.all(seedIds.map(id => syncSnapshot('stages', id)));
   lastCloudCache = pulled;
-  for (const row of pulled) await applyCloudRow(row);
+  for (const row of pulled) await applyCloudRow(row, owner);
+  // Remove the unused seed only after the incoming Journal has been applied.
+  await withSyncStores(['stages', 'syncLedger'], owner, async tx => {
+    const store = tx.objectStore('stages');
+    for (const id of seedIds) {
+      if (pulled.some(row => row.entityType === 'stages' && row.entityId === id)) continue;
+      const ledgerStore = tx.objectStore('syncLedger');
+      const ledger = await requestToPromise(ledgerStore.get('stages::' + id));
+      const seed = seeds.find(row => row.local?.id === id);
+      const current = await requestToPromise(store.get(id));
+      if (seed && (seed.entry ? sameVersion(ledger, seed.entry) : !ledger) && JSON.stringify(current) === JSON.stringify(seed.local)) {
+        store.delete(id); ledgerStore.delete('stages::' + id);
+      }
+    }
+  });
   await patchSyncState({
     pendingBootstrap: false, enabled: true, lastSyncAt: nowIso(), status: "idle", lastError: null,
-  });
+  }, owner);
   return { discarded: true };
 }
 
 export async function enableAndUploadLocalJournal() {
+  if (isSyncPaused(await ensureDeviceState())) throw new Error(PAUSED_LABEL);
   if (!isOnline()) throw new Error("sin conexión");
   const auth = await getAuthState();
   if (auth.status !== "signed_in") throw new Error("hace falta iniciar sesión");
   await ensureDeviceState();
   await bindSyncOwner();
-  const cloudRows = await pullCloudRecords();
+  const owner = await assertSyncOwner();
+  const cloudRows = await pullCloudRecords(owner);
   if (!(await cloudLooksEmpty(cloudRows))) {
     throw new Error("la nube ya tiene Journal. No se sube este dispositivo en silencio.");
   }
-  await markAllLocalDirty();
-  await patchSyncState({ enabled: true, lastError: null, status: "syncing", userId: auth.userId || null });
-  const pushed = await pushDirty();
-  await patchSyncState({ enabled: true, lastSyncAt: nowIso(), status: "idle", lastError: null });
+  await markAllLocalDirty(owner);
+  await patchSyncState({ enabled: true, lastError: null, status: "syncing", userId: auth.userId || null }, owner);
+  const pushed = await pushDirty(owner);
+  await patchSyncState({ enabled: true, lastSyncAt: nowIso(), status: "idle", lastError: null }, owner);
   return pushed;
 }
 
-export async function setSyncEnabled(enabled) {
-  return patchSyncState({ enabled: Boolean(enabled), status: enabled ? "idle" : "local_only" });
+export async function pauseSync() {
+  await ensureDeviceState();
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = null; queued = false;
+  const next = await withStores(['syncState'], 'readwrite', async tx => {
+    const store = tx.objectStore('syncState');
+    const state = await requestToPromise(store.get(SYNC_STATE_ID));
+    const next = { ...state, paused: true, enabled: false, modeEpoch: createId(), status: 'paused', lastError: null };
+    store.put(next); return next;
+  });
+  modeChannel?.postMessage('paused');
+  emit(); return next;
+}
+function reviewKey(ledger, conflicts) {
+  return JSON.stringify([ledger.sort((a,b) => a.id.localeCompare(b.id)), conflicts.sort((a,b) => a.id.localeCompare(b.id))]);
+}
+export async function prepareSyncResume() {
+  await ensureDeviceState();
+  const owner = await assertSyncOwner(null, { allowPaused: true });
+  return withStores(['syncState', 'syncLedger', 'syncConflicts'], 'readonly', async tx => {
+    const state = await requestToPromise(tx.objectStore('syncState').get(SYNC_STATE_ID));
+    const ledger = await requestToPromise(tx.objectStore('syncLedger').getAll());
+    const conflicts = await requestToPromise(tx.objectStore('syncConflicts').getAll());
+    return { owner, modeEpoch: state.modeEpoch, pending: ledger.filter(r => r.dirty).length,
+      conflicts: conflicts.filter(r => !r.resolvedAt).length, reviewKey: reviewKey(ledger, conflicts) };
+  });
+}
+export async function resumeSync(review) {
+  if (!review?.owner) throw new Error('Revisá cuenta, proyecto y pendientes antes de reactivar.');
+  await assertSyncOwner(review.owner, { allowPaused: true });
+  await withStores(['syncState', 'syncLedger', 'syncConflicts'], 'readwrite', async tx => {
+    const store = tx.objectStore('syncState');
+    const state = await requestToPromise(store.get(SYNC_STATE_ID));
+    const ledger = await requestToPromise(tx.objectStore('syncLedger').getAll());
+    const conflicts = await requestToPromise(tx.objectStore('syncConflicts').getAll());
+    if (authGeneration() !== review.owner.generation || state.modeEpoch !== review.modeEpoch || state.ownerUserId !== review.owner.userId || state.ownerProject !== review.owner.project || reviewKey(ledger, conflicts) !== review.reviewKey) throw new Error('Los datos o la pausa cambiaron. Revisá los pendientes de nuevo.');
+    store.put({ ...state, paused: false, enabled: true, modeEpoch: createId(), status: conflicts.some(r => !r.resolvedAt) ? 'conflict' : 'idle', lastError: null });
+  });
+  // No network call or conflict resolution here. The user can sync explicitly.
+  modeChannel?.postMessage('resumed');
+  emit(); return ensureDeviceState();
+}
+export async function setSyncEnabled(enabled, review) {
+  return enabled ? resumeSync(review) : pauseSync();
 }
 
 export function isRestoreBlocked(state) {
@@ -452,32 +519,33 @@ export function isRestoreBlocked(state) {
 export async function syncNow(opts = {}) {
   const state = await ensureDeviceState();
   const auth = await getAuthState();
+  if (isSyncPaused(state)) return { skipped: true, reason: "paused" };
   if (!state.enabled) return { skipped: true, reason: "disabled" };
   if (auth.status !== "signed_in") return { skipped: true, reason: "signed_out" };
   if (!isOnline()) {
     await patchSyncState({ status: "offline_dirty" });
     return { skipped: true, reason: "offline" };
   }
-  await assertSyncOwner();
+  const owner = await assertSyncOwner();
   if (inflight) {
     queued = true;
     return inflight;
   }
   inflight = (async () => {
-    await patchSyncState({ status: "syncing", lastError: null, userId: auth.userId || null });
     try {
+      await patchSyncState({ status: "syncing", lastError: null, userId: auth.userId || null }, owner);
       if (state.pendingBootstrap) await discardVirginSeedIfCloudHasJournal();
-      const pulled = await pullNow();
-      const pushed = await pushDirty();
+      const pulled = await pullNow(owner);
+      const pushed = await pushDirty(owner);
       const snap = await getSyncSnapshot();
       await patchSyncState({
         lastSyncAt: nowIso(),
         lastError: null,
         status: snap.conflicts.length ? "conflict" : "idle",
-      });
+      }, owner);
       return { skipped: false, pulled, pushed, conflicts: snap.conflicts.length };
     } catch (err) {
-      await patchSyncState({ status: "error", lastError: err && err.message ? err.message : String(err) });
+      await patchSyncState({ status: "error", lastError: err && err.message ? err.message : String(err) }, owner).catch(() => {});
       throw err;
     } finally {
       inflight = null;

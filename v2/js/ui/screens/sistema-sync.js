@@ -1,3 +1,4 @@
+import { isSyncPaused, PAUSED_LABEL } from '../../services/sync-mode.js';
 import { bindSyncOwner, assertSyncOwner } from '../../services/sync-owner.js';
 import { el } from "../render.js";
 import {
@@ -10,26 +11,34 @@ import {
   configReady,
 } from "../../services/auth.js";
 import {
-  getSyncSnapshot,
+  getSyncSnapshot, pauseSync, prepareSyncResume, resumeSync,
   syncStatusLabel,
   isOnline,
   syncNow,
   enableAndUploadLocalJournal,
   countLocalSyncable,
-  cloudLooksEmpty,
   isRestoreBlocked,
 } from "../../services/sync-engine.js";
 import {
   resolveConflictKeepLocal,
   resolveConflictUseCloud,
 } from "../../services/sync-resolve.js";
-import { pullCloudRecords } from "../../services/sync-cloud.js";
 
 async function refreshSyncPanel(node) {
   const panel = node.closest("#sincronizacion");
   if (!panel) return;
   panel.replaceWith(await buildSincronizacionPanel());
 }
+// A tab that was already open must refresh its visible mode after another tab pauses.
+let refreshingMode = false;
+async function refreshVisibleMode() {
+  const panel = document.getElementById('sincronizacion');
+  if (!panel || refreshingMode) return;
+  refreshingMode = true;
+  try { await refreshSyncPanel(panel); } finally { refreshingMode = false; }
+}
+window.addEventListener('journal-sync-mode', () => { refreshVisibleMode().catch(() => {}); });
+window.addEventListener('focus', () => { refreshVisibleMode().catch(() => {}); });
 
 function formatWhen(iso) {
   if (!iso) return "nunca";
@@ -42,20 +51,21 @@ export async function buildSincronizacionPanel() {
   const snap = await getSyncSnapshot();
   const online = isOnline();
   const syncState = snap.state;
+  const paused = isSyncPaused(syncState);
   let ownerReady = false;
   let ownerError = '';
   if (state.status === 'signed_in') {
-    try { await assertSyncOwner(); ownerReady = true; } catch (e) { ownerError = e.message; }
+    try { await assertSyncOwner(null, { allowPaused: true }); ownerReady = true; } catch (e) { ownerError = e.message; }
   }
   const err = el("p", {
     className: "err sync-err",
     text: ownerError || (state.status === "error" ? (state.error || "") : (syncState.lastError || "")),
   });
   const statusLine = el("p", { className: "sync-status", text: authLabel(state) });
-  const engineLine = el("p", { className: "sync-engine-status", text: ownerError ? "Sincronización bloqueada · datos locales conservados" : syncStatusLabel(snap, state, online) });
+  const engineLine = el("p", { className: "sync-engine-status", text: paused ? PAUSED_LABEL : ownerError ? "Sincronización bloqueada · datos locales conservados" : syncStatusLabel(snap, state, online) });
   const hint = el("p", {
     className: "hint",
-    text: state.status === "missing_config"
+    text: paused ? "Tus registros, capturas, cuenta y cambios pendientes se conservan. No se suben ni descargan datos del Journal. Cerrá las pestañas con versiones anteriores." : state.status === "missing_config"
       ? "Falta la URL y la key pública de Supabase. No hay sync todavía: esto solo autentica."
       : (syncState.enabled
         ? "IndexedDB sigue siendo la fuente de verdad. La nube es réplica."
@@ -63,7 +73,7 @@ export async function buildSincronizacionPanel() {
   });
 
   const syncNowBtn = el("button", { type: "button", className: "ghost sync-now", text: "Sincronizar ahora" });
-  const canSync = ownerReady && state.status === "signed_in" && syncState.enabled && online && !snap.conflicts.length;
+  const canSync = !paused && ownerReady && state.status === "signed_in" && syncState.enabled && online && !snap.conflicts.length;
   syncNowBtn.disabled = !canSync;
   syncNowBtn.addEventListener("click", async () => {
     err.textContent = "";
@@ -87,6 +97,23 @@ export async function buildSincronizacionPanel() {
     err,
   ];
 
+  const modeBtn = el('button', { type: 'button', className: 'sync-toggle-mode', text: paused ? 'Reactivar sincronización' : 'Pausar sincronización' });
+  modeBtn.disabled = paused && !ownerReady;
+  modeBtn.addEventListener('click', async () => {
+    modeBtn.disabled = true;
+    try {
+      if (!paused) await pauseSync();
+      else {
+        const review = await prepareSyncResume();
+        const message = 'Reactivar para la cuenta ' + state.email + ' (' + review.owner.userId + ') en ' + review.owner.project + '?\nCambios pendientes: ' + review.pending + '. Conflictos abiertos: ' + review.conflicts + '.\nNo se resuelven conflictos automáticamente. Las ediciones posteriores podrán sincronizarse. Cerrá primero las pestañas antiguas.';
+        if (!window.confirm(message)) { modeBtn.disabled = false; return; }
+        await resumeSync(review);
+      }
+      await refreshSyncPanel(modeBtn);
+    } catch (e) { err.textContent = e.message; modeBtn.disabled = paused && !ownerReady; }
+  });
+  children.push(el('div', { className: 'row-actions' }, [modeBtn]));
+
   if (state.status === "signed_in") {
     const outBtn = el("button", { type: "button", className: "ghost sync-logout", text: "Cerrar sesión" });
     outBtn.addEventListener("click", async () => {
@@ -101,20 +128,10 @@ export async function buildSincronizacionPanel() {
       confirm.onclick = async () => { try { await bindSyncOwner(); await refreshSyncPanel(confirm); } catch (e) { err.textContent = e.message; } };
       children.push(confirm);
     }
-    if (!syncState.enabled) {
+    if (!paused && !syncState.lastSyncAt) {
       const count = await countLocalSyncable();
-      let cloudEmpty = true;
-      if (online && ownerReady) {
-        try {
-          const rows = await pullCloudRecords();
-          cloudEmpty = await cloudLooksEmpty(rows);
-        } catch (e) {
-          cloudEmpty = true;
-          err.textContent = e.message;
-        }
-      }
       const uploadBtn = el("button", { type: "button", className: "sync-upload", text: "Subir este Journal a la nube" });
-      uploadBtn.disabled = !ownerReady || !online || !cloudEmpty || count === 0;
+      uploadBtn.disabled = !ownerReady || !online || count === 0;
       uploadBtn.addEventListener("click", async () => {
         err.textContent = "";
         try {
@@ -126,9 +143,7 @@ export async function buildSincronizacionPanel() {
       });
       children.push(el("p", {
         className: "hint",
-        text: cloudEmpty
-          ? `Este dispositivo tiene ${count} registros locales. Cloud está vacío.`
-          : "La nube ya tiene Journal. Este dispositivo tiene que bajar, no subir.",
+        text: `Este dispositivo tiene ${count} registros locales. Se comprobará que la nube esté vacía antes de subir.`,
       }));
       children.push(el("div", { className: "row-actions" }, [uploadBtn]));
     }
@@ -162,8 +177,8 @@ export async function buildSincronizacionPanel() {
     for (const row of snap.conflicts) {
       const keepBtn = el("button", { type: "button", className: "ghost sync-keep-local", text: "Conservar local" });
       const cloudBtn = el("button", { type: "button", className: "ghost sync-use-cloud", text: "Usar versión de la nube" });
-      keepBtn.disabled = !ownerReady || !online;
-      cloudBtn.disabled = !ownerReady;
+      keepBtn.disabled = paused || !ownerReady || !online;
+      cloudBtn.disabled = paused || !ownerReady;
       keepBtn.addEventListener("click", async () => {
         err.textContent = "";
         keepBtn.disabled = true;

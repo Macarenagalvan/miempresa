@@ -1,3 +1,4 @@
+import { prepareSyncResume, resumeSync } from '../js/services/sync-engine.js';
 import './test-safety.js';
 import { DB_NAME } from '../js/config.js';
 import { closeDb, resetOpenCache } from '../js/storage/db.js';
@@ -26,7 +27,7 @@ function login(id = A, url = project) {
 async function fresh(userId = A) {
   resetSyncEngine(); await closeDb(); resetOpenCache();
   await new Promise((resolve, reject) => { const req = indexedDB.deleteDatabase(DB_NAME); req.onsuccess = resolve; req.onerror = () => reject(req.error); req.onblocked = () => reject(new Error('QA database blocked')); });
-  login(userId); await ensureDeviceState(); await bindSyncOwner(); setOnlineOverride(true);
+  login(userId); await ensureDeviceState(); await bindSyncOwner(); await resumeSync(await prepareSyncResume()); setOnlineOverride(true);
 }
 function gate() {
   let release, entered;
@@ -78,7 +79,7 @@ export async function run() {
   check((await notes.get('p01-note')).text === 'v4' && JSON.stringify(await getLedgerEntry('officeNotes', 'p01-note')) === atomicBefore, 'failed record write rolls back pending marker too');
 
   await notes.put(note('offline'));
-  await setSyncEnabled(true); setOnlineOverride(false);
+  await setSyncEnabled(true, await prepareSyncResume()); setOnlineOverride(false);
   let calls = 0;
   setSyncCloud({ pullRecords: async () => { calls++; return cloud.pullRecords(); }, pushRecord: async input => { calls++; return cloud.pushRecord(input); } });
   check((await syncNow()).reason === 'offline' && calls === 0, 'offline makes no cloud requests');
@@ -86,6 +87,7 @@ export async function run() {
   setOnlineOverride(true); await syncNow();
   check(cloud.rows.get('officeNotes::p01-note').payload.text === 'offline' && !(await getLedgerEntry('officeNotes', 'p01-note')).dirty, 'reconnection sends pending data');
   await setSyncEnabled(false);
+  await resumeSync(await prepareSyncResume());
   await notes.put(note('network-failure'));
   setSyncCloud({ pushRecord: async () => { throw new Error('synthetic network failure'); } });
   await rejects(() => pushDirty(), 'network failure reported');

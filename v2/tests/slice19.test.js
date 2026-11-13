@@ -109,7 +109,7 @@ async function run() {
   assert("UI login email", Boolean(panel && panel.querySelector(".sync-email")));
   assert("UI login password", Boolean(panel && panel.querySelector(".sync-password")));
   assert("UI sin sync real", Boolean(panel && panel.querySelector(".sync-now") && panel.querySelector(".sync-now").disabled));
-  assert("UI explica sync pendiente", Boolean(panel && panel.textContent.includes("Disponible después de activar la sincronización.")));
+  assert("UI explica sync pendiente", Boolean(panel && panel.textContent.includes("Modo local — sincronización pausada")));
 
   const beforeMeta = JSON.stringify(await getMeta());
   const beforeTrades = await countCollection("trades");

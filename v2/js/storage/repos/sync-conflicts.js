@@ -1,3 +1,4 @@
+import { withSyncStores } from '../../services/sync-mode.js';
 import { STORES } from "../../config.js";
 import { createRepo } from "./base.js";
 
@@ -11,8 +12,9 @@ export async function getConflict(entityType, entityId) {
   return repo.get(conflictId(entityType, entityId));
 }
 
-export async function putConflict(row) {
+export async function putConflict(row, owner) {
   const id = conflictId(row.entityType, row.entityId);
+  if (owner) return withSyncStores(['syncConflicts'], owner, tx => { tx.objectStore('syncConflicts').put({ ...row, id }); });
   return repo.put({ ...row, id });
 }
 

@@ -1,4 +1,5 @@
 import { assertSyncOwner } from './sync-owner.js';
+import { dispatchSyncRequest } from './sync-mode.js';
 import { getAuthClient, readSupabaseConfig } from "./auth.js";
 
 let injected = null;
@@ -31,26 +32,26 @@ async function requestCloud(owner, endpoint, body) {
   const session = data?.session;
   if (error || !session?.access_token || session.user?.id !== owner.userId || new URL(cfg.url).origin !== owner.project) throw new Error('La sesión cambió antes de sincronizar.');
   await assertSyncOwner(owner);
-  const response = await fetch(owner.project + '/rest/v1/' + endpoint, {
+  const response = await dispatchSyncRequest(owner, () => fetch(owner.project + '/rest/v1/' + endpoint, {
     method: body ? 'POST' : 'GET',
     headers: { apikey: cfg.publishableKey, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
     ...(body ? { body: JSON.stringify(body) } : {}),
-  });
+  }));
   if (!response.ok) throw new Error('Supabase rechazó la sincronización (' + response.status + ').');
   return response.json();
 }
-export async function pullCloudRecords() {
-  const owner = await assertSyncOwner();
+export async function pullCloudRecords(expected) {
+  const owner = await assertSyncOwner(expected);
   const rows = injected && typeof injected.pullRecords === 'function'
-    ? await injected.pullRecords()
+    ? await dispatchSyncRequest(owner, () => injected.pullRecords())
     : await requestCloud(owner, 'journal_sync_records?select=entity_type,entity_id,payload,revision,tombstone,updated_at,updated_by_device');
   await assertSyncOwner(owner);
   return (rows || []).map(mapRow);
 }
-export async function pushCloudRecord(input) {
-  const owner = await assertSyncOwner();
+export async function pushCloudRecord(input, expected) {
+  const owner = await assertSyncOwner(expected);
   const result = injected && typeof injected.pushRecord === 'function'
-    ? await injected.pushRecord(input)
+    ? await dispatchSyncRequest(owner, () => injected.pushRecord(input))
     : await requestCloud(owner, 'rpc/journal_sync_push', {
       p_entity_type: input.entityType, p_entity_id: input.entityId, p_payload: input.payload,
       p_expected_revision: input.expectedRevision, p_tombstone: Boolean(input.tombstone), p_device_id: input.deviceId,

@@ -1,3 +1,5 @@
+import { bindSyncOwner } from '../js/services/sync-owner.js';
+import { prepareSyncResume, resumeSync } from '../js/services/sync-engine.js';
 import './test-safety.js';
 import { SCHEMA_VERSION, DB_VERSION, DB_NAME, STORES, META_ID, INITIAL_STAGE_NAME } from "../js/config.js";
 import { listStoreNames, closeDb, resetOpenCache, openDb } from "../js/storage/db.js";
@@ -82,6 +84,7 @@ async function signTestUser() {
   setAuthClient(createMemoryAuthClient(null));
   const login = await signInWithPassword("maca@example.com", "pass-test");
   assert("login test user", login.ok === true);
+  await ensureDeviceState(); await bindSyncOwner(); await resumeSync(await prepareSyncResume());
   return login;
 }
 
@@ -390,7 +393,7 @@ async function run() {
   const valid = validateBackup(backup);
   assert("backup actual válido", valid.ok === true, (valid.errors || []).join(" | "));
 
-  await setSyncEnabled(true);
+  await setSyncEnabled(true, await prepareSyncResume());
   const blockedState = await ensureDeviceState();
   assert("restore bloqueado con sync on", isRestoreBlocked(blockedState) === true);
   let restoreMsg = "";

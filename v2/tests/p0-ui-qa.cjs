@@ -50,7 +50,7 @@ async function isolated(browser, options = {}) {
         let opens = 0, deletes = 0, blocked = 0;
         indexedDB.open = (...args) => { opens++; return open(...args); };
         indexedDB.deleteDatabase = (...args) => { deletes++; return remove(...args); };
-        for (const name of ['slice0', 'slice13', 'slice20', 'p0-studies', 'p01-security']) {
+        for (const name of ['slice0', 'slice13', 'slice20', 'p0-studies', 'p01-security', 'p02-local-mode']) {
           try { const mod = await import('/v2/tests/' + name + '.test.js'); await mod.run(); }
           catch (e) { if (e.message.includes('Pruebas bloqueadas')) blocked++; else throw e; }
         }
@@ -58,7 +58,7 @@ async function isolated(browser, options = {}) {
         const value = await new Promise(resolve => { const r = verify.transaction('sentinel').objectStore('sentinel').get('key'); r.onsuccess = () => resolve(r.result); });
         verify.close(); return { opens, deletes, blocked, value };
       });
-      assert.deepEqual(result, { opens: 0, deletes: 0, blocked: 5, value: 'synthetic-preserve' });
+      assert.deepEqual(result, { opens: 0, deletes: 0, blocked: 6, value: 'synthetic-preserve' });
       report.isolation.push({ host, passed: true, ...result });
       await context.close();
     }
@@ -71,6 +71,7 @@ async function isolated(browser, options = {}) {
     report.suite = await test.getAttribute('body', 'data-test-status');
     assert.equal(report.suite, 'passed', log.slice(-1500));
     await suite.close();
+    report.localMode = await require('./p02-browser-qa.cjs')({ browser, isolated, root, output, fs, path });
 
     if (process.env.BACKUP_PATH) {
       const bytes = await fs.readFile(process.env.BACKUP_PATH);
@@ -165,8 +166,13 @@ async function isolated(browser, options = {}) {
       await page.getByRole('heading',{name:'Backtesting',exact:true}).waitFor();
       await page.screenshot({path:path.join(output,device+'-backtesting.png'),fullPage:true});
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,'horizontal overflow');
+      await page.goto(origin+'/index.html#/sistema');
+      await page.getByText('Modo local — sincronización pausada', {exact:true}).waitFor();
+      await page.getByRole('button', {name:'Reactivar sincronización',exact:true}).waitFor();
+      await page.locator('#sincronizacion').screenshot({path:path.join(output,device+'-local-mode.png')});
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,'local-mode horizontal overflow');
       assert.deepEqual(errors,[]);
-      report.devices.push({device,timezoneId,passed:true,keyboard:true,doubleClick:true,studyAndDraftImages:true,dates:true,dstGapRejected:true});
+      report.devices.push({device,timezoneId,passed:true,keyboard:true,doubleClick:true,studyAndDraftImages:true,dates:true,dstGapRejected:true,localMode:true});
       await context.close();
     }
     console.log(JSON.stringify(report,null,2));
