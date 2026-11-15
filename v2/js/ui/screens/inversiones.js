@@ -24,8 +24,10 @@ const since = (iso) => {
 
 let autoTried = 0;
 
-export async function renderInversiones() {
+export async function renderInversiones(ctx = {}) {
   await ensureDefaultAssets();
+  const incoming = ctx.route?.query?.agregar;
+  if (incoming) setTimeout(() => importFromLink(incoming), 50);
   // Precio automático de cripto una vez por apertura (como mucho cada 2 minutos).
   if (Date.now() - autoTried > 120000) {
     autoTried = Date.now();
@@ -283,4 +285,33 @@ async function exportXlsx(p) {
   const a = el("a", { href: URL.createObjectURL(blob), download: `RGM-inversiones-${today()}.xlsx` });
   document.body.append(a); a.click(); a.remove();
   toast("Excel descargado.", { tone: "ok", timeout: 2500 });
+}
+
+// ---------- agregar planes desde un link (con confirmación) ----------
+function decodeLink(raw) {
+  const b64 = String(raw).replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64 + "===".slice((b64.length + 3) % 4));
+  const json = new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+  const data = JSON.parse(json);
+  if (!data || !Array.isArray(data.plans) || !data.plans.length || data.plans.length > 20) throw new Error("Link inválido.");
+  return data.plans.map((p) => ({ symbol: String(p.symbol || "").toUpperCase(), amount: p.amount ?? null, targetPrice: p.targetPrice ?? null, note: String(p.note || "").slice(0, 200) }));
+}
+
+async function importFromLink(raw) {
+  history.replaceState(null, "", "#/inversiones");
+  let plans;
+  try { plans = decodeLink(raw); } catch (_) { toast("El link no se pudo leer.", { tone: "error" }); return; }
+  const p = await loadPortfolio();
+  const bySym = Object.fromEntries(p.rows.map((r) => [r.asset.symbol, r.asset]));
+  const valid = plans.filter((pl) => bySym[pl.symbol]);
+  if (!valid.length) { toast("No encontré esos activos en tu cartera.", { tone: "error" }); return; }
+  const ok = await confirmDialog({
+    title: `¿Agregar ${valid.length} plan${valid.length === 1 ? "" : "es"} de compra?`,
+    body: valid.map((pl) => el("p", { className: "rgm-dialog-target", text: [pl.symbol, pl.amount != null ? usd(pl.amount, 0) : null, pl.targetPrice != null ? "si llega a " + usd(pl.targetPrice, 0) : null, pl.note].filter(Boolean).join(" · ") })),
+    confirmText: "Sí, agregar",
+  });
+  if (!ok) return;
+  for (const pl of valid) await savePlan({ assetId: bySym[pl.symbol].id, amount: pl.amount, targetPrice: pl.targetPrice, note: pl.note });
+  refresh();
+  toast("Planes agregados.", { tone: "ok", timeout: 3000 });
 }
