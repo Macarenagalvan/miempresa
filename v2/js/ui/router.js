@@ -19,6 +19,7 @@ import { getTrade } from "../storage/repos/trades.js";
 
 import { renderImportar } from "./screens/importar.js";
 import { renderPractice } from "./screens/practice.js";
+import { renderInversiones } from "./screens/inversiones.js";
 
 let paintedPath = "";
 
@@ -56,7 +57,7 @@ export function currentRoute() {
 
 export function routeList() {
   return {
-    hoy: true, importar: true, practica: true,
+    hoy: true, importar: true, practica: true, inversiones: true,
     nuevo: true,
     historial: true,
     backtesting: true,
@@ -76,7 +77,9 @@ export async function paint(ctx) {
   let nodes;
   let nav = parsed.name;
 
-  if (parsed.name === "importar") {
+  if (parsed.name === "inversiones") {
+    title = "Inversiones"; nodes = await renderInversiones(viewCtx);
+  } else if (parsed.name === "importar") {
     title = "Importar operaciones"; nav = "historial"; nodes = await renderImportar(viewCtx);
   } else if (parsed.name === "practica") {
     title = "Mi plan y rutina"; nodes = await renderPractice(viewCtx);

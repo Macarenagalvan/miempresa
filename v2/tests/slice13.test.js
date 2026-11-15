@@ -130,8 +130,8 @@ async function deleteJournalDb() {
 async function run() {
   await ensureJournalSeed();
   const db = await openDb();
-  assert("DB_VERSION app vigente", DB_VERSION === SCHEMA_VERSION && DB_VERSION === 3);
-  assert("SCHEMA_VERSION app vigente", SCHEMA_VERSION === 3);
+  assert("DB_VERSION app vigente", DB_VERSION === SCHEMA_VERSION && DB_VERSION === 4);
+  assert("SCHEMA_VERSION app vigente", SCHEMA_VERSION === 4);
   assert("IDB version vigente", db.version === SCHEMA_VERSION, String(db.version));
 
   const names = await listStoreNames();

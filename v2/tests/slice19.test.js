@@ -69,8 +69,8 @@ async function run() {
   const seed = await ensureJournalSeed();
   const names = await listStoreNames();
 
-  assert("schema local 3", SCHEMA_VERSION === 3 && DB_VERSION === 3);
-  assert("meta.schemaVersion 3", seed.meta.schemaVersion === 3);
+  assert("schema local 4", SCHEMA_VERSION === 4 && DB_VERSION === 4);
+  assert("meta.schemaVersion 4", seed.meta.schemaVersion === 4);
   assert("store syncState", names.includes("syncState") && STORES.syncState === "syncState");
   assert("store syncLedger", names.includes("syncLedger") && STORES.syncLedger === "syncLedger");
   assert("store syncConflicts", names.includes("syncConflicts") && STORES.syncConflicts === "syncConflicts");

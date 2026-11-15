@@ -96,7 +96,7 @@ async function run() {
   await openDb();
   const names = await listStoreNames();
   assert("migration 3 stores", names.includes("syncState") && names.includes("syncLedger") && names.includes("syncConflicts"));
-  assert("schema constants 3", SCHEMA_VERSION === 3 && DB_VERSION === 3);
+  assert("schema constants 4", SCHEMA_VERSION === 4 && DB_VERSION === 4);
 
   const beforeMeta = await getMeta();
   const beforeStages = await countCollection("stages");
