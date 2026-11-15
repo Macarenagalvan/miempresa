@@ -58,7 +58,7 @@ async function run() {
   assert("label GREEN CRYPTO", strategyLabel(Strategy.GREEN_CRYPTO) === "GREEN CRYPTO");
   assert("label GREEN no cambia", strategyLabel(Strategy.GREEN) === "GREEN");
   assert("RGM no es Strategy", !Object.values(Strategy).some((s) => /RGM|SHADOW|RCC/i.test(s)));
-  assert("schema sin bump", SCHEMA_VERSION === 3);
+  assert("schema vigente (4: inversiones)", SCHEMA_VERSION === 4);
 
   const setup = await createSetup({
     asset: "BTCUSD",

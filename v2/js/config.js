@@ -1,7 +1,7 @@
 import { journalDatabaseName } from './runtime-isolation.js';
 export const DB_NAME = journalDatabaseName;
-export const DB_VERSION = 3;
-export const SCHEMA_VERSION = 3;
+export const DB_VERSION = 4;
+export const SCHEMA_VERSION = 4;
 export const JOURNAL_EDITION = "v2";
 export const BACKUP_PRODUCT = "Journal V2";
 export const BACKUP_FORMAT = "journal-v2";
@@ -107,6 +107,7 @@ export const STORES = {
   officeNotes: "officeNotes",
   officeEvents: "officeEvents",
   officeShortcuts: "officeShortcuts",
+  investments: "investments",
   syncState: "syncState",
   syncLedger: "syncLedger",
   syncConflicts: "syncConflicts",
@@ -183,6 +184,7 @@ export const STORE_INDEXES = {
   ],
   officeEvents: [["date", "date", { unique: false }]],
   officeShortcuts: [["order", "order", { unique: false }]],
+  investments: [["kind", "kind", { unique: false }], ["assetId", "assetId", { unique: false }]],
   syncLedger: [
     ["entityType", "entityType", { unique: false }],
     ["dirty", "dirty", { unique: false }],
@@ -211,7 +213,10 @@ export const OFFICE_COLLECTIONS = [
   "officeShortcuts",
 ];
 
-export const EXPORT_COLLECTIONS = TRADING_COLLECTIONS.concat(OFFICE_COLLECTIONS);
+// Cartera de inversión a largo plazo (BTC, acciones). Separada del trading.
+export const INVEST_COLLECTIONS = ["investments"];
+
+export const EXPORT_COLLECTIONS = TRADING_COLLECTIONS.concat(OFFICE_COLLECTIONS, INVEST_COLLECTIONS);
 
 export const SYNC_STORES = ["syncState", "syncLedger", "syncConflicts"];
 
@@ -251,6 +256,7 @@ export const SYNC_PUSH_ORDER = Object.freeze([
   "officeNotes",
   "officeEvents",
   "officeShortcuts",
+  "investments",
   "meta",
 ]);
 

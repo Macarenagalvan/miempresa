@@ -25,6 +25,9 @@ export function applyMigrations(db, oldVersion, newVersion) {
   if (oldVersion < 3 && newVersion >= 3) {
     migrateTo3(db);
   }
+  if (oldVersion < 4 && newVersion >= 4) {
+    createStoreIfMissing(db, STORES.investments);
+  }
 }
 
 function createStoreIfMissing(db, name) {
