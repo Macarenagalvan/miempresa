@@ -1,5 +1,5 @@
 import { createId, nowIso } from "./ids.js";
-import { assertExecution } from "./execution.js";
+import { validDay, assertExecution } from "./execution.js";
 import { Context, Lifecycle, Strategy, Style, BlueVariant, CloseType, TradeRecordSource } from "./enums.js";
 import {
   assertTrade,
@@ -15,6 +15,8 @@ import { getTrade, putTrade } from "../storage/repos/trades.js";
 import { getSetup } from "../storage/repos/setups.js";
 import { getAccount } from "../storage/repos/accounts.js";
 import { lockSetupOnTrade } from "./setup.js";
+import { withStores, requestToPromise } from "../storage/db.js";
+import { buildTradeImage } from "../storage/repos/attachments.js";
 import { SESSIONS } from "../config.js";
 
 export const TRADE_JOURNAL_FIELDS = Object.freeze([
@@ -55,7 +57,7 @@ function snapshotFromSetup(setup) {
 function deriveTrade(trade) {
   trade.hasPartials = trade.hasPartials === true;
   trade.incompleteForR = incompleteForR(trade);
-  trade.rrRealized = computeRrRealized(trade);
+  trade.rrRealized = trade.sourceRef?.sessionDate ? trade.rrRealized : computeRrRealized(trade);
   trade.costComplete = trade.commission != null && trade.swap != null;
   return trade;
 }
@@ -194,7 +196,7 @@ export async function enrichTrade(id, patch) {
   return derived;
 }
 
-export async function createClosedTrade(input, stageId) {
+export async function createClosedTrade(input, stageId, images = []) {
   if (!input) throw new Error("input requerido");
   let setup = null;
   if (input.setupId) {
@@ -204,7 +206,16 @@ export async function createClosedTrade(input, stageId) {
   const snap = snapshotFromSetup(setup);
   const now = nowIso();
   const context = input.context || (setup && setup.context) || Context.BACKTEST;
-  assertExecution({ ...input, asset: input.asset || setup?.asset, direction: input.direction || setup?.direction,
+  const quick = input.sessionDate !== undefined;
+  if (quick) {
+    if (context !== Context.BACKTEST || !validDay(input.sessionDate)) throw new Error("Fecha de sesión histórica inválida.");
+    if (!["WIN", "LOSS", "BE"].includes(input.result)) throw new Error("Elegí WIN, LOSS o BE.");
+    const r = input.rrRealized;
+    if (r != null && r !== "" && (!Number.isFinite(Number(r)) || (input.result === "WIN" ? Number(r) <= 0 : input.result === "LOSS" ? Number(r) >= 0 : Number(r) !== 0))) throw new Error("R debe ser positivo para WIN, negativo para LOSS y cero para BE.");
+    for (const key of ["openedAt", "closedAt", "entry", "exit", "netPnl", "initialSL", "tp", "lots", "commission", "swap", "riskMoney", "riskPercent", "setupId"]) {
+      if (input[key] != null && input[key] !== "") throw new Error("La carga rápida no recibe datos de ejecución: " + key);
+    }
+  } else assertExecution({ ...input, asset: input.asset || setup?.asset, direction: input.direction || setup?.direction,
     openedAt: input.openedAt || (context === Context.BACKTEST ? null : now),
     closedAt: input.closedAt || (context === Context.BACKTEST ? null : now) });
   let account = null;
@@ -220,7 +231,7 @@ export async function createClosedTrade(input, stageId) {
   const netPnl = numOrNull(input.netPnl);
   const closeType = input.closeType || CloseType.UNKNOWN;
   if (!Object.values(CloseType).includes(closeType)) throw new Error("closeType inválido");
-  const result = deriveResult(closeType, netPnl, closeType === CloseType.BE || input.declaredBe === true);
+  const result = quick ? input.result : deriveResult(closeType, netPnl, closeType === CloseType.BE || input.declaredBe === true);
   const sl = numOrNull(input.initialSL);
   let strategy = snap.strategy;
   if (input.strategy != null && input.strategy !== "") {
@@ -248,7 +259,7 @@ export async function createClosedTrade(input, stageId) {
     context,
     direction: input.direction || (setup && setup.direction),
     accountId,
-    openedAt: input.openedAt || now,
+    openedAt: quick ? null : (input.openedAt || now),
     entry: numOrNull(input.entry),
     lifecycle: Lifecycle.CLOSED,
     initialSL: sl,
@@ -258,7 +269,7 @@ export async function createClosedTrade(input, stageId) {
     setupId: setup ? setup.id : null,
     deskSignalId: null,
     session: (setup && setup.session) || input.session || null,
-    closedAt: input.closedAt || now,
+    closedAt: quick ? null : (input.closedAt || now),
     exit: numOrNull(input.exit),
     closeType,
     commission: numOrNull(input.commission),
@@ -270,14 +281,14 @@ export async function createClosedTrade(input, stageId) {
     executionQuality: input.executionQuality || null,
     note: input.note || null,
     importBatchId: null,
-    sourceRef: input.sourceRef || null,
+    sourceRef: quick ? { sessionDate: input.sessionDate } : (input.sourceRef || null),
     strategy,
     style,
     variant,
     rrPlanned: input.rrPlanned != null ? numOrNull(input.rrPlanned) : (setup ? setup.plannedRr : null),
     riskPercent: parseRiskNum(input.riskPercent),
     riskMoney: parseRiskNum(input.riskMoney),
-    rrRealized: null,
+    rrRealized: quick ? numOrNull(input.rrRealized) : null,
     voidedAt: null,
     voidReason: null,
     createdAt: now,
@@ -285,7 +296,21 @@ export async function createClosedTrade(input, stageId) {
   });
   assertTrade(trade);
   assertTradeAccountPair(trade, account);
-  await putTrade(trade);
+  if (quick) {
+    if (images.length > 6) throw new Error("Elegí como máximo 6 capturas.");
+    const captures = images.map(image => buildTradeImage(trade.id, image));
+    await withStores(["trades", "attachments", "syncLedger"], "readwrite", async tx => {
+      for (const [entityType, row] of [["trades", trade], ...captures.map(c => ["attachments", c])]) {
+        const id = entityType + "::" + row.id;
+        const ledger = tx.objectStore("syncLedger");
+        const old = await requestToPromise(ledger.get(id));
+        tx.objectStore(entityType).put(row);
+        ledger.put({ ...old, id, entityType, entityId: row.id, cloudRevision: old?.cloudRevision || 0,
+          localVersion: createId(), dirty: true, tombstone: false, localChangedAt: now });
+      }
+    });
+    import("../services/sync-engine.js").then(m => m.scheduleSync()).catch(() => {});
+  } else await putTrade(trade);
   if (trade.setupId && trade.lifecycle !== Lifecycle.VOID) {
     await lockSetupOnTrade(trade.setupId);
   }

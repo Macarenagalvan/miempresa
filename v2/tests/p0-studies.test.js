@@ -100,8 +100,8 @@ export async function run() {
   check(compute(dataset,{universe:"REAL"}).nClosed===1&&compute(dataset,{universe:"DEMO"}).nClosed===1,"universos separados");
   check(compute([]).winRate===null&&compute([]).expectancyR===null,"ausencias no son ceros");
 
-  const form=host(await renderNuevoTrade({...seed,route:{rest:"trade",query:{mode:"simulated",context:"BACKTEST"}}}));
-  check(form.querySelector('[name="openedAt"]').value===""&&form.querySelector('[name="closedAt"]').value==="","simulado histórico sin hoy automático");
+  const form=host(await renderNuevoTrade({...seed,route:{rest:"trade",query:{mode:"simulated",context:"DEMO"}}}));
+  check(form.querySelector('[name="context"]').value==="DEMO","demo conserva su contexto propio");
   check(form.querySelector('[aria-label="Carga rápida"]').querySelectorAll("button").length===3,"tres botones de carga rápida");
   check([...form.querySelector('[name="context"]').options].map(o=>o.value).join(',')==='BACKTEST,DEMO',"simulado no ofrece cuenta real");
   const realForm=host(await renderNuevoTrade({...seed,route:{rest:"trade",query:{mode:"real"}}}));

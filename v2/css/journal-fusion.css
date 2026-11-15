@@ -26,3 +26,11 @@ button:disabled{opacity:.45;cursor:not-allowed}.journal-chart circle:hover{r:6}.
 @media(min-width:1201px){.journal-hist-head,button.row.hist.journal-history-row{grid-template-columns:90px 75px 85px minmax(140px,1fr) 70px 65px 112px 45px 135px;gap:8px;padding:12px}.journal-history-row .num{white-space:nowrap}}
 @media(min-width:901px){.deletable-row>button.row.hist{grid-template-columns:minmax(180px,2fr) repeat(4,minmax(70px,1fr))}}
 .import-drop{padding:22px;border:2px dashed var(--line-strong);border-radius:12px;background:var(--bg)}.import-drop.is-dragging{border-color:var(--accent);background:var(--accent-soft)}.import-drop input{max-width:100%}
+
+/* Quick historical entry reuses the journal fields and choice buttons. */
+.quick-bt-fields { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 12px; }
+.quick-bt details { margin: 4px 0; }
+.quick-bt details summary { cursor: pointer; }
+.quick-bt input[type=file] { max-width: 100%; }
+.quick-bt button[type=submit] { justify-self: start; min-width: 180px; }
+.quick-bt [hidden] { display: none !important; }

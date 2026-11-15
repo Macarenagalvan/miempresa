@@ -57,7 +57,7 @@ async function renderCard(trade, setup, asr) {
   const actions = [];
   const asrLabel = asrStatusLabel(trade, asr);
 
-  if (trade.lifecycle === Lifecycle.OPEN || trade.lifecycle === Lifecycle.CLOSED) {
+  if (!trade.sourceRef?.sessionDate && (trade.lifecycle === Lifecycle.OPEN || trade.lifecycle === Lifecycle.CLOSED)) {
     actions.push(el("button", {
       type: "button",
       text: "Editar operación",
@@ -121,6 +121,8 @@ async function renderCard(trade, setup, asr) {
       el("h1", { text: `${trade.asset} ${trade.direction}` }),
       trade.isDraft && trade.lifecycle !== Lifecycle.VOID ? el("p", { className: "draft-notice", text: "Este borrador no cuenta como operación abierta ni como resultado. Completá sus datos y marcá la apertura o registrá el cierre." }) : null,
       el("div", { className: "trade-facts" }, [
+      metaLine("Fecha de sesión histórica", trade.sourceRef?.sessionDate),
+      metaLine("Resultado en R", trade.rrRealized),
       metaLine("Entrada", trade.entry),
       trade.lifecycle === Lifecycle.CLOSED ? metaLine("Salida", trade.exit) : null,
       metaLine("Estrategia", strategyLabel(trade.strategy)),

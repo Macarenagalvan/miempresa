@@ -40,7 +40,7 @@ function snapshotFromSetup(setup) {
 function deriveTrade(trade) {
   trade.hasPartials = trade.hasPartials === true;
   trade.incompleteForR = incompleteForR(trade);
-  trade.rrRealized = computeRrRealized(trade);
+  trade.rrRealized = trade.sourceRef?.sessionDate ? trade.rrRealized : computeRrRealized(trade);
   trade.costComplete = trade.commission != null && trade.swap != null;
   return trade;
 }
@@ -529,8 +529,8 @@ export async function listStageTrades(stageId, opts = {}) {
     .filter((t) => opts.includeVoid || t.lifecycle !== Lifecycle.VOID)
     .filter((t) => !opts.setupId || t.setupId === opts.setupId)
     .sort((a, b) => {
-      const da = a.closedAt || a.openedAt || "";
-      const db = b.closedAt || b.openedAt || "";
+      const da = a.sourceRef?.sessionDate || a.closedAt || a.openedAt || "";
+      const db = b.sourceRef?.sessionDate || b.closedAt || b.openedAt || "";
       return da < db ? 1 : -1;
     });
 }

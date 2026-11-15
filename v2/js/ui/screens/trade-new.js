@@ -1,3 +1,4 @@
+import { quickBacktest } from "./backtest-quick.js";
 import { label } from "../journal-insights.js";
 import { choiceButtons } from "../forms/choice-buttons.js";
 import { quickRegister } from "../quick-register.js";
@@ -41,6 +42,7 @@ function formSection(title, description, children, extra = "") {
 }
 
 export async function renderNuevoTrade(ctx) {
+  if (ctx.route.query?.context === "BACKTEST" && !ctx.route.rest.startsWith("trade/")) return [quickBacktest(ctx)];
   const setupId = ctx.route.rest.startsWith("trade/") ? ctx.route.rest.slice("trade/".length) : "";
   const mode = ctx.route.query?.mode;
   const dedicatedBacktest = !setupId && ctx.route.query && ctx.route.query.context === Context.BACKTEST && mode !== "simulated";

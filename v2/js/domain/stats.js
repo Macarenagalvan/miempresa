@@ -51,7 +51,7 @@ export function filterTrades(trades, filters = {}) {
     if (filters.direction && t.direction !== filters.direction) return false;
     if (filters.session && t.session !== filters.session) return false;
     if (from || to) {
-      const day = (t.closedAt || t.openedAt || "").slice(0, 10);
+      const day = (t.sourceRef?.sessionDate || t.closedAt || t.openedAt || "").slice(0, 10);
       if (from && day < from) return false;
       if (to && day > to) return false;
     }
@@ -65,9 +65,11 @@ function mean(nums) {
 }
 
 function streaks(closed) {
+  // A session day does not establish the execution order needed for streaks.
+  if (closed.some(t => t.context === Context.BACKTEST && t.sourceRef?.sessionDate)) return { maxConsecWins: null, maxConsecLosses: null };
   const ordered = closed.slice().sort((a, b) => {
-    const da = a.closedAt || a.openedAt || "";
-    const db = b.closedAt || b.openedAt || "";
+    const da = a.sourceRef?.sessionDate || a.closedAt || a.openedAt || "";
+    const db = b.sourceRef?.sessionDate || b.closedAt || b.openedAt || "";
     if (da !== db) return da < db ? -1 : 1;
     return String(a.id) < String(b.id) ? -1 : 1;
   });
@@ -145,8 +147,8 @@ export function compute(trades, filters = {}) {
   else profitFactorUsd = grossProfit / Math.abs(grossLoss);
 
   const moneyOrdered = money.slice().sort((a, b) => {
-    const da = a.closedAt || a.openedAt || "";
-    const db = b.closedAt || b.openedAt || "";
+    const da = a.sourceRef?.sessionDate || a.closedAt || a.openedAt || "";
+    const db = b.sourceRef?.sessionDate || b.closedAt || b.openedAt || "";
     if (da !== db) return da < db ? -1 : 1;
     return String(a.id) < String(b.id) ? -1 : 1;
   });

@@ -104,7 +104,7 @@
         out.className = "fail";
         document.body.dataset.testStatus = "failed";
         out.textContent += "\nERROR " + err.message;
-        console.error(out.textContent);
+        console.error(out.textContent, err.stack);
       });
   </script>
 </body>

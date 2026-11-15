@@ -1,3 +1,4 @@
+import { validDay } from "./execution.js";
 import { META_ID, JOURNAL_EDITION, SCHEMA_VERSION } from "../config.js";
 import {
   StageStatus,
@@ -71,7 +72,7 @@ export function assertObservation(obs) {
   if (!obs.stageId) throw new Error("observation.stageId requerido");
   const asset = normalizeAsset(obs.asset);
   if (!asset) throw new Error("asset requerido");
-  if (!obs.note || !String(obs.note).trim()) throw new Error("note requerido");
+  if (!obs.studyOutcome && (!obs.note || !String(obs.note).trim())) throw new Error("note requerido");
   if (!obs.date || !/^\d{4}-\d{2}-\d{2}$/.test(obs.date)) throw new Error("date inválida");
   if (obs.session && !["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"].includes(obs.session)) {
     throw new Error("session inválida");
@@ -172,6 +173,7 @@ export function computeRrRealized(trade) {
 }
 
 export function incompleteForR(trade) {
+  if (trade.context === Context.BACKTEST && validDay(trade.sourceRef?.sessionDate)) return trade.rrRealized == null;
   const entry = finiteNum(trade.entry);
   const sl = finiteNum(trade.initialSL);
   return entry == null || sl == null || entry === sl;
@@ -196,11 +198,19 @@ export function parseLots(raw) {
 export function assertTrade(trade) {
   if (!trade || !trade.id) throw new Error("trade.id requerido");
   if (!trade.stageId) throw new Error("trade.stageId requerido");
+  const quick = trade.context === Context.BACKTEST && validDay(trade.sourceRef?.sessionDate);
+  if (quick) {
+    if (trade.isDraft === true || ![Lifecycle.CLOSED, Lifecycle.VOID].includes(trade.lifecycle)) throw new Error("Estado de backtest inválido");
+    for (const key of ["openedAt", "closedAt", "entry", "exit", "netPnl"]) if (trade[key] != null) throw new Error("Carga rápida sin datos de ejecución");
+    if (!["WIN", "LOSS", "BE"].includes(trade.result)) throw new Error("Resultado inválido");
+    const r = trade.rrRealized;
+    if (r != null && (!Number.isFinite(Number(r)) || (trade.result === "WIN" ? Number(r) <= 0 : trade.result === "LOSS" ? Number(r) >= 0 : Number(r) !== 0))) throw new Error("R incompatible con el resultado");
+  }
   const importedDraft = trade.context === Context.BACKTEST && trade.isDraft === true && trade.lifecycle === Lifecycle.OPEN && trade.sourceRef?.kind === "BACKTEST_JSON";
   if (!importedDraft && !normalizeAsset(trade.asset)) throw new Error("asset requerido");
   if (!CONTEXTS.includes(trade.context)) throw new Error("context requerido");
   if ((!importedDraft || trade.direction != null) && !DIRECTIONS.includes(trade.direction)) throw new Error("direction requerido");
-  if ((trade.entry == null || trade.entry === "" || !Number.isFinite(Number(trade.entry))) && trade.isDraft !== true) throw new Error("entry requerido");
+  if ((trade.entry == null || trade.entry === "" || !Number.isFinite(Number(trade.entry))) && trade.isDraft !== true && !quick) throw new Error("entry requerido");
   if (!Object.values(Lifecycle).includes(trade.lifecycle)) throw new Error("lifecycle inválido");
   if (trade.context === Context.BACKTEST) {
     if (trade.accountId != null) throw new Error("BACKTEST no usa accountId");
@@ -211,9 +221,9 @@ export function assertTrade(trade) {
     if (trade.result != null || trade.closedAt != null) throw new Error("OPEN no lleva result/closedAt");
   }
   if (trade.lifecycle === Lifecycle.CLOSED) {
-    if (trade.exit == null || trade.exit === "" || !Number.isFinite(Number(trade.exit))) throw new Error("exit requerido");
-    if (!trade.closedAt) throw new Error("closedAt requerido");
-    if (trade.netPnl == null || trade.netPnl === "" || !Number.isFinite(Number(trade.netPnl))) throw new Error("netPnl requerido");
+    if (!quick && (trade.exit == null || trade.exit === "" || !Number.isFinite(Number(trade.exit)))) throw new Error("exit requerido");
+    if (!quick && !trade.closedAt) throw new Error("closedAt requerido");
+    if (!quick && (trade.netPnl == null || trade.netPnl === "" || !Number.isFinite(Number(trade.netPnl)))) throw new Error("netPnl requerido");
     if (!Object.values(Result).includes(trade.result)) throw new Error("result inválido");
   }
   if (trade.lifecycle === Lifecycle.VOID) {

@@ -6,7 +6,7 @@ import { Context, Lifecycle } from "../../domain/enums.js";
 import { isTestRecord } from "../../domain/test-record.js";
 import { go } from "../router.js";
 import { stateBadge } from "../trade-presentation.js";
-import { quickRegister } from "../quick-register.js";
+import { quickBacktest } from "./backtest-quick.js";
 import { listActiveObservations } from "../../domain/observation.js";
 import { computeStudies } from "../../domain/stats.js";
 
@@ -24,7 +24,7 @@ function summary(label, value, note) {
 }
 
 function tradeRow(trade) {
-  const day = String(trade.closedAt || trade.openedAt || "").slice(0, 10) || "Sin fecha";
+  const day = String(trade.sourceRef?.sessionDate || trade.closedAt || trade.openedAt || "").slice(0, 10) || "Sin fecha";
   const status = trade.isDraft === true ? "Borrador" : (trade.lifecycle === Lifecycle.CLOSED ? (trade.result || "Cerrado") : "En curso");
   const value = trade.lifecycle === Lifecycle.CLOSED ? fmtR(realizedR(trade)) : "Pendiente";
   return el("button", {
@@ -36,7 +36,7 @@ function tradeRow(trade) {
     el("span", { className: "bt-row-date", text: day }),
     el("strong", { text: trade.asset || "Activo pendiente" }),
     el("span", { text: trade.direction || "Dirección pendiente" }),
-    stateBadge(trade),
+    trade.lifecycle === Lifecycle.CLOSED ? el("span", { className: "state-badge", text: status }) : stateBadge(trade),
     el("span", { className: "bt-row-r", text: value }),
   ]);
 }
@@ -45,29 +45,24 @@ export async function renderBacktesting(ctx) {
   const studies = await listActiveObservations(ctx.stage.id);
   const studyStats = computeStudies(studies, { stageId: ctx.stage.id });
   const trades = (await listStageTrades(ctx.stage.id, { includeVoid: false }))
-    .filter((trade) => trade.context === Context.BACKTEST)
-    .sort((a, b) => String(b.closedAt || b.openedAt || "").localeCompare(String(a.closedAt || a.openedAt || "")));
+    .filter((trade) => trade.context === Context.BACKTEST && trade.isDraft !== true)
+    .sort((a, b) => String(b.sourceRef?.sessionDate || b.closedAt || b.openedAt || "").localeCompare(String(a.sourceRef?.sessionDate || a.closedAt || a.openedAt || "")));
   const test = trades.filter(isTestRecord);
   const genuine = trades.filter((trade) => !isTestRecord(trade));
   const stats = compute(genuine, { universe: "BACKTEST", stageId: ctx.stage.id });
   const importer = backtestImporter(ctx.stage.id);
-  const action = () => go("nuevo/trade?context=BACKTEST");
+  const action = () => document.querySelector(".quick-bt input")?.focus();
   const qa = test.length ? el("details", { className: "bt-test-fold" }, [
     el("summary", { text: `Datos de prueba (${test.length}) · excluidos del resumen` }),
     el("div", { className: "bt-list" }, test.map(tradeRow)),
   ]) : null;
 
   return [
-    el("section", { className: "panel bt-hero" }, [
-      el("p", { className: "kicker", text: "Práctica y análisis histórico" }),
-      el("h1", { text: "Backtesting" }),
-      quickRegister(),
-      el("p", { className: "hint", text: "Registrá pruebas históricas sin mezclarlas con operaciones ejecutadas ni afectar el saldo de ninguna cuenta." }),
-      el("div", { className: "row-actions" }, [
-        el("button", { type: "button", text: "+ Registrar backtest", onclick: action }),
-        importer.button,
-        el("button", { type: "button", className: "ghost", text: "Ver estadísticas", onclick: () => go("numeros?universe=BACKTEST&excludeTest=1") }),
-      ]),
+    el("section", { className: "panel bt-hero" }, [el("h1", { text: "Backtesting" })]),
+    quickBacktest(ctx),
+    el("section", { className: "panel" }, [
+      el("div", { className: "row-actions" }, [importer.button,
+        el("button", { type: "button", className: "ghost", text: "Ver estadísticas", onclick: () => go("numeros?universe=BACKTEST&excludeTest=1") })]),
       el("div", { className: "bt-summary" }, [
         summary("Registros", genuine.length, "Pruebas históricas"),
         summary("Cerrados", stats.nClosed, "Con resultado registrado"),
@@ -85,7 +80,7 @@ export async function renderBacktesting(ctx) {
       el("div", { className: "bt-section-heading" }, [
         el("div", {}, [
           el("h2", { text: "Historial de backtests" }),
-          el("p", { className: "hint", text: "Abrí un registro para editarlo, revisar la operación y adjuntar capturas del gráfico." }),
+          el("p", { className: "hint", text: "Abrí un registro para revisarlo y ver sus capturas." }),
         ]),
         el("button", { type: "button", className: "ghost", text: "Nuevo backtest", onclick: action }),
       ]),
@@ -93,7 +88,7 @@ export async function renderBacktesting(ctx) {
         ? el("div", { className: "bt-list" }, genuine.map(tradeRow))
         : el("div", { className: "empty-block" }, [
           el("p", { className: "empty", text: "Todavía no tenés backtests registrados." }),
-          el("p", { className: "hint", text: "Empezá con el activo y la dirección. Podés guardar un borrador y completar fechas, precios y resultado después." }),
+          el("p", { className: "hint", text: "Empezá con el activo y la dirección. Elegí el resultado y guardá en un clic." }),
           el("button", { type: "button", text: "Registrar primer backtest", onclick: action }),
         ]),
       qa,

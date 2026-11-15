@@ -44,7 +44,7 @@ export async function renderHistorial(ctx) {
     includeVoid: q.lifecycle === "VOID",
   };
   const rows = filterTrades(q.context === Context.BACKTEST ? allTrades.filter((t) => t.context === Context.BACKTEST) : raw, filters)
-    .filter(t => q.lifecycle === "DRAFT" ? t.isDraft : q.lifecycle === "OPEN" ? !t.isDraft : true);
+    .filter(t => q.lifecycle === "DRAFT" ? t.isDraft : !t.isDraft);
   const asrByTrade = {};
   for (const row of await listStageAsrs(ctx.stage.id)) {
     asrByTrade[row.tradeId] = row;
@@ -59,7 +59,7 @@ export async function renderHistorial(ctx) {
   const variant = select(filters.variant, [["", "variante"], ...Object.values(BlueVariant).map((v) => [v, v])]);
   const direction = select(filters.direction, [["", "Dirección"], ...Object.values(Direction).map((d) => [d, uiLabel(d)])]);
   const session = select(filters.session, [["", "sesión"], ...SESSIONS.map((s) => [s, s])]);
-  const lifecycle = select(q.lifecycle, [["", "Borradores y operaciones"], ["DRAFT", "BORRADOR"], [Lifecycle.OPEN, "Abiertas"], [Lifecycle.CLOSED, "Cerradas"], [Lifecycle.VOID, "Anuladas"]]);
+  const lifecycle = select(q.lifecycle, [["", "Operaciones"], ["DRAFT", "BORRADOR"], [Lifecycle.OPEN, "Abiertas"], [Lifecycle.CLOSED, "Cerradas"], [Lifecycle.VOID, "Anuladas"]]);
   const from = el("input", { className: "input slim", type: "date", value: filters.from });
   const to = el("input", { className: "input slim", type: "date", value: filters.to });
   function apply() {
@@ -74,7 +74,7 @@ export async function renderHistorial(ctx) {
   const stageEmpty = (q.context === Context.BACKTEST ? allTrades.filter((t) => t.context === Context.BACKTEST) : raw).length === 0;
   const list = rows.length
     ? rows.map((t) => {
-      const when = (t.closedAt || t.openedAt || "").slice(0, 10);
+      const when = (t.sourceRef?.sessionDate || t.closedAt || t.openedAt || "").slice(0, 10);
       let r = "";
       if (t.lifecycle === "CLOSED") {
         const rr = realizedR(t);
