@@ -65,7 +65,7 @@ async function run() {
   const values = opts.map((o) => o[0]);
   assert("opciones sin duplicados", values.length === new Set(values).size);
   assert("opciones no son solo ROADMAP", values.includes("NZDJPY") && values.includes("GER40"));
-  assert("ROADMAP_ASSETS intacto", ROADMAP_ASSETS.map((a) => a.id).join(",") === "EURUSD,NZDUSD,XAUUSD,SP500");
+  assert("ROADMAP_ASSETS intacto", ROADMAP_ASSETS.map((a) => a.id).join(",") === "NAS100,MNQ,SP500,XAUUSD");
 
   const histAll = flatten(await renderHistorial(ctxBase));
   const histAsset = histAll.querySelector('[name="asset"]');

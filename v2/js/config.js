@@ -10,11 +10,12 @@ export const V1_DB_NAME = "TradingJournalDB";
 export const META_ID = "singleton";
 export const INITIAL_STAGE_NAME = "V2 · inicio";
 
+// Activos de trabajo de Maca (NASDAQ primero; S&P 500 para SMT). Otros se escriben a mano.
 export const ROADMAP_ASSETS = [
-  { id: "EURUSD", label: "EURUSD" },
-  { id: "NZDUSD", label: "NZDUSD" },
-  { id: "XAUUSD", label: "XAUUSD" },
+  { id: "NAS100", label: "NAS100" },
+  { id: "MNQ", label: "MNQ" },
   { id: "SP500", label: "S&P 500" },
+  { id: "XAUUSD", label: "XAUUSD" },
 ];
 
 export const SESSIONS = ["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"];

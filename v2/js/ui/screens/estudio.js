@@ -40,7 +40,15 @@ export async function renderEstudio(ctx) {
     text: "Todos",
     onclick: () => go(allPath),
   }));
-  for (const item of ROADMAP_ASSETS) {
+  // Además de los fijos, cualquier activo que ya hayas usado en notas o ideas.
+  const used = new Set();
+  try {
+    const { listActiveObservations } = await import("../../domain/observation.js");
+    for (const o of await listActiveObservations(ctx.stage.id)) if (o.asset && !o.studyOutcome) used.add(o.asset);
+    for (const s of await listActiveSetups(ctx.stage.id, null)) if (s.asset) used.add(s.asset);
+  } catch (_) { /* sin datos */ }
+  const chipAssets = [...ROADMAP_ASSETS, ...[...used].filter((a) => !ROADMAP_ASSETS.some((r) => r.id === a)).sort().map((a) => ({ id: a, label: a }))];
+  for (const item of chipAssets) {
     const path = tab === "setups" ? "estudio/setups/" + item.id : "estudio/" + item.id;
     chips.append(el("button", {
       type: "button",
