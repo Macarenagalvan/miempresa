@@ -7,6 +7,7 @@ import { getChallenge } from "../../storage/repos/challenges.js";
 import {
   updateChallenge,
   linkAccountToChallenge,
+  unlinkAccountFromChallenge,
   accountsForChallenge,
 } from "../../domain/challenge.js";
 import { createAccount, listStageAccounts } from "../../domain/account.js";
@@ -114,7 +115,11 @@ export async function renderChallengeDetail(ctx) {
         el("span", { text: a.currency }),
       ]);
       row.addEventListener("click", () => go("cuenta/" + a.id));
-      return deletableRow(row,'account',a,'challenge/'+ch.id);
+      const unlink = el("button", { type: "button", className: "ghost", text: "Desvincular", title: "La cuenta y sus operaciones se conservan; después la podés vincular a otro fondeo." });
+      unlink.addEventListener("click", async () => {
+        try { await unlinkAccountFromChallenge(a.id); go("challenge/" + ch.id); } catch (e) { err.textContent = e.message; }
+      });
+      return el("div", { className: "row-wrap" }, [deletableRow(row,'account',a,'challenge/'+ch.id), unlink]);
     })
     : [el("p", { className: "empty", text: "No hay cuentas vinculadas." })];
 
