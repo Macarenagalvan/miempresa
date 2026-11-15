@@ -2,7 +2,7 @@
 import { buildXlsx, readXlsx, excelSerial, serialToDay, XS } from "./xlsx.js";
 import { realizedR } from "../domain/stats.js";
 import { strategyLabel, Strategy, Style } from "../domain/enums.js";
-import { SESSIONS } from "../config.js";
+import { SESSIONS, ALL_SESSIONS, sessionLabel } from "../config.js";
 import { FAMILIES, CONFLUENCES, EMOTIONS, PLAN, ERRORS, labelOf } from "../domain/process.js";
 
 // ---------- formato ----------
@@ -96,7 +96,7 @@ function columns(kind, accountsById) {
   base.push(
     { h: "Estrategia", w: 13, type: "text", get: (t) => (t.strategy && t.strategy !== "UNCLASSIFIED" ? strategyLabel(t.strategy) : "") },
     { h: "Estilo", w: 9, type: "text", get: (t) => t.style || "" },
-    { h: "Sesión", w: 11, type: "text", get: (t) => t.session || "" },
+    { h: "Sesión", w: 11, type: "text", get: (t) => sessionLabel(t.session) },
     { h: "Setup", w: 13, type: "text", get: (t) => (t.process?.family ? labelOf(FAMILIES, t.process.family) : "") },
     { h: "Plan", w: 9, type: "text", get: (t) => (t.process?.plan ? labelOf(PLAN, t.process.plan) : "") },
     ...(kind === "operaciones" ? [{ h: "Emoción", w: 12, type: "text", get: (t) => (t.process?.emotion ? labelOf(EMOTIONS, t.process.emotion) : "") }] : []),
@@ -222,7 +222,7 @@ export function downloadBacktestTemplate() {
     [{ v: "R", s: XS.LABEL }, "Opcional. Positivo en WIN, negativo en LOSS, 0 en BE. Ej.: 2 · -1 · 1,5"],
     [{ v: "Estrategia", s: XS.LABEL }, "Opcional: " + Object.values(Strategy).filter((s) => s !== "UNCLASSIFIED").map(strategyLabel).join(", ")],
     [{ v: "Estilo", s: XS.LABEL }, "Opcional: " + Object.values(Style).join(", ")],
-    [{ v: "Sesión", s: XS.LABEL }, "Opcional: " + SESSIONS.join(", ")],
+    [{ v: "Sesión", s: XS.LABEL }, "Opcional: Asia, Londres, NY AM, NY PM"],
     [{ v: "Notas", s: XS.LABEL }, "Opcional. Texto libre."],
     [],
     ["Completá la hoja «Backtests» (una fila por backtest) y después usá Importar en la pantalla Backtesting."],
@@ -348,9 +348,9 @@ function parseStyle(v) {
 function parseSession(v) {
   const s = fold(v).replace(/[\s-]+/g, "_").toUpperCase();
   if (!s) return null;
-  const alias = { LONDRES: "LONDON", LONDRA: "LONDON", NUEVA_YORK: "NEW_YORK", NY: "NEW_YORK", NEWYORK: "NEW_YORK", ASIA: "TOKYO", TOKIO: "TOKYO" };
+  const alias = { LONDRES: "LONDON", LONDRA: "LONDON", ASIA: "ASIA", TOKIO: "TOKYO", NY_AM: "NY_AM", NYAM: "NY_AM", NY_PM: "NY_PM", NYPM: "NY_PM", NUEVA_YORK: "NEW_YORK", NY: "NEW_YORK", NEWYORK: "NEW_YORK" };
   const out = alias[s] || s;
-  return SESSIONS.includes(out) ? out : undefined;
+  return ALL_SESSIONS.includes(out) ? out : undefined;
 }
 
 /** Lee un archivo CSV o XLSX y devuelve filas normalizadas con su estado. */

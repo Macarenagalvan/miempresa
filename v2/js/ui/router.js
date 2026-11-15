@@ -77,7 +77,7 @@ export async function paint(ctx) {
   let nav = parsed.name;
 
   if (parsed.name === "importar") {
-    title = "Importar operaciones"; nodes = await renderImportar(viewCtx);
+    title = "Importar operaciones"; nav = "historial"; nodes = await renderImportar(viewCtx);
   } else if (parsed.name === "practica") {
     title = "Mi plan y rutina"; nodes = await renderPractice(viewCtx);
   } else if (parsed.name === "nuevo") {
@@ -120,7 +120,7 @@ export async function paint(ctx) {
     nav = "senales";
     nodes = await renderSignalDetail(viewCtx);
   } else if (parsed.name === "cuentas") {
-    title = "Cuentas";
+    title = "Cuentas y fondeo";
     nodes = await renderCuentas(viewCtx);
   } else if (parsed.name === "cuenta") {
     title = "Cuenta";
@@ -128,10 +128,11 @@ export async function paint(ctx) {
     nodes = await renderCuentaDetail(viewCtx);
   } else if (parsed.name === "fondeo") {
     title = "Fondeo";
+    nav = "cuentas";
     nodes = await renderFondeo(viewCtx);
   } else if (parsed.name === "challenge") {
     title = "Challenge";
-    nav = "fondeo";
+    nav = "cuentas";
     nodes = await renderChallengeDetail(viewCtx);
   } else if (parsed.name === "sistema") {
     title = "Configuración";

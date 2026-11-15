@@ -6,11 +6,12 @@ import { asrStatusLabel, isAsrPending, listStageAsrs } from "../../domain/asr.js
 import { filterTrades, realizedR, assetFilterOptions } from "../../domain/stats.js";
 import { Context, Strategy, Direction, Lifecycle, BlueVariant, strategyLabel } from "../../domain/enums.js";
 import { listStageAccounts } from "../../domain/account.js";
-import { SESSIONS } from "../../config.js";
+import { ALL_SESSIONS, sessionLabel } from "../../config.js";
 import { go } from "../router.js";
 import { stateBadge } from "../trade-presentation.js";
 import { rowActions } from "../trade-actions.js";
 import { dataToolbar } from "../data-toolbar.js";
+import { FAMILIES, labelOf } from "../../domain/process.js";
 
 function qs(query) {
   const parts = [];
@@ -60,7 +61,7 @@ export async function renderHistorial(ctx) {
   strategy.setAttribute("name", "strategy");
   const variant = select(filters.variant, [["", "variante"], ...Object.values(BlueVariant).map((v) => [v, v])]);
   const direction = select(filters.direction, [["", "Dirección"], ...Object.values(Direction).map((d) => [d, uiLabel(d)])]);
-  const session = select(filters.session, [["", "sesión"], ...SESSIONS.map((s) => [s, s])]);
+  const session = select(filters.session, [["", "sesión"], ...ALL_SESSIONS.map((s) => [s, sessionLabel(s)])]);
   const lifecycle = select(q.lifecycle, [["", "Operaciones"], ["DRAFT", "BORRADOR"], [Lifecycle.OPEN, "Abiertas"], [Lifecycle.CLOSED, "Cerradas"], [Lifecycle.VOID, "Anuladas"]]);
   const from = el("input", { className: "input slim", type: "date", value: filters.from });
   const to = el("input", { className: "input slim", type: "date", value: filters.to });
@@ -90,7 +91,7 @@ export async function renderHistorial(ctx) {
         el("span", { text: when }),
         el("strong", { text: t.asset }),
         el("span", { text: label(t.context) }),
-        el("span", { text: `${label(t.direction)} · ${label(strategyLabel(t.strategy))}` }),
+        el("span", { text: `${label(t.direction)} · ${t.process?.family ? labelOf(FAMILIES, t.process.family) : (t.strategy && t.strategy !== "UNCLASSIFIED" ? strategyLabel(t.strategy) : "—")}` }),
         stateBadge(t),
         el("span", { text: t.result ? label(t.result) : "—" }),
         el("span", { className: "num", text: t.netPnl == null ? "—" : money(t.netPnl, accounts.find(a=>a.id===t.accountId)?.currency || "") }),
@@ -126,9 +127,10 @@ export async function renderHistorial(ctx) {
       el("div", { className: "filters-basic", "aria-label": "Filtros rápidos" }, [ctxSel, accSel, asset, lifecycle]),
       (() => {
         const advanced = el("details", { className: "filters-advanced" }, [
-          el("summary", { text: "Más filtros · estrategia, sesión, dirección y fechas" }),
+          el("summary", { text: "Más filtros · dirección, sesión y fechas" }),
           el("div", { className: "chips filters" }, [
-            strategy, variant, direction, session, from, to,
+            direction, session, from, to,
+            (() => { const d = el("details", { className: "legacy-filters" }, [el("summary", { text: "Sistema de colores (anterior)" }), strategy, variant]); d.open = Boolean(filters.strategy || filters.variant); return d; })(),
             el("button", { type: "button", className: "ghost filters-reset", text: "Limpiar filtros", onclick: () => go("historial") }),
           ]),
         ]);
@@ -138,7 +140,7 @@ export async function renderHistorial(ctx) {
       stageEmpty
         ? null
         : el("p", { className: "meta historial-count", text: `${rows.length} operaciones · ${pendingCount} revisiones pendientes` }),
-      el("div", {className:"journal-hist-head", "aria-hidden":"true"}, ["Fecha","Activo","Tipo","Dirección / estrategia","Estado","Resultado","Neto","R","Revisión",""].map(text=>el("span",{text}))),
+      el("div", {className:"journal-hist-head", "aria-hidden":"true"}, ["Fecha","Activo","Tipo","Dirección / setup","Estado","Resultado","Neto","R","Revisión",""].map(text=>el("span",{text}))),
       el("div", { className: "list table-wrap" }, list),
     ]),
   ];

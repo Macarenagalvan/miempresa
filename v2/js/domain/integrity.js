@@ -74,7 +74,7 @@ export function assertObservation(obs) {
   if (!asset) throw new Error("asset requerido");
   if (!obs.studyOutcome && (!obs.note || !String(obs.note).trim())) throw new Error("note requerido");
   if (!obs.date || !/^\d{4}-\d{2}-\d{2}$/.test(obs.date)) throw new Error("date inválida");
-  if (obs.session && !["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"].includes(obs.session)) {
+  if (obs.session && !["ASIA", "LONDON", "NY_AM", "NY_PM", "SYDNEY", "TOKYO", "NEW_YORK"].includes(obs.session)) {
     throw new Error("session inválida");
   }
   if (obs.studyOutcome != null && !["NO_TRADE", "TRADE_TAKEN"].includes(obs.studyOutcome)) throw new Error("studyOutcome inválido");

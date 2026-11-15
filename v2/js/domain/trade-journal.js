@@ -17,7 +17,7 @@ import { getAccount } from "../storage/repos/accounts.js";
 import { lockSetupOnTrade } from "./setup.js";
 import { withStores, requestToPromise } from "../storage/db.js";
 import { buildTradeImage } from "../storage/repos/attachments.js";
-import { SESSIONS } from "../config.js";
+import { ALL_SESSIONS } from "../config.js";
 
 export const TRADE_JOURNAL_FIELDS = Object.freeze([
   "strategy",
@@ -92,7 +92,7 @@ function applyJournalField(next, field, raw) {
   }
   if (field === "session") {
     if (raw == null || raw === "") { next.session = null; return; }
-    if (!SESSIONS.includes(raw)) throw new Error("session inválida");
+    if (!ALL_SESSIONS.includes(raw)) throw new Error("session inválida");
     next.session = raw;
     return;
   }

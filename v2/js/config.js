@@ -18,7 +18,16 @@ export const ROADMAP_ASSETS = [
   { id: "XAUUSD", label: "XAUUSD" },
 ];
 
-export const SESSIONS = ["SYDNEY", "TOKYO", "LONDON", "NEW_YORK"];
+// Sesiones que se eligen hoy. Las viejas (SYDNEY, TOKYO, NEW_YORK) siguen siendo válidas en registros anteriores.
+export const SESSIONS = ["ASIA", "LONDON", "NY_AM", "NY_PM"];
+export const LEGACY_SESSIONS = ["SYDNEY", "TOKYO", "NEW_YORK"];
+export const ALL_SESSIONS = [...SESSIONS, ...LEGACY_SESSIONS];
+export const SESSION_LABELS = Object.freeze({ ASIA: "Asia", LONDON: "Londres", NY_AM: "NY AM", NY_PM: "NY PM", SYDNEY: "Asia (Sídney)", TOKYO: "Asia (Tokio)", NEW_YORK: "Nueva York" });
+export function sessionLabel(value) { return SESSION_LABELS[value] || value || ""; }
+/** Opciones para un selector: las actuales y, si el registro tiene una vieja, también esa. */
+export function sessionOptions(current = null) {
+  return current && LEGACY_SESSIONS.includes(current) ? [...SESSIONS, current] : SESSIONS;
+}
 
 export const RGM_SOURCE_ASSET = "SP500";
 export const RGM_SOURCE_CONTEXT = "LIVE";

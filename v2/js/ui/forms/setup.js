@@ -11,7 +11,7 @@ import {
   Verdict,
   SetupQuality,
 } from "../../domain/enums.js";
-import { SESSIONS } from "../../config.js";
+import { sessionOptions, sessionLabel } from "../../config.js";
 import { CHECKLIST_FIXTURE_ITEMS } from "../../fixtures/checklist-slice2.js";
 import { el } from "../render.js";
 import { field } from "./observation.js";
@@ -43,7 +43,7 @@ export function evaluateFields(setup) {
   const strategy = select(Object.values(Strategy).map((s) => [s, strategyLabel(s)]), setup.strategy || Strategy.UNCLASSIFIED);
   const variant = select([["", "—"], ...Object.values(BlueVariant).map((v) => [v, v])], setup.variant || "");
   const style = select([["", "—"], ...Object.values(Style).map((s) => [s, s])], setup.style || "");
-  const session = select([["", "—"], ...SESSIONS.map((s) => [s, s])], setup.session || "");
+  const session = select([["", "—"], ...sessionOptions(setup.session).map((s) => [s, sessionLabel(s)])], setup.session || "");
   const status = select(
     [SetupStatus.WATCHING, SetupStatus.WAITING_CONFIRMATION, SetupStatus.VALIDATED].map((s) => [s, s]),
     setup.status,
