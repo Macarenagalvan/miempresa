@@ -16,6 +16,9 @@ import { deleteTradeFlow } from "../trade-actions.js";
 import { toast, confirmDialog } from "../feedback.js";
 import { editQuickBacktest, editManualExecution, isQuickBacktest, isMt5Trade, executionEditable } from "../../domain/trade-edit.js";
 import { findSimilarQuickBacktest, describeRecord } from "../../domain/duplicates.js";
+import { captureDrop } from "../capture-drop.js";
+import { processFields } from "../forms/process-fields.js";
+import { setTradeProcess, FAMILIES, CONFLUENCES, EMOTIONS, PLAN, ERRORS, labelOf } from "../../domain/process.js";
 
 function partialsSelect(current) {
   const node = el("select", { className: "input" }, [
@@ -152,6 +155,7 @@ async function renderCard(trade, setup, asr) {
       trade.lifecycle === Lifecycle.CLOSED ? metaLine("Swap", trade.swap) : null,
       trade.closeType ? metaLine("Tipo de cierre", trade.closeType) : null,
       ]),
+      processSummary(trade.process),
       trade.note ? el("p", { className: "meta", text: `Notas: ${trade.note}` }) : null,
       el("p", { className: "meta origen", text: origenLine(trade) }),
       setup ? el("p", { className: "meta", text: `plannedEntry ${setup.plannedEntry ?? "—"} ≠ actual ${trade.entry}` }) : null,
@@ -215,9 +219,8 @@ function renderCaptures(trade, images, err) {
   return el("div", { className: "captures" }, [
     el("p", { className: "kicker", text: "Capturas / Imágenes" }),
     images.length ? el("div", { className: "thumb-row" }, thumbs) : el("p", { className: "meta", text: "Sin capturas." }),
-    file,
-    add,
-    el("p", { className: "hint", text: "PNG, JPEG o WEBP. Máx 8 MB. Local en este dispositivo." }),
+    captureDrop(file, { label: "Agregar captura", onAdded: () => add.click() }),
+    el("p", { className: "hint", text: "Pegá con Ctrl+V o arrastrá: se agrega sola. PNG, JPEG o WEBP, máx 8 MB. Local en este dispositivo." }),
   ]);
 }
 
@@ -276,6 +279,7 @@ function renderEdit(trade, target = "DRAFT") {
   const partials = partialsSelect(trade.hasPartials);
   partials.setAttribute("name", "hasPartials");
   const closeType = enumSelect(Object.values(CloseType), trade.closeType || CloseType.UNKNOWN, "closeType");
+  const proc = processFields(trade.process);
   const err = el("p", { className: "err", text: "" });
   const save = el("button", { type: "button", text: "Guardar cambios" });
   save.addEventListener("click", async () => {
@@ -306,6 +310,7 @@ function renderEdit(trade, target = "DRAFT") {
         openedAt: localDateTimeIso(openedEdit.value, trade.openedAt),
         closedAt: localDateTimeIso(closedEdit.value, trade.draftClosedAt),
         }, patch, completion.value);
+        await setTradeProcess(next.id, proc.read());
         go("trade/" + next.id);
         return;
       }
@@ -318,6 +323,7 @@ function renderEdit(trade, target = "DRAFT") {
         });
       }
       const next = await enrichTrade(trade.id, patch);
+      await setTradeProcess(next.id, proc.read());
       go("trade/" + next.id);
       toast("Cambios guardados.", { tone: "ok", timeout: 2500 });
     } catch (e) {
@@ -377,6 +383,7 @@ function renderEdit(trade, target = "DRAFT") {
     field("Variante", variant),
     field("Sesión", choiceButtons(session, "Sesión")),
     ]),
+    tradeSection("Proceso y emociones", [el("div", { className: "trade-field-wide" }, [proc.node])]),
     el("details", { className: "trade-extra" }, [
       el("summary", { text: "Gestión y notas" }),
       field("Gestión", mgmt), field("Notas y aprendizaje", note),
@@ -399,6 +406,7 @@ function renderQuickEdit(trade) {
   const session = enumSelect(SESSIONS, trade.session, "session", "—");
   const note = el("textarea", { className: "input", name: "note", rows: "3" });
   note.value = trade.note || "";
+  const proc = processFields(trade.process, { emotion: false });
   const err = el("p", { className: "err", role: "alert" });
   const save = el("button", { type: "button", text: "Guardar cambios" });
   save.addEventListener("click", async () => {
@@ -410,6 +418,7 @@ function renderQuickEdit(trade) {
       if (similar && !(await confirmDialogLazy(similar))) { save.disabled = false; return; }
       await editQuickBacktest(trade.id, { ...input, expectedUpdatedAt: trade.updatedAt,
         strategy: strategy.value, style: style.value || null, session: session.value || null, note: note.value });
+      await setTradeProcess(trade.id, proc.read());
       go("trade/" + trade.id);
       toast("Backtest actualizado.", { tone: "ok", timeout: 2500 });
     } catch (e) { err.textContent = e.message; save.disabled = false; }
@@ -423,8 +432,9 @@ function renderQuickEdit(trade) {
       field("Resultado", choiceButtons(result, "Resultado")),
       field("Resultado en R (opcional)", r),
     ]),
+    tradeSection("Proceso", [el("div", { className: "trade-field-wide" }, [proc.node])]),
     tradeSection("Clasificación (opcional)", [
-      field("Estrategia", strategy), field("Estilo", style), field("Sesión", choiceButtons(session, "Sesión")),
+      field("Estrategia (sistema de colores)", strategy), field("Estilo", style), field("Sesión", choiceButtons(session, "Sesión")),
     ]),
     field("Notas", note),
     err,
@@ -549,4 +559,16 @@ function renderVoid(trade) {
       ]),
     ]),
   ];
+}
+
+function processSummary(p) {
+  if (!p) return null;
+  const chip = (text, tone = "") => el("span", { className: "proc-chip " + tone, text });
+  const items = [];
+  if (p.family) items.push(chip(labelOf(FAMILIES, p.family), "is-family"));
+  if (p.plan) items.push(chip("Plan: " + labelOf(PLAN, p.plan), p.plan === "YES" ? "is-good" : p.plan === "NO" ? "is-bad" : "is-mid"));
+  if (p.emotion) items.push(chip(labelOf(EMOTIONS, p.emotion)));
+  for (const c of p.confluences || []) items.push(chip(labelOf(CONFLUENCES, c), "is-conf"));
+  for (const e of p.errors || []) items.push(chip(labelOf(ERRORS, e), "is-bad"));
+  return items.length ? el("div", { className: "proc-summary", "aria-label": "Proceso" }, items) : null;
 }

@@ -7,6 +7,7 @@ import { SESSIONS } from "../../config.js";
 import { go } from "../router.js";
 import { deleteStudyFlow } from "../trade-actions.js";
 import { toast } from "../feedback.js";
+import { captureDrop } from "../capture-drop.js";
 
 function pick(name, options, value) {
   const control = el("select", { name }, options.map(([v, text]) => el("option", { value: v, text })));
@@ -49,7 +50,7 @@ export async function renderStudy(ctx, current = null) {
     field("Resultado del estudio", choiceButtons(outcome, "Resultado del estudio")),
     field("Sesgo", choiceButtons(bias, "Sesgo")), field("Sesión", choiceButtons(session, "Sesión")),
     field("Notas y aprendizaje", note), el("div", { className: "thumb-row" }, thumbs),
-    field("Capturas (hasta 6 por guardado, 8 MB cada una)", file), err, save,
+    field("Capturas (hasta 6 por guardado)", captureDrop(file, { label: "Captura del estudio" })), err, save,
     el("div", { className: "row-actions" }, [
       el("button", { type: "button", className: "ghost", text: "Volver a Backtesting", onclick: () => go("backtesting") }),
       current ? el("button", { type: "button", className: "btn-danger-ghost", text: "Borrar",
