@@ -19,6 +19,7 @@ import { listMovements } from "../../storage/repos/movements.js";
 import { listTrades } from "../../storage/repos/trades.js";
 import { go } from "../router.js";
 import { renderFondeo } from "./fondeo.js";
+import { applyAccountLink } from "../account-link.js";
 
 function contextLabel(ctx) {
   if (ctx === AccountContext.PROP_CHALLENGE) return "PROP";
@@ -27,6 +28,7 @@ function contextLabel(ctx) {
 
 export async function renderCuentas(ctx) {
   if (ctx.route.rest === "nueva") return renderNueva(ctx);
+  if (ctx.route.query?.agregar) { const raw = ctx.route.query.agregar; setTimeout(() => applyAccountLink(raw, ctx.stage.id), 50); }
   const rows = await listStageAccounts(ctx.stage.id, {includeArchived:true});
   const active = await getActiveAccount();
   const movements = await listMovements();
