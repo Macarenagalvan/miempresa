@@ -1,4 +1,4 @@
-import { ROADMAP_ASSETS, SESSIONS, OBSERVATION_TAG_SUGGESTIONS } from "../../config.js";
+import { ROADMAP_ASSETS, ALL_SESSIONS, sessionLabel, OBSERVATION_TAG_SUGGESTIONS } from "../../config.js";
 import { el } from "../render.js";
 
 function field(label, control) {
@@ -40,7 +40,7 @@ export function optionalFields(values) {
   const timeframe = el("input", { className: "input", value: values.timeframe || "", placeholder: "D, 4H, 1H…" });
   const session = el("select", { className: "input" }, [
     el("option", { value: "", text: "—" }),
-    ...SESSIONS.map((s) => el("option", { value: s, text: s })),
+    ...ALL_SESSIONS.map((s) => el("option", { value: s, text: sessionLabel(s) })),
   ]);
   session.value = values.session || "";
   const priceBehavior = el("input", { className: "input", value: values.priceBehavior || "" });

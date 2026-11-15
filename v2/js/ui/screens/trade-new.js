@@ -20,7 +20,7 @@ function readLastTrade() { try { return JSON.parse(localStorage.getItem(LAST_TRA
 function writeLastTrade(v) { try { localStorage.setItem(LAST_TRADE, JSON.stringify(v)); } catch (_) { /* sin almacenamiento */ } }
 import { go } from "../router.js";
 import { Context, Direction, Strategy, Style, CloseType, BlueVariant, Lifecycle, strategyLabel } from "../../domain/enums.js";
-import { ROADMAP_ASSETS, SESSIONS } from "../../config.js";
+import { ROADMAP_ASSETS, SESSIONS, sessionLabel } from "../../config.js";
 import { normalizeAsset } from "../../domain/integrity.js";
 import { previewTradeR } from "../../domain/trade-rr-preview.js";
 import { addTradeImage, ATTACHMENT_MAX_BYTES, IMAGE_MIMES } from "../../storage/repos/attachments.js";
@@ -97,7 +97,7 @@ export async function renderNuevoTrade(ctx) {
   style.setAttribute("name", "style");
   const variant = select([["", "—"]].concat(Object.values(BlueVariant).map((s) => [s, s])), "");
   variant.setAttribute("name", "variant");
-  const session = select([["", "—"]].concat(SESSIONS.map((s) => [s, s])), "");
+  const session = select([["", "—"]].concat(SESSIONS.map((s) => [s, sessionLabel(s)])), "");
   session.setAttribute("name", "session");
   const openedAt = el("input", { className: "input", type: "datetime-local", name: "openedAt", value: historical() ? "" : localDateTimeValue() });
   const closedAt = el("input", { className: "input", type: "datetime-local", name: "closedAt", value: historical() ? "" : localDateTimeValue() });
@@ -420,12 +420,11 @@ export async function renderNuevoTrade(ctx) {
   }
 
   const extra = el("details", { className: "trade-extra" }, [
-    el("summary", { text: "Detalles adicionales · estrategia, sesión, costes y notas" }),
+    el("summary", { text: "Detalles adicionales · estilo, riesgo, costes y notas" }),
     el("p", { className: "hint", text: "Estos campos son opcionales. Usalos para documentar el contexto y mejorar tus estadísticas." }),
     el("div", { className: "trade-fields-grid" }, [
-      field("Estrategia", strategy),
       field("Estilo", style),
-      field("Variante", variant),
+      el("details", { className: "legacy-filters trade-field-wide" }, [el("summary", { text: "Sistema de colores (anterior)" }), el("div", { className: "trade-fields-grid" }, [field("Estrategia", strategy), field("Variante", variant)])]),
       field("Símbolo del broker", broker),
       field("Riesgo (%)", riskPct),
       field("Lotaje / cantidad", lots),

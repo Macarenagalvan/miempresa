@@ -3,7 +3,7 @@ import { field } from "../forms/observation.js";
 import { choiceButtons } from "../forms/choice-buttons.js";
 import { saveStudy } from "../../domain/observation.js";
 import { listByEntity } from "../../storage/repos/attachments.js";
-import { SESSIONS } from "../../config.js";
+import { sessionOptions, sessionLabel } from "../../config.js";
 import { go } from "../router.js";
 import { deleteStudyFlow } from "../trade-actions.js";
 import { toast } from "../feedback.js";
@@ -22,7 +22,7 @@ export async function renderStudy(ctx, current = null) {
   note.value = current?.note || "";
   const outcome = pick("studyOutcome", [["NO_TRADE", "NO TRADE"], ["TRADE_TAKEN", "Hubo entrada (estudio)"]], current?.studyOutcome || "NO_TRADE");
   const bias = pick("bias", [["", "Sin definir"], ["LONG", "LONG"], ["SHORT", "SHORT"], ["NEUTRAL", "NEUTRAL"]], current?.bias || "");
-  const session = pick("session", [["", "Sin definir"], ...SESSIONS.map(s => [s, s])], current?.session || "");
+  const session = pick("session", [["", "Sin definir"], ...sessionOptions(current?.session).map(s => [s, sessionLabel(s)])], current?.session || "");
   const file = el("input", { className: "input", type: "file", name: "study-images", multiple: true, accept: "image/png,image/jpeg,image/webp" });
   const err = el("p", { className: "err", role: "alert" });
   const save = el("button", { type: "button", text: current ? "Guardar cambios" : "Guardar estudio" });

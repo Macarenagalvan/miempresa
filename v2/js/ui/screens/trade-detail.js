@@ -8,7 +8,7 @@ import { localDateTimeValue, localDateTimeIso, stateBadge, tradeSection } from "
 import { getAccount } from "../../storage/repos/accounts.js";
 import { asrForTrade, asrStatusLabel, createAsr, updateAsr } from "../../domain/asr.js";
 import { CloseType, VoidReason, Lifecycle, Strategy, Style, BlueVariant, strategyLabel } from "../../domain/enums.js";
-import { SESSIONS } from "../../config.js";
+import { sessionOptions, sessionLabel } from "../../config.js";
 import { asrFields } from "../forms/asr.js";
 import { go } from "../router.js";
 import { addTradeImage, listTradeImages, removeAttachment } from "../../storage/repos/attachments.js";
@@ -136,10 +136,10 @@ async function renderCard(trade, setup, asr) {
       metaLine("Resultado en R", trade.rrRealized),
       metaLine("Entrada", trade.entry),
       trade.lifecycle === Lifecycle.CLOSED ? metaLine("Salida", trade.exit) : null,
-      metaLine("Estrategia", strategyLabel(trade.strategy)),
+      trade.strategy && trade.strategy !== "UNCLASSIFIED" ? metaLine("Estrategia", strategyLabel(trade.strategy)) : null,
       metaLine("Estilo", trade.style),
       metaLine("Variante", trade.variant),
-      metaLine("Sesión", trade.session),
+      metaLine("Sesión", sessionLabel(trade.session)),
       metaLine("Cuenta", account ? account.name : "Sin cuenta · histórico"),
       metaLine("Símbolo broker", trade.brokerSymbol),
       metaLine("Apertura", localDateTimeValue(trade.openedAt).replace("T", " ")),
@@ -266,7 +266,7 @@ function renderEdit(trade, target = "DRAFT") {
   const strategy = enumSelect(Object.values(Strategy), trade.strategy, "strategy", null, strategyLabel);
   const style = enumSelect(Object.values(Style), trade.style, "style", "—");
   const variant = enumSelect(Object.values(BlueVariant), trade.variant, "variant", "—");
-  const session = enumSelect(SESSIONS, trade.session, "session", "—");
+  const session = enumSelect(sessionOptions(trade.session), trade.session, "session", "—", sessionLabel);
   const sl = el("input", { className: "input", name: "initialSL", value: trade.initialSL ?? "" });
   const tp = el("input", { className: "input", name: "tp", value: trade.tp ?? "" });
   const rr = el("input", { className: "input", name: "rrPlanned", value: trade.rrPlanned ?? "" });
@@ -378,10 +378,9 @@ function renderEdit(trade, target = "DRAFT") {
     field("Hubo cierres parciales", partials),
     ]),
     tradeSection("3. Clasificación", [
-    field("Estrategia", strategy),
     field("Estilo", style),
-    field("Variante", variant),
     field("Sesión", choiceButtons(session, "Sesión")),
+    el("details", { className: "legacy-filters trade-field-wide" }, [el("summary", { text: "Sistema de colores (anterior)" }), field("Estrategia", strategy), field("Variante", variant)]),
     ]),
     tradeSection("Proceso y emociones", [el("div", { className: "trade-field-wide" }, [proc.node])]),
     el("details", { className: "trade-extra" }, [
@@ -403,7 +402,7 @@ function renderQuickEdit(trade) {
   const r = el("input", { className: "input", name: "rrRealized", type: "number", step: "any", value: trade.rrRealized ?? "", placeholder: "Ej.: 2 o -1" });
   const strategy = enumSelect(Object.values(Strategy), trade.strategy || Strategy.UNCLASSIFIED, "strategy", null, strategyLabel);
   const style = enumSelect(Object.values(Style), trade.style, "style", "—");
-  const session = enumSelect(SESSIONS, trade.session, "session", "—");
+  const session = enumSelect(sessionOptions(trade.session), trade.session, "session", "—", sessionLabel);
   const note = el("textarea", { className: "input", name: "note", rows: "3" });
   note.value = trade.note || "";
   const proc = processFields(trade.process, { emotion: false });
@@ -434,7 +433,8 @@ function renderQuickEdit(trade) {
     ]),
     tradeSection("Proceso", [el("div", { className: "trade-field-wide" }, [proc.node])]),
     tradeSection("Clasificación (opcional)", [
-      field("Estrategia (sistema de colores)", strategy), field("Estilo", style), field("Sesión", choiceButtons(session, "Sesión")),
+      field("Estilo", style), field("Sesión", choiceButtons(session, "Sesión")),
+      el("details", { className: "legacy-filters trade-field-wide" }, [el("summary", { text: "Sistema de colores (anterior)" }), field("Estrategia", strategy)]),
     ]),
     field("Notas", note),
     err,

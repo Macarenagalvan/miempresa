@@ -18,6 +18,7 @@ import { nowIso } from "../../domain/ids.js";
 import { listMovements } from "../../storage/repos/movements.js";
 import { listTrades } from "../../storage/repos/trades.js";
 import { go } from "../router.js";
+import { renderFondeo } from "./fondeo.js";
 
 function contextLabel(ctx) {
   if (ctx === AccountContext.PROP_CHALLENGE) return "PROP";
@@ -36,7 +37,7 @@ export async function renderCuentas(ctx) {
       const isOn = active && active.id === a.id;
       const item = el("button", { type: "button", className: "row hist" }, [
         el("strong", { text: a.name }),
-        el("span", { text: contextLabel(a.context) }),
+        el("span", { text: label(a.context) }),
         el("span", { text: a.currency }),
         el("span", { className: "num", text: money(bal, a.currency) }),
         el("span", { text: a.status==='ARCHIVED' ? 'Archivada' : isOn ? "activa" : "" }),
@@ -60,6 +61,7 @@ export async function renderCuentas(ctx) {
       el("div", { className: "list table-wrap" }, list),
     ]),
     el("section", { className: "panel" }, [el("h2", {text:"Traer operaciones de MT5"}), el("p", {className:"hint",text:"Importá directamente el informe HTML. Revisá la cuenta, los netos y los duplicados antes de guardar."}), link("Importar HTML o CSV de MT5", "importar")]),
+    ...(await renderFondeo({ ...ctx, route: { ...ctx.route, rest: "" } })),
   ];
 }
 

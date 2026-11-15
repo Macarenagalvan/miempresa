@@ -7,7 +7,7 @@ import { listTrades } from "../../storage/repos/trades.js";
 import { listSignals } from "../../storage/repos/signals.js";
 import { compute, computeDesk, assetFilterOptions } from "../../domain/stats.js";
 import { Context, Strategy, Direction, BlueVariant, Disposition, Resolution, strategyLabel } from "../../domain/enums.js";
-import { SESSIONS } from "../../config.js";
+import { ALL_SESSIONS, sessionLabel } from "../../config.js";
 import { isTestRecord } from "../../domain/test-record.js";
 import { go } from "../router.js";
 
@@ -132,7 +132,7 @@ export async function renderNumeros(ctx) {
   const strategy = select(filters.strategy, [["", "Todas"], ...Object.values(Strategy).map((s) => [s, label(strategyLabel(s))])]);
   strategy.setAttribute("name", "strategy");
   const variant = select(filters.variant, [["", "Todas"], ...Object.values(BlueVariant).map((v) => [v, v])]);
-  const session = select(filters.session, [["", "sesión"], ...SESSIONS.map((s) => [s, s])]);
+  const session = select(filters.session, [["", "sesión"], ...ALL_SESSIONS.map((s) => [s, sessionLabel(s)])]);
   function apply() {
     go("numeros" + qs({
       universe: uni.value, context: uni.value === universe ? ctxSel.value : "", account: uni.value === universe ? accountSel.value : "all",
@@ -146,9 +146,10 @@ export async function renderNumeros(ctx) {
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: universe === "BACKTEST" ? "Pruebas históricas" : "Tus operaciones ejecutadas" }),
       el("h1", { text: "Estadísticas" }),
-      el("p", { className: "meta", text: "Resultados de operaciones cerradas. Estudios, borradores, anulados y TEST / FICTICIO no cuentan." }),
+      el("p", { className: "meta", text: "Solo cuentan operaciones cerradas. No cuentan borradores, anuladas, estudios ni datos de prueba." }),
       mixed ? el("p", { className: "hint", text: "Elegí una cuenta para ver importes: hay monedas distintas y no se suman entre sí." }) : null,
-      el("div", { className: "journal-stat-filters" }, [field("Resultados",uni),field("Cuenta",accountSel),field("Tipo de cuenta",ctxSel),field("Activo",asset),field("Estrategia",strategy),field("Variante",variant),field("Dirección",direction),field("Sesión",session),field("Desde",from),field("Hasta",to)]),
+      el("div", { className: "journal-stat-filters" }, [field("Resultados",uni),field("Cuenta",accountSel),field("Tipo de cuenta",ctxSel),field("Activo",asset),field("Dirección",direction),field("Sesión",session),field("Desde",from),field("Hasta",to)]),
+      (() => { const d = el("details", { className: "legacy-filters" }, [el("summary", { text: "Sistema de colores (anterior)" }), el("div", { className: "journal-stat-filters" }, [field("Estrategia", strategy), field("Variante", variant)])]); d.open = Boolean(filters.strategy || filters.variant); return d; })(),
       el("button", {type:"button",className:"ghost",text:"Limpiar filtros",onclick:()=>go("numeros")}),
       el("div", { className: "metrics" }, [
         metric("Operaciones cerradas", stats.nClosed),

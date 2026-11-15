@@ -141,7 +141,7 @@ async function buildOficinaPanel() {
   return el("section", { className: "panel office-sistema", id: "oficina" }, [
     el("p", { className: "kicker", text: "Oficina" }),
     el("h1", { text: "Accesos rápidos" }),
-    el("p", { className: "hint", text: "Se abren desde Hoy. No entran a Números. Ejemplos (no se guardan solos): TradingView, RGM Desk." }),
+    el("p", { className: "hint", text: "Links que abrís seguido (TradingView, el desk de la prop…). Aparecen en Hoy, dentro de Mi escritorio." }),
     el("div", { className: "shortcut-composer" }, [labelInput, urlInput, addBtn]),
     err,
     empty,
@@ -191,7 +191,7 @@ export async function renderSistema(ctx) {
     refreshRestoreGate();
   }
 
-  const exportBtn = el("button", { type: "button", text: "Exportar backup" });
+  const exportBtn = el("button", { type: "button", text: "Descargar respaldo" });
   exportBtn.addEventListener("click", async () => {
     err.textContent = "";
     exportBtn.disabled = true;
@@ -285,7 +285,7 @@ export async function renderSistema(ctx) {
 
   const meta = await getMeta();
   const nameInput = el("input", { className: "input", value: visibleName(meta), placeholder: "Maca" });
-  const nameStatus = el("p", { className: "hint", text: "Aparece en el saludo y en la barra. Sin login." });
+  const nameStatus = el("p", { className: "hint", text: "Aparece en el saludo de Hoy." });
   const saveName = el("button", { type: "button", text: "Guardar nombre" });
   saveName.addEventListener("click", async () => {
     const next = { ...meta, traderName: String(nameInput.value || "").trim() };
@@ -300,7 +300,7 @@ export async function renderSistema(ctx) {
   return [
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: "Perfil" }),
-      el("h1", { text: "Quién usa esta Office" }),
+      el("h1", { text: "Tu nombre" }),
       el("label", { className: "field" }, [
         el("span", { text: "Nombre visible" }),
         nameInput,
@@ -308,33 +308,35 @@ export async function renderSistema(ctx) {
       nameStatus,
       el("div", { className: "row-actions" }, [saveName]),
     ]),
-    await buildSincronizacionPanel(),
     await buildOficinaPanel(),
     el("section", { className: "panel" }, [
-      el("p", { className: "kicker", text: "Resguardo" }),
-      el("h1", { text: "Backup / Restore" }),
-      el("p", { className: "hint", text: "Exportá cuando quieras un resguardo. Restore reemplaza todo: no hay merge." }),
+      el("p", { className: "kicker", text: "Respaldo" }),
+      el("h1", { text: "Tus datos a salvo" }),
+      el("p", { className: "hint", text: "Tus registros viven en este navegador. Descargá un respaldo cada semana y guardalo en Drive u OneDrive." }),
       el("div", { className: "row-actions" }, [exportBtn]),
-    ]),
-    el("section", { className: "panel panel-danger" }, [
-      el("p", { className: "kicker", text: "Operación destructiva" }),
-      el("h2", { text: "Restaurar backup" }),
-      status,
-      file,
-      el("div", { className: "row-actions" }, [pickBtn, protectBtn, restoreBtn]),
-      confirmLabel,
-      protectLabel,
-      err,
-      previewBox,
+      el("details", { className: "restore-fold" }, [
+        el("summary", { text: "Restaurar un respaldo (reemplaza todo lo actual)" }),
+        el("div", { className: "panel-danger restore-box" }, [
+          el("h2", { text: "Restaurar backup" }),
+          el("p", { className: "hint", text: "Cuidado: borra lo que tenés ahora y lo reemplaza por el archivo. Primero descargá un respaldo del estado actual." }),
+          status,
+          file,
+          el("div", { className: "row-actions" }, [pickBtn, protectBtn, restoreBtn]),
+          confirmLabel,
+          protectLabel,
+          err,
+          previewBox,
+        ]),
+      ]),
     ]),
     el("details", { className: "panel tech-fold" }, [
       el("summary", {}, [
-        el("p", { className: "kicker", text: "Información técnica" }),
-        el("strong", { text: "Journal V2" }),
+        el("p", { className: "kicker", text: "Avanzado" }),
+        el("strong", { text: "Sincronización en la nube e información técnica" }),
       ]),
+      await buildSincronizacionPanel(),
       el("p", { className: "meta", text: "Base " + DB_NAME + " · schema " + SCHEMA_VERSION }),
       el("p", { className: "meta", text: "Backup " + BACKUP_PRODUCT + " · " + BACKUP_FORMAT + " · v" + BACKUP_VERSION }),
-      el("p", { className: "hint", text: "Nombres internos del producto. No cambian cómo operás el día a día." }),
     ]),
   ];
 }

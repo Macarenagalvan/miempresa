@@ -8,7 +8,7 @@ import { assertTrade, normalizeAsset, deriveResult, parseLots } from "./integrit
 import { deriveTrade } from "./trade-journal.js";
 import { getTrade, putTrade } from "../storage/repos/trades.js";
 import { Lifecycle, Strategy, Style } from "./enums.js";
-import { SESSIONS } from "../config.js";
+import { ALL_SESSIONS } from "../config.js";
 
 const num = (v) => {
   if (v == null || String(v).trim() === "") return null;
@@ -47,7 +47,7 @@ function classification(next, input) {
     next.style = input.style || null;
   }
   if (input.session !== undefined) {
-    if (input.session && !SESSIONS.includes(input.session)) throw new Error("Sesión inválida.");
+    if (input.session && !ALL_SESSIONS.includes(input.session)) throw new Error("Sesión inválida.");
     next.session = input.session || null;
   }
   if (input.note !== undefined) next.note = String(input.note || "").trim() || null;

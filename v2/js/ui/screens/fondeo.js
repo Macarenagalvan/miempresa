@@ -31,7 +31,7 @@ export async function renderFondeo(ctx) {
     }))
     : [el("div", { className: "empty-block" }, [
       el("p", { className: "empty", text: "Todavía no cargaste un fondeo." }),
-      el("button", { type: "button", className: "ghost", text: "Nuevo fondeo", onclick: () => go("fondeo/nuevo") }),
+
     ])];
   const costBits = Object.entries(summary.costByCurrency).map(([c, n]) => `${n} ${c}`).join(" · ") || "—";
   const payBits = Object.entries(summary.payoutByCurrency).map(([c, n]) => `${n} ${c}`).join(" · ") || "—";

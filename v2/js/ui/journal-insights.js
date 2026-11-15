@@ -3,7 +3,9 @@ import { deleteButton } from './delete-button.js';
 import { listStageAccounts, accountBalance, getActiveAccount, setActiveAccount } from '../domain/account.js';
 import { listTrades } from '../storage/repos/trades.js';
 import { listMovements } from '../storage/repos/movements.js';
-import { compute, filterTrades } from '../domain/stats.js';
+import { compute, filterTrades, realizedR } from '../domain/stats.js';
+import { FAMILIES, EMOTIONS, PLAN, ERRORS, labelOf } from '../domain/process.js';
+import { sessionLabel } from '../config.js';
 import { isMovementLive, isTradePnlForBalance } from '../domain/integrity.js';
 import { go } from './router.js';
 
@@ -31,15 +33,18 @@ export function curve(title, points, unit, caption) {
 export function resultCharts(trades, filters, currency = '') {
  const closed=filterTrades(trades,filters).filter(t=>t.lifecycle==='CLOSED'&&!t.isDraft&&t.netPnl!=null).sort((a,b)=>String(a.closedAt).localeCompare(String(b.closedAt)));
  let total=0;const points=[{date:'Inicio del período',value:0},...closed.map(t=>({date:t.closedAt.slice(0,10),value:(total+=Number(t.netPnl))}))];
- function bars(title,key){
-  const groups=new Map();for(const t of closed){const k=label(t[key]);const a=groups.get(k)||[];a.push(t);groups.set(k,a);}
+ const decidedAll=filterTrades(trades,filters).filter(t=>t.lifecycle==='CLOSED'&&!t.isDraft);
+ function bars(title,keyFn,labelFn=(k)=>k){
+  const groups=new Map();for(const t of decidedAll){for(const raw of [].concat(keyFn(t))){if(raw==null||raw==='')continue;const k=labelFn(raw);const a=groups.get(k)||[];a.push(t);groups.set(k,a);}}
+  if(!groups.size)return null;
   return el('section',{className:'panel'},[el('h2',{text:title}),...Array.from(groups,([k,rows])=>{
    const wins=rows.filter(t=>t.result==='WIN').length,decided=rows.filter(t=>t.result==='WIN'||t.result==='LOSS').length,pct=decided?wins/decided*100:0;
+   const rs=rows.map(t=>realizedR(t)).filter(v=>v!=null&&Number.isFinite(Number(v))).map(Number);const avg=rs.length?rs.reduce((x,y)=>x+y,0)/rs.length:null;
    const progress=el('progress',{max:'100',value:String(pct),'aria-label':k+' porcentaje de acierto'});
-   return el('div',{className:'journal-bar'},[el('strong',{text:k}),progress,el('span',{text:(decided?pct.toFixed(1)+'%':'—')+' · '+rows.length+' ops'})]);
-  }),closed.length?null:el('p',{className:'empty',text:'Sin operaciones para estos filtros.'})]);
+   return el('div',{className:'journal-bar'},[el('strong',{text:k}),progress,el('span',{text:(decided?pct.toFixed(0)+'%':'—')+' · '+rows.length+' ops'+(avg==null?'':' · '+(avg>0?'+':'')+avg.toFixed(2)+'R')})]);
+  })]);
  }
- return el('div',{className:'journal-analysis'},[curve('Evolución del resultado neto',points,currency,'Resultado acumulado de las operaciones seleccionadas; no incluye depósitos ni retiros.'),el('div',{className:'journal-two'},[bars('Acierto por estrategia','strategy'),bars('Acierto por activo','asset'),bars('Acierto por dirección','direction'),bars('Acierto por sesión','session')])]);
+ return el('div',{className:'journal-analysis'},[curve('Evolución del resultado neto',points,currency,'Resultado acumulado de las operaciones seleccionadas; no incluye depósitos ni retiros.'),decidedAll.length?el('div',{className:'journal-two'},[bars('¿Seguiste el plan?',t=>t.process?.plan,k=>labelOf(PLAN,k)),bars('Por tipo de setup',t=>t.process?.family,k=>labelOf(FAMILIES,k)),bars('Cómo estabas al entrar',t=>t.process?.emotion,k=>labelOf(EMOTIONS,k)),bars('Errores marcados',t=>t.process?.errors,k=>labelOf(ERRORS,k)),bars('Por sesión',t=>t.session,sessionLabel),bars('Por hora de entrada (Italia)',t=>t.openedAt?String(new Date(t.openedAt).getHours()).padStart(2,'0')+':00':null),bars('Por activo',t=>t.asset),bars('Por dirección',t=>t.direction,k=>label(k))]):el('p',{className:'empty',text:'Sin operaciones para estos filtros.'})]);
 }
 export async function accountOverview(ctx, compact=false){
  const accounts=await listStageAccounts(ctx.stage.id), active=await getActiveAccount(), trades=await listTrades(),movements=await listMovements();
@@ -50,7 +55,7 @@ export async function accountOverview(ctx, compact=false){
  pick.addEventListener('change',async()=>{await setActiveAccount(pick.value);go(ctx.route.name+'?account='+encodeURIComponent(pick.value));});
  const intro=el('section',{className:'panel journal-overview'},[
   el('div',{className:'journal-heading'},[el('div',{},[el('p',{className:'kicker',text:'Tu journal · de la operación al resultado'}),el('h1',{text:compact?'Tu trading, de un vistazo':'Cartera y evolución'})]),accounts.length?pick:link('Crear mi primera cuenta','cuentas/nueva')]),
-  el('div',{className:'journal-actions'},[compact?null:link('+ Nueva operación','nuevo/trade'),link('Importar informe de MT5','importar'),link('Ver historial','historial'+(selected?'?account='+selected.id:'')),link('Ver estadísticas','numeros'+(selected?'?account='+selected.id+'&universe='+(selected.context==='DEMO'?'DEMO':'REAL'):''))]),
+  el('div',{className:'journal-actions'},[link('Importar informe de MT5','importar'),link('Ver historial','historial'+(selected?'?account='+selected.id:'')),link('Ver estadísticas','numeros'+(selected?'?account='+selected.id+'&universe='+(selected.context==='DEMO'?'DEMO':'REAL'):''))]),
  ]);
  if(!selected){intro.append(el('p',{className:'empty',text:'Creá tu cuenta con el capital inicial. Después podés registrar una operación o importar el informe HTML de MT5.'}));return intro;}
  intro.querySelector('.journal-actions').append(deleteButton('account',selected,ctx.route.name));
