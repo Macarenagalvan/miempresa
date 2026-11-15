@@ -23,7 +23,7 @@ function select(values, current) {
 }
 
 export function setupCoreFields(values) {
-  const asset = select(ROADMAP_ASSETS.map((a) => [a.id, a.label]).concat([["OTHER", "otro"]]), values.asset || "EURUSD");
+  const asset = select(ROADMAP_ASSETS.map((a) => [a.id, a.label]).concat([["OTHER", "otro"]]), values.asset || "NAS100");
   const other = el("input", { className: "input slim", value: ROADMAP_ASSETS.some((a) => a.id === values.asset) ? "" : (values.asset || "") });
   const context = select(Object.values(Context).map((c) => [c, c]), values.context || Context.BACKTEST);
   const direction = select([["", "elegí"], ...Object.values(Direction).map((d) => [d, d])], values.direction || "");
