@@ -1,4 +1,5 @@
 import './test-safety.js';
+import { autoAcceptDuplicates } from './dup-guard.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { createAccount } from "../js/domain/account.js";
 import { createTrade, syncMt5Csv, findTradeByMt5Position } from "../js/domain/trade.js";
@@ -35,6 +36,7 @@ function fill(host, name, value) {
 }
 
 async function run() {
+  const dupGuard = autoAcceptDuplicates();
   const seed = await ensureJournalSeed();
   const { stage } = seed;
   const tz = "Europe/Athens";
@@ -177,6 +179,7 @@ async function run() {
   const saveClosed = [...nuevoClosed.querySelectorAll("button")].find((b) => b.classList.contains("trade-form-submit"));
   saveClosed.click();
   let createdClosed = [];
+  const warnedBefore = dupGuard.count;
   for (let i = 0; i < 25; i++) {
     const listed = await listTrades();
     createdClosed = listed.filter((t) => t.note === "Nota manual" && t.asset === "NZDJPY" && t.lifecycle === Lifecycle.CLOSED);
@@ -184,6 +187,8 @@ async function run() {
     await new Promise((r) => setTimeout(r, 20));
   }
   const afterClosed = await listTrades();
+  // Misma hora, activo y dirección que la abierta de arriba: el journal avisa de posible repetida.
+  assert("avisa posible repetida", dupGuard.count > warnedBefore);
   assert("CLOSED crea una sola", createdClosed.length === 1 && afterClosed.length === nMid + 1);
   assert("NZDJPY manual aceptado", createdClosed[0].asset === "NZDJPY");
   assert("nace CLOSED", createdClosed[0].lifecycle === Lifecycle.CLOSED);
@@ -205,6 +210,7 @@ async function run() {
   lines.push(failed.length ? `${failed.length} fallos` : `${results.length} tests OK`);
   const out = document.getElementById("out");
   out.textContent += "\n\nSLICE 22\n" + lines.join("\n");
+  dupGuard.observer.disconnect();
   if (failed.length) out.className = "fail";
   if (failed.length) throw new Error("slice22 " + failed.length);
 }

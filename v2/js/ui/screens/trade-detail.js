@@ -12,6 +12,10 @@ import { SESSIONS } from "../../config.js";
 import { asrFields } from "../forms/asr.js";
 import { go } from "../router.js";
 import { addTradeImage, listTradeImages, removeAttachment } from "../../storage/repos/attachments.js";
+import { deleteTradeFlow } from "../trade-actions.js";
+import { toast, confirmDialog } from "../feedback.js";
+import { editQuickBacktest, editManualExecution, isQuickBacktest, isMt5Trade, executionEditable } from "../../domain/trade-edit.js";
+import { findSimilarQuickBacktest, describeRecord } from "../../domain/duplicates.js";
 
 function partialsSelect(current) {
   const node = el("select", { className: "input" }, [
@@ -37,7 +41,7 @@ export async function renderTradeDetail(ctx) {
   if (closeMode) return trade.isDraft ? renderEdit(trade, "CLOSED") : renderClose(trade);
   if (voidMode) return renderVoid(trade);
   if (asrMode) return renderAsr(trade, asr);
-  if (editMode) return renderEdit(trade);
+  if (editMode) return isQuickBacktest(trade) ? renderQuickEdit(trade) : renderEdit(trade);
   return await renderCard(trade, setup, asr);
 }
 
@@ -57,10 +61,10 @@ async function renderCard(trade, setup, asr) {
   const actions = [];
   const asrLabel = asrStatusLabel(trade, asr);
 
-  if (!trade.sourceRef?.sessionDate && (trade.lifecycle === Lifecycle.OPEN || trade.lifecycle === Lifecycle.CLOSED)) {
+  if (trade.lifecycle === Lifecycle.OPEN || trade.lifecycle === Lifecycle.CLOSED) {
     actions.push(el("button", {
       type: "button",
-      text: "Editar operación",
+      text: isQuickBacktest(trade) ? "Editar backtest" : "Editar operación",
       onclick: () => go("trade/" + trade.id + "/editar"),
     }));
   }
@@ -99,6 +103,10 @@ async function renderCard(trade, setup, asr) {
   if (setup) {
     actions.push(el("button", { type: "button", className: "ghost", text: "Ver idea", onclick: () => go("setup/" + setup.id) }));
   }
+  actions.push(el("button", {
+    type: "button", className: "btn-danger-ghost", text: "Borrar",
+    onclick: () => deleteTradeFlow(trade, { after: trade.context === "BACKTEST" ? "backtesting" : "historial" }).catch((e) => toast(e.message, { tone: "error" })),
+  }));
 
   let rLabel = "R al cierre";
   if (trade.lifecycle === Lifecycle.CLOSED) {
@@ -241,12 +249,17 @@ function renderEdit(trade, target = "DRAFT") {
     value => ({ DRAFT: "Conservar borrador", OPEN: "Marcar abierta", CLOSED: "Completar y cerrar" })[value]);
   const importedDraft = draft && trade.context === "BACKTEST" && trade.sourceRef?.kind === "BACKTEST_JSON";
   const assetEdit = el("input", { className: "input", name: "asset", value: trade.asset || "" });
-  const directionEdit = enumSelect(["LONG", "SHORT"], trade.direction, "direction", "Sin completar");
-  const entryEdit = el("input", { className: "input", name: "entry", value: trade.entry ?? "" });
-  const exitEdit = el("input", { className: "input", name: "exit", value: trade.draftExit ?? "" });
-  const netEdit = el("input", { className: "input", name: "netPnl", value: trade.draftNetPnl ?? "" });
+  const directionEdit = enumSelect(["LONG", "SHORT"], trade.direction, "direction", draft ? "Sin completar" : null);
+  const execEditable = !draft && executionEditable(trade);
+  const closedTrade = trade.lifecycle === Lifecycle.CLOSED;
+  const entryEdit = el("input", { className: "input", name: "entry", inputmode: "decimal", value: trade.entry ?? "" });
+  const exitEdit = el("input", { className: "input", name: "exit", inputmode: "decimal", value: (draft ? trade.draftExit : trade.exit) ?? "" });
+  const netEdit = el("input", { className: "input", name: "netPnl", inputmode: "decimal", value: (draft ? trade.draftNetPnl : trade.netPnl) ?? "" });
   const openedEdit = el("input", { className: "input", name: "openedAt", type: "datetime-local", value: localDateTimeValue(trade.openedAt) });
-  const closedEdit = el("input", { className: "input", name: "closedAt", type: "datetime-local", value: localDateTimeValue(trade.draftClosedAt) });
+  const closedEdit = el("input", { className: "input", name: "closedAt", type: "datetime-local", value: localDateTimeValue(draft ? trade.draftClosedAt : trade.closedAt) });
+  const commEdit = el("input", { className: "input", name: "commission", inputmode: "decimal", value: trade.commission ?? "" });
+  const swapEdit = el("input", { className: "input", name: "swap", inputmode: "decimal", value: trade.swap ?? "" });
+  const lotsEdit = el("input", { className: "input", name: "lots", inputmode: "decimal", value: trade.lots ?? "" });
   const strategy = enumSelect(Object.values(Strategy), trade.strategy, "strategy", null, strategyLabel);
   const style = enumSelect(Object.values(Style), trade.style, "style", "—");
   const variant = enumSelect(Object.values(BlueVariant), trade.variant, "variant", "—");
@@ -296,8 +309,17 @@ function renderEdit(trade, target = "DRAFT") {
         go("trade/" + next.id);
         return;
       }
+      if (execEditable) {
+        await editManualExecution(trade.id, {
+          expectedUpdatedAt: trade.updatedAt,
+          asset: assetEdit.value, direction: directionEdit.value,
+          entry: entryEdit.value, openedAt: localDateTimeIso(openedEdit.value, trade.openedAt), lots: lotsEdit.value,
+          ...(closedTrade ? { exit: exitEdit.value, netPnl: netEdit.value, closedAt: localDateTimeIso(closedEdit.value, trade.closedAt), commission: commEdit.value, swap: swapEdit.value } : {}),
+        });
+      }
       const next = await enrichTrade(trade.id, patch);
       go("trade/" + next.id);
+      toast("Cambios guardados.", { tone: "ok", timeout: 2500 });
     } catch (e) {
       err.textContent = e.message;
       save.disabled = false;
@@ -316,8 +338,22 @@ function renderEdit(trade, target = "DRAFT") {
     stateBadge(trade),
     draft ? field("Guardar como", choiceButtons(completion, "Estado del borrador")) : null,
     el("p", { className: "hint", text: "Las horas se interpretan en la zona del dispositivo: " + Intl.DateTimeFormat().resolvedOptions().timeZone }),
-    el("p", { className: "hint", text: draft ? "Completá el borrador a tu ritmo. Guardar cambios no lo convierte en una operación ejecutada." : "Los precios y las fechas de ejecución se conservan. Podés completar el análisis y la gestión." }),
-    tradeSection("1. Ejecución", [
+    el("p", { className: "hint", text: draft ? "Completá el borrador a tu ritmo. Guardar cambios no lo convierte en una operación ejecutada."
+      : execEditable ? "Podés corregir cualquier dato. El resultado (WIN / LOSS / BE) se recalcula con el neto."
+      : isMt5Trade(trade) ? "Importada de MT5: precios, fechas y neto vienen del broker y no se tocan. Podés completar el análisis y la gestión."
+      : "Los precios y las fechas de ejecución se conservan. Podés completar el análisis y la gestión." }),
+    execEditable ? tradeSection("1. Ejecución", [
+      field("Activo", assetEdit),
+      field("Dirección", choiceButtons(directionEdit, "Dirección")),
+      field("Fecha y hora de entrada", openedEdit),
+      field("Precio de entrada", entryEdit),
+      field("Lotes", lotsEdit),
+      closedTrade ? field("Fecha y hora de cierre", closedEdit) : null,
+      closedTrade ? field("Precio de salida", exitEdit) : null,
+      closedTrade ? field("Resultado neto", netEdit) : null,
+      closedTrade ? field("Comisión", commEdit) : null,
+      closedTrade ? field("Swap", swapEdit) : null,
+    ]) : tradeSection("1. Ejecución", [
     importedDraft ? field("Activo", assetEdit) : null,
     importedDraft ? field("Dirección", choiceButtons(directionEdit, "Dirección")) : null,
     draft ? field("Entrada (borrador)", entryEdit) : field("Entrada (solo lectura)", entryActual),
@@ -350,6 +386,61 @@ function renderEdit(trade, target = "DRAFT") {
   nodes.push(err);
   nodes.push(el("div", { className: "row-actions" }, [save, cancel]));
   return [el("section", { className: "panel form trade-form" }, nodes)];
+}
+
+function renderQuickEdit(trade) {
+  const date = el("input", { className: "input", type: "date", name: "sessionDate", value: trade.sourceRef?.sessionDate || "" });
+  const asset = el("input", { className: "input", name: "asset", value: trade.asset || "" });
+  const direction = enumSelect(["LONG", "SHORT"], trade.direction, "direction", null);
+  const result = enumSelect(["WIN", "LOSS", "BE"], trade.result, "result", null);
+  const r = el("input", { className: "input", name: "rrRealized", type: "number", step: "any", value: trade.rrRealized ?? "", placeholder: "Ej.: 2 o -1" });
+  const strategy = enumSelect(Object.values(Strategy), trade.strategy || Strategy.UNCLASSIFIED, "strategy", null, strategyLabel);
+  const style = enumSelect(Object.values(Style), trade.style, "style", "—");
+  const session = enumSelect(SESSIONS, trade.session, "session", "—");
+  const note = el("textarea", { className: "input", name: "note", rows: "3" });
+  note.value = trade.note || "";
+  const err = el("p", { className: "err", role: "alert" });
+  const save = el("button", { type: "button", text: "Guardar cambios" });
+  save.addEventListener("click", async () => {
+    if (save.disabled) return;
+    save.disabled = true; err.textContent = "";
+    try {
+      const input = { sessionDate: date.value, asset: asset.value, direction: direction.value, result: result.value, rrRealized: r.value };
+      const similar = await findSimilarQuickBacktest(input, trade.id);
+      if (similar && !(await confirmDialogLazy(similar))) { save.disabled = false; return; }
+      await editQuickBacktest(trade.id, { ...input, expectedUpdatedAt: trade.updatedAt,
+        strategy: strategy.value, style: style.value || null, session: session.value || null, note: note.value });
+      go("trade/" + trade.id);
+      toast("Backtest actualizado.", { tone: "ok", timeout: 2500 });
+    } catch (e) { err.textContent = e.message; save.disabled = false; }
+  });
+  return [el("section", { className: "panel form trade-form" }, [
+    el("p", { className: "kicker", text: "Editar backtest" }),
+    el("h1", { text: `${trade.asset} ${trade.direction}` }),
+    tradeSection("Backtest", [
+      field("Fecha de sesión", date), field("Activo", asset),
+      field("Dirección", choiceButtons(direction, "Dirección")),
+      field("Resultado", choiceButtons(result, "Resultado")),
+      field("Resultado en R (opcional)", r),
+    ]),
+    tradeSection("Clasificación (opcional)", [
+      field("Estrategia", strategy), field("Estilo", style), field("Sesión", choiceButtons(session, "Sesión")),
+    ]),
+    field("Notas", note),
+    err,
+    el("div", { className: "row-actions" }, [
+      el("button", { type: "button", className: "ghost", text: "Cancelar", onclick: () => go("trade/" + trade.id) }),
+      save,
+    ]),
+  ])];
+}
+
+async function confirmDialogLazy(similar) {
+  return confirmDialog({
+    title: "Parece repetido",
+    body: ["Con estos cambios queda igual a otro registro:", el("p", { className: "rgm-dialog-target", text: describeRecord(similar) }), "¿Guardar igual?"],
+    confirmText: "Guardar igual", cancelText: "No, revisar",
+  });
 }
 
 function renderClose(trade) {

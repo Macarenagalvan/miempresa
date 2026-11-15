@@ -9,6 +9,8 @@ import { stateBadge } from "../trade-presentation.js";
 import { quickBacktest } from "./backtest-quick.js";
 import { listActiveObservations } from "../../domain/observation.js";
 import { computeStudies } from "../../domain/stats.js";
+import { rowActions } from "../trade-actions.js";
+import { dataToolbar } from "../data-toolbar.js";
 
 function fmtR(value) {
   return value == null || !Number.isFinite(Number(value))
@@ -24,12 +26,17 @@ function summary(label, value, note) {
 }
 
 function tradeRow(trade) {
+  return el("div", { className: "row-wrap" }, [tradeRowButton(trade), rowActions(trade, { editable: trade.lifecycle !== Lifecycle.VOID })]);
+}
+
+function tradeRowButton(trade) {
   const day = String(trade.sourceRef?.sessionDate || trade.closedAt || trade.openedAt || "").slice(0, 10) || "Sin fecha";
   const status = trade.isDraft === true ? "Borrador" : (trade.lifecycle === Lifecycle.CLOSED ? (trade.result || "Cerrado") : "En curso");
+  const tone = trade.result === "WIN" ? " is-win" : trade.result === "LOSS" ? " is-loss" : trade.result === "BE" ? " is-be" : "";
   const value = trade.lifecycle === Lifecycle.CLOSED ? fmtR(realizedR(trade)) : "Pendiente";
   return el("button", {
     type: "button",
-    className: "bt-row",
+    className: "bt-row" + tone,
     onclick: () => go("trade/" + trade.id + "?from=backtesting"),
     "aria-label": `Abrir backtest ${trade.asset} ${trade.direction}, ${day}`,
   }, [
@@ -61,8 +68,14 @@ export async function renderBacktesting(ctx) {
     el("section", { className: "panel bt-hero" }, [el("h1", { text: "Backtesting" })]),
     quickBacktest(ctx),
     el("section", { className: "panel" }, [
-      el("div", { className: "row-actions" }, [importer.button,
-        el("button", { type: "button", className: "ghost", text: "Ver estadísticas", onclick: () => go("numeros?universe=BACKTEST&excludeTest=1") })]),
+      dataToolbar({
+        kind: "backtests",
+        stageId: ctx.stage.id,
+        getData: async () => ({ trades: genuine, studies: studies.filter((o) => !isTestRecord(o)), accounts: [] }),
+        extra: [
+          el("button", { type: "button", className: "tool-btn is-quiet", onclick: () => go("numeros?universe=BACKTEST&excludeTest=1") }, [el("span", { text: "Estadísticas" })]),
+        ],
+      }),
       el("div", { className: "bt-summary" }, [
         summary("Registros", genuine.length, "Pruebas históricas"),
         summary("Cerrados", stats.nClosed, "Con resultado registrado"),
@@ -92,7 +105,7 @@ export async function renderBacktesting(ctx) {
           el("button", { type: "button", text: "Registrar primer backtest", onclick: action }),
         ]),
       qa,
-      el("p", { className: "hint", text: "Podés registrar backtests manualmente o importar un archivo JSON con vista previa." }),
+      el("div", { className: "bt-json-import" }, [importer.button, el("span", { className: "hint", text: "¿Tenés un JSON o ZIP con capturas? Usá este importador." })]),
     ]),
   ];
 }

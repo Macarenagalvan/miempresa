@@ -54,7 +54,7 @@ function snapshotFromSetup(setup) {
   };
 }
 
-function deriveTrade(trade) {
+export function deriveTrade(trade) {
   trade.hasPartials = trade.hasPartials === true;
   trade.incompleteForR = incompleteForR(trade);
   trade.rrRealized = trade.sourceRef?.sessionDate ? trade.rrRealized : computeRrRealized(trade);

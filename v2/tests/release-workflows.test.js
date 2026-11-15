@@ -1,4 +1,5 @@
 import './test-safety.js';
+import { autoAcceptDuplicates } from './dup-guard.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
 import { createTrade, updateDraftTrade, activateDraftTrade, closeTrade, voidTrade, createClosedTrade } from "../js/domain/trade.js";
 import { getTrade, listTrades } from "../js/storage/repos/trades.js";
@@ -12,6 +13,8 @@ import { buildExportPayload, applyRestoreTransaction, validateBackup } from "../
 import { addTradeImage, listTradeImages } from "../js/storage/repos/attachments.js";
 
 export async function run() {
+  const dupGuard = autoAcceptDuplicates();
+  try {
   let count = 0;
   function check(ok, message) { if (!ok) throw new Error(message); count++; }
   async function rejects(fn, message) { let failed = false; try { await fn(); } catch { failed = true; } check(failed, message); }
@@ -95,4 +98,5 @@ export async function run() {
   await rejects(()=>applyRestoreTransaction(broken), "Restore corrupto rechazado");
   check((await listTradeImages(btTrade.id)).length===2, "Restore fallido conserva imágenes");
   document.getElementById("out").textContent+=`\nRelease workflows: ${count} tests OK\n`;
+  } finally { dupGuard.stop(); }
 }
