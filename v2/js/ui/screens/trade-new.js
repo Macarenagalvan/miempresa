@@ -1,7 +1,6 @@
 import { quickBacktest } from "./backtest-quick.js";
 import { label } from "../journal-insights.js";
 import { choiceButtons } from "../forms/choice-buttons.js";
-import { quickRegister } from "../quick-register.js";
 import { assertExecution } from "../../domain/execution.js";
 import { localDateTimeIso } from "../trade-presentation.js";
 import { el } from "../render.js";
@@ -10,7 +9,12 @@ import { getSetup } from "../../storage/repos/setups.js";
 import { createTrade, createClosedTrade, enrichTrade } from "../../domain/trade.js";
 import { findSimilarTrade, describeRecord } from "../../domain/duplicates.js";
 import { confirmDialog } from "../feedback.js";
-import { getActiveAccount, listStageAccounts, visibleActiveAccount } from "../../domain/account.js";
+import { getActiveAccount, listStageAccounts, visibleActiveAccount, createAccount } from "../../domain/account.js";
+import { toast } from "../feedback.js";
+
+const LAST_TRADE = "rgm.trade.last";
+function readLastTrade() { try { return JSON.parse(localStorage.getItem(LAST_TRADE) || "{}") || {}; } catch (_) { return {}; } }
+function writeLastTrade(v) { try { localStorage.setItem(LAST_TRADE, JSON.stringify(v)); } catch (_) { /* sin almacenamiento */ } }
 import { go } from "../router.js";
 import { Context, Direction, Strategy, Style, CloseType, BlueVariant, Lifecycle, strategyLabel } from "../../domain/enums.js";
 import { ROADMAP_ASSETS, SESSIONS } from "../../config.js";
@@ -51,7 +55,8 @@ export async function renderNuevoTrade(ctx) {
   const setup = setupId ? await getSetup(setupId) : null;
   const accounts = await listStageAccounts(ctx.stage.id);
   const active = await getActiveAccount();
-  const initialContext = setup ? setup.context : (dedicatedBacktest || mode === "simulated" ? (ctx.route.query?.context === "DEMO" ? Context.DEMO : Context.BACKTEST) : mode === "real" ? (accounts.find(a => a.context !== "DEMO")?.context || Context.LIVE) : (active?.context || accounts[0]?.context || Context.LIVE));
+  const last = setupId ? {} : readLastTrade();
+  const initialContext = setup ? setup.context : (dedicatedBacktest || mode === "simulated" ? (ctx.route.query?.context === "DEMO" ? Context.DEMO : Context.BACKTEST) : mode === "real" ? (accounts.find(a => a.context !== "DEMO")?.context || Context.LIVE) : (last.context && last.context !== Context.BACKTEST ? last.context : (active?.context || accounts[0]?.context || Context.LIVE)));
   const historical = () => context.value === Context.BACKTEST;
   const suggest = [];
   const seen = new Set();
@@ -65,7 +70,7 @@ export async function renderNuevoTrade(ctx) {
     className: "input",
     name: "asset",
     list: "nuevo-asset-suggest",
-    value: setup ? setup.asset : "",
+    value: setup ? setup.asset : (last.asset || ""),
     autocomplete: "off",
   });
   const assetList = el("datalist", { id: "nuevo-asset-suggest" }, suggest.map((s) => el("option", { value: s })));
@@ -114,7 +119,12 @@ export async function renderNuevoTrade(ctx) {
   partials.setAttribute("name", "hasPartials");
   const accountPick = el("select", { className: "input" });
   accountPick.name = "accountId";
-  const accountField = field("Cuenta", accountPick);
+  const createAcc = el("button", { type: "button", className: "ghost account-create", text: "+ Crear cuenta" });
+  createAcc.addEventListener("click", async () => {
+    const made = await quickAccountDialog(context.value, ctx.stage.id);
+    if (made) { accounts.push(made); paintAccounts(); accountPick.value = made.id; hint.textContent = `Cuenta «${made.name}» creada y elegida.`; }
+  });
+  const accountField = field("Cuenta", el("div", { className: "account-pick" }, [accountPick, createAcc]));
   const hint = el("p", { className: "hint", text: "" });
   const err = el("p", { className: "err", text: "", role: "alert" });
   const recovery = el("button", { type: "button", className: "ghost", text: "Abrir registro guardado" });
@@ -137,12 +147,12 @@ export async function renderNuevoTrade(ctx) {
     for (const a of compatible) {
       accountPick.append(el("option", { value: a.id, text: `${a.name} · ${contextLabel(a.context)}` }));
     }
-    const pre = visibleActiveAccount(active, ctxVal) || (compatible.length === 1 ? compatible[0] : null);
+    const pre = compatible.find((a) => a.id === last.accountId) || visibleActiveAccount(active, ctxVal) || (compatible.length === 1 ? compatible[0] : null);
     if (pre && compatible.some((a) => a.id === pre.id)) {
       accountPick.value = pre.id;
-      hint.textContent = `Cuenta activa preseleccionada (${pre.name}). Podés cambiarla.`;
+      hint.textContent = `Cuenta preseleccionada: ${pre.name}. Podés cambiarla.`;
     } else if (!compatible.length) {
-      hint.textContent = `Falta una cuenta ${contextLabel(ctxVal)} activa. Creala en Cuentas.`;
+      hint.textContent = `Todavía no tenés una cuenta ${contextLabel(ctxVal)}. Tocá «+ Crear cuenta» y seguís acá mismo.`;
     } else {
       hint.textContent = "Elegí la cuenta a la que pertenece esta operación.";
     }
@@ -329,7 +339,9 @@ export async function renderNuevoTrade(ctx) {
         }, ctx.stage.id);
         persistedTrade = trade;
         await persistCaptures(trade, chosen);
+        writeLastTrade({ asset: assetVal, context: context.value, accountId: accountPick.value || null });
         go("trade/" + trade.id + (historical() ? "?from=backtesting" : ""));
+        toast("Operación guardada.", { tone: "ok", timeout: 2500 });
         return;
       }
       const trade = await createTrade({
@@ -372,7 +384,9 @@ export async function renderNuevoTrade(ctx) {
       };
       const enriched = await enrichTrade(trade.id, journal);
       await persistCaptures(enriched, chosen);
+      writeLastTrade({ asset: assetVal, context: context.value, accountId: accountPick.value || null });
       go("trade/" + enriched.id + (historical() ? "?from=backtesting" : ""));
+      toast(enriched.isDraft ? "Borrador guardado." : "Operación guardada.", { tone: "ok", timeout: 2500 });
     } catch (e) {
       if (persistedTrade) {
         err.textContent = "El registro ya se guardó. No lo vuelvas a crear. Hubo un problema con los datos adicionales o capturas: " + e.message;
@@ -414,16 +428,14 @@ export async function renderNuevoTrade(ctx) {
   return [
     el("section", { className: "panel form trade-form" }, [
       el("div", { className: "trade-form-intro" }, [
-        quickRegister(),
         el("p", { className: "kicker", text: dedicatedBacktest ? "Backtesting / Registro histórico" : "Journal / Registro" }),
         el("h1", { text: dedicatedBacktest ? "Registrar backtest" : (setup ? "Operación desde idea" : "Registrar operación") }),
         el("p", { className: "hint", text: dedicatedBacktest
           ? "Guardá una operación simulada del pasado. No modifica cuentas ni saldos reales."
           : "Registrá los datos básicos ahora. Podés completar el análisis en detalles adicionales." }),
-        el("p", { className: "hint", text: "Si faltan datos, usá Guardar borrador. No cuenta como ejecución. Horas en " + Intl.DateTimeFormat().resolvedOptions().timeZone + "." }),
+        el("p", { className: "hint", text: "Lo mínimo: activo, dirección, entrada y fecha. ¿Te falta algo? Guardá como borrador y completalo después." }),
         ...refs,
       ]),
-      el("nav", {className:"journal-steps", "aria-label":"Pasos del registro"}, ["1. Setup y cuenta", "2. Entrada y riesgo", "3. Cierre", "4. Capturas"].map((text,i)=>el("button",{type:"button",className:"ghost",text,onclick:()=>document.querySelectorAll(".trade-form > .trade-form-section")[i]?.scrollIntoView({behavior:"smooth",block:"start"})}))),
       formSection("1. Identificación", "Seleccioná el mercado, la dirección y el estado de la operación.", [
         field("Activo / símbolo", asset),
         field("Dirección", choiceButtons(direction, "Dirección")),
@@ -457,4 +469,35 @@ export async function renderNuevoTrade(ctx) {
       ]),
     ]),
   ];
+}
+
+/** Crear una cuenta sin salir del formulario. */
+function quickAccountDialog(context, stageId) {
+  return new Promise((resolve) => {
+    const LABELS = { LIVE: "Cuenta propia", DEMO: "Demo", PROP_CHALLENGE: "Evaluación", FUNDED: "Fondeada" };
+    const name = el("input", { className: "input", name: "accName", placeholder: "Ej.: Bullfy WSF 173126" });
+    const currency = el("select", { className: "input", name: "accCurrency" }, ["USD", "EUR"].map((c) => el("option", { value: c, text: c })));
+    const amount = el("input", { className: "input", name: "accAmount", inputmode: "decimal", placeholder: "Ej.: 10000" });
+    const err = el("p", { className: "err", role: "alert" });
+    const ok = el("button", { type: "button", text: "Crear y usar" });
+    const cancel = el("button", { type: "button", className: "ghost", text: "Cancelar" });
+    const dialog = el("dialog", { className: "rgm-dialog" }, [
+      el("h2", { text: "Nueva cuenta · " + (LABELS[context] || context) }),
+      field("Nombre", name), field("Moneda", currency), field("Capital inicial", amount), err,
+      el("div", { className: "row-actions" }, [cancel, ok]),
+    ]);
+    const close = (v) => { try { dialog.close(); } catch (_) { /* */ } dialog.remove(); resolve(v); };
+    cancel.addEventListener("click", () => close(null));
+    dialog.addEventListener("cancel", (e) => { e.preventDefault(); close(null); });
+    ok.addEventListener("click", async () => {
+      err.textContent = "";
+      try {
+        if (!name.value.trim()) throw new Error("Poné un nombre.");
+        const value = Number(String(amount.value).replace(",", "."));
+        if (!Number.isFinite(value) || value <= 0) throw new Error("Capital inicial inválido.");
+        close(await createAccount({ name: name.value, currency: currency.value, context, initialAmount: value }, stageId));
+      } catch (e) { err.textContent = e.message; }
+    });
+    document.body.append(dialog); dialog.showModal(); name.focus();
+  });
 }

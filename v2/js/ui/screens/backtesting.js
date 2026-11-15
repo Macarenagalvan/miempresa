@@ -65,7 +65,6 @@ export async function renderBacktesting(ctx) {
   ]) : null;
 
   return [
-    el("section", { className: "panel bt-hero" }, [el("h1", { text: "Backtesting" })]),
     quickBacktest(ctx),
     el("section", { className: "panel" }, [
       dataToolbar({
@@ -83,15 +82,6 @@ export async function renderBacktesting(ctx) {
       ]),
     ]),
     importer.panel,
-    el("section", { className: "panel" }, [
-      el("h2", { text: "Estudios" }),
-      el("p", { text: `${studyStats.total} estudios · ${studyStats.noTrade} NO TRADE · ${studyStats.unclassified} sin clasificar` }),
-      el("p", { className: "hint", text: `NO TRADE / estudios clasificados: ${studyStats.noTradeRate == null ? "—" : (studyStats.noTradeRate * 100).toFixed(1) + "%"} (${studyStats.noTrade}/${studyStats.classified}). No incluye operaciones ni estudios sin clasificar.` }),
-      ...studies.filter(o => !isTestRecord(o)).map(o => el("div", { className: "row-wrap" }, [
-        el("button", { type: "button", className: "row", text: `${o.date} · ${o.asset} · ${o.studyOutcome === "NO_TRADE" ? "NO TRADE" : o.studyOutcome || "Sin clasificar"}`, onclick: () => go("observacion/" + o.id) }),
-        studyRowActions(o),
-      ])),
-    ]),
     el("section", { className: "panel bt-register" }, [
       el("div", { className: "bt-section-heading" }, [
         el("div", {}, [
@@ -109,6 +99,15 @@ export async function renderBacktesting(ctx) {
         ]),
       qa,
       el("div", { className: "bt-json-import" }, [importer.button, el("span", { className: "hint", text: "¿Tenés un JSON o ZIP con capturas? Usá este importador." })]),
+    ]),
+    el("section", { className: "panel" }, [
+      el("h2", { text: "Estudios" }),
+      el("p", { text: `${studyStats.total} estudios · ${studyStats.noTrade} NO TRADE · ${studyStats.unclassified} sin clasificar` }),
+      el("p", { className: "hint", text: `NO TRADE / estudios clasificados: ${studyStats.noTradeRate == null ? "—" : (studyStats.noTradeRate * 100).toFixed(1) + "%"} (${studyStats.noTrade}/${studyStats.classified}). No incluye operaciones ni estudios sin clasificar.` }),
+      ...studies.filter(o => !isTestRecord(o)).map(o => el("div", { className: "row-wrap" }, [
+        el("button", { type: "button", className: "row", text: `${o.date} · ${o.asset} · ${o.studyOutcome === "NO_TRADE" ? "NO TRADE" : o.studyOutcome || "Sin clasificar"}`, onclick: () => go("observacion/" + o.id) }),
+        studyRowActions(o),
+      ])),
     ]),
   ];
 }

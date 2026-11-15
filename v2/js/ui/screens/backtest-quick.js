@@ -40,6 +40,17 @@ export function quickBacktest(ctx) {
     el("details", {}, [el("summary", { text: "Notas y capturas (opcional)" }), field("Notas", note), field("Capturas · hasta 6, máximo 8 MB cada una", files)]),
     save,
   ]);
+  const quickMode = ctx.route?.query?.quick;
+  if (quickMode === "nt") outcome.value = "NO_TRADE";
+  if (quickMode) {
+    setTimeout(() => {
+      const form = document.querySelector("form.quick-bt");
+      if (!form) return;
+      form.closest("section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      (date.value ? (asset.value ? (quickMode === "nt" ? note : null) : asset) : date)?.focus?.();
+      outcome.dispatchEvent(new Event("change"));
+    }, 60);
+  }
   outcome.addEventListener("change", () => {
     rField.hidden = outcome.value === "NO_TRADE";
     save.textContent = outcome.value === "NO_TRADE" ? "Guardar estudio" : "Guardar backtest";
@@ -77,7 +88,7 @@ export function quickBacktest(ctx) {
       }
       writeLast({ date: date.value, asset: asset.value.trim().toUpperCase() });
       controls.disabled = true;
-      go("backtesting");
+      go("backtesting" + (outcome.value === "NO_TRADE" ? "?quick=nt" : ""));
       toast(outcome.value === "NO_TRADE" ? "NO TRADE guardado." : `Backtest guardado · ${outcome.value}${r.value ? " · R " + r.value : ""}.`, {
         tone: "ok", actionText: "Deshacer", timeout: 7000,
         onAction: async () => { await undo(); window.dispatchEvent(new HashChangeEvent("hashchange")); toast("Deshecho.", { timeout: 2000 }); },

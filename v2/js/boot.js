@@ -8,7 +8,7 @@ import {
   bindNetworkSync,
   syncNow,
 } from "./services/sync-engine.js";
-import { paint, currentRoute, routeList } from "./ui/router.js";
+import { paint, currentRoute, routeList, go } from "./ui/router.js";
 import { applyIdentity } from "./ui/identity.js";
 
 function retireLegacyWorkers() {
@@ -64,10 +64,28 @@ function bindNav() {
   if (backdrop) backdrop.addEventListener("click", closeNav);
 }
 
+function bindQuickActions() {
+  document.querySelectorAll("[data-go]").forEach((btn) => {
+    btn.addEventListener("click", () => { closeNav(); go(btn.getAttribute("data-go")); });
+  });
+  const keys = { n: "nuevo/trade", b: "backtesting?quick=bt", t: "backtesting?quick=nt", h: "hoy" };
+  document.addEventListener("keydown", (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+    const target = event.target;
+    if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+    if (document.querySelector("dialog[open]")) return;
+    const route = keys[event.key.toLowerCase()];
+    if (!route) return;
+    event.preventDefault();
+    go(route);
+  });
+}
+
 export async function boot() {
   warnFileProtocol();
   retireLegacyWorkers();
   bindNav();
+  bindQuickActions();
   await ensureDeviceState();
   await restoreAuthSession().catch(() => {});
   const pulled = await bootstrapFromCloudIfEmpty().catch(() => ({ applied: false }));

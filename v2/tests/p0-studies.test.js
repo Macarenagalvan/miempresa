@@ -102,7 +102,7 @@ export async function run() {
 
   const form=host(await renderNuevoTrade({...seed,route:{rest:"trade",query:{mode:"simulated",context:"DEMO"}}}));
   check(form.querySelector('[name="context"]').value==="DEMO","demo conserva su contexto propio");
-  check(form.querySelector('[aria-label="Carga rápida"]').querySelectorAll("button").length===3,"tres botones de carga rápida");
+  check(!form.querySelector('[aria-label="Carga rápida"]'),"carga rápida vive en la barra superior (Trade / Backtest / No trade)");
   check([...form.querySelector('[name="context"]').options].map(o=>o.value).join(',')==='BACKTEST,DEMO',"simulado no ofrece cuenta real");
   const realForm=host(await renderNuevoTrade({...seed,route:{rest:"trade",query:{mode:"real"}}}));
   check(![...realForm.querySelector('[name="context"]').options].some(o=>['DEMO','BACKTEST'].includes(o.value)),"real no ofrece contextos simulados");
