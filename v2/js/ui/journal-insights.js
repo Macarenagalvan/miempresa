@@ -50,7 +50,7 @@ export async function accountOverview(ctx, compact=false){
  pick.addEventListener('change',async()=>{await setActiveAccount(pick.value);go(ctx.route.name+'?account='+encodeURIComponent(pick.value));});
  const intro=el('section',{className:'panel journal-overview'},[
   el('div',{className:'journal-heading'},[el('div',{},[el('p',{className:'kicker',text:'Tu journal · de la operación al resultado'}),el('h1',{text:compact?'Tu trading, de un vistazo':'Cartera y evolución'})]),accounts.length?pick:link('Crear mi primera cuenta','cuentas/nueva')]),
-  el('div',{className:'journal-actions'},[link('+ Nueva operación','nuevo/trade'),link('Importar informe de MT5','importar'),link('Ver historial','historial'+(selected?'?account='+selected.id:'')),link('Ver estadísticas','numeros'+(selected?'?account='+selected.id+'&universe='+(selected.context==='DEMO'?'DEMO':'REAL'):''))]),
+  el('div',{className:'journal-actions'},[compact?null:link('+ Nueva operación','nuevo/trade'),link('Importar informe de MT5','importar'),link('Ver historial','historial'+(selected?'?account='+selected.id:'')),link('Ver estadísticas','numeros'+(selected?'?account='+selected.id+'&universe='+(selected.context==='DEMO'?'DEMO':'REAL'):''))]),
  ]);
  if(!selected){intro.append(el('p',{className:'empty',text:'Creá tu cuenta con el capital inicial. Después podés registrar una operación o importar el informe HTML de MT5.'}));return intro;}
  intro.querySelector('.journal-actions').append(deleteButton('account',selected,ctx.route.name));

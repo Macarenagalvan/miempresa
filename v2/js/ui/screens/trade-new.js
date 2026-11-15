@@ -11,6 +11,9 @@ import { findSimilarTrade, describeRecord } from "../../domain/duplicates.js";
 import { confirmDialog } from "../feedback.js";
 import { getActiveAccount, listStageAccounts, visibleActiveAccount, createAccount } from "../../domain/account.js";
 import { toast } from "../feedback.js";
+import { captureDrop } from "../capture-drop.js";
+import { processFields } from "../forms/process-fields.js";
+import { setTradeProcess, normalizeProcess } from "../../domain/process.js";
 
 const LAST_TRADE = "rgm.trade.last";
 function readLastTrade() { try { return JSON.parse(localStorage.getItem(LAST_TRADE) || "{}") || {}; } catch (_) { return {}; } }
@@ -255,12 +258,21 @@ export async function renderNuevoTrade(ctx) {
     "4. Capturas del gráfico",
     "Podés seleccionar varias imágenes. Se guardarán con el registro y podrás consultarlas desde su ficha.",
     [
-      field("Antes / contexto", capturesBefore),
-      field("Después / resultado", capturesAfter),
+      field("Antes / contexto", captureDrop(capturesBefore, { label: "Captura antes" })),
+      field("Después / resultado", captureDrop(capturesAfter, { label: "Captura después" })),
       el("div", { className: "trade-field-wide" }, [captureCount]),
     ],
     "trade-evidence"
   );
+
+  const proc = processFields(null);
+  const processSection = formSection(
+    "5. Proceso y emociones",
+    "Opcional, pero es lo que más enseña: con el tiempo vas a ver cuánto rendís cuando seguís el plan y cuánto cuando no.",
+    [el("div", { className: "trade-field-wide" }, [proc.node])],
+    "trade-process"
+  );
+  const saveProcess = async (trade) => { if (normalizeProcess(proc.read())) await setTradeProcess(trade.id, proc.read()); };
 
   const save = el("button", { type: "button", text: "Guardar operación", className: "trade-form-submit" });
   const draftSave = el("button", { type: "button", className: "ghost", text: "Guardar borrador", onclick: () => {
@@ -339,6 +351,7 @@ export async function renderNuevoTrade(ctx) {
         }, ctx.stage.id);
         persistedTrade = trade;
         await persistCaptures(trade, chosen);
+        await saveProcess(trade);
         writeLastTrade({ asset: assetVal, context: context.value, accountId: accountPick.value || null });
         go("trade/" + trade.id + (historical() ? "?from=backtesting" : ""));
         toast("Operación guardada.", { tone: "ok", timeout: 2500 });
@@ -384,6 +397,7 @@ export async function renderNuevoTrade(ctx) {
       };
       const enriched = await enrichTrade(trade.id, journal);
       await persistCaptures(enriched, chosen);
+      await saveProcess(enriched);
       writeLastTrade({ asset: assetVal, context: context.value, accountId: accountPick.value || null });
       go("trade/" + enriched.id + (historical() ? "?from=backtesting" : ""));
       toast(enriched.isDraft ? "Borrador guardado." : "Operación guardada.", { tone: "ok", timeout: 2500 });
@@ -454,6 +468,7 @@ export async function renderNuevoTrade(ctx) {
       ]),
       closedBlock,
       evidence,
+      processSection,
       extra,
       hint,
       err,

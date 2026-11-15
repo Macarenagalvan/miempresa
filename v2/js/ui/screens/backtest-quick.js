@@ -8,6 +8,9 @@ import { confirmDialog, toast } from "../feedback.js";
 import { findSimilarQuickBacktest, findSimilarStudy, describeRecord } from "../../domain/duplicates.js";
 import { deleteTrades } from "../../domain/trade-delete.js";
 import { archiveObservation } from "../../domain/observation.js";
+import { captureDrop } from "../capture-drop.js";
+import { processFields } from "../forms/process-fields.js";
+import { setTradeProcess, normalizeProcess } from "../../domain/process.js";
 
 const LAST_KEY = "rgm.quickBacktest.last";
 function readLast() {
@@ -33,11 +36,15 @@ export function quickBacktest(ctx) {
   const err = el("p", { className: "err", role: "alert" });
   const status = el("p", { role: "status", text: "" });
   const save = el("button", { type: "submit", text: "Guardar backtest" });
+  const proc = processFields(null, { emotion: false, errors: true });
+  const procBox = el("details", { className: "quick-process" }, [el("summary", { text: "Setup, confluencias y plan (opcional)" }), proc.node]);
   const controls = el("fieldset", { className: "quick-bt-fields" }, [
     el("div", { className: "trade-fields-grid" }, [field("Fecha de sesión histórica", date), field("Activo", asset)]),
     field("Dirección (opcional en NO TRADE)", choiceButtons(direction, "Dirección")),
     field("Resultado", choiceButtons(outcome, "Resultado")), rField,
-    el("details", {}, [el("summary", { text: "Notas y capturas (opcional)" }), field("Notas", note), field("Capturas · hasta 6, máximo 8 MB cada una", files)]),
+    field("Captura (opcional) · hasta 6", captureDrop(files, { label: "Captura del backtest" })),
+    procBox,
+    el("details", {}, [el("summary", { text: "Notas (opcional)" }), field("Notas", note)]),
     save,
   ]);
   const quickMode = ctx.route?.query?.quick;
@@ -84,6 +91,7 @@ export function quickBacktest(ctx) {
         undo = () => archiveObservation(study.id);
       } else {
         const trade = await createClosedTrade({ context: "BACKTEST", sessionDate: date.value, asset: asset.value, direction: direction.value, result: outcome.value, rrRealized: r.value, note: note.value }, ctx.stage.id, [...files.files]);
+        if (normalizeProcess(proc.read())) await setTradeProcess(trade.id, proc.read());
         undo = async () => { await deleteTrades(trade.id); };
       }
       writeLast({ date: date.value, asset: asset.value.trim().toUpperCase() });

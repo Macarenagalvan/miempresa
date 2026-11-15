@@ -3,6 +3,7 @@ import { buildXlsx, readXlsx, excelSerial, serialToDay, XS } from "./xlsx.js";
 import { realizedR } from "../domain/stats.js";
 import { strategyLabel, Strategy, Style } from "../domain/enums.js";
 import { SESSIONS } from "../config.js";
+import { FAMILIES, CONFLUENCES, EMOTIONS, PLAN, ERRORS, labelOf } from "../domain/process.js";
 
 // ---------- formato ----------
 const CONTEXT_LABEL = { BACKTEST: "Backtest", LIVE: "Cuenta propia", DEMO: "Demo", PROP_CHALLENGE: "Evaluación", FUNDED: "Fondeada" };
@@ -96,6 +97,11 @@ function columns(kind, accountsById) {
     { h: "Estrategia", w: 13, type: "text", get: (t) => (t.strategy && t.strategy !== "UNCLASSIFIED" ? strategyLabel(t.strategy) : "") },
     { h: "Estilo", w: 9, type: "text", get: (t) => t.style || "" },
     { h: "Sesión", w: 11, type: "text", get: (t) => t.session || "" },
+    { h: "Setup", w: 13, type: "text", get: (t) => (t.process?.family ? labelOf(FAMILIES, t.process.family) : "") },
+    { h: "Plan", w: 9, type: "text", get: (t) => (t.process?.plan ? labelOf(PLAN, t.process.plan) : "") },
+    ...(kind === "operaciones" ? [{ h: "Emoción", w: 12, type: "text", get: (t) => (t.process?.emotion ? labelOf(EMOTIONS, t.process.emotion) : "") }] : []),
+    { h: "Confluencias", w: 30, type: "text", get: (t) => (t.process?.confluences || []).map((c) => labelOf(CONFLUENCES, c)).join(", ") },
+    { h: "Errores", w: 26, type: "text", get: (t) => (t.process?.errors || []).map((e) => labelOf(ERRORS, e)).join(", ") },
     { h: "Notas", w: 42, type: "text", get: (t) => [t.note, t.management].filter(Boolean).join(" · ") },
     { h: "Origen", w: 12, type: "text", get: originLabel },
     { h: "ID", w: 10, type: "text", get: (t) => t.id || "" },

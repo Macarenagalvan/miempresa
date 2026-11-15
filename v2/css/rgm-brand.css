@@ -197,3 +197,62 @@ button.trade-form-submit:hover, form.quick-bt button[type="submit"]:hover, .tq-m
   .pulse-week { gap: 2px; }
   .pulse-dot { width: 26px; height: 26px; }
 }
+
+/* ---------- Fase 4: capturas pegables, proceso, respaldo, revisión ---------- */
+.capture-input { position: absolute !important; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.capture-wrap { position: relative; }
+.capture-drop {
+  display: grid; gap: 4px; justify-items: center; text-align: center; padding: 16px 14px; cursor: pointer;
+  border: 1.5px dashed var(--line-strong); border-radius: 12px; background: rgba(0, 0, 0, 0.18); transition: border-color .15s, background .15s;
+}
+.capture-drop strong { font-size: 14px; }
+.capture-drop span { font-size: 12px; color: var(--muted); }
+.capture-drop:hover, .capture-drop.is-target, .capture-drop:focus-visible { border-color: rgba(212, 166, 74, 0.6); }
+.capture-drop.is-over, .capture-drop.is-pasted { border-color: var(--accent); background: var(--accent-soft); }
+.capture-thumbs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 4px; }
+.capture-thumbs:empty { display: none; }
+.capture-thumb { position: relative; margin: 0; }
+.capture-thumb img { width: 92px; height: 62px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line-strong); display: block; }
+.capture-remove {
+  position: absolute; top: -7px; right: -7px; width: 22px; height: 22px; min-height: 0; padding: 0; border-radius: 50%;
+  background: #2a2a31 !important; color: var(--text) !important; border: 1px solid var(--line-strong) !important; font-size: 14px; line-height: 1;
+}
+
+.process-fields { display: grid; gap: 14px; }
+.process-row { display: grid; gap: 7px; }
+.process-label { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+.process-hint { font-size: 11.5px; color: var(--muted); opacity: .8; }
+.process-row .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.process-row .chip { min-height: 34px; padding: 5px 12px; font-size: 13px; border-radius: 999px; }
+.quick-process { margin: 6px 0 14px; }
+.quick-process > summary { cursor: pointer; color: var(--text); margin-bottom: 12px; }
+.trade-process .trade-fields-grid { display: block; }
+
+.proc-summary { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.proc-chip { padding: 4px 10px; border-radius: 999px; font-size: 12px; border: 1px solid var(--line-strong); color: var(--text); }
+.proc-chip.is-family { border-color: rgba(212, 166, 74, 0.6); color: var(--accent); }
+.proc-chip.is-good { border-color: rgba(121, 194, 124, 0.55); color: var(--win); }
+.proc-chip.is-mid { border-color: rgba(217, 164, 65, 0.55); color: var(--be); }
+.proc-chip.is-bad { border-color: rgba(227, 117, 107, 0.55); color: var(--loss); }
+.proc-chip.is-conf { color: var(--muted); }
+
+.pulse-backup {
+  display: flex; align-items: center; gap: 14px; justify-content: space-between; flex-wrap: wrap;
+  margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(227, 117, 107, 0.45); background: rgba(227, 117, 107, 0.08);
+}
+.pulse-backup span { flex: 1 1 320px; font-size: 13.5px; line-height: 1.5; }
+.pulse-backup button { white-space: nowrap; }
+.pulse-review {
+  display: grid; gap: 2px; text-align: left; width: 100%; margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+  background: rgba(212, 166, 74, 0.08) !important; border: 1px solid rgba(212, 166, 74, 0.4) !important; color: var(--text) !important;
+}
+.pulse-review strong { color: var(--accent); font-size: 14.5px; }
+.pulse-review span { font-size: 12px; color: var(--muted); font-weight: 500; }
+.pulse-review:hover { background: rgba(212, 166, 74, 0.14) !important; filter: none; }
+.review-dialog .chips { display: flex; gap: 8px; margin: 4px 0 8px; }
+.review-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 10px 0; }
+.review-kpi { display: grid; gap: 2px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(0, 0, 0, 0.2); }
+.review-kpi strong { font: 600 22px var(--font-num); }
+.review-kpi span { font-size: 12px; color: var(--muted); }
+.review-kpi small { font-size: 11px; color: var(--muted); }
+@media (max-width: 700px) { .review-kpis { grid-template-columns: repeat(2, 1fr); } }
