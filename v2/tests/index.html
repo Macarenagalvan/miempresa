@@ -57,6 +57,7 @@
     import { run as runP0 } from "./p0-studies.test.js";
     import { run as runP01 } from "./p01-security.test.js";
     import { run as runP02 } from "./p02-local-mode.test.js";
+    import { run as runRgm1 } from "./rgm-phase1.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
@@ -95,6 +96,7 @@
       .then(() => runFourZips())
       .then(() => runMt5Html())
       .then(() => runDeleteEntity())
+      .then(() => runRgm1())
       .then(() => runImportPreferences())
       .then(() => runP0())
       .then(() => runP01())

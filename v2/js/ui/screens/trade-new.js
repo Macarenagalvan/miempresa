@@ -8,6 +8,8 @@ import { el } from "../render.js";
 import { field } from "../forms/observation.js";
 import { getSetup } from "../../storage/repos/setups.js";
 import { createTrade, createClosedTrade, enrichTrade } from "../../domain/trade.js";
+import { findSimilarTrade, describeRecord } from "../../domain/duplicates.js";
+import { confirmDialog } from "../feedback.js";
 import { getActiveAccount, listStageAccounts, visibleActiveAccount } from "../../domain/account.js";
 import { go } from "../router.js";
 import { Context, Direction, Strategy, Style, CloseType, BlueVariant, Lifecycle, strategyLabel } from "../../domain/enums.js";
@@ -275,6 +277,19 @@ export async function renderNuevoTrade(ctx) {
         entry: entry.value, exit: exit.value, netPnl: net.value, initialSL: sl.value, tp: tp.value,
         closedAt: localDateTimeIso(closedAt.value) },
         { closed: lifecycle.value === Lifecycle.CLOSED, draft: lifecycle.value === "DRAFT" });
+      if (lifecycle.value !== "DRAFT" && openedIso) {
+        const similar = await findSimilarTrade({ context: context.value, accountId: context.value === Context.BACKTEST ? null : accountPick.value,
+          asset: assetVal, direction: direction.value, openedAt: openedIso, entry: entry.value });
+        if (similar) {
+          const ok = await confirmDialog({
+            title: "Parece repetida",
+            body: ["Ya hay una operación muy parecida (misma cuenta, activo, dirección y hora o precio de entrada):",
+              el("p", { className: "rgm-dialog-target", text: describeRecord(similar) }), "¿La guardo igual?"],
+            confirmText: "Guardar igual", cancelText: "No, revisar",
+          });
+          if (!ok) { save.disabled = false; return; }
+        }
+      }
       const completeOpen = lifecycle.value === Lifecycle.OPEN && Boolean(entry.value.trim()) && Boolean(openedAt.value);
       const completeClose = lifecycle.value === Lifecycle.CLOSED && Boolean(openedAt.value) && Boolean(entry.value.trim()) && Boolean(exit.value.trim()) && Boolean(net.value.trim()) && Boolean(closedAt.value);
       if (completeClose) {

@@ -1,0 +1,104 @@
+/* Fase 1 · acciones rápidas, confirmaciones, avisos, exportar/importar */
+
+/* Filas con acciones (Editar / Borrar) al costado */
+.row-wrap { display: flex; align-items: stretch; gap: 8px; min-width: 0; }
+.row-wrap > button.row, .row-wrap > button.bt-row { flex: 1; min-width: 0; }
+.row-quick { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+.icon-btn {
+  width: 36px; height: 36px; min-height: 36px; padding: 0; display: inline-grid; place-items: center;
+  border: 1px solid var(--line); border-radius: 9px; background: transparent; color: var(--muted); cursor: pointer;
+}
+.icon-btn svg { width: 17px; height: 17px; }
+.icon-btn:hover, .icon-btn:focus-visible { color: var(--text); border-color: var(--line-strong); background: var(--elev); }
+.icon-btn.is-danger:hover, .icon-btn.is-danger:focus-visible { color: #ffb4b4; border-color: #804444; background: #301b20; }
+.journal-hist-head span:last-child { width: 80px; }
+@media (min-width: 1201px) {
+  .journal-hist-head { padding-right: 92px; }
+}
+button.bt-row.is-win .bt-row-r { color: var(--win); }
+button.bt-row.is-loss .bt-row-r { color: var(--loss); }
+button.bt-row.is-be .bt-row-r { color: var(--be); }
+
+/* Barra de datos: exportar / importar a la vista */
+.data-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
+.tool-btn {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 14px;
+  border: 1px solid var(--line-strong); border-radius: 999px; background: var(--elev); color: var(--text);
+  font: 500 13px var(--font); cursor: pointer;
+}
+.tool-btn svg { width: 16px; height: 16px; color: var(--accent); }
+.tool-btn:hover, .tool-btn:focus-visible { border-color: var(--accent); background: var(--accent-soft); }
+.tool-btn.is-quiet { background: transparent; border-color: var(--line); color: var(--muted); }
+.tool-btn.is-quiet:hover { color: var(--text); }
+.bt-json-import { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+
+/* Diálogo de confirmación */
+.rgm-dialog {
+  color: var(--text); background: var(--panel); border: 1px solid var(--line-strong); border-radius: 16px;
+  padding: 24px 26px; width: min(480px, calc(100vw - 32px)); max-height: 86vh; overflow: auto;
+  box-shadow: 0 24px 60px #000a;
+}
+.rgm-dialog.is-wide { width: min(860px, calc(100vw - 32px)); }
+.rgm-dialog::backdrop { background: #000b; backdrop-filter: blur(2px); }
+.rgm-dialog h2 { margin: 0 0 10px; font-size: 20px; }
+.rgm-dialog p { line-height: 1.55; margin: 8px 0; color: var(--muted); }
+.rgm-dialog .rgm-dialog-target {
+  color: var(--text); font: 600 14px var(--font-num); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px;
+}
+.rgm-dialog .row-actions { justify-content: flex-end; margin-top: 18px; }
+.btn-danger, button.btn-danger { background: #a8473f !important; border-color: #a8473f !important; color: #fff !important; }
+.btn-danger:hover { background: #bf5248 !important; }
+.btn-danger-ghost, button.btn-danger-ghost { background: transparent !important; color: #e8a39b !important; border: 1px solid #6d3a36 !important; }
+.btn-danger-ghost:hover { background: #301b20 !important; }
+
+/* Aviso inferior con Deshacer */
+.rgm-toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 1000;
+  display: flex; align-items: center; gap: 12px; padding: 12px 10px 12px 18px; overflow: hidden;
+  max-width: calc(100vw - 32px); background: #22262f; color: var(--text); border: 1px solid var(--line-strong);
+  border-radius: 12px; box-shadow: 0 14px 40px #0009; font-size: 14px; animation: rgm-toast-in .18s ease-out;
+}
+.rgm-toast.is-ok { border-left: 3px solid var(--win); }
+.rgm-toast.is-error { border-left: 3px solid var(--loss); }
+.rgm-toast.is-leaving { opacity: 0; transition: opacity .2s; }
+.rgm-toast-action {
+  min-height: 32px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--accent);
+  background: var(--accent-soft); color: var(--accent); font-weight: 600; cursor: pointer;
+}
+.rgm-toast-close { background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; padding: 0 6px; min-height: 0; cursor: pointer; }
+.rgm-toast-progress {
+  position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--accent);
+  transform-origin: left; animation: rgm-toast-bar linear forwards;
+}
+@keyframes rgm-toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+@keyframes rgm-toast-bar { to { transform: scaleX(0); } }
+
+/* Vista previa de importación */
+.import-kpis { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.import-kpis span { padding: 5px 12px; border-radius: 999px; font: 600 13px var(--font); border: 1px solid var(--line); }
+.import-kpis .is-new, .import-tr.is-new .import-status b { color: var(--win); }
+.import-kpis .is-dup, .import-tr.is-dup .import-status b { color: var(--be); }
+.import-kpis .is-error, .import-tr.is-error .import-status b { color: var(--loss); }
+.import-kpis .is-skip, .import-tr.is-skip .import-status b { color: var(--muted); }
+.import-dup-opt { display: flex; gap: 8px; align-items: center; margin: 6px 0 10px; color: var(--muted); }
+.import-table { border: 1px solid var(--line); border-radius: 10px; max-height: 46vh; overflow: auto; }
+.import-tr {
+  display: grid; grid-template-columns: 48px 96px minmax(70px, 1fr) 62px 86px 56px minmax(150px, 2fr);
+  gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 13px; align-items: start;
+}
+.import-tr:last-child { border-bottom: 0; }
+.import-tr.is-head { position: sticky; top: 0; background: var(--elev); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.import-tr.is-dup, .import-tr.is-skip { opacity: .72; }
+.import-status small { display: block; color: var(--muted); font-size: 11px; line-height: 1.35; margin-top: 2px; }
+
+@media (max-width: 700px) {
+  .row-wrap { gap: 6px; }
+  .row-quick { flex-direction: column; justify-content: center; }
+  .icon-btn { width: 34px; height: 34px; min-height: 34px; }
+  .import-tr { grid-template-columns: 34px 82px 1fr 54px; }
+  .import-tr > :nth-child(6), .import-tr.is-head > :nth-child(6) { display: none; }
+  .import-tr > :nth-child(5), .import-tr.is-head > :nth-child(5) { display: none; }
+  .import-tr .import-status { grid-column: 2 / -1; }
+  .rgm-toast { bottom: 14px; width: calc(100vw - 24px); }
+}

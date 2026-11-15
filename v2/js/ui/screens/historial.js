@@ -1,5 +1,5 @@
 import { uiLabel } from '../labels.js';
-import { money, label, link } from "../journal-insights.js";
+import { money, label } from "../journal-insights.js";
 import { el } from "../render.js";
 import { listStageTrades } from "../../domain/trade.js";
 import { asrStatusLabel, isAsrPending, listStageAsrs } from "../../domain/asr.js";
@@ -9,6 +9,8 @@ import { listStageAccounts } from "../../domain/account.js";
 import { SESSIONS } from "../../config.js";
 import { go } from "../router.js";
 import { stateBadge } from "../trade-presentation.js";
+import { rowActions } from "../trade-actions.js";
+import { dataToolbar } from "../data-toolbar.js";
 
 function qs(query) {
   const parts = [];
@@ -96,7 +98,7 @@ export async function renderHistorial(ctx) {
         el("span", { text: isAsrPending(t, asrByTrade[t.id]) ? "Revisión pendiente" : asrByTrade[t.id] ? "Revisada" : "—" }),
       ]);
       item.addEventListener("click", () => go("trade/" + t.id));
-      return item;
+      return el("div", { className: "row-wrap" }, [item, rowActions(t, { editable: t.lifecycle !== "VOID" })]);
     })
     : [el("div", { className: "empty-block" }, [
       el("p", { className: "empty", text: stageEmpty
@@ -109,12 +111,19 @@ export async function renderHistorial(ctx) {
       el("div", { className: "historial-header" }, [
         el("div", {}, [
           el("h1", { text: "Operaciones" }),
-          el("p", { className: "meta", text: "Tus operaciones, resultados y capturas. Abrí una fila para ver o completar su análisis." }),
-          el("a", { href: "#/backtesting", text: "Las pruebas históricas están en Backtesting →" }),
+          el("p", { className: "meta", text: "Tocá una fila para ver el detalle. Lápiz para editar, tacho para borrar." }),
         ]),
         el("button", { type: "button", className: "top-new-trade", text: "+ Nueva operación", onclick: () => go("nuevo/trade") }),
       ]),
-      el("div", {className:"journal-actions"}, [link("Importar HTML de MT5", "importar"),link("Ver estadísticas", "numeros"+(filters.accountId?"?account="+filters.accountId:""))]),
+      dataToolbar({
+        kind: "operaciones",
+        getData: async () => ({ trades: rows, accounts }),
+        extra: [
+          el("button", { type: "button", className: "tool-btn", onclick: () => go("importar") }, [el("span", { text: "Importar MT5" })]),
+          el("button", { type: "button", className: "tool-btn is-quiet", onclick: () => go("numeros" + (filters.accountId ? "?account=" + filters.accountId : "")) }, [el("span", { text: "Estadísticas" })]),
+          el("button", { type: "button", className: "tool-btn is-quiet", onclick: () => go("backtesting") }, [el("span", { text: "Backtesting →" })]),
+        ],
+      }),
       el("div", { className: "filters-basic", "aria-label": "Filtros rápidos" }, [ctxSel, accSel, asset, lifecycle]),
       (() => {
         const advanced = el("details", { className: "filters-advanced" }, [
@@ -130,7 +139,7 @@ export async function renderHistorial(ctx) {
       stageEmpty
         ? null
         : el("p", { className: "meta historial-count", text: `${rows.length} operaciones · ${pendingCount} revisiones pendientes` }),
-      el("div", {className:"journal-hist-head", "aria-hidden":"true"}, ["Fecha","Activo","Tipo","Dirección / estrategia","Estado","Resultado","Neto","R","Revisión"].map(text=>el("span",{text}))),
+      el("div", {className:"journal-hist-head", "aria-hidden":"true"}, ["Fecha","Activo","Tipo","Dirección / estrategia","Estado","Resultado","Neto","R","Revisión",""].map(text=>el("span",{text}))),
       el("div", { className: "list table-wrap" }, list),
     ]),
   ];

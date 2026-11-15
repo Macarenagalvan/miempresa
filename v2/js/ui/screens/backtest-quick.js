@@ -4,10 +4,23 @@ import { choiceButtons } from "../forms/choice-buttons.js";
 import { createClosedTrade } from "../../domain/trade-journal.js";
 import { saveStudy } from "../../domain/observation.js";
 import { go } from "../router.js";
+import { confirmDialog, toast } from "../feedback.js";
+import { findSimilarQuickBacktest, findSimilarStudy, describeRecord } from "../../domain/duplicates.js";
+import { deleteTrades } from "../../domain/trade-delete.js";
+import { archiveObservation } from "../../domain/observation.js";
+
+const LAST_KEY = "rgm.quickBacktest.last";
+function readLast() {
+  try { return JSON.parse(localStorage.getItem(LAST_KEY) || "{}") || {}; } catch (_) { return {}; }
+}
+function writeLast(value) {
+  try { localStorage.setItem(LAST_KEY, JSON.stringify(value)); } catch (_) { /* almacenamiento no disponible */ }
+}
 
 export function quickBacktest(ctx) {
-  const date = el("input", { className: "input", type: "date", name: "sessionDate", required: true });
-  const asset = el("input", { className: "input", name: "asset", placeholder: "NAS100 / MNQ…", required: true });
+  const last = readLast();
+  const date = el("input", { className: "input", type: "date", name: "sessionDate", required: true, value: last.date || "" });
+  const asset = el("input", { className: "input", name: "asset", placeholder: "NAS100 / MNQ…", required: true, value: last.asset || "" });
   const pick = (name, values) => el("select", { name }, values.map(v => el("option", { value: v, text: v === "NO_TRADE" ? "NO TRADE" : v })));
   const direction = pick("direction", ["LONG", "SHORT"]);
   direction.selectedIndex = -1;
@@ -18,7 +31,7 @@ export function quickBacktest(ctx) {
   const note = el("textarea", { className: "input", name: "note", rows: 2 });
   const files = el("input", { type: "file", name: "captures", multiple: true, accept: "image/png,image/jpeg,image/webp" });
   const err = el("p", { className: "err", role: "alert" });
-  const status = el("p", { role: "status", text: ctx.route?.query?.saved === "1" ? "Guardado. Ya está en tu historial." : "" });
+  const status = el("p", { role: "status", text: "" });
   const save = el("button", { type: "submit", text: "Guardar backtest" });
   const controls = el("fieldset", { className: "quick-bt-fields" }, [
     el("div", { className: "trade-fields-grid" }, [field("Fecha de sesión histórica", date), field("Activo", asset)]),
@@ -39,16 +52,39 @@ export function quickBacktest(ctx) {
     try {
       if (!outcome.value) throw new Error("Elegí WIN, LOSS, BE o NO TRADE.");
       if (outcome.value !== "NO_TRADE" && !direction.value) throw new Error("Elegí LONG o SHORT.");
-      if (outcome.value === "NO_TRADE") {
-        await saveStudy({ date: date.value, asset: asset.value, bias: direction.value, studyOutcome: "NO_TRADE", note: note.value }, ctx.stage.id, [...files.files]);
-      } else {
-        await createClosedTrade({ context: "BACKTEST", sessionDate: date.value, asset: asset.value, direction: direction.value, result: outcome.value, rrRealized: r.value, note: note.value }, ctx.stage.id, [...files.files]);
+      if (!date.value) throw new Error("Elegí la fecha de la sesión.");
+      if (!asset.value.trim()) throw new Error("Completá el activo.");
+      if (outcome.value === "LOSS" && Number(r.value) > 0) r.value = String(-Number(r.value));
+      const similar = outcome.value === "NO_TRADE"
+        ? await findSimilarStudy(ctx.stage.id, { date: date.value, asset: asset.value })
+        : await findSimilarQuickBacktest({ sessionDate: date.value, asset: asset.value, direction: direction.value, result: outcome.value, rrRealized: r.value });
+      if (similar) {
+        const ok = await confirmDialog({
+          title: "Parece repetido",
+          body: ["Ya tenés un registro igual:", el("p", { className: "rgm-dialog-target", text: describeRecord(similar) }), "¿Lo guardo igual?"],
+          confirmText: "Guardar igual",
+          cancelText: "No, revisar",
+        });
+        if (!ok) { save.disabled = false; busy = false; return; }
       }
+      let undo;
+      if (outcome.value === "NO_TRADE") {
+        const study = await saveStudy({ date: date.value, asset: asset.value, bias: direction.value, studyOutcome: "NO_TRADE", note: note.value }, ctx.stage.id, [...files.files]);
+        undo = () => archiveObservation(study.id);
+      } else {
+        const trade = await createClosedTrade({ context: "BACKTEST", sessionDate: date.value, asset: asset.value, direction: direction.value, result: outcome.value, rrRealized: r.value, note: note.value }, ctx.stage.id, [...files.files]);
+        undo = async () => { await deleteTrades(trade.id); };
+      }
+      writeLast({ date: date.value, asset: asset.value.trim().toUpperCase() });
       controls.disabled = true;
-      go("backtesting?saved=1");
+      go("backtesting");
+      toast(outcome.value === "NO_TRADE" ? "NO TRADE guardado." : `Backtest guardado · ${outcome.value}${r.value ? " · R " + r.value : ""}.`, {
+        tone: "ok", actionText: "Deshacer", timeout: 7000,
+        onAction: async () => { await undo(); window.dispatchEvent(new HashChangeEvent("hashchange")); toast("Deshecho.", { timeout: 2000 }); },
+      });
     } catch (error) { err.textContent = error.message; save.disabled = false; busy = false; }
   } }, [status, controls, err]);
   return el("section", { className: "panel" }, [el("h2", { text: "Carga rápida de backtesting" }),
-    el("p", { className: "hint", text: "WIN / LOSS / BE registra una operación histórica. NO TRADE guarda un estudio, fuera del winrate. R vacío no cuenta como cero." }), form]);
+    el("p", { className: "hint", text: "WIN / LOSS / BE suma al winrate. NO TRADE guarda un estudio aparte. La fecha y el activo se recuerdan para cargar el siguiente." }), form]);
 }
 
