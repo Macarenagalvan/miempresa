@@ -60,6 +60,7 @@
     import { run as runRgm1 } from "./rgm-phase1.test.js";
     import { run as runRgm4 } from "./rgm-phase4.test.js";
     import { run as runInv } from "./rgm-inversiones.test.js";
+    import { run as runPlan } from "./rgm-plan.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
@@ -101,6 +102,7 @@
       .then(() => runRgm1())
       .then(() => runRgm4())
       .then(() => runInv())
+      .then(() => runPlan())
       .then(() => runImportPreferences())
       .then(() => runP0())
       .then(() => runP01())

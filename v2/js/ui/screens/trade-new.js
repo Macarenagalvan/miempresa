@@ -13,6 +13,7 @@ import { getActiveAccount, listStageAccounts, visibleActiveAccount, createAccoun
 import { toast } from "../feedback.js";
 import { captureDrop } from "../capture-drop.js";
 import { processFields } from "../forms/process-fields.js";
+import { planWarning } from "../plan-status.js";
 import { setTradeProcess, normalizeProcess } from "../../domain/process.js";
 
 const LAST_TRADE = "rgm.trade.last";
@@ -58,6 +59,7 @@ export async function renderNuevoTrade(ctx) {
   const setup = setupId ? await getSetup(setupId) : null;
   const accounts = await listStageAccounts(ctx.stage.id);
   const active = await getActiveAccount();
+  const planNote = dedicatedBacktest ? null : await planWarning(ctx);
   const last = setupId ? {} : readLastTrade();
   const initialContext = setup ? setup.context : (dedicatedBacktest || mode === "simulated" ? (ctx.route.query?.context === "DEMO" ? Context.DEMO : Context.BACKTEST) : mode === "real" ? (accounts.find(a => a.context !== "DEMO")?.context || Context.LIVE) : (last.context && last.context !== Context.BACKTEST ? last.context : (active?.context || accounts[0]?.context || Context.LIVE)));
   const historical = () => context.value === Context.BACKTEST;
@@ -446,6 +448,7 @@ export async function renderNuevoTrade(ctx) {
         el("p", { className: "hint", text: dedicatedBacktest
           ? "Guardá una operación simulada del pasado. No modifica cuentas ni saldos reales."
           : "Registrá los datos básicos ahora. Podés completar el análisis en detalles adicionales." }),
+        planNote,
         el("p", { className: "hint", text: "Lo mínimo: activo, dirección, entrada y fecha. ¿Te falta algo? Guardá como borrador y completalo después." }),
         ...refs,
       ]),

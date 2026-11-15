@@ -102,3 +102,18 @@ button.bt-row.is-be .bt-row-r { color: var(--be); }
   .import-tr .import-status { grid-column: 2 / -1; }
   .rgm-toast { bottom: 14px; width: calc(100vw - 24px); }
 }
+
+/* Reglas de hoy (trading plan) */
+.plan-today .plan-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.plan-today .link-btn { background: none; border: 0; color: var(--gold, #d4a94a); text-decoration: underline; cursor: pointer; padding: 0; }
+.plan-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.plan-chip { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-radius: 10px; border: 1px solid #ffffff22; min-width: 110px; }
+.plan-chip span { font-size: 12px; opacity: .75; }
+.plan-chip strong { font-size: 14px; }
+.plan-chip.is-ok { border-color: #3fa66b66; }
+.plan-chip.is-warn { border-color: #d4a94a; background: #d4a94a14; }
+.plan-chip.is-stop { border-color: #d9534f; background: #d9534f1f; }
+.plan-closed { border: 1px solid #d9534f; background: #d9534f1a; border-radius: 10px; padding: 10px 14px; margin: 10px 0; }
+.plan-closed ul { margin: 6px 0 4px 18px; padding: 0; }
+.plan-signals { display: grid; gap: 4px; }
+.plan-rule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 8px; }
