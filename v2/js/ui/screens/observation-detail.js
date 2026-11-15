@@ -3,6 +3,7 @@ import { updateObservation, archiveObservation } from "../../domain/observation.
 import { el } from "../render.js";
 import { assetPicker, coreFields, optionalFields, field } from "../forms/observation.js";
 import { go } from "../router.js";
+import { deleteStudyFlow } from "../trade-actions.js";
 import { renderStudy } from "./study.js";
 
 export async function renderObservationDetail(ctx) {
@@ -64,6 +65,7 @@ export async function renderObservationDetail(ctx) {
         save,
         el("button", { type: "button", text: "Crear Setup", onclick: () => go("nuevo/setup/" + obs.id) }),
         archive,
+        el("button", { type: "button", className: "btn-danger-ghost", text: "Borrar", onclick: () => deleteStudyFlow(obs, { after: "estudio" }) }),
       ]),
     ]),
   ];
