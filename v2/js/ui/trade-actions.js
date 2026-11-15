@@ -69,3 +69,34 @@ function svg(d) {
 }
 const pencil = () => svg(["M4 20h4L19 9l-4-4L4 16z", "M13.5 6.5l4 4"]);
 const trash = () => svg(["M4 7h16", "M9 7V4h6v3", "M6 7l1 13h10l1-13", "M10 11v6M14 11v6"]);
+
+/** Borrar un estudio / NO TRADE con confirmación y Deshacer. */
+export async function deleteStudyFlow(obs, { after = null } = {}) {
+  const { deleteObservation, restoreDeletedObservation } = await import("../domain/trade-delete.js");
+  const ok = await confirmDialog({
+    title: "¿Borrar este estudio?",
+    body: [
+      el("p", { className: "rgm-dialog-target", text: [obs.asset, obs.studyOutcome === "NO_TRADE" ? "NO TRADE" : "Estudio", obs.date].filter(Boolean).join(" · ") }),
+      "Se borran también sus capturas. Vas a tener unos segundos para deshacerlo.",
+    ],
+    confirmText: "Sí, borrar",
+    danger: true,
+  });
+  if (!ok) return false;
+  const { snapshot } = await deleteObservation(obs.id);
+  if (after) go(after); else refresh();
+  toast("Estudio borrado.", {
+    actionText: "Deshacer", timeout: 8000,
+    onAction: async () => { await restoreDeletedObservation(snapshot); refresh(); toast("Restaurado.", { timeout: 2500, tone: "ok" }); },
+  });
+  return true;
+}
+
+export function studyRowActions(obs) {
+  const stop = (fn) => (event) => { event.stopPropagation(); event.preventDefault(); fn(); };
+  return el("div", { className: "row-quick" }, [
+    el("button", { type: "button", className: "icon-btn", title: "Editar", "aria-label": "Editar estudio " + obs.asset, onclick: stop(() => go("observacion/" + obs.id)) }, [pencil()]),
+    el("button", { type: "button", className: "icon-btn is-danger", title: "Borrar", "aria-label": "Borrar estudio " + obs.asset,
+      onclick: stop(() => deleteStudyFlow(obs).catch((e) => toast(e.message, { tone: "error" }))) }, [trash()]),
+  ]);
+}

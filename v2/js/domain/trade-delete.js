@@ -86,3 +86,40 @@ export async function restoreDeletedTrades(snapshot) {
   });
   scheduleSync();
 }
+
+// ---------- Estudios / NO TRADE ----------
+const OBS_STORES = ["observations", "attachments", "setups", "syncLedger"];
+
+/** Borra un estudio con sus capturas. Las ideas (setups) enlazadas se conservan, sin el vínculo. */
+export async function deleteObservation(id) {
+  const result = await withStores(OBS_STORES, "readwrite", async (tx) => {
+    const [observations, attachments, setups, ledger] = await Promise.all(OBS_STORES.map((s) => requestToPromise(tx.objectStore(s).getAll())));
+    const target = observations.find((o) => o.id === id);
+    if (!target) throw new Error("Este estudio ya no existe. Actualizá la pantalla.");
+    const now = new Date().toISOString();
+    const track = tracker(tx, ledger, now);
+    const images = attachments.filter((a) => a.entityType === "observation" && a.entityId === id);
+    const linked = setups.filter((s) => s.observationId === id);
+    tx.objectStore("observations").delete(id); track("observations", target, true);
+    for (const img of images) { tx.objectStore("attachments").delete(img.id); track("attachments", img, true); }
+    for (const s of linked) { const next = { ...s, observationId: null, updatedAt: now }; tx.objectStore("setups").put(next); track("setups", next, false); }
+    return { snapshot: { observations: [target], attachments: images, setups: linked }, counts: { attachments: images.length, setups: linked.length } };
+  });
+  scheduleSync();
+  return result;
+}
+
+export async function restoreDeletedObservation(snapshot) {
+  await withStores(OBS_STORES, "readwrite", async (tx) => {
+    const ledger = await requestToPromise(tx.objectStore("syncLedger").getAll());
+    const now = new Date().toISOString();
+    const track = tracker(tx, ledger, now);
+    for (const store of ["observations", "attachments", "setups"]) {
+      for (const row of snapshot[store] || []) {
+        const next = store === "setups" ? { ...row, updatedAt: now } : row;
+        tx.objectStore(store).put(next); track(store, next, false);
+      }
+    }
+  });
+  scheduleSync();
+}

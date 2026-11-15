@@ -6,6 +6,8 @@ import { saveStudy } from "../../domain/observation.js";
 import { listByEntity } from "../../storage/repos/attachments.js";
 import { SESSIONS } from "../../config.js";
 import { go } from "../router.js";
+import { deleteStudyFlow } from "../trade-actions.js";
+import { toast } from "../feedback.js";
 
 function pick(name, options, value) {
   const control = el("select", { name }, options.map(([v, text]) => el("option", { value: v, text })));
@@ -49,6 +51,10 @@ export async function renderStudy(ctx, current = null) {
     field("Sesgo", choiceButtons(bias, "Sesgo")), field("Sesión", choiceButtons(session, "Sesión")),
     field("Notas y aprendizaje", note), el("div", { className: "thumb-row" }, thumbs),
     field("Capturas (hasta 6 por guardado, 8 MB cada una)", file), err, save,
-    el("button", { type: "button", className: "ghost", text: "Volver a Backtesting", onclick: () => go("backtesting") }),
+    el("div", { className: "row-actions" }, [
+      el("button", { type: "button", className: "ghost", text: "Volver a Backtesting", onclick: () => go("backtesting") }),
+      current ? el("button", { type: "button", className: "btn-danger-ghost", text: "Borrar",
+        onclick: () => deleteStudyFlow(current, { after: "backtesting" }).catch((e) => toast(e.message, { tone: "error" })) }) : null,
+    ]),
   ])];
 }
