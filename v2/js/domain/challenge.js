@@ -106,6 +106,22 @@ export async function linkAccountToChallenge(accountId, challengeId) {
   return { account: nextAccount, challenge };
 }
 
+/** Quita el vínculo de una cuenta con su fondeo (la cuenta y sus operaciones se conservan). */
+export async function unlinkAccountFromChallenge(accountId) {
+  const account = await getAccount(accountId);
+  if (!account) throw new Error("account no existe");
+  if (!account.challengeId) return account;
+  const next = { ...account, challengeId: null, updatedAt: nowIso() };
+  await putAccount(next);
+  return next;
+}
+
+/** Pasa una cuenta a otro fondeo. */
+export async function moveAccountToChallenge(accountId, challengeId) {
+  await unlinkAccountFromChallenge(accountId);
+  return linkAccountToChallenge(accountId, challengeId);
+}
+
 export async function listStageChallenges(stageId) {
   const all = await listChallenges();
   return all
