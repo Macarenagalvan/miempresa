@@ -1,7 +1,6 @@
 import { el } from "../render.js";
 import { field } from "../forms/observation.js";
 import { choiceButtons } from "../forms/choice-buttons.js";
-import { quickRegister } from "../quick-register.js";
 import { saveStudy } from "../../domain/observation.js";
 import { listByEntity } from "../../storage/repos/attachments.js";
 import { SESSIONS } from "../../config.js";
@@ -44,7 +43,7 @@ export async function renderStudy(ctx, current = null) {
     return el("div", { className: "thumb-card" }, [img, el("p", { text: image.name || "Captura" })]);
   });
   return [el("section", { className: "panel form" }, [
-    quickRegister(), el("h1", { text: "Estudio / NO TRADE" }),
+    el("h1", { text: "Estudio / NO TRADE" }),
     el("p", { className: "hint", text: "Un estudio no suma al winrate. Si hubo ejecución, registrá el trade por separado. No se crean fechas ni operaciones automáticamente." }),
     field("Activo", asset), field("Fecha de sesión histórica", date),
     field("Resultado del estudio", choiceButtons(outcome, "Resultado del estudio")),

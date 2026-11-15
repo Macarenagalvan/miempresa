@@ -113,7 +113,6 @@ export async function renderHistorial(ctx) {
           el("h1", { text: "Operaciones" }),
           el("p", { className: "meta", text: "Tocá una fila para ver el detalle. Lápiz para editar, tacho para borrar." }),
         ]),
-        el("button", { type: "button", className: "top-new-trade", text: "+ Nueva operación", onclick: () => go("nuevo/trade") }),
       ]),
       dataToolbar({
         kind: "operaciones",

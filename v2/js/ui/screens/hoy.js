@@ -23,6 +23,7 @@ import {
 } from "../../domain/office-note.js";
 import { buildCalCard } from "./hoy-cal.js";
 import { listHoyShortcuts } from "../../domain/office-shortcut.js";
+import { hoyPulse } from "./hoy-pulse.js";
 
 const FOLLOW_STATUSES = [SetupStatus.WATCHING, SetupStatus.WAITING_CONFIRMATION];
 
@@ -392,6 +393,7 @@ export async function renderHoy(ctx) {
   ];
 
   return [
+    await hoyPulse(ctx),
     await accountOverview(ctx, true),
     el("details", { className: "journal-office" }, [el("summary", {text:"Mi escritorio · tareas, notas, calendario e ideas"}), el("div", { className: "hoy-desk" }, [
       el("section", { className: "panel identity-band hoy-ident" }, [

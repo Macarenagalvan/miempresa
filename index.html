@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
-  <meta name="theme-color" content="#111318">
-  <title>Maca · Trading Office</title>
+  <meta name="theme-color" content="#0b0b0d">
+  <title>RGM · Trading Journal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap">
@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="./v2/css/ux-v1.css">
   <link rel="stylesheet" href="./v2/css/journal-fusion.css">
   <link rel="stylesheet" href="./v2/css/rgm-actions.css">
+  <link rel="stylesheet" href="./v2/css/rgm-brand.css">
 </head>
 <body>
   <div id="file-warning" class="warn" hidden>
@@ -28,9 +29,14 @@
   <div class="app">
     <aside class="sidebar" id="sidebar">
       <div class="brand-block">
-        <div id="brand-name" class="brand">Maca</div>
-        <div class="brand-sub">Trader’s Journal</div>
-        <div id="stage-label" class="stage-label"></div>
+        <div class="rgm-logo" aria-label="RGM Trading">
+          <svg class="rgm-candles" viewBox="0 0 40 28" aria-hidden="true"><g fill="currentColor"><rect x="4" y="14" width="5" height="10" rx="1"/><rect x="6" y="10" width="1" height="17"/><rect x="17" y="8" width="5" height="14" rx="1"/><rect x="19" y="4" width="1" height="21"/><rect x="30" y="2" width="5" height="16" rx="1"/><rect x="32" y="0" width="1" height="21"/></g></svg>
+          <span class="rgm-word">RGM</span>
+        </div>
+        <div class="brand-sub">Trading · Journal</div>
+        <div class="rgm-motto">Disciplina · Paciencia · Resultados</div>
+        <div id="brand-name" class="brand" hidden>Maca</div>
+        <div id="stage-label" class="stage-label" hidden></div>
       </div>
       <p class="nav-label">Trading</p>
       <nav class="nav" aria-label="Trading">
@@ -55,9 +61,13 @@
       <header class="top" role="banner">
         <div class="top-location">
           <button id="nav-toggle" type="button" class="ghost nav-toggle" aria-label="Abrir menú de navegación" aria-controls="sidebar" aria-expanded="false">Menú</button>
-          <div class="top-heading"><span class="top-eyebrow">MACA / TRADING OFFICE</span><strong id="page-title">Hoy</strong></div>
+          <div class="top-heading"><span class="top-eyebrow">RGM · TRADING OFFICE</span><strong id="page-title">Hoy</strong></div>
         </div>
-        <a id="top-new-trade" class="top-new-trade" href="#/nuevo/trade">+ Nueva operación</a>
+        <nav class="top-quick" aria-label="Registro rápido">
+          <button type="button" class="tq tq-main" data-go="nuevo/trade" title="Nueva operación (tecla N)"><span class="tq-plus">+</span><span class="tq-label">Trade</span></button>
+          <button type="button" class="tq" data-go="backtesting?quick=bt" title="Nuevo backtest (tecla B)"><span class="tq-plus">+</span><span class="tq-label">Backtest</span></button>
+          <button type="button" class="tq" data-go="backtesting?quick=nt" title="Registrar NO TRADE (tecla T)"><span class="tq-label">No trade</span></button>
+        </nav>
       </header>
       <main id="app" class="content"></main>
     </div>
