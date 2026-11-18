@@ -1,13 +1,16 @@
 // Cargar resultados diarios (movimientos) y corregir capital/moneda de una cuenta desde un link, con confirmación.
 import { el } from "./render.js";
 import { confirmDialog, toast } from "./feedback.js";
-import { listStageAccounts, correctInitialAmount } from "../domain/account.js";
+import { listStageAccounts, correctInitialAmount, createAccount, archiveAccount } from "../domain/account.js";
 import { createMovement } from "../domain/movement.js";
 import { getAccount, putAccount } from "../storage/repos/accounts.js";
 import { listMovements } from "../storage/repos/movements.js";
 import { listTrades } from "../storage/repos/trades.js";
 import { nowIso } from "../domain/ids.js";
-import { createChallenge, listStageChallenges, moveAccountToChallenge } from "../domain/challenge.js";
+import { createChallenge, listStageChallenges, moveAccountToChallenge, updateChallenge } from "../domain/challenge.js";
+import { ChallengeStatus } from "../domain/enums.js";
+
+const STATUS_LABEL = { ACTIVE: "Activa", PHASE1_PASSED: "Fase 1 pasada", FUNDED: "Fondeada" };
 
 function decode(raw) {
   const b64 = String(raw).replace(/-/g, "+").replace(/_/g, "/");
@@ -20,7 +23,11 @@ function decode(raw) {
   }
   const ch = data.challenge && typeof data.challenge === "object" ? data.challenge : null;
   if (ch && (!/^\d{4}-\d{2}-\d{2}$/.test(ch.purchasedAt) || !Number.isFinite(Number(ch.cost)) || !ch.firm)) throw new Error("Link inválido.");
-  return { account: data.account, initialAmount: data.initialAmount ?? null, currency: data.currency ?? null, movements, challenge: ch };
+  const create = data.create && typeof data.create === "object" ? data.create : null;
+  if (create && (!["PROP_CHALLENGE", "FUNDED", "LIVE", "DEMO"].includes(create.context) || !Number.isFinite(Number(data.initialAmount)) || !data.currency)) throw new Error("Link inválido.");
+  const challengeStatus = data.challengeStatus && Object.values(ChallengeStatus).includes(data.challengeStatus) ? data.challengeStatus : null;
+  const archive = Array.isArray(data.archive) ? data.archive.filter((x) => typeof x === "string").slice(0, 10) : [];
+  return { archive, account: data.account, initialAmount: data.initialAmount ?? null, currency: data.currency ?? null, movements, challenge: ch, create, challengeStatus };
 }
 
 export async function applyAccountLink(raw, stageId) {
@@ -28,7 +35,8 @@ export async function applyAccountLink(raw, stageId) {
   let pack;
   try { pack = decode(raw); } catch (_) { toast("El link no se pudo leer.", { tone: "error" }); return; }
   const accounts = await listStageAccounts(stageId, { includeArchived: true });
-  const acc = accounts.find((a) => a.name === pack.account);
+  let acc = accounts.find((a) => a.name === pack.account);
+  if (!acc && pack.create) return createFromLink(pack, stageId);
   if (!acc) { toast(`No encontré la cuenta «${pack.account}».`, { tone: "error", timeout: 6000 }); return; }
   const [movs, trades] = await Promise.all([listMovements(), listTrades()]);
   const empty = !movs.some((m) => m.accountId === acc.id) && !trades.some((t) => t.accountId === acc.id);
@@ -61,4 +69,31 @@ export async function applyAccountLink(raw, stageId) {
   for (const m of fresh) await createMovement({ accountId: acc.id, type: "ADJUSTMENT", amount: Number(m.amount), date: m.date, note: m.note || "Resultado diario" }, stageId);
   window.dispatchEvent(new HashChangeEvent("hashchange"));
   toast("Cuenta actualizada.", { tone: "ok", timeout: 3000 });
+}
+
+async function findOrPlanChallenge(pack, stageId) {
+  if (!pack.challenge) return { ch: null, isNew: false };
+  const all = await listStageChallenges(stageId);
+  const ch = all.find((c) => c.firm === pack.challenge.firm && c.purchasedAt === pack.challenge.purchasedAt && Number(c.cost) === Number(pack.challenge.cost)) || null;
+  return { ch, isNew: !ch };
+}
+
+async function createFromLink(pack, stageId) {
+  const { ch, isNew } = await findOrPlanChallenge(pack, stageId);
+  const ctxLabel = { PROP_CHALLENGE: "Challenge", FUNDED: "Fondeada", LIVE: "Cuenta propia", DEMO: "Demo" }[pack.create.context];
+  const body = [el("p", { className: "rgm-dialog-target", text: pack.account }), `Cuenta nueva · ${ctxLabel} · ${pack.initialAmount} ${pack.currency}`];
+  if (pack.challenge) body.push(isNew ? `Nuevo fondeo ${pack.challenge.firm} del ${pack.challenge.purchasedAt.split("-").reverse().join("/")}` : `Queda en el fondeo ${pack.challenge.firm} del ${pack.challenge.purchasedAt.split("-").reverse().join("/")}`);
+  if (pack.challengeStatus && (!ch || ch.status !== pack.challengeStatus)) body.push(`Estado del fondeo: ${STATUS_LABEL[pack.challengeStatus] || pack.challengeStatus}`);
+  const toArchive = (await listStageAccounts(stageId)).filter((a) => pack.archive.includes(a.name));
+  for (const a of toArchive) body.push(`${a.name} se archiva (pasó la evaluación). Su historial se conserva.`);
+  const ok = await confirmDialog({ title: "¿Crear esta cuenta?", body, confirmText: "Sí, crear" });
+  if (!ok) return;
+  let target = ch;
+  if (pack.challenge && !target) target = await createChallenge({ firm: pack.challenge.firm, purchasedAt: pack.challenge.purchasedAt, cost: pack.challenge.cost, currency: pack.challenge.currency || "EUR", size: pack.challenge.size ?? 25, note: pack.challenge.note || null }, stageId);
+  if (target && pack.challengeStatus && target.status !== pack.challengeStatus) await updateChallenge(target.id, { status: pack.challengeStatus });
+  await createAccount({ name: pack.account, currency: pack.currency, context: pack.create.context, initialAmount: Number(pack.initialAmount), challengeId: target ? target.id : null }, stageId);
+  for (const m of pack.movements) await createMovement({ accountId: (await listStageAccounts(stageId)).find((a) => a.name === pack.account).id, type: "ADJUSTMENT", amount: Number(m.amount), date: m.date, note: m.note || "Resultado diario" }, stageId);
+  for (const a of toArchive) await archiveAccount(a.id);
+  window.dispatchEvent(new HashChangeEvent("hashchange"));
+  toast("Cuenta creada.", { tone: "ok", timeout: 3000 });
 }
