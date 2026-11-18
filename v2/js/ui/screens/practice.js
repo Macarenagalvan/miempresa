@@ -56,7 +56,7 @@ function decodePlanLink(raw) {
   const data = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
   if (!data || (typeof data.text !== 'string' && !data.rules)) throw new Error('Link inválido.');
   const rules = data.rules ? normalizeRules(data.rules) : null;
-  return { text: typeof data.text === 'string' ? data.text.slice(0, 20000) : null, rules: rules && hasRules(rules) ? rules : null };
+  return { text: typeof data.text === 'string' ? data.text.slice(0, 20000) : null, rules: rules && hasRules(rules) ? rules : null, append: data.mode === 'append' };
 }
 
 async function applyPlanLink(raw, notes) {
@@ -65,11 +65,15 @@ async function applyPlanLink(raw, notes) {
   try { pack = decodePlanLink(raw); } catch (_) { toast('El link no se pudo leer.', { tone: 'error' }); return; }
   const current = notes.find((n) => n.text.startsWith(PLAN_PREFIX));
   const body = [];
-  if (pack.text) body.push(current ? 'Reemplaza el texto de tu plan por la versión nueva.' : 'Carga el texto de tu plan.');
+  if (pack.text) body.push(pack.append && current ? 'Agrega una sección al final de tu plan. Lo que ya tenías no se toca.' : (current ? 'Reemplaza el texto de tu plan por la versión nueva.' : 'Carga el texto de tu plan.'));
   if (pack.rules) body.push('Carga las reglas en números. Desde ahora Hoy te avisa cuando llegás a un límite.');
   const ok = await confirmDialog({ title: '¿Cargar tu trading plan?', body, confirmText: 'Sí, cargar' });
   if (!ok) return;
-  if (pack.text) { const text = PLAN_PREFIX + pack.text; if (current) await updateOfficeNote(current.id, { text }); else await addOfficeNote({ text }); }
+  if (pack.text) {
+    const already = pack.append && current && current.text.includes(pack.text.trim());
+    const text = pack.append && current ? (already ? current.text : current.text.replace(/\s+$/, '') + '\n\n' + pack.text) : PLAN_PREFIX + pack.text;
+    if (current) await updateOfficeNote(current.id, { text }); else await addOfficeNote({ text });
+  }
   if (pack.rules) await savePlanRules(pack.rules);
   toast('Plan cargado.', { tone: 'ok', timeout: 3000 });
   window.dispatchEvent(new HashChangeEvent('hashchange'));
