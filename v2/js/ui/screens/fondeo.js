@@ -39,7 +39,6 @@ export async function renderFondeo(ctx) {
     el("section", { className: "panel" }, [
       el("h1", { text: "Fondeo" }),
       el("p", { className: "meta", text: `${summary.nChallenges} fondeos · costo ${costBits} · cobros ${payBits}` }),
-      el("p", { className: "hint", text: "Acá registrás la evaluación, su costo y los cobros. Las operaciones se consultan en la cuenta vinculada." }),
       el("div", { className: "row-actions" }, [
         el("button", { type: "button", text: "Nuevo fondeo", onclick: () => go("fondeo/nuevo") }),
       ]),

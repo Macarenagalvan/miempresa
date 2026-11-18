@@ -163,6 +163,7 @@ export async function paint(ctx) {
   const nextPath = parsed.name + "/" + parsed.rest;
   if (paintedPath !== nextPath) window.scrollTo({ top: 0, behavior: "instant" });
   paintedPath = nextPath;
+  document.body.dataset.route = parsed.name;
   document.querySelectorAll("[data-route]").forEach((link) => {
     link.classList.toggle("is-active", link.getAttribute("data-route") === nav);
   });

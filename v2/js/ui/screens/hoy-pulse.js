@@ -107,7 +107,6 @@ export async function hoyPulse(ctx) {
       el("div", {}, [
         el("p", { className: "pulse-date", text: longDate() }),
         el("h1", { className: "pulse-hello", text: greetingLine(ctx.meta) }),
-        el("p", { className: "pulse-motto", text: "Disciplina · Paciencia · Resultados" }),
       ]),
       el("div", { className: "pulse-streak" + (doneToday ? " is-lit" : "") }, [
         el("strong", { text: String(streak) }),
