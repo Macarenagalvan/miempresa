@@ -25,6 +25,7 @@ import { buildCalCard } from "./hoy-cal.js";
 import { listHoyShortcuts } from "../../domain/office-shortcut.js";
 import { hoyPulse } from "./hoy-pulse.js";
 import { planTodayPanel } from "../plan-status.js";
+import { partePanel } from "../parte-panel.js";
 
 const FOLLOW_STATUSES = [SetupStatus.WATCHING, SetupStatus.WAITING_CONFIRMATION];
 
@@ -395,6 +396,7 @@ export async function renderHoy(ctx) {
 
   return [
     await hoyPulse(ctx),
+    await partePanel(ctx),
     await planTodayPanel(ctx),
     await accountOverview(ctx, true),
     el("details", { className: "journal-office" }, [el("summary", {text:"Mi escritorio · tareas, notas, calendario e ideas"}), el("div", { className: "hoy-desk" }, [
