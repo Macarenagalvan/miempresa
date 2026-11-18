@@ -125,3 +125,14 @@ details.trade-optional[open] > summary, details.bt-data[open] > summary { margin
 .acct-mov { flex-shrink: 0; white-space: nowrap; }
 /* En Hoy los botones de registro rápido ya están en el centro: no se repiten arriba */
 body[data-route="hoy"] .top-quick { visibility: hidden; }
+
+/* Parte del Nasdaq */
+.parte-bias { font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1px solid #ffffff33; }
+.parte-bias.is-a_favor { border-color: #3fa66b; color: #7fd6a2; }
+.parte-bias.is-en_contra { border-color: #d9534f; color: #f19a97; }
+.parte-bias.is-neutro { border-color: #d4a94a; color: #e6c98a; }
+.parte-alerts { border-left: 3px solid #d4a94a; margin: 8px 0; padding: 6px 0 6px 22px; }
+.parte-list { margin: 4px 0 8px 18px; padding: 0; }
+.parte-list li.is-high strong { color: #f19a97; }
+.parte a { color: var(--gold, #d4a94a); }
+.parte-sources { word-break: break-word; }
