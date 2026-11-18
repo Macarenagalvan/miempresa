@@ -58,13 +58,12 @@ export async function renderCuentas(ctx) {
     await accountOverview(ctx),
     el("section", { className: "panel" }, [
       el("h1", { text: "Cuentas" }),
-      el("p", { className: "meta", text: "Elegí una cuenta para ver sus movimientos o administrar el capital." }),
       el("div", { className: "row-actions" }, [
         el("button", { type: "button", text: "Nueva cuenta", onclick: () => go("cuentas/nueva") }),
       ]),
       el("div", { className: "list table-wrap" }, list),
     ]),
-    el("section", { className: "panel" }, [el("h2", {text:"Traer operaciones de MT5"}), el("p", {className:"hint",text:"Importá directamente el informe HTML. Revisá la cuenta, los netos y los duplicados antes de guardar."}), link("Importar HTML o CSV de MT5", "importar")]),
+    el("section", { className: "panel" }, [el("h2", {text:"Traer operaciones de MT5"}), link("Importar HTML o CSV de MT5", "importar")]),
     ...(await renderFondeo({ ...ctx, route: { ...ctx.route, rest: "" } })),
   ];
 }

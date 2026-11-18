@@ -99,7 +99,7 @@ export async function renderNuevoTrade(ctx) {
   style.setAttribute("name", "style");
   const variant = select([["", "—"]].concat(Object.values(BlueVariant).map((s) => [s, s])), "");
   variant.setAttribute("name", "variant");
-  const session = select([["", "—"]].concat(SESSIONS.map((s) => [s, sessionLabel(s)])), "");
+  const session = select([["", "—"]].concat(SESSIONS.map((s) => [s, sessionLabel(s)])), SESSIONS.includes(last.session) ? last.session : "");
   session.setAttribute("name", "session");
   const openedAt = el("input", { className: "input", type: "datetime-local", name: "openedAt", value: historical() ? "" : localDateTimeValue() });
   const closedAt = el("input", { className: "input", type: "datetime-local", name: "closedAt", value: historical() ? "" : localDateTimeValue() });
@@ -354,7 +354,7 @@ export async function renderNuevoTrade(ctx) {
         persistedTrade = trade;
         await persistCaptures(trade, chosen);
         await saveProcess(trade);
-        writeLastTrade({ asset: assetVal, context: context.value, accountId: accountPick.value || null });
+        writeLastTrade({ asset: assetVal, context: context.value, accountId: accountPick.value || null, session: session.value || "" });
         go("trade/" + trade.id + (historical() ? "?from=backtesting" : ""));
         toast("Operación guardada.", { tone: "ok", timeout: 2500 });
         return;
@@ -400,7 +400,7 @@ export async function renderNuevoTrade(ctx) {
       const enriched = await enrichTrade(trade.id, journal);
       await persistCaptures(enriched, chosen);
       await saveProcess(enriched);
-      writeLastTrade({ asset: assetVal, context: context.value, accountId: accountPick.value || null });
+      writeLastTrade({ asset: assetVal, context: context.value, accountId: accountPick.value || null, session: session.value || "" });
       go("trade/" + enriched.id + (historical() ? "?from=backtesting" : ""));
       toast(enriched.isDraft ? "Borrador guardado." : "Operación guardada.", { tone: "ok", timeout: 2500 });
     } catch (e) {
@@ -443,13 +443,11 @@ export async function renderNuevoTrade(ctx) {
   return [
     el("section", { className: "panel form trade-form" }, [
       el("div", { className: "trade-form-intro" }, [
-        el("p", { className: "kicker", text: dedicatedBacktest ? "Backtesting / Registro histórico" : "Journal / Registro" }),
         el("h1", { text: dedicatedBacktest ? "Registrar backtest" : (setup ? "Operación desde idea" : "Registrar operación") }),
         el("p", { className: "hint", text: dedicatedBacktest
           ? "Guardá una operación simulada del pasado. No modifica cuentas ni saldos reales."
-          : "Registrá los datos básicos ahora. Podés completar el análisis en detalles adicionales." }),
+          : "Lo mínimo: activo, dirección, entrada y fecha. Lo demás podés completarlo después." }),
         planNote,
-        el("p", { className: "hint", text: "Lo mínimo: activo, dirección, entrada y fecha. ¿Te falta algo? Guardá como borrador y completalo después." }),
         ...refs,
       ]),
       formSection("1. Identificación", "Seleccioná el mercado, la dirección y el estado de la operación.", [

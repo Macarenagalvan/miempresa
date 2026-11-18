@@ -123,3 +123,5 @@ details.trade-optional, details.bt-data { margin-top: 14px; border: 1px solid va
 details.trade-optional > summary, details.bt-data > summary { cursor: pointer; font-weight: 600; }
 details.trade-optional[open] > summary, details.bt-data[open] > summary { margin-bottom: 12px; }
 .acct-mov { flex-shrink: 0; white-space: nowrap; }
+/* En Hoy los botones de registro rápido ya están en el centro: no se repiten arriba */
+body[data-route="hoy"] .top-quick { visibility: hidden; }

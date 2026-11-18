@@ -104,6 +104,6 @@ export function quickBacktest(ctx) {
     } catch (error) { err.textContent = error.message; save.disabled = false; busy = false; }
   } }, [status, controls, err]);
   return el("section", { className: "panel" }, [el("h2", { text: "Carga rápida de backtesting" }),
-    el("p", { className: "hint", text: "WIN / LOSS / BE suma al winrate. NO TRADE guarda un estudio aparte. La fecha y el activo se recuerdan para cargar el siguiente." }), form]);
+    el("p", { className: "hint", text: "La fecha y el activo se recuerdan para el siguiente." }), form]);
 }
 
