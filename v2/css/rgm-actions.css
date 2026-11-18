@@ -117,3 +117,9 @@ button.bt-row.is-be .bt-row-r { color: var(--be); }
 .plan-closed ul { margin: 6px 0 4px 18px; padding: 0; }
 .plan-signals { display: grid; gap: 4px; }
 .plan-rule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 8px; }
+
+/* Journal más simple (18/11/2026): secciones opcionales plegadas */
+details.trade-optional, details.bt-data { margin-top: 14px; border: 1px solid var(--line, #2a2a33); border-radius: 12px; padding: 12px 16px; }
+details.trade-optional > summary, details.bt-data > summary { cursor: pointer; font-weight: 600; }
+details.trade-optional[open] > summary, details.bt-data[open] > summary { margin-bottom: 12px; }
+.acct-mov { flex-shrink: 0; white-space: nowrap; }

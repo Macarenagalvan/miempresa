@@ -54,11 +54,11 @@ export async function accountOverview(ctx, compact=false){
  if(selected)pick.value=selected.id;
  pick.addEventListener('change',async()=>{await setActiveAccount(pick.value);go(ctx.route.name+'?account='+encodeURIComponent(pick.value));});
  const intro=el('section',{className:'panel journal-overview'},[
-  el('div',{className:'journal-heading'},[el('div',{},[el('p',{className:'kicker',text:'Tu journal · de la operación al resultado'}),el('h1',{text:compact?'Tu trading, de un vistazo':'Cartera y evolución'})]),accounts.length?pick:link('Crear mi primera cuenta','cuentas/nueva')]),
+  el('div',{className:'journal-heading'},[el('div',{},[el('h1',{text:compact?'Tu trading, de un vistazo':'Cartera y evolución'})]),accounts.length?pick:link('Crear mi primera cuenta','cuentas/nueva')]),
   el('div',{className:'journal-actions'},[link('Importar informe de MT5','importar'),link('Ver historial','historial'+(selected?'?account='+selected.id:'')),link('Ver estadísticas','numeros'+(selected?'?account='+selected.id+'&universe='+(selected.context==='DEMO'?'DEMO':'REAL'):''))]),
  ]);
  if(!selected){intro.append(el('p',{className:'empty',text:'Creá tu cuenta con el capital inicial. Después podés registrar una operación o importar el informe HTML de MT5.'}));return intro;}
- intro.querySelector('.journal-actions').append(deleteButton('account',selected,ctx.route.name));
+ intro.querySelector('.journal-actions').append(link('Depósito / retiro','cuenta/'+selected.id+'?mov=1'));
  const own=trades.filter(t=>t.accountId===selected.id&&t.stageId===ctx.stage.id&&!t.isDraft&&t.lifecycle!=='VOID');
  const stats=compute(own,{universe:selected.context==='DEMO'?'DEMO':'REAL',accountId:selected.id});
  intro.append(el('div',{className:'journal-kpis'},[kpi('Saldo actual',money(accountBalance(selected,movements,trades),selected.currency),'Inicial: '+money(selected.initialAmount,selected.currency)),kpi('Resultado neto',money(stats.netPnl,selected.currency),'Operaciones cerradas · todo el historial'),kpi('Operaciones cerradas',String(stats.nClosed),stats.nWins+' ganadas · '+stats.nLosses+' perdidas'),kpi('Porcentaje de acierto',stats.winRate==null?'—':(stats.winRate*100).toFixed(1)+'%','Ganadas / ganadas y perdidas')]));

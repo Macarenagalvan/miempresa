@@ -1,7 +1,7 @@
 import { uiLabel } from '../labels.js';
 import { accountOverview, link, label, money } from "../journal-insights.js";
 import { el } from "../render.js";
-import { deletableRow } from '../delete-button.js';
+import { deleteButton } from '../delete-button.js';
 import { field } from "../forms/observation.js";
 import { AccountContext, Currency } from "../../domain/enums.js";
 import {
@@ -45,7 +45,9 @@ export async function renderCuentas(ctx) {
         el("span", { text: a.status==='ARCHIVED' ? 'Archivada' : isOn ? "activa" : "" }),
       ]);
       item.addEventListener("click", () => go("cuenta/" + a.id));
-      return deletableRow(item,'account',a,'cuentas');
+      const mov = el("button", { type: "button", className: "ghost acct-mov", text: "Depósito / retiro", title: "Cargar un depósito, retiro, comisión o ajuste" });
+      mov.addEventListener("click", () => go("cuenta/" + a.id + "?mov=1"));
+      return el('div', { className: 'deletable-row' }, [item, a.status === 'ARCHIVED' ? null : mov, deleteButton('account', a, 'cuentas')]);
     })
     : [el("div", { className: "empty-block" }, [
       el("p", { className: "empty", text: "Todavía no agregaste una cuenta." }),

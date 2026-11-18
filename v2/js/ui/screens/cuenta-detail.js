@@ -108,6 +108,7 @@ export async function renderCuentaDetail(ctx) {
     })
     : [el("p", { className: "empty", text: "Todavía no hay movimientos en esta cuenta." })];
 
+  if (ctx.route.query?.mov) setTimeout(() => { const s = document.getElementById('nuevo-movimiento'); if (s) { s.scrollIntoView({ behavior: 'smooth', block: 'start' }); amount.focus(); } }, 150);
   return [
     el("section", { className: "panel" }, [
       el("p", { className: "kicker", text: `${contextLabel(account.context)} · ${uiLabel(account.status)}` }),
@@ -120,8 +121,8 @@ export async function renderCuentaDetail(ctx) {
       el("div", { className: "row-actions" }, actions),
     ]),
     account.status === AccountStatus.ACTIVE
-      ? el("section", { className: "panel" }, [
-        el("h2", { text: "Nuevo movimiento" }),
+      ? el("section", { className: "panel", id: "nuevo-movimiento" }, [
+        el("h2", { text: "Depósito, retiro o ajuste" }),
         field("tipo", type),
         field("Monto (positivo; un ajuste puede ser negativo)", amount),
         field("fecha", date),
