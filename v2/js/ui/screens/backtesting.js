@@ -67,19 +67,19 @@ export async function renderBacktesting(ctx) {
   return [
     quickBacktest(ctx),
     el("section", { className: "panel" }, [
-      dataToolbar({
+      el("div", { className: "bt-summary" }, [
+        summary("Registros", genuine.length, "Pruebas históricas"),
+        summary("Cerrados", stats.nClosed, "Con resultado registrado"),
+        summary("Expectativa", fmtR(stats.expectancyR), `Calculada con ${stats.nR} R válidos`),
+      ]),
+      el("details", { className: "bt-data" }, [el("summary", { text: "Estadísticas, importar y exportar" }), dataToolbar({
         kind: "backtests",
         stageId: ctx.stage.id,
         getData: async () => ({ trades: genuine, studies: studies.filter((o) => !isTestRecord(o)), accounts: [] }),
         extra: [
           el("button", { type: "button", className: "tool-btn is-quiet", onclick: () => go("numeros?universe=BACKTEST&excludeTest=1") }, [el("span", { text: "Estadísticas" })]),
         ],
-      }),
-      el("div", { className: "bt-summary" }, [
-        summary("Registros", genuine.length, "Pruebas históricas"),
-        summary("Cerrados", stats.nClosed, "Con resultado registrado"),
-        summary("Expectativa", fmtR(stats.expectancyR), `Calculada con ${stats.nR} R válidos`),
-      ]),
+      })]),
     ]),
     importer.panel,
     el("section", { className: "panel bt-register" }, [
@@ -88,14 +88,12 @@ export async function renderBacktesting(ctx) {
           el("h2", { text: "Historial de backtests" }),
           el("p", { className: "hint", text: "Abrí un registro para revisarlo y ver sus capturas." }),
         ]),
-        el("button", { type: "button", className: "ghost", text: "Nuevo backtest", onclick: action }),
       ]),
       genuine.length
         ? el("div", { className: "bt-list" }, genuine.map(tradeRow))
         : el("div", { className: "empty-block" }, [
           el("p", { className: "empty", text: "Todavía no tenés backtests registrados." }),
-          el("p", { className: "hint", text: "Empezá con el activo y la dirección. Elegí el resultado y guardá en un clic." }),
-          el("button", { type: "button", text: "Registrar primer backtest", onclick: action }),
+          el("p", { className: "hint", text: "Cargá el primero en el formulario de arriba (o con la tecla B)." }),
         ]),
       qa,
       el("div", { className: "bt-json-import" }, [importer.button, el("span", { className: "hint", text: "¿Tenés un JSON o ZIP con capturas? Usá este importador." })]),

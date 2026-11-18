@@ -470,7 +470,7 @@ export async function renderNuevoTrade(ctx) {
       ]),
       closedBlock,
       evidence,
-      processSection,
+      el("details", { className: "trade-optional" }, [el("summary", { text: "Proceso y emociones (opcional): setup, plan, confluencias, cómo estabas, errores" }), processSection]),
       extra,
       hint,
       err,
