@@ -136,3 +136,4 @@ body[data-route="hoy"] .top-quick { visibility: hidden; }
 .parte-list li.is-high strong { color: #f19a97; }
 .parte a { color: var(--gold, #d4a94a); }
 .parte-sources { word-break: break-word; }
+.prep-bias{display:flex;align-items:center;gap:10px;margin:6px 0 8px}.prep-bias select{max-width:200px}

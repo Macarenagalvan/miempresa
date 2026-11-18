@@ -2,6 +2,7 @@ import { uiLabel } from '../labels.js';
 import { listStageAccounts, getActiveAccount } from "../../domain/account.js";
 import { field } from "../forms/observation.js";
 import { resultCharts, label } from "../journal-insights.js";
+import { getAllPrep } from "../../domain/day-prep.js";
 import { el } from "../render.js";
 import { listTrades } from "../../storage/repos/trades.js";
 import { listSignals } from "../../storage/repos/signals.js";
@@ -165,7 +166,7 @@ export async function renderNumeros(ctx) {
         metric("Máx. ganadas seguidas", stats.maxConsecWins),
         metric("Máx. perdidas seguidas", stats.maxConsecLosses),
       ]),
-      !mixed ? resultCharts(allTrades, filters, currency) : null,
+      !mixed ? resultCharts(allTrades, filters, currency, await getAllPrep()) : null,
       el("p", { className: "hint", text: "R mide el resultado respecto del riesgo inicial. Si falta ese dato, se muestra —; no impide calcular el saldo ni el resultado neto." }),
     ]),
   ];

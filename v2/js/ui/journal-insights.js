@@ -30,7 +30,9 @@ export function curve(title, points, unit, caption) {
  host.append(svg,el('div',{className:'journal-chart-labels'},[el('span',{text:points[0].date+' · '+money(values[0],unit)}),el('strong',{text:points.at(-1).date+' · '+money(values.at(-1),unit)})]));
  return host;
 }
-export function resultCharts(trades, filters, currency = '') {
+export function resultCharts(trades, filters, currency = '', prep = null) {
+ const dayOf=t=>{const d=new Date(t.openedAt||t.closedAt||0);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+ const prepKey=(field,yes,no)=>t=>{const r=prep&&prep[dayOf(t)];return r?(r[field]?yes:no):null;};
  const closed=filterTrades(trades,filters).filter(t=>t.lifecycle==='CLOSED'&&!t.isDraft&&t.netPnl!=null).sort((a,b)=>String(a.closedAt).localeCompare(String(b.closedAt)));
  let total=0;const points=[{date:'Inicio del período',value:0},...closed.map(t=>({date:t.closedAt.slice(0,10),value:(total+=Number(t.netPnl))}))];
  const decidedAll=filterTrades(trades,filters).filter(t=>t.lifecycle==='CLOSED'&&!t.isDraft);
@@ -44,7 +46,7 @@ export function resultCharts(trades, filters, currency = '') {
    return el('div',{className:'journal-bar'},[el('strong',{text:k}),progress,el('span',{text:(decided?pct.toFixed(0)+'%':'—')+' · '+rows.length+' ops'+(avg==null?'':' · '+(avg>0?'+':'')+avg.toFixed(2)+'R')})]);
   })]);
  }
- return el('div',{className:'journal-analysis'},[curve('Evolución del resultado neto',points,currency,'Resultado acumulado de las operaciones seleccionadas; no incluye depósitos ni retiros.'),decidedAll.length?el('div',{className:'journal-two'},[bars('¿Seguiste el plan?',t=>t.process?.plan,k=>labelOf(PLAN,k)),bars('Por tipo de setup',t=>t.process?.family,k=>labelOf(FAMILIES,k)),bars('Cómo estabas al entrar',t=>t.process?.emotion,k=>labelOf(EMOTIONS,k)),bars('Errores marcados',t=>t.process?.errors,k=>labelOf(ERRORS,k)),bars('Por sesión',t=>t.session,sessionLabel),bars('Por hora de entrada (Italia)',t=>t.openedAt?String(new Date(t.openedAt).getHours()).padStart(2,'0')+':00':null),bars('Por activo',t=>t.asset),bars('Por dirección',t=>t.direction,k=>label(k))]):el('p',{className:'empty',text:'Sin operaciones para estos filtros.'})]);
+ return el('div',{className:'journal-analysis'},[curve('Evolución del resultado neto',points,currency,'Resultado acumulado de las operaciones seleccionadas; no incluye depósitos ni retiros.'),decidedAll.length?el('div',{className:'journal-two'},[bars('Días con yoga',prepKey('yoga','Con yoga','Sin yoga')),bars('Días con meditación',prepKey('meditation','Medité','No medité')),bars('Sesgo del día',t=>{const r=prep&&prep[dayOf(t)];return r&&r.bias?r.bias:null;},k=>({BULL:'Alcista',BEAR:'Bajista',RANGE:'Rango'})[k]||k),bars('¿Seguiste el plan?',t=>t.process?.plan,k=>labelOf(PLAN,k)),bars('Por tipo de setup',t=>t.process?.family,k=>labelOf(FAMILIES,k)),bars('Cómo estabas al entrar',t=>t.process?.emotion,k=>labelOf(EMOTIONS,k)),bars('Errores marcados',t=>t.process?.errors,k=>labelOf(ERRORS,k)),bars('Por sesión',t=>t.session,sessionLabel),bars('Por hora de entrada (Italia)',t=>t.openedAt?String(new Date(t.openedAt).getHours()).padStart(2,'0')+':00':null),bars('Por activo',t=>t.asset),bars('Por dirección',t=>t.direction,k=>label(k))]):el('p',{className:'empty',text:'Sin operaciones para estos filtros.'})]);
 }
 export async function accountOverview(ctx, compact=false){
  const accounts=await listStageAccounts(ctx.stage.id), active=await getActiveAccount(), trades=await listTrades(),movements=await listMovements();
