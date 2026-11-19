@@ -67,8 +67,7 @@ const server = http.createServer((req, res) => {
       const file = page.locator('.captures input[type=file]');
       const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=', 'base64');
       await file.setInputFiles({ name: 'captura-test.png', mimeType: 'image/png', buffer: png });
-      const add = page.locator('.captures button').filter({ hasText: /Añadir imagen/ });
-      await add.click();
+      // Elegir el archivo ya guarda la imagen (no hay botón aparte).
       await page.waitForFunction(expected => document.querySelectorAll('.thumb-card').length === expected, expectedImages + 1);
       await page.reload(); await page.locator('.thumb-card').first().waitFor();
       if (await page.locator('.thumb-card').count() !== expectedImages + 1) throw new Error('Captura posterior no persistió');

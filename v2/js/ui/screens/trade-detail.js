@@ -176,52 +176,70 @@ async function renderCard(trade, setup, asr) {
 }
 
 function renderCaptures(trade, images, err) {
-  const file = el("input", { className: "input", type: "file", accept: "image/png,image/jpeg,image/webp" });
+  // Se guarda al elegir, pegar o arrastrar, y se actualiza en el lugar (sirve también dentro de «Editar»).
+  const file = el("input", { className: "input", type: "file", accept: "image/png,image/jpeg,image/webp", multiple: true });
+  file.multiple = true;
   file.setAttribute("name", "trade-image");
-  const add = el("button", { type: "button", text: "Añadir imagen" });
-  add.addEventListener("click", async () => {
+  const box = el("div", { className: "captures" });
+  const list = el("div", {});
+  const status = el("p", { className: "hint", role: "status", text: "" });
+  let saving = false;
+  async function paintList(current) {
+    const atts = current || await listTradeImages(trade.id);
+    const thumbs = atts.map((att) => {
+      const src = att.blob ? URL.createObjectURL(att.blob) : "";
+      const img = el("img", { className: "thumb", alt: att.name || "captura" });
+      if (src) img.src = src;
+      img.addEventListener("click", () => {
+        if (src) window.open(src, "_blank");
+      });
+      const del = el("button", { type: "button", className: "ghost", text: "Quitar" });
+      del.addEventListener("click", async () => {
+        err.textContent = "";
+        try {
+          await removeAttachment(att.id);
+          await paintList();
+        } catch (e) {
+          err.textContent = e.message;
+        }
+      });
+      return el("div", { className: "thumb-card", "data-att": att.id }, [
+        img,
+        el("p", { className: "meta", text: (att.phase === "BEFORE" ? "ANTES · " : att.phase === "AFTER" ? "DESPUÉS · " : "") + (att.name || "captura") }),
+        del,
+      ]);
+    });
+    list.replaceChildren(atts.length ? el("div", { className: "thumb-row" }, thumbs) : el("p", { className: "meta", text: "Sin capturas." }));
+  }
+  file.addEventListener("change", async () => {
+    const picked = [...(file.files || [])];
+    if (!picked.length || saving) return;
+    saving = true;
     err.textContent = "";
-    const picked = file.files && file.files[0];
-    if (!picked) {
-      err.textContent = "elegí una imagen";
-      return;
-    }
+    status.textContent = "Guardando imagen…";
     try {
-      await addTradeImage(trade.id, picked);
-      go("trade/" + trade.id);
+      for (const f of picked) await addTradeImage(trade.id, f);
+      status.textContent = picked.length === 1 ? "Imagen guardada." : picked.length + " imágenes guardadas.";
     } catch (e) {
       err.textContent = e.message;
+      status.textContent = "";
+    } finally {
+      saving = false;
+      const dt = new DataTransfer();
+      file.files = dt.files;
+      file.dispatchEvent(new Event("change", { bubbles: true }));
+      await paintList();
     }
   });
-  const thumbs = images.map((att) => {
-    const src = att.blob ? URL.createObjectURL(att.blob) : "";
-    const img = el("img", { className: "thumb", alt: att.name || "captura" });
-    if (src) img.src = src;
-    img.addEventListener("click", () => {
-      if (src) window.open(src, "_blank");
-    });
-    const del = el("button", { type: "button", className: "ghost", text: "Quitar" });
-    del.addEventListener("click", async () => {
-      err.textContent = "";
-      try {
-        await removeAttachment(att.id);
-        go("trade/" + trade.id);
-      } catch (e) {
-        err.textContent = e.message;
-      }
-    });
-    return el("div", { className: "thumb-card", "data-att": att.id }, [
-      img,
-      el("p", { className: "meta", text: (att.phase === "BEFORE" ? "ANTES · " : att.phase === "AFTER" ? "DESPUÉS · " : "") + (att.name || "captura") }),
-      del,
-    ]);
-  });
-  return el("div", { className: "captures" }, [
+  paintList(images);
+  box.replaceChildren(
     el("p", { className: "kicker", text: "Capturas / Imágenes" }),
-    images.length ? el("div", { className: "thumb-row" }, thumbs) : el("p", { className: "meta", text: "Sin capturas." }),
-    captureDrop(file, { label: "Agregar captura", onAdded: () => add.click() }),
-    el("p", { className: "hint", text: "Pegá con Ctrl+V o arrastrá: se agrega sola. PNG, JPEG o WEBP, máx 8 MB. Local en este dispositivo." }),
-  ]);
+    list,
+    captureDrop(file, { label: "Agregar captura" }),
+    status,
+    el("p", { className: "hint", text: "Pegá con Ctrl+V, arrastrá o hacé clic para elegir: se guarda sola. PNG, JPEG o WEBP, máx 8 MB. Local en este dispositivo." }),
+  );
+  return box;
 }
 
 function origenLine(trade) {
@@ -353,7 +371,7 @@ function renderEdit(trade, target = "DRAFT") {
     el("p", { className: "hint", text: "Las horas se interpretan en la zona del dispositivo: " + Intl.DateTimeFormat().resolvedOptions().timeZone }),
     el("p", { className: "hint", text: draft ? "Completá el borrador a tu ritmo. Guardar cambios no lo convierte en una operación ejecutada."
       : execEditable ? "Podés corregir cualquier dato. El resultado (WIN / LOSS / BE) se recalcula con el neto."
-      : isMt5Trade(trade) ? "Importada de MT5: precios, fechas y neto vienen del broker y no se tocan. Podés completar el análisis y la gestión."
+      : isMt5Trade(trade) ? "Importada de " + (trade.sourceRef?.broker || "MT5") + ": precios, fechas y neto vienen del broker y no se tocan. Podés completar el análisis y la gestión."
       : "Los precios y las fechas de ejecución se conservan. Podés completar el análisis y la gestión." }),
     execEditable ? tradeSection("1. Ejecución", [
       field("Activo", assetEdit),
@@ -398,6 +416,7 @@ function renderEdit(trade, target = "DRAFT") {
   if (trade.lifecycle === Lifecycle.CLOSED) nodes.push(field("Tipo de cierre", closeType));
   nodes.push(err);
   nodes.push(el("div", { className: "row-actions" }, [save, cancel]));
+  nodes.push(renderCaptures(trade, null, err));
   return [el("section", { className: "panel form trade-form" }, nodes)];
 }
 
