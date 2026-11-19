@@ -3,7 +3,7 @@ import { ensureJournalSeed } from '../js/domain/stage.js';
 import { createAccount, balanceFor } from '../js/domain/account.js';
 import { listTrades } from '../js/storage/repos/trades.js';
 import { isTradovatePerformanceCsv, parseTradovateMoney, mapTradovateSymbol, parseTradovatePerformance, tradovateRowToDraft } from '../js/adapters/tradovate.js';
-import { previewTradovateCsv, syncTradovateCsv } from '../js/domain/tradovate-import.js';
+import { previewTradovateCsv, syncTradovateCsv, tradovateCommissionSummary, applyTradovateCommissions } from '../js/domain/tradovate-import.js';
 import { renderImportar } from '../js/ui/screens/importar.js';
 
 // Datos sintéticos con la forma del CSV de Desempeño de Tradovate.
@@ -59,7 +59,26 @@ export async function run() {
   let tz = false; try { await previewTradovateCsv(csv(ROWS), { ...src, timeZone: 'Asia/Tokyo' }); } catch { tz = true; }
   check(tz, 'rechaza horario no permitido');
 
+  // Comisiones sobre trades ya importados (cuenta importada sin comisión).
+  const raw = await createAccount({ name: 'TEST Tradovate sin comisión', context: 'LIVE', currency: 'USD', initialAmount: 25000 }, stage.id);
+  await syncTradovateCsv(csv(ROWS), stage.id, { accountId: raw.id, context: 'LIVE', timeZone: 'Europe/Rome' });
+  let sum = await tradovateCommissionSummary(raw.id);
+  check(sum.length === 2 && sum.find(r => r.asset === 'MNQ').contracts === 5 && sum.find(r => r.asset === 'MNQ').commission === 0, 'resumen por activo sin comisión');
+  check(await balanceFor(raw.id) === 25025, 'sin comisión el saldo usa el bruto');
+  const ap = await applyTradovateCommissions(raw.id, { MNQ: '1', MGC: '1,60' });
+  check(ap.updated === 5 && Math.abs(await balanceFor(raw.id) - (25025 - 5 - 1.6)) < 1e-9, 'aplica comisión por activo y actualiza saldo');
+  const be = (await listTrades()).find(t => t.accountId === raw.id && t.sourceRef.grossPnl === 0);
+  check(be.result === 'LOSS' && be.netPnl === -1 && be.commission === -1, 'trade en cero con comisión pasa a pérdida');
+  check((await applyTradovateCommissions(raw.id, { MNQ: '1', MGC: '1.6' })).updated === 0, 'reaplicar lo mismo no cambia nada');
+  await applyTradovateCommissions(raw.id, { MNQ: '1.25' });
+  sum = await tradovateCommissionSummary(raw.id);
+  check(sum.find(r => r.asset === 'MNQ').feePerContract === 1.25 && sum.find(r => r.asset === 'MGC').commission === -1.6, 'cambia un activo y deja el otro');
+  let badFee = false; try { await applyTradovateCommissions(raw.id, { MNQ: '-1' }); } catch { badFee = true; }
+  check(badFee, 'rechaza comisión negativa');
+
   const nodes = await renderImportar({ stage, route: { query: {} } });
   check(nodes[0].id === 'importar-tradovate' && nodes[0].querySelector('input[name="tv-report"]'), 'pantalla Importar muestra Tradovate');
+  const withFees = await renderImportar({ stage, route: { query: { account: raw.id } } });
+  check(withFees[0].querySelector('input[name="tv-fee-MGC"]')?.value === '1.6', 'pantalla muestra comisiones de la cuenta');
   document.getElementById('out').textContent += '\nTradovate: ' + n + ' tests OK';
 }

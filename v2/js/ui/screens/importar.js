@@ -12,7 +12,7 @@ import { go } from '../router.js';
 import { importPreference,saveImportPreference } from '../../domain/import-preferences.js';
 import { TRADOVATE_SOURCE_TIMEZONES } from '../../config.js';
 import { isTradovatePerformanceCsv } from '../../adapters/tradovate.js';
-import { previewTradovateCsv, syncTradovateCsv } from '../../domain/tradovate-import.js';
+import { previewTradovateCsv, syncTradovateCsv, tradovateCommissionSummary, applyTradovateCommissions } from '../../domain/tradovate-import.js';
 
 export async function renderImportar(ctx){
  const accounts=await listStageAccounts(ctx.stage.id),active=await getActiveAccount();let meta=await getMeta();
@@ -111,6 +111,7 @@ async function tradovatePanel(ctx, accounts, active) {
  let pending = null, version = 0, busy = false;
  const invalidate = () => { version++; pending = null; confirm.disabled = true; preview.replaceChildren(); err.textContent = ''; };
  for (const c of [account, zone]) c.addEventListener('change', () => { invalidate(); file.value = ''; });
+ account.addEventListener('change', () => refreshFees());
  fee.addEventListener('input', () => { invalidate(); file.value = ''; });
  const feeValue = () => { const raw = String(fee.value || '').trim().replace(',', '.'); if (!raw) return null; const n = Number(raw); if (!Number.isFinite(n) || n < 0) throw new Error('La comisión tiene que ser un número mayor o igual a 0.'); return n; };
  const drop = el('div', { className: 'import-drop', tabindex: '0', 'aria-label': 'Arrastrá aquí el CSV de Desempeño de Tradovate' }, [el('strong', { text: 'Arrastrá aquí el CSV de Desempeño' }), el('p', { className: 'hint', text: 'O elegilo desde tu computadora. Primero indicá la cuenta.' }), file]);
@@ -154,13 +155,44 @@ async function tradovatePanel(ctx, accounts, active) {
    const current = await getMeta(); await putMeta({ ...current, tradovateImport: { timeZone: pending.options.timeZone, fee: pending.options.feePerContract ?? '' } });
    await setActiveAccount(pending.options.accountId);
    preview.replaceChildren(el('h2', { text: result.created + ' operaciones importadas' }), el('p', { text: result.duplicates + ' ya estaban cargadas. Tus resultados y el saldo ya están actualizados.' }), el('div', { className: 'journal-actions' }, [link('Ver operaciones', 'historial?account=' + pending.options.accountId), link('Ver estadísticas', 'numeros?account=' + pending.options.accountId + '&universe=' + (pending.options.context === 'DEMO' ? 'DEMO' : 'REAL')), link('Ver saldo', 'cuentas?account=' + pending.options.accountId)]));
-   pending = null; file.value = '';
+   pending = null; file.value = ''; refreshFees();
   } catch (e) { err.textContent = 'No se completó la importación: ' + e.message + '. Revisá el historial antes de repetir; los trades ya guardados se omitirán.'; pending = null; file.value = ''; }
   finally { busy = false; account.disabled = zone.disabled = fee.disabled = file.disabled = false; }
  });
+ // Comisiones de trades ya importados: neto = P&L bruto de Tradovate − comisión × contratos.
+ const feesBox = el('div', { className: 'tv-fees', id: 'tradovate-comisiones' });
+ async function refreshFees() {
+  const acc = accounts.find(a => a.id === account.value);
+  if (!acc) { feesBox.replaceChildren(); return; }
+  const rows = await tradovateCommissionSummary(acc.id);
+  if (!rows.length) { feesBox.replaceChildren(); return; }
+  const cur = acc.currency || 'USD', inputs = {}, msg = el('p', { role: 'status', className: 'hint' }), ferr = el('p', { className: 'err', role: 'alert' });
+  const total = el('strong', {});
+  const calc = () => { let net = 0; try { for (const r of rows) { const raw = String(inputs[r.asset].value || '').trim().replace(',', '.'); const f = raw === '' ? null : Number(raw); if (f != null && (!Number.isFinite(f) || f < 0)) throw new Error('Comisión inválida en ' + r.asset); net += f == null ? r.net : r.gross - f * r.contracts; } ferr.textContent = ''; total.textContent = 'Neto con estas comisiones: ' + money(Math.round(net * 100) / 100, cur); } catch (e) { ferr.textContent = e.message; total.textContent = ''; } };
+  const table = el('table', { className: 'journal-table' });
+  table.append(el('tr', {}, ['Activo', 'Trades', 'Contratos', 'Bruto', 'Comisión actual', 'Neto actual', 'Comisión por contrato (USD)'].map(text => el('th', { text }))));
+  for (const r of rows) {
+   inputs[r.asset] = el('input', { className: 'input', name: 'tv-fee-' + r.asset, inputmode: 'decimal', placeholder: 'Ej.: 1.00', value: r.commission && !r.mixed ? String(r.feePerContract) : '' });
+   inputs[r.asset].addEventListener('input', calc);
+   table.append(el('tr', {}, [el('td', { text: r.asset }), el('td', { text: String(r.trades) }), el('td', { text: String(r.contracts) }), el('td', { text: money(r.gross, cur) }), el('td', { text: r.mixed ? 'varía' : money(r.commission, cur) }), el('td', { text: money(r.net, cur) }), el('td', {}, [inputs[r.asset]])]));
+  }
+  const apply = el('button', { type: 'button', text: 'Aplicar comisiones' });
+  apply.addEventListener('click', async () => {
+   apply.disabled = true; msg.textContent = '';
+   try {
+    const fees = Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value]));
+    const res = await applyTradovateCommissions(acc.id, fees);
+    await refreshFees();
+    feesBox.querySelector('[role=status]').textContent = res.updated + ' trades actualizados' + (res.unchanged ? ' · ' + res.unchanged + ' ya estaban así' : '') + '. El saldo y las estadísticas ya usan el neto.';
+   } catch (e) { ferr.textContent = e.message; apply.disabled = false; }
+  });
+  calc();
+  feesBox.replaceChildren(el('h2', { text: 'Comisiones de trades ya importados' }), el('p', { className: 'hint', text: 'Para ' + acc.name + '. El neto se recalcula desde el P&L bruto de Tradovate, así que podés corregirlo las veces que quieras. Dejá vacío un activo para no tocarlo.' }), el('div', { className: 'table-wrap' }, [table]), total, ferr, apply, msg);
+ }
+ await refreshFees();
  return el('section', { className: 'panel form', id: 'importar-tradovate' }, [el('p', { className: 'kicker', text: 'Tradovate → Journal → Resultados' }), el('h1', { text: 'Importar desde Tradovate' }), el('p', { className: 'meta', text: 'Para MNQ y demás futuros. Usá el CSV de Desempeño, que trae cada trade con entrada, salida, horario y P&L.' }),
   el('ol', { className: 'journal-guide' }, [el('li', { text: 'En Tradovate: Informes de cuenta → elegí la cuenta → pestaña Desempeño.' }), el('li', { text: 'En Fecha elegí el rango (De / Para), tocá Ir y después Descargar CSV.' }), el('li', { text: 'Aquí: elegí la misma cuenta, seleccioná el archivo, revisá y confirmá.' })]),
   !accounts.length ? el('p', {}, [el('span', { text: 'Todavía no tenés una cuenta. ' }), link('Crear cuenta', 'cuentas/nueva')]) : null,
   field('1. Cuenta destino', account), field('Horario del archivo', zone), el('p', { className: 'hint', text: 'Tradovate exporta con el horario de tu navegador; si operás desde Italia, dejá Europe/Rome.' }),
-  field('Comisión por contrato, ida y vuelta (USD, opcional)', fee), field('2. CSV de Desempeño', drop), err, preview, confirm].filter(Boolean));
+  field('Comisión por contrato, ida y vuelta (USD, opcional)', fee), field('2. CSV de Desempeño', drop), err, preview, confirm, feesBox].filter(Boolean));
 }
