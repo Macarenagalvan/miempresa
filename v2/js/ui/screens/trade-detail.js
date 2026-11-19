@@ -229,6 +229,10 @@ function origenLine(trade) {
     return `origen JSON · ${trade.sourceRef.importId} · resultado declarado: ${trade.sourceRef.declaredResult || "sin completar"}`;
   }
   const pos = trade.sourceRef && trade.sourceRef.mt5Position;
+  if (trade.sourceRef?.kind === "TRADOVATE_PERFORMANCE") {
+    const gross = trade.sourceRef.grossPnl;
+    return `origen Tradovate · ejecuciones ${trade.sourceRef.buyFillId} / ${trade.sourceRef.sellFillId}` + (gross != null ? ` · P&L bruto ${gross}` : "");
+  }
   if (trade.recordSource === "MT5_EA") {
     return `origen MT5_EA · position ${pos || "—"}`;
   }

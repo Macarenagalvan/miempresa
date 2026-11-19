@@ -46,7 +46,11 @@ export const MT5_SOURCE_TIMEZONES = Object.freeze([
   "Europe/Rome",
   "Europe/London",
   "America/New_York",
+  "America/Chicago",
 ]);
+
+// Tradovate: horario en que vienen los CSV de Desempeño (por defecto, el del navegador).
+export const TRADOVATE_SOURCE_TIMEZONES = Object.freeze(["Europe/Rome", "America/Chicago", "America/New_York", "UTC"]);
 
 export const MT5_BROKER_SYMBOL_MAP = Object.freeze({
   NDXUSD: "NAS100",

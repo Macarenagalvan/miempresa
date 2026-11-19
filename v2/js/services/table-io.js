@@ -52,6 +52,7 @@ function originLabel(t) {
   if (t.sourceRef?.sessionDate) return "Carga rápida";
   if (t.sourceRef?.kind === "BACKTEST_JSON") return "JSON";
   if (t.sourceRef?.kind === "TABLE_IMPORT") return "CSV / Excel";
+  if (t.sourceRef?.kind === "TRADOVATE_PERFORMANCE") return "Tradovate";
   if (t.recordSource === "MT5_EA" || t.sourceRef?.mt5Position) return "MT5";
   return "Manual";
 }

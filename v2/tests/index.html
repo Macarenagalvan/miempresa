@@ -54,6 +54,7 @@
     import { run as runMt5Html } from "./mt5-html.test.js";
     import { run as runDeleteEntity } from "./delete-entity.test.js";
     import { run as runImportPreferences } from "./import-preferences.test.js";
+    import { run as runTradovate } from "./tradovate-import.test.js";
     import { run as runP0 } from "./p0-studies.test.js";
     import { run as runP01 } from "./p01-security.test.js";
     import { run as runP02 } from "./p02-local-mode.test.js";
@@ -108,6 +109,7 @@
       .then(() => runParte())
       .then(() => runPrep())
       .then(() => runImportPreferences())
+      .then(() => runTradovate())
       .then(() => runP0())
       .then(() => runP01())
       .then(() => runP02())
