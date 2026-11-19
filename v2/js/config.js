@@ -54,6 +54,18 @@ export const TRADOVATE_SOURCE_TIMEZONES = Object.freeze(["Europe/Rome", "America
 
 export const MT5_BROKER_SYMBOL_MAP = Object.freeze({
   NDXUSD: "NAS100",
+  NAS100: "NAS100",
+  NAS100FT: "NAS100",
+  USTEC: "NAS100",
+  US100: "NAS100",
+  GER40: "GER40",
+  GER40FT: "GER40",
+  DE40: "GER40",
+  DJ30: "DJ30",
+  DJ30FT: "DJ30",
+  US30: "DJ30",
+  SP500FT: "SP500",
+  XAGUSD: "XAGUSD",
   EURUSD: "EURUSD",
   EURUSDC: "EURUSD",
   "EURUSD.C": "EURUSD",

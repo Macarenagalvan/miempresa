@@ -12,6 +12,7 @@ import { go } from '../router.js';
 import { importPreference,saveImportPreference } from '../../domain/import-preferences.js';
 import { TRADOVATE_SOURCE_TIMEZONES } from '../../config.js';
 import { isTradovatePerformanceCsv } from '../../adapters/tradovate.js';
+import { previewVantagePaste, syncVantagePaste } from '../../domain/vantage-import.js';
 import { previewTradovateCsv, syncTradovateCsv, tradovateCommissionSummary, applyTradovateCommissions } from '../../domain/tradovate-import.js';
 
 export async function renderImportar(ctx){
@@ -89,7 +90,7 @@ export async function renderImportar(ctx){
   }catch(e){err.textContent='No se completó la importación: '+e.message+'. Revisá el historial antes de repetir; las posiciones MT5 ya guardadas se omitirán.';pending=null;file.value='';}
   finally{busy=false;account.disabled=zone.disabled=file.disabled=broker.disabled=sourceLogin.disabled=saveSettings.disabled=false;}
  });
- return [await tradovatePanel(ctx,accounts,active),el('section',{className:'panel form'},[el('p',{className:'kicker',text:'MT5 → Journal → Resultados'}),el('h1',{text:'Importar operaciones'}),el('p',{className:'meta',text:'Subí el informe HTML de MT5 directamente. También podés usar el CSV del exportador MACA.'}),
+ return [await tradovatePanel(ctx,accounts,active),await vantagePanel(ctx,accounts,active),el('section',{className:'panel form'},[el('p',{className:'kicker',text:'MT5 → Journal → Resultados'}),el('h1',{text:'Importar operaciones'}),el('p',{className:'meta',text:'Subí el informe HTML de MT5 directamente. También podés usar el CSV del exportador MACA.'}),
   el('ol',{className:'journal-guide'},[el('li',{text:'En MT5: Historial → Todo el historial → Informe HTML.'}),el('li',{text:'Elegí aquí la cuenta y el horario del servidor del broker.'}),el('li',{text:'Seleccioná el archivo, revisá las posiciones y confirmá.'})]),
   !accounts.length?el('p',{},[el('span',{text:'Todavía no tenés una cuenta. '}),link('Crear cuenta','cuentas/nueva')]):null,
   field('1. Cuenta destino',account),deleteButton('account',()=>accounts.find(a=>a.id===account.value),'importar'),field('Broker / servidor (opcional)',broker),field('Número de cuenta MT5 (opcional)',sourceLogin),field('2. Zona horaria de MT5',zone),el('p',{className:'hint',text:'Es el horario del servidor, no el de tu computadora. Se recuerda por cuenta y origen; no se copia a otros brokers.'}),saveSettings,saved,field('3. Informe HTML o archivo CSV',drop),err,preview,confirm,
@@ -195,4 +196,63 @@ async function tradovatePanel(ctx, accounts, active) {
   !accounts.length ? el('p', {}, [el('span', { text: 'Todavía no tenés una cuenta. ' }), link('Crear cuenta', 'cuentas/nueva')]) : null,
   field('1. Cuenta destino', account), field('Horario del archivo', zone), el('p', { className: 'hint', text: 'Tradovate exporta con el horario de tu navegador; si operás desde Italia, dejá Europe/Rome.' }),
   field('Comisión por contrato, ida y vuelta (USD, opcional)', fee), field('2. CSV de Desempeño', drop), err, preview, confirm, feesBox].filter(Boolean));
+}
+
+// ---------- Vantage (texto copiado de «Historial de posiciones» del portal) ----------
+async function vantagePanel(ctx, accounts, active) {
+ const meta = await getMeta();
+ const account = el('select', { className: 'input', name: 'vt-account' }, [el('option', { value: '', text: 'Elegí la cuenta destino' }), ...accounts.map(a => el('option', { value: a.id, text: a.name + ' · ' + label(a.context) }))]);
+ account.value = ctx.route.query.account || active?.id || (accounts.length === 1 ? accounts[0].id : '');
+ const zone = el('select', { className: 'input', name: 'vt-zone' }, MT5_SOURCE_TIMEZONES.map(z => el('option', { value: z, text: z === 'Europe/Athens' ? 'Europe/Athens (servidor de Vantage, GMT+2)' : z })));
+ zone.value = MT5_SOURCE_TIMEZONES.includes(meta?.vantageImport?.timeZone) ? meta.vantageImport.timeZone : 'Europe/Athens';
+ const text = el('textarea', { className: 'input', name: 'vt-text', rows: 10, placeholder: 'Pegá aquí lo que copiaste de Historial de posiciones (Buy / NAS100 / 0.1/0.1 / precios / P&L / fechas / #posición / Cerrado…)' });
+ const review = el('button', { type: 'button', className: 'ghost', text: 'Revisar' });
+ const preview = el('div', { 'aria-live': 'polite' }), err = el('p', { className: 'err', role: 'alert' });
+ const confirm = el('button', { type: 'button', text: 'Importar operaciones de Vantage', disabled: true }); confirm.disabled = true;
+ let pending = null, version = 0, busy = false;
+ const invalidate = () => { version++; pending = null; confirm.disabled = true; preview.replaceChildren(); err.textContent = ''; };
+ for (const c of [account, zone]) c.addEventListener('change', invalidate);
+ text.addEventListener('input', invalidate);
+ review.addEventListener('click', async () => {
+  if (busy) return; invalidate();
+  const v = version, acc = accounts.find(a => a.id === account.value);
+  try {
+   if (!acc) throw new Error('Primero elegí la cuenta destino.');
+   if (!String(text.value || '').trim()) throw new Error('Pegá el historial de posiciones.');
+   const options = { accountId: acc.id, context: acc.context, timeZone: zone.value };
+   const result = await previewVantagePaste(text.value, options); if (v !== version) return;
+   if (!result.read) throw new Error('No encontré posiciones en el texto. Copiá desde Historial de posiciones (desde el primer Buy/Sell hasta el último «Cerrado»).');
+   const cur = acc.currency || 'USD';
+   const cents = result.drafts.reduce((s, t) => s + Math.round(t.netPnl * 100), 0) / 100;
+   const acknowledge = el('input', { type: 'checkbox', 'aria-label': 'Confirmo que el historial es de esta cuenta' });
+   const ready = () => result.invalid === 0 && result.created > 0 && acknowledge.checked;
+   acknowledge.addEventListener('change', () => confirm.disabled = !ready());
+   const table = el('table', { className: 'journal-table' });
+   table.append(el('tr', {}, ['Apertura (servidor)', 'Activo', 'Dirección', 'Lote', 'Entrada', 'Salida', 'Neto'].map(t => el('th', { text: t }))));
+   for (const t of result.drafts.slice(0, 300)) table.append(el('tr', {}, [t.sourceRef.openedWall.replace('T', ' '), t.asset, t.direction, String(t.lots), String(t.entry), String(t.exit), money(t.netPnl, cur)].map(x => el('td', { text: x }))));
+   preview.replaceChildren(...[el('h2', { text: 'Revisá antes de guardar' }), el('p', { text: acc.name + ' · ' + zone.value }),
+    el('div', { className: 'journal-kpis' }, [el('strong', { text: result.created + ' nuevas' }), el('strong', { text: result.duplicates + ' ya cargadas' }), el('strong', { text: result.invalid + ' inválidas' }), el('strong', { text: 'Neto nuevo: ' + money(cents, cur) })]),
+    result.truncated ? el('p', { className: 'err', text: 'El final del texto quedó cortado (' + result.truncated + ' posición incompleta). Esa no se importa: copiala de nuevo junto con las que falten.' }) : null,
+    el('label', { className: 'journal-confirm' }, [acknowledge, el('span', { text: 'Confirmo que este historial es de ' + acc.name + '.' })]),
+    ...result.errors.map(e => el('p', { className: 'err', text: 'Posición ' + (e.id || '—') + (e.brokerSymbol ? ' (' + e.brokerSymbol + ')' : '') + ': ' + e.error })),
+    el('div', { className: 'table-wrap' }, [table]),
+    el('p', { className: 'hint', text: 'La dirección se toma al revés del lado de cierre (Buy = cerró un short). Las ya cargadas se omiten, así que podés pegar el historial entero cada vez.' })].filter(Boolean));
+   pending = { text: text.value, options }; confirm.disabled = !ready();
+  } catch (e) { if (v === version) { pending = null; err.textContent = e.message; } }
+ });
+ confirm.addEventListener('click', async () => {
+  if (!pending || busy || confirm.disabled) return; busy = true; confirm.disabled = true; account.disabled = zone.disabled = text.disabled = review.disabled = true;
+  try {
+   const result = await syncVantagePaste(pending.text, ctx.stage.id, pending.options);
+   const current = await getMeta(); await putMeta({ ...current, vantageImport: { timeZone: pending.options.timeZone } });
+   await setActiveAccount(pending.options.accountId);
+   preview.replaceChildren(el('h2', { text: result.created + ' operaciones importadas' }), el('p', { text: result.duplicates + ' ya estaban cargadas. Tus resultados y el saldo ya están actualizados.' }), el('div', { className: 'journal-actions' }, [link('Ver operaciones', 'historial?account=' + pending.options.accountId), link('Ver saldo', 'cuentas?account=' + pending.options.accountId)]));
+   pending = null; text.value = '';
+  } catch (e) { err.textContent = 'No se completó la importación: ' + e.message; pending = null; }
+  finally { busy = false; account.disabled = zone.disabled = text.disabled = review.disabled = false; }
+ });
+ return el('section', { className: 'panel form', id: 'importar-vantage' }, [el('p', { className: 'kicker', text: 'Vantage → Journal → Resultados' }), el('h1', { text: 'Pegar historial de Vantage' }), el('p', { className: 'meta', text: 'Para la cuenta de Vantage que no exporta archivo. Copiás el historial del portal y lo pegás acá.' }),
+  el('ol', { className: 'journal-guide' }, [el('li', { text: 'En el portal de Vantage: Web Trader → elegí la cuenta → abajo, Historial de posiciones.' }), el('li', { text: 'Seleccioná desde el primer Buy/Sell hasta el último «Cerrado» y copiá (Ctrl+C).' }), el('li', { text: 'Aquí: elegí la cuenta, pegá, tocá Revisar y confirmá.' })]),
+  field('1. Cuenta destino', account), field('Horario del servidor', zone), el('p', { className: 'hint', text: 'El portal muestra la hora del servidor (GMT+2 en invierno, GMT+3 en verano): Europe/Athens lo convierte bien.' }),
+  field('2. Historial copiado', text), review, err, preview, confirm]);
 }

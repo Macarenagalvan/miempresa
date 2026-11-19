@@ -233,6 +233,9 @@ function origenLine(trade) {
     const gross = trade.sourceRef.grossPnl;
     return `origen Tradovate · ejecuciones ${trade.sourceRef.buyFillId} / ${trade.sourceRef.sellFillId}` + (gross != null ? ` · P&L bruto ${gross}` : "");
   }
+  if (trade.sourceRef?.kind === "VANTAGE_POSITION_HISTORY") {
+    return `origen Vantage · posición ${pos || "—"}`;
+  }
   if (trade.recordSource === "MT5_EA") {
     return `origen MT5_EA · position ${pos || "—"}`;
   }
