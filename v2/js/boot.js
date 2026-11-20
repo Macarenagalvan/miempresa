@@ -10,6 +10,7 @@ import {
 } from "./services/sync-engine.js";
 import { paint, currentRoute, routeList, go } from "./ui/router.js";
 import { applyIdentity } from "./ui/identity.js";
+import { bindDecimalFix } from "./ui/decimal.js";
 
 function retireLegacyWorkers() {
   if (navigator.serviceWorker) {
@@ -63,6 +64,8 @@ function bindNav() {
   const backdrop = document.getElementById("nav-backdrop");
   if (backdrop) backdrop.addEventListener("click", closeNav);
 }
+
+bindDecimalFix();
 
 function bindQuickActions() {
   document.querySelectorAll("[data-go]").forEach((btn) => {

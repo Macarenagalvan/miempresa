@@ -14,6 +14,7 @@ import { toast } from "../feedback.js";
 import { captureDrop } from "../capture-drop.js";
 import { processFields } from "../forms/process-fields.js";
 import { planWarning } from "../plan-status.js";
+import { normalizeDecimal } from "../decimal.js";
 import { setTradeProcess, normalizeProcess } from "../../domain/process.js";
 
 const LAST_TRADE = "rgm.trade.last";
@@ -287,6 +288,7 @@ export async function renderNuevoTrade(ctx) {
     save.disabled = true;
     err.textContent = "";
     let persistedTrade = null;
+    for (const f of [entry, sl, tp, exit, net]) f.value = normalizeDecimal(f.value);
     try {
       const chosen = selectedCaptures();
       validateCaptures(chosen);
