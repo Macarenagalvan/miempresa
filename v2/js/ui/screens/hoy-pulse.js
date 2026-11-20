@@ -25,7 +25,7 @@ export async function hoyPulse(ctx) {
   const trades = (await listStageTrades(ctx.stage.id, { includeVoid: false })).filter((t) => !isTestRecord(t));
   const studies = (await listActiveObservations(ctx.stage.id)).filter((o) => o.studyOutcome && !isTestRecord(o));
   const records = [
-    ...trades.map((t) => ({ kind: t.context === "BACKTEST" ? "bt" : "trade", day: dayOf(t.createdAt), t })),
+    ...trades.map((t) => ({ kind: t.context === "BACKTEST" ? "bt" : "trade", day: dayOf(t.context === "BACKTEST" ? t.createdAt : (t.openedAt || t.createdAt)), t })),
     ...studies.map((o) => ({ kind: "nt", day: dayOf(o.createdAt), o })),
   ].filter((r) => r.day);
   const byDay = new Map();
