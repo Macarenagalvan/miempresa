@@ -26,15 +26,15 @@ export function normalizeRules(input = {}) {
   const ladder = [].concat(funded.ladder || []).map(pos).filter((v) => v != null && v > 0).slice(0, 6);
   return {
     maxIdeas: pos(input.maxIdeas), maxLosses: pos(input.maxLosses), signalsLimit: pos(input.signalsLimit),
-    prop: { risk: pos(prop.risk), dailyStop: pos(prop.dailyStop), dailyCap: pos(prop.dailyCap), weeklyStop: pos(prop.weeklyStop) },
-    own: { risk: pos(own.risk), dailyStop: pos(own.dailyStop) },
-    funded: { ladder, dropAfter: pos(funded.dropAfter) },
+    prop: { risk: pos(prop.risk), dailyStop: pos(prop.dailyStop), dailyCap: pos(prop.dailyCap), weeklyStop: pos(prop.weeklyStop), weeklyCap: pos(prop.weeklyCap) },
+    own: { risk: pos(own.risk), dailyStop: pos(own.dailyStop), weeklyStopPct: pos(own.weeklyStopPct), weeklyCapPct: pos(own.weeklyCapPct) },
+    funded: { ladder, dropAfter: pos(funded.dropAfter), weeklyStop: pos(funded.weeklyStop), weeklyCap: pos(funded.weeklyCap) },
   };
 }
 
 export function hasRules(r) {
   if (!r) return false;
-  const vals = [r.maxIdeas, r.maxLosses, r.signalsLimit, ...Object.values(r.prop), ...Object.values(r.own), r.funded.dropAfter];
+  const vals = [r.maxIdeas, r.maxLosses, r.signalsLimit, ...Object.values(r.prop), ...Object.values(r.own), r.funded.dropAfter, r.funded.weeklyStop, r.funded.weeklyCap];
   return vals.some((v) => v != null) || r.funded.ladder.length > 0;
 }
 
@@ -141,10 +141,18 @@ export function evaluateDay({ trades, accounts, rules, signals = [], now = new D
       }
       if (p.dailyStop != null) rows.push({ label: "Stop diario", value: day, limit: -p.dailyStop, state: day <= -p.dailyStop ? "stop" : day <= -p.dailyStop * 0.5 ? "warn" : "ok", why: `${acc.name}: tocaste el stop diario (−$${p.dailyStop}).` });
       if (p.dailyCap != null) rows.push({ label: "Techo diario", value: day, limit: p.dailyCap, state: day >= p.dailyCap ? "stop" : day >= p.dailyCap * 0.8 ? "warn" : "ok", why: `${acc.name}: llegaste al techo (+$${p.dailyCap}). Terminaste el día.` });
-      if (p.weeklyStop != null) rows.push({ label: "Stop semanal", value: week, limit: -p.weeklyStop, state: week <= -p.weeklyStop ? "stop" : week <= -p.weeklyStop * 0.5 ? "warn" : "ok", why: `${acc.name}: stop semanal (−$${p.weeklyStop}). El resto de la semana, solo backtest.` });
+      const funded = acc.context === "FUNDED";
+      const wStop = funded && rules.funded.weeklyStop != null ? rules.funded.weeklyStop : p.weeklyStop;
+      const wCap = funded && rules.funded.weeklyCap != null ? rules.funded.weeklyCap : p.weeklyCap;
+      if (wStop != null) rows.push({ label: "Stop semanal", value: week, limit: -wStop, state: week <= -wStop ? "stop" : week <= -wStop * 0.5 ? "warn" : "ok", why: `${acc.name}: stop semanal (−$${wStop}). El resto de la semana, solo backtest.` });
+      if (wCap != null) rows.push({ label: "Techo semanal", value: week, limit: wCap, state: week >= wCap ? "stop" : week >= wCap * 0.8 ? "warn" : "ok", why: `${acc.name}: llegaste al techo semanal (+$${wCap}). El resto de la semana, solo backtest.` });
     } else if (isOwn(acc)) {
       risk = rules.own.risk;
       if (rules.own.dailyStop != null) rows.push({ label: "Stop diario", value: day, limit: -rules.own.dailyStop, state: day <= -rules.own.dailyStop ? "stop" : day <= -rules.own.dailyStop * 0.5 ? "warn" : "ok", why: `${acc.name}: tocaste el stop diario (−$${rules.own.dailyStop}).` });
+      const base = Number(acc.initialAmount) || 0;
+      const money2 = (v) => "$" + v.toFixed(2).replace(/\.00$/, "");
+      if (base > 0 && rules.own.weeklyStopPct != null) { const lim = base * rules.own.weeklyStopPct / 100; rows.push({ label: "Stop semanal", value: week, limit: -lim, state: week <= -lim ? "stop" : week <= -lim * 0.5 ? "warn" : "ok", why: `${acc.name}: stop semanal (−${rules.own.weeklyStopPct}% ≈ −${money2(lim)}). El resto de la semana, solo backtest.` }); }
+      if (base > 0 && rules.own.weeklyCapPct != null) { const lim = base * rules.own.weeklyCapPct / 100; rows.push({ label: "Techo semanal", value: week, limit: lim, state: week >= lim ? "stop" : week >= lim * 0.8 ? "warn" : "ok", why: `${acc.name}: techo semanal (+${rules.own.weeklyCapPct}% ≈ +${money2(lim)}). El resto de la semana, solo backtest.` }); }
     } else continue;
     accRows.push({ account: acc, day, week, risk, riskNote, checks: rows });
   }
