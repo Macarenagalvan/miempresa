@@ -39,6 +39,19 @@ export async function run() {
   check(s.accounts.find((a) => a.account.id === "f").risk === 100, "escalón 2 tras 1 cobro");
   s = evaluateDay({ trades: [], accounts, rules, now, payoutsByChallenge: { c1: 5 } });
   check(s.accounts.find((a) => a.account.id === "f").risk === 125, "tope de la escalera");
+  // Techos y stops semanales nuevos
+  const r2 = normalizeRules({ prop: { weeklyStop: 400, weeklyCap: 750 }, funded: { weeklyStop: 300, weeklyCap: 500 }, own: { weeklyStopPct: 5, weeklyCapPct: 5 } });
+  const acc2 = [{ id: "a", name: "CH", context: "PROP_CHALLENGE" }, { id: "f", name: "FD", context: "FUNDED" }, { id: "v", name: "VT", context: "LIVE", initialAmount: 600 }];
+  s = evaluateDay({ trades: [tr("a", "MNQZ6", at(10, 0, 16), 760)], accounts: acc2, rules: r2, now });
+  check(s.closed && s.stops[0].includes("techo semanal"), "techo semanal challenge +750");
+  s = evaluateDay({ trades: [tr("f", "MNQZ6", at(10, 0, 16), 510)], accounts: acc2, rules: r2, now });
+  check(s.closed && s.stops[0].includes("+$500"), "techo semanal de la fondeada");
+  s = evaluateDay({ trades: [tr("f", "MNQZ6", at(10, 0, 16), -310)], accounts: acc2, rules: r2, now });
+  check(s.closed && s.stops[0].includes("−$300"), "stop semanal de la fondeada");
+  s = evaluateDay({ trades: [tr("v", "NAS100", at(10, 0, 16), 31)], accounts: acc2, rules: r2, now });
+  check(s.closed && s.stops[0].includes("+5%"), "techo semanal Vantage en %");
+  s = evaluateDay({ trades: [tr("v", "NAS100", at(10, 0, 16), -29)], accounts: acc2, rules: r2, now });
+  check(!s.closed, "Vantage −29 no llega al −5% de 600");
   // Sin regla = apagada
   s = evaluateDay({ trades: two, accounts, rules: normalizeRules({}), now });
   check(!s.closed && s.checks.length === 0, "reglas vacías no evalúan");

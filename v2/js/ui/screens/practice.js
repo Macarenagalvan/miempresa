@@ -15,10 +15,10 @@ function rulesPanel(rules) {
   const r = rules || normalizeRules({});
   const f = {
     maxIdeas: numInput('maxIdeas', r.maxIdeas), maxLosses: numInput('maxLosses', r.maxLosses), signalsLimit: numInput('signalsLimit', r.signalsLimit),
-    propRisk: numInput('propRisk', r.prop.risk), propStop: numInput('propStop', r.prop.dailyStop), propCap: numInput('propCap', r.prop.dailyCap), propWeek: numInput('propWeek', r.prop.weeklyStop),
-    ownRisk: numInput('ownRisk', r.own.risk), ownStop: numInput('ownStop', r.own.dailyStop),
+    propRisk: numInput('propRisk', r.prop.risk), propStop: numInput('propStop', r.prop.dailyStop), propCap: numInput('propCap', r.prop.dailyCap), propWeek: numInput('propWeek', r.prop.weeklyStop), propWeekCap: numInput('propWeekCap', r.prop.weeklyCap),
+    ownRisk: numInput('ownRisk', r.own.risk), ownStop: numInput('ownStop', r.own.dailyStop), ownWeekPct: numInput('ownWeekPct', r.own.weeklyStopPct), ownWeekCapPct: numInput('ownWeekCapPct', r.own.weeklyCapPct),
     ladder: el('input', { className: 'input', name: 'ladder', value: r.funded.ladder.join(' / '), placeholder: 'ej. 75 / 100 / 125' }),
-    drop: numInput('drop', r.funded.dropAfter),
+    drop: numInput('drop', r.funded.dropAfter), fWeek: numInput('fWeek', r.funded.weeklyStop), fWeekCap: numInput('fWeekCap', r.funded.weeklyCap),
   };
   const status = el('p', { role: 'status' });
   const save = el('button', { type: 'button', text: 'Guardar reglas' });
@@ -27,9 +27,9 @@ function rulesPanel(rules) {
     try {
       await savePlanRules({
         maxIdeas: f.maxIdeas.value, maxLosses: f.maxLosses.value, signalsLimit: f.signalsLimit.value,
-        prop: { risk: f.propRisk.value, dailyStop: f.propStop.value, dailyCap: f.propCap.value, weeklyStop: f.propWeek.value },
-        own: { risk: f.ownRisk.value, dailyStop: f.ownStop.value },
-        funded: { ladder: f.ladder.value.split(/[\/;,\s]+/).filter(Boolean), dropAfter: f.drop.value },
+        prop: { risk: f.propRisk.value, dailyStop: f.propStop.value, dailyCap: f.propCap.value, weeklyStop: f.propWeek.value, weeklyCap: f.propWeekCap.value },
+        own: { risk: f.ownRisk.value, dailyStop: f.ownStop.value, weeklyStopPct: f.ownWeekPct.value, weeklyCapPct: f.ownWeekCapPct.value },
+        funded: { ladder: f.ladder.value.split(/[\/;,\s]+/).filter(Boolean), dropAfter: f.drop.value, weeklyStop: f.fWeek.value, weeklyCap: f.fWeekCap.value },
       });
       status.textContent = 'Reglas guardadas. En Hoy vas a ver cómo vas.';
     } catch (e) { status.textContent = e.message; } finally { save.disabled = false; }
@@ -41,11 +41,11 @@ function rulesPanel(rules) {
     el('h3', { text: 'Para mí (todas las cuentas juntas)' }),
     grid([['Ideas máximas por día', f.maxIdeas], ['Pérdidas que cierran el día', f.maxLosses], ['Señales que cierran el día', f.signalsLimit]]),
     el('h3', { text: 'Challenge y fondeada (cada cuenta)' }),
-    grid([['Riesgo por trade', f.propRisk], ['Stop diario', f.propStop], ['Techo diario', f.propCap], ['Stop semanal', f.propWeek]]),
+    grid([['Riesgo por trade', f.propRisk], ['Stop diario', f.propStop], ['Techo diario', f.propCap], ['Stop semanal', f.propWeek], ['Techo semanal', f.propWeekCap]]),
     el('h3', { text: 'Capital propio' }),
-    grid([['Riesgo por trade', f.ownRisk], ['Stop diario', f.ownStop]]),
+    grid([['Riesgo por trade', f.ownRisk], ['Stop diario', f.ownStop], ['Stop semanal (%)', f.ownWeekPct], ['Techo semanal (%)', f.ownWeekCapPct]]),
     el('h3', { text: 'Fondeada: escalera de riesgo' }),
-    grid([['Riesgo por escalón (sube con cada cobro)', f.ladder], ['Bajar un escalón si caigo', f.drop]]),
+    grid([['Riesgo por escalón (sube con cada cobro)', f.ladder], ['Bajar un escalón si caigo', f.drop], ['Stop semanal (si es distinto)', f.fWeek], ['Techo semanal (si es distinto)', f.fWeekCap]]),
     save, status,
   ]);
 }
