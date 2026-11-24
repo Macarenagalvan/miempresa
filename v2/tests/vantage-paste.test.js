@@ -41,8 +41,11 @@ export async function run() {
   check(again.created === 1 && again.duplicates === 2, 'pegar todo otra vez solo agrega lo nuevo');
   check(Math.abs(await balanceFor(acc.id) - (500 - 10 + 10 - 22.4)) < 1e-9, 'saldo con neto');
   check((await listTrades()).filter(t => t.accountId === acc.id).every(t => t.sourceRef.kind === 'VANTAGE_POSITION_HISTORY'), 'marca origen Vantage');
-  let blocked = false; try { await syncVantagePaste(block('Buy', 'FOOBAR99', '1/1', '2', '1', '1', '1', '18/11/2026 10:00:00', '18/11/2026 10:05:00', '900000009'), stage.id, src); } catch { blocked = true; }
-  check(blocked, 'símbolo desconocido no guarda nada');
+  const before = (await listTrades()).filter(t => t.accountId === acc.id).length;
+  const mixed = block('Buy', 'FOOBAR99', '1/1', '2', '1', '1', '1', '18/11/2026 10:00:00', '18/11/2026 10:05:00', '900000009') + '\n' + block('Sell', 'XAUUSD+', '0.1/0.1', '3,629.98', '3,629.75', '-2.30', '-2.90', '18/11/2026 11:00:00', '18/11/2026 11:05:00', '900000010');
+  const res = await syncVantagePaste(mixed, stage.id, src);
+  check(res.invalid === 1 && res.created === 1 && (await listTrades()).filter(t => t.accountId === acc.id).length === before + 1, 'símbolo desconocido se saltea y el resto se guarda');
+  check((await listTrades()).some(t => t.accountId === acc.id && t.asset === 'XAUUSD' && t.netPnl === -2.9), 'XAUUSD+ se lee como XAUUSD');
   const nodes = await renderImportar({ stage, route: { query: {} } });
   check(nodes[1].id === 'importar-vantage' && nodes[1].querySelector('textarea[name="vt-text"]'), 'pantalla Importar muestra Vantage');
   document.getElementById('out').textContent += '\nVantage: ' + n + ' tests OK';

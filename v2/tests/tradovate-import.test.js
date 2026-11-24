@@ -54,8 +54,8 @@ export async function run() {
   check(Math.abs(Number(bal) - 25019) < 1e-6, 'saldo de la cuenta incluye el neto: ' + bal);
   const again = await syncTradovateCsv(csv([...ROWS, 'MNQZ6,-2,0,0.25,100010,100011,1,20000.00,20001.00,$2.00,11/14/2026 10:00:00,11/14/2026 10:01:00,1min']), stage.id, src);
   check(again.created === 1 && again.duplicates === 5, 'reimportar el mismo rango solo agrega lo nuevo');
-  let blocked = false; try { await syncTradovateCsv(csv(['FOOZ6,-2,0,0.25,200001,200002,1,1,2,$1.00,11/14/2026 10:00:00,11/14/2026 10:01:00,1min']), stage.id, src); } catch { blocked = true; }
-  check(blocked && (await listTrades()).filter(t => t.accountId === acc.id).length === 6, 'archivo con símbolo desconocido no guarda nada');
+  const mixedRes = await syncTradovateCsv(csv(['FOOZ6,-2,0,0.25,200001,200002,1,1,2,$1.00,11/14/2026 10:00:00,11/14/2026 10:01:00,1min', 'MNQZ6,-2,0,0.25,200003,200004,1,20000.00,20002.00,$4.00,11/14/2026 11:00:00,11/14/2026 11:01:00,1min']), stage.id, src);
+  check(mixedRes.invalid === 1 && mixedRes.created === 1 && (await listTrades()).filter(t => t.accountId === acc.id).length === 7, 'símbolo desconocido se saltea y la fila válida se guarda');
   let tz = false; try { await previewTradovateCsv(csv(ROWS), { ...src, timeZone: 'Asia/Tokyo' }); } catch { tz = true; }
   check(tz, 'rechaza horario no permitido');
 
