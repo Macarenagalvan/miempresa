@@ -155,7 +155,7 @@ async function tradovatePanel(ctx, accounts, active) {
     el('div', { className: 'journal-kpis' }, [el('strong', { text: result.created + ' nuevas' }), el('strong', { text: result.duplicates + ' ya cargadas' }), el('strong', { text: result.invalid + ' inválidas' }), el('strong', { text: 'Neto nuevo: ' + money(cents, acc.currency || 'USD') })]),
     options.feePerContract == null ? el('p', { className: 'hint', text: 'Sin comisión: el neto es el P&L bruto de Tradovate. Si querés que coincida con el saldo, poné la comisión por contrato.' }) : el('p', { className: 'hint', text: 'Neto = P&L de Tradovate − ' + options.feePerContract + ' USD por contrato.' }),
     el('label', { className: 'journal-confirm' }, [acknowledge, el('span', { text: 'Confirmo que este CSV es de ' + acc.name + ' (el archivo de Tradovate no dice de qué cuenta es).' })]),
-    result.errors.length ? el('p', { className: 'meta', text: result.errors.length === 1 ? 'Esta no se importa; las demás sí:' : 'Estas no se importan; las demás sí:' }) : null,
+    result.errors.length ? el('p', { className: 'meta', text: result.errors.length === 1 ? 'Esta no se importa; las demás sí:' : 'Estas no se importan; las demás sí:' }) : '',
     ...result.errors.map(e => el('p', { className: 'err', text: 'Fila ' + e.index + (e.brokerSymbol ? ' (' + e.brokerSymbol + ')' : '') + ': ' + e.error })),
     el('div', { className: 'table-wrap' }, [table]),
     el('p', { className: 'hint', text: 'Los trades ya cargados se omiten, así que podés subir el mismo rango otra vez. Quedan sin estrategia: clasificalos desde el historial.' })]);
@@ -249,7 +249,7 @@ async function vantagePanel(ctx, accounts, active) {
     el('div', { className: 'journal-kpis' }, [el('strong', { text: result.created + ' nuevas' }), el('strong', { text: result.duplicates + ' ya cargadas' }), el('strong', { text: result.invalid + ' inválidas' }), el('strong', { text: 'Neto nuevo: ' + money(cents, cur) })]),
     result.truncated ? el('p', { className: 'err', text: 'El final del texto quedó cortado (' + result.truncated + ' posición incompleta). Esa no se importa: copiala de nuevo junto con las que falten.' }) : null,
     el('label', { className: 'journal-confirm' }, [acknowledge, el('span', { text: 'Confirmo que este historial es de ' + acc.name + '.' })]),
-    result.errors.length ? el('p', { className: 'meta', text: result.errors.length === 1 ? 'Esta no se importa; las demás sí:' : 'Estas no se importan; las demás sí:' }) : null,
+    result.errors.length ? el('p', { className: 'meta', text: result.errors.length === 1 ? 'Esta no se importa; las demás sí:' : 'Estas no se importan; las demás sí:' }) : '',
     ...result.errors.map(e => el('p', { className: 'err', text: 'Posición ' + (e.id || '—') + (e.brokerSymbol ? ' (' + e.brokerSymbol + ')' : '') + ': ' + e.error })),
     el('div', { className: 'table-wrap' }, [table]),
     el('p', { className: 'hint', text: 'La dirección se toma al revés del lado de cierre (Buy = cerró un short). Las ya cargadas se omiten, así que podés pegar el historial entero cada vez.' })].filter(Boolean));
