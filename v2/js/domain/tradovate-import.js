@@ -47,7 +47,7 @@ export async function syncTradovateCsv(text, stageId, opts = {}) {
   if (account.context !== opts.context) throw new Error("context incompatible con la Account");
   const importBatchId = opts.importBatchId || createId();
   const report = await mapRows(text, { ...opts, importBatchId });
-  if (report.invalid) throw new Error("El archivo tiene filas inválidas; no se guardó nada.");
+  // Las filas inválidas se informan y se saltean; las válidas se guardan.
   for (const draft of report.drafts) await importClosedMt5Trade(draft, stageId);
   const { drafts, ...summary } = report;
   return { ...summary, importBatchId };
