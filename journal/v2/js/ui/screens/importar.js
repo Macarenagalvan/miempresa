@@ -18,7 +18,7 @@ export async function renderImportar(ctx){
  const accounts=await listStageAccounts(ctx.stage.id),active=await getActiveAccount();let meta=await getMeta();
  const account=el('select',{className:'input',name:'import-account'},[el('option',{value:'',text:'Elegí la cuenta destino'}),...accounts.map(a=>el('option',{value:a.id,text:a.name+' · '+label(a.context)}))]);
  account.value=ctx.route.query.account||(accounts.some(a=>a.id===meta.mt5LastAccountId)?meta.mt5LastAccountId:null)||active?.id||meta.mt5Sync?.accountId|| (accounts.length===1?accounts[0].id:'');
- const zone=el('select',{className:'input',name:'import-zone'},[el('option',{value:'',text:'Elegí la zona horaria del servidor'}),...MT5_SOURCE_TIMEZONES.map(z=>el('option',{value:z,text:z}))]);
+ const zone=el('select',{className:'input',name:'import-zone'},[el('option',{value:'',text:'Elegí la zona horaria del servidor'}),...MT5_SOURCE_TIMEZONES.map(z=>el('option',{value:z,text:zoneLabel(z)}))]);
  const broker=el('input',{className:'input',name:'import-broker',placeholder:'Ej.: tu broker · servidor MT5'}),sourceLogin=el('input',{className:'input',name:'import-login',inputmode:'numeric',placeholder:'Ej.: 1234567'});
  const saved=el('p',{role:'status',className:'hint'}),saveSettings=el('button',{type:'button',className:'ghost',text:'Guardar este origen'});
  function restoreSettings(){const pref=importPreference(meta,account.value);zone.value=pref?.timeZone||'';broker.value=pref?.broker||'';sourceLogin.value=pref?.login||accounts.find(a=>a.id===account.value)?.mt5Login||'';saved.textContent=pref?'Origen recordado para esta cuenta. Podés corregirlo aquí.':'';}
@@ -89,12 +89,15 @@ export async function renderImportar(ctx){
   }catch(e){err.textContent='No se completó la importación: '+e.message+'. Revisá el historial antes de repetir; las posiciones MT5 ya guardadas se omitirán.';pending=null;file.value='';}
   finally{busy=false;account.disabled=zone.disabled=file.disabled=broker.disabled=sourceLogin.disabled=saveSettings.disabled=false;}
  });
- return [await tradovatePanel(ctx,accounts,active),el('section',{className:'panel form'},[el('p',{className:'kicker',text:'MT5 → Journal → Resultados'}),el('h1',{text:'Importar operaciones'}),el('p',{className:'meta',text:'Subí el informe HTML de MT5 directamente, o un CSV de MT5.'}),
+ return [el('section',{className:'panel form'},[el('p',{className:'kicker',text:'MetaTrader 5 → Journal → Resultados'}),el('h1',{text:'Importar desde MetaTrader 5'}),el('p',{className:'meta',text:'Subí el informe HTML de MT5 directamente, o un CSV de MT5.'}),
   el('ol',{className:'journal-guide'},[el('li',{text:'En MT5: Historial → Todo el historial → Informe HTML.'}),el('li',{text:'Elegí aquí la cuenta y el horario del servidor del broker.'}),el('li',{text:'Seleccioná el archivo, revisá las posiciones y confirmá.'})]),
   !accounts.length?el('p',{},[el('span',{text:'Todavía no tenés una cuenta. '}),link('Crear cuenta','cuentas/nueva')]):null,
   field('1. Cuenta destino',account),deleteButton('account',()=>accounts.find(a=>a.id===account.value),'importar'),field('Broker / servidor (opcional)',broker),field('Número de cuenta MT5 (opcional)',sourceLogin),field('2. Zona horaria de MT5',zone),el('p',{className:'hint',text:'Es el horario del servidor, no el de tu computadora. Se recuerda por cuenta y origen; no se copia a otros brokers.'}),saveSettings,saved,field('3. Informe HTML o archivo CSV',drop),err,preview,confirm,
-  link('Respaldos y exportación','sistema')])];
+  link('Respaldos y exportación','sistema')]),await tradovatePanel(ctx,accounts,active)];
 }
+
+// Nombre amigable de la zona horaria del servidor.
+function zoneLabel(z){return ({'UTC':'GMT+0 (UTC)','Europe/Athens':'GMT+2 / GMT+3 · la mayoría de los brokers de MT5 (Europe/Athens)','Europe/Helsinki':'GMT+2 / GMT+3 (Europe/Helsinki)','Europe/Berlin':'GMT+1 / GMT+2 (Europe/Berlin)','Europe/Rome':'Hora de Italia (Europe/Rome)'})[z]||z;}
 
 // Cuenta propuesta para cada importador: la del link, la última usada, la que encaja con el broker, o la única.
 function pickImportAccount(list, { queryId, lastId, prefer } = {}) {
