@@ -127,7 +127,7 @@ export function mapBrokerSymbolToAsset(raw) {
   if (Object.prototype.hasOwnProperty.call(MT5_BROKER_SYMBOL_MAP, upper)) {
     return MT5_BROKER_SYMBOL_MAP[upper];
   }
-  const compact = upper.replace(/[._#/-]/g, "");
+  const compact = upper.replace(/[._#/+-]/g, "");
   if (Object.prototype.hasOwnProperty.call(MT5_BROKER_SYMBOL_MAP, compact)) {
     return MT5_BROKER_SYMBOL_MAP[compact];
   }
