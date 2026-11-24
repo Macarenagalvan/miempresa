@@ -38,7 +38,7 @@ export function parseVantagePositionHistory(text) {
   let truncated = 0, lastEnd = -1;
   for (let i = 0; i < lines.length; i++) {
     const side = SIDE[lines[i].toUpperCase()];
-    if (!side || !/^[A-Za-z0-9._#-]{2,20}$/.test(lines[i + 1] || "")) continue;
+    if (!side || !/^[A-Za-z0-9._#+-]{2,20}$/.test(lines[i + 1] || "")) continue;
     // Buscar la línea de fechas (dos fechas) y el #posición dentro del bloque.
     let j = i + 2, dates = null;
     for (; j < Math.min(lines.length, i + 14); j++) {
