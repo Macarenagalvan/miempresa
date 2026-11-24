@@ -1,0 +1,293 @@
+import { journalDatabaseName } from './runtime-isolation.js';
+export const DB_NAME = journalDatabaseName;
+export const DB_VERSION = 4;
+export const SCHEMA_VERSION = 4;
+export const JOURNAL_EDITION = "v2";
+export const BACKUP_PRODUCT = "Journal V2";
+export const BACKUP_FORMAT = "journal-v2";
+export const BACKUP_VERSION = 2;
+export const V1_DB_NAME = "TradingJournalDB";
+export const META_ID = "singleton";
+export const INITIAL_STAGE_NAME = "Inicio";
+
+// Activos sugeridos por defecto. Los que uses se agregan solos; otros se escriben a mano.
+export const ROADMAP_ASSETS = [
+  { id: "EURUSD", label: "EURUSD" },
+  { id: "XAUUSD", label: "XAUUSD" },
+  { id: "NAS100", label: "NAS100" },
+  { id: "SP500", label: "S&P 500" },
+];
+
+// Sesiones que se eligen hoy. Las viejas (SYDNEY, TOKYO, NEW_YORK) siguen siendo válidas en registros anteriores.
+export const SESSIONS = ["ASIA", "LONDON", "NY_AM", "NY_PM"];
+export const LEGACY_SESSIONS = ["SYDNEY", "TOKYO", "NEW_YORK"];
+export const ALL_SESSIONS = [...SESSIONS, ...LEGACY_SESSIONS];
+export const SESSION_LABELS = Object.freeze({ ASIA: "Asia", LONDON: "Londres", NY_AM: "NY AM", NY_PM: "NY PM", SYDNEY: "Asia (Sídney)", TOKYO: "Asia (Tokio)", NEW_YORK: "Nueva York" });
+export function sessionLabel(value) { return SESSION_LABELS[value] || value || ""; }
+/** Opciones para un selector: las actuales y, si el registro tiene una vieja, también esa. */
+export function sessionOptions(current = null) {
+  return current && LEGACY_SESSIONS.includes(current) ? [...SESSIONS, current] : SESSIONS;
+}
+
+export const RGM_SOURCE_ASSET = "SP500";
+export const RGM_SOURCE_CONTEXT = "LIVE";
+
+export const FOREX_CURRENCIES = Object.freeze([
+  "USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "NZD",
+  "NOK", "SEK", "DKK", "PLN", "HUF", "CZK", "TRY", "ZAR",
+  "MXN", "SGD", "HKD", "CNH", "CNY", "INR", "KRW", "THB",
+]);
+
+export const MT5_SOURCE_TIMEZONES = Object.freeze([
+  "UTC",
+  "Europe/Athens",
+  "Europe/Helsinki",
+  "Europe/Berlin",
+  "Europe/Rome",
+  "Europe/London",
+  "America/New_York",
+  "America/Chicago",
+]);
+
+// Tradovate: horario en que vienen los CSV de Desempeño (por defecto, el del navegador).
+export const TRADOVATE_SOURCE_TIMEZONES = Object.freeze(["Europe/Rome", "America/Chicago", "America/New_York", "UTC"]);
+
+export const MT5_BROKER_SYMBOL_MAP = Object.freeze({
+  NDXUSD: "NAS100",
+  USOUSD: "USOIL",
+  USOIL: "USOIL",
+  XTIUSD: "USOIL",
+  WTI: "USOIL",
+  USOILC: "USOIL",
+  UKOUSD: "UKOIL",
+  UKOIL: "UKOIL",
+  XBRUSD: "UKOIL",
+  BRENT: "UKOIL",
+  UK100: "UK100",
+  JP225: "JP225",
+  XNGUSD: "NATGAS",
+  NGAS: "NATGAS",
+  NAS100: "NAS100",
+  NAS100FT: "NAS100",
+  USTEC: "NAS100",
+  US100: "NAS100",
+  GER40: "GER40",
+  GER40FT: "GER40",
+  DE40: "GER40",
+  DJ30: "DJ30",
+  DJ30FT: "DJ30",
+  US30: "DJ30",
+  SP500FT: "SP500",
+  XAGUSD: "XAGUSD",
+  EURUSD: "EURUSD",
+  EURUSDC: "EURUSD",
+  "EURUSD.C": "EURUSD",
+  "EURUSD.M": "EURUSD",
+  EURUSDM: "EURUSD",
+  NZDUSD: "NZDUSD",
+  NZDUSDC: "NZDUSD",
+  "NZDUSD.M": "NZDUSD",
+  XAUUSD: "XAUUSD",
+  XAUUSDC: "XAUUSD",
+  "XAUUSD.M": "XAUUSD",
+  GOLD: "XAUUSD",
+  US500: "SP500",
+  US500C: "SP500",
+  "US500.M": "SP500",
+  SPX: "SP500",
+  SPX500: "SP500",
+  SP500: "SP500",
+  "S&P500": "SP500",
+  BTCUSD: "BTCUSD",
+  ETHUSD: "ETHUSD",
+  GBPUSD: "GBPUSD",
+  USDJPY: "USDJPY",
+  USDCHF: "USDCHF",
+  USDCAD: "USDCAD",
+  AUDUSD: "AUDUSD",
+  EURGBP: "EURGBP",
+  EURJPY: "EURJPY",
+  GBPJPY: "GBPJPY",
+});
+
+export const OBSERVATION_TAG_SUGGESTIONS = [
+  "false-break",
+  "wick",
+  "news",
+  "cash-open",
+  "slow-pb",
+  "impulsive",
+];
+
+export const STORES = {
+  meta: "meta",
+  stages: "stages",
+  accounts: "accounts",
+  movements: "movements",
+  observations: "observations",
+  setups: "setups",
+  trades: "trades",
+  asrs: "asrs",
+  signals: "signals",
+  challenges: "challenges",
+  payouts: "payouts",
+  attachments: "attachments",
+  officeTasks: "officeTasks",
+  officeNotes: "officeNotes",
+  officeEvents: "officeEvents",
+  officeShortcuts: "officeShortcuts",
+  investments: "investments",
+  syncState: "syncState",
+  syncLedger: "syncLedger",
+  syncConflicts: "syncConflicts",
+};
+
+export const STORE_INDEXES = {
+  stages: [["status", "status", { unique: false }]],
+  accounts: [
+    ["stageId", "stageId", { unique: false }],
+    ["context", "context", { unique: false }],
+    ["challengeId", "challengeId", { unique: false }],
+  ],
+  movements: [
+    ["stageId", "stageId", { unique: false }],
+    ["accountId", "accountId", { unique: false }],
+    ["date", "date", { unique: false }],
+  ],
+  observations: [
+    ["stageId", "stageId", { unique: false }],
+    ["asset", "asset", { unique: false }],
+    ["date", "date", { unique: false }],
+  ],
+  setups: [
+    ["stageId", "stageId", { unique: false }],
+    ["asset", "asset", { unique: false }],
+    ["context", "context", { unique: false }],
+    ["strategy", "strategy", { unique: false }],
+    ["status", "status", { unique: false }],
+    ["observationId", "observationId", { unique: false }],
+    ["deskSignalId", "deskSignalId", { unique: false }],
+  ],
+  trades: [
+    ["stageId", "stageId", { unique: false }],
+    ["asset", "asset", { unique: false }],
+    ["context", "context", { unique: false }],
+    ["accountId", "accountId", { unique: false }],
+    ["setupId", "setupId", { unique: false }],
+    ["deskSignalId", "deskSignalId", { unique: false }],
+    ["lifecycle", "lifecycle", { unique: false }],
+    ["closedAt", "closedAt", { unique: false }],
+    ["openedAt", "openedAt", { unique: false }],
+    ["importBatchId", "importBatchId", { unique: false }],
+  ],
+  asrs: [
+    ["stageId", "stageId", { unique: false }],
+    ["tradeId", "tradeId", { unique: true }],
+  ],
+  signals: [
+    ["stageId", "stageId", { unique: false }],
+    ["asset", "asset", { unique: false }],
+    ["resolution", "resolution", { unique: false }],
+    ["disposition", "disposition", { unique: false }],
+    ["printedAt", "printedAt", { unique: false }],
+  ],
+  challenges: [
+    ["stageId", "stageId", { unique: false }],
+    ["status", "status", { unique: false }],
+    ["accountId", "accountId", { unique: false }],
+  ],
+  payouts: [
+    ["stageId", "stageId", { unique: false }],
+    ["challengeId", "challengeId", { unique: false }],
+    ["date", "date", { unique: false }],
+  ],
+  attachments: [["entity", ["entityType", "entityId"], { unique: false }]],
+  officeTasks: [
+    ["dueDate", "dueDate", { unique: false }],
+    ["done", "done", { unique: false }],
+    ["archivedAt", "archivedAt", { unique: false }],
+  ],
+  officeNotes: [
+    ["archivedAt", "archivedAt", { unique: false }],
+    ["createdAt", "createdAt", { unique: false }],
+  ],
+  officeEvents: [["date", "date", { unique: false }]],
+  officeShortcuts: [["order", "order", { unique: false }]],
+  investments: [["kind", "kind", { unique: false }], ["assetId", "assetId", { unique: false }]],
+  syncLedger: [
+    ["entityType", "entityType", { unique: false }],
+    ["dirty", "dirty", { unique: false }],
+  ],
+  syncConflicts: [["resolvedAt", "resolvedAt", { unique: false }]],
+};
+
+export const TRADING_COLLECTIONS = [
+  "stages",
+  "accounts",
+  "movements",
+  "observations",
+  "setups",
+  "trades",
+  "asrs",
+  "signals",
+  "challenges",
+  "payouts",
+  "attachments",
+];
+
+export const OFFICE_COLLECTIONS = [
+  "officeTasks",
+  "officeNotes",
+  "officeEvents",
+  "officeShortcuts",
+];
+
+// Cartera de inversión a largo plazo (BTC, acciones). Separada del trading.
+export const INVEST_COLLECTIONS = ["investments"];
+
+export const EXPORT_COLLECTIONS = TRADING_COLLECTIONS.concat(OFFICE_COLLECTIONS, INVEST_COLLECTIONS);
+
+export const SYNC_STORES = ["syncState", "syncLedger", "syncConflicts"];
+
+export const PRODUCT_STORE_NAMES = ["meta"].concat(EXPORT_COLLECTIONS);
+
+export const PRODUCT_SYNC_STORES = PRODUCT_STORE_NAMES.slice();
+
+export const META_SYNC_FIELDS = Object.freeze([
+  "id",
+  "schemaVersion",
+  "journalEdition",
+  "activeStageId",
+  "traderName",
+  "createdAt",
+  "activeAccountId",
+]);
+
+export const META_DEVICE_FIELDS = Object.freeze([
+  "lastBackupAt",
+  "rgmSync",
+  "mt5Sync",
+]);
+
+export const SYNC_PUSH_ORDER = Object.freeze([
+  "stages",
+  "accounts",
+  "challenges",
+  "observations",
+  "setups",
+  "trades",
+  "movements",
+  "asrs",
+  "signals",
+  "payouts",
+  "attachments",
+  "officeTasks",
+  "officeNotes",
+  "officeEvents",
+  "officeShortcuts",
+  "investments",
+  "meta",
+]);
+
+export const SYNC_STATE_ID = "singleton";
+export const SYNC_DEBOUNCE_MS = 1200;

@@ -1,0 +1,93 @@
+import { uiLabel } from '../labels.js';
+import { el } from "../render.js";
+import { deletableRow } from '../delete-button.js';
+import { field } from "../forms/observation.js";
+import { ChallengeStatus, Currency } from "../../domain/enums.js";
+import { createChallenge, listStageChallenges, accountsForChallenge } from "../../domain/challenge.js";
+import { listPayouts } from "../../storage/repos/payouts.js";
+import { fundingSummary, listChallengePayouts } from "../../domain/payout.js";
+import { isPayoutLive } from "../../domain/integrity.js";
+import { go } from "../router.js";
+
+export async function renderFondeo(ctx) {
+  if (ctx.route.rest === "nuevo") return renderNuevo(ctx);
+  const rows = await listStageChallenges(ctx.stage.id);
+  const payouts = await listPayouts();
+  const summary = fundingSummary(rows, payouts);
+  const list = rows.length
+    ? await Promise.all(rows.map(async (ch) => {
+      const accs = await accountsForChallenge(ch.id);
+      const pays = (await listChallengePayouts(ch.id)).filter(isPayoutLive);
+      const paid = pays.reduce((s, p) => s + Number(p.amount), 0);
+      const item = el("button", { type: "button", className: "row hist" }, [
+        el("strong", { text: ch.firm }),
+        el("span", { className: "num", text: String(ch.size) }),
+        el("span", { text: uiLabel(ch.status) }),
+        el("span", { text: `${accs.length} cta` }),
+        el("span", { className: "num", text: paid ? `${paid} ${ch.currency}` : "—" }),
+      ]);
+      item.addEventListener("click", () => go("challenge/" + ch.id));
+      return deletableRow(item,'challenge',ch,'fondeo');
+    }))
+    : [el("div", { className: "empty-block" }, [
+      el("p", { className: "empty", text: "Todavía no cargaste un fondeo." }),
+
+    ])];
+  const costBits = Object.entries(summary.costByCurrency).map(([c, n]) => `${n} ${c}`).join(" · ") || "—";
+  const payBits = Object.entries(summary.payoutByCurrency).map(([c, n]) => `${n} ${c}`).join(" · ") || "—";
+  return [
+    el("section", { className: "panel" }, [
+      el("h1", { text: "Fondeo" }),
+      el("p", { className: "meta", text: `${summary.nChallenges} fondeos · costo ${costBits} · cobros ${payBits}` }),
+      el("div", { className: "row-actions" }, [
+        el("button", { type: "button", text: "Nuevo fondeo", onclick: () => go("fondeo/nuevo") }),
+      ]),
+      el("div", { className: "list table-wrap" }, list),
+    ]),
+  ];
+}
+
+function renderNuevo(ctx) {
+  const firm = el("input", { className: "input", value: "" });
+  const purchasedAt = el("input", { className: "input", type: "date", value: new Date().toISOString().slice(0, 10) });
+  const size = el("input", { className: "input", value: "" });
+  const cost = el("input", { className: "input", value: "" });
+  const currency = el("select", { className: "input" }, Object.values(Currency).map((c) => el("option", { value: c, text: c })));
+  const status = el("select", { className: "input" }, Object.values(ChallengeStatus).map((s) => el("option", { value: s, text: uiLabel(s) })));
+  const format = el("input", { className: "input", value: "" });
+  const err = el("p", { className: "err", text: "" });
+  const save = el("button", { type: "button", text: "Crear fondeo" });
+  save.addEventListener("click", async () => {
+    err.textContent = "";
+    try {
+      const ch = await createChallenge({
+        firm: firm.value,
+        purchasedAt: purchasedAt.value,
+        size: size.value,
+        cost: cost.value,
+        currency: currency.value,
+        status: status.value,
+        format: format.value,
+      }, ctx.stage.id);
+      go("challenge/" + ch.id);
+    } catch (e) { err.textContent = e.message; }
+  });
+  return [
+    el("section", { className: "panel form" }, [
+      el("h1", { text: "Nuevo fondeo" }),
+      field("Firma", firm),
+      field("Fecha de compra", purchasedAt),
+      field("Tamaño de cuenta", size),
+      field("Costo", cost),
+      field("Moneda", currency),
+      field("Estado", status),
+      field("Formato (opcional)", format),
+      el("p", { className: "hint", text: "Después podés vincular una cuenta. El costo del fondeo se registra separado del resultado de tus operaciones." }),
+      err,
+      el("div", { className: "row-actions" }, [
+        save,
+        el("button", { type: "button", className: "ghost", text: "Volver", onclick: () => go("fondeo") }),
+      ]),
+    ]),
+  ];
+}
