@@ -1,7 +1,7 @@
 // Cargar resultados diarios (movimientos) y corregir capital/moneda de una cuenta desde un link, con confirmación.
 import { el } from "./render.js";
 import { confirmDialog, toast } from "./feedback.js";
-import { listStageAccounts, correctInitialAmount, createAccount, archiveAccount } from "../domain/account.js";
+import { listStageAccounts, correctInitialAmount, createAccount, archiveAccount, balanceFor } from "../domain/account.js";
 import { createMovement } from "../domain/movement.js";
 import { getAccount, putAccount } from "../storage/repos/accounts.js";
 import { listMovements } from "../storage/repos/movements.js";
@@ -16,6 +16,11 @@ function decode(raw) {
   const b64 = String(raw).replace(/-/g, "+").replace(/_/g, "/");
   const bin = atob(b64 + "===".slice((b64.length + 3) % 4));
   const data = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
+  if (data && Array.isArray(data.balances)) {
+    const balances = data.balances.slice(0, 20).map((b) => ({ account: String(b.account || ""), target: Number(b.target), note: typeof b.note === "string" ? b.note.slice(0, 120) : "" }));
+    if (!balances.length || balances.some((b) => !b.account || !Number.isFinite(b.target))) throw new Error("Link inválido.");
+    return { balances };
+  }
   if (!data || typeof data.account !== "string") throw new Error("Link inválido.");
   const movements = Array.isArray(data.movements) ? data.movements.slice(0, 200) : [];
   for (const m of movements) {
@@ -35,6 +40,7 @@ export async function applyAccountLink(raw, stageId) {
   let pack;
   try { pack = decode(raw); } catch (_) { toast("El link no se pudo leer.", { tone: "error" }); return; }
   const accounts = await listStageAccounts(stageId, { includeArchived: true });
+  if (pack.balances) return applyBalances(pack.balances, accounts, stageId);
   let acc = accounts.find((a) => a.name === pack.account);
   if (!acc && pack.create) return createFromLink(pack, stageId);
   if (!acc) { toast(`No encontré la cuenta «${pack.account}».`, { tone: "error", timeout: 6000 }); return; }
@@ -96,4 +102,26 @@ async function createFromLink(pack, stageId) {
   for (const a of toArchive) await archiveAccount(a.id);
   window.dispatchEvent(new HashChangeEvent("hashchange"));
   toast("Cuenta creada.", { tone: "ok", timeout: 3000 });
+}
+
+// Iguala el saldo de cada cuenta al de la plataforma con un ajuste (la diferencia se calcula en el momento).
+async function applyBalances(list, accounts, stageId) {
+  const rows = [];
+  for (const b of list) {
+    const acc = accounts.find((a) => a.name === b.account);
+    if (!acc) { rows.push({ b, missing: true }); continue; }
+    const current = Math.round(Number(await balanceFor(acc.id)) * 100) / 100;
+    const diff = Math.round((b.target - current) * 100) / 100;
+    rows.push({ b, acc, current, diff });
+  }
+  const money = (v) => v.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const body = rows.map((r) => r.missing ? `${r.b.account}: no la encontré, se saltea.` : r.diff === 0 ? `${r.acc.name}: ya está en ${money(r.b.target)}.` : `${r.acc.name}: ${money(r.current)} → ${money(r.b.target)} (ajuste ${r.diff > 0 ? "+" : ""}${money(r.diff)})`);
+  const todo = rows.filter((r) => !r.missing && r.diff !== 0);
+  if (!todo.length) { await confirmDialog({ title: "Todo coincide", body, confirmText: "Listo", cancelText: "Cerrar" }); return; }
+  const ok = await confirmDialog({ title: "¿Igualar los saldos?", body, confirmText: "Sí, igualar" });
+  if (!ok) return;
+  const today = new Date(); const d = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
+  for (const r of todo) await createMovement({ accountId: r.acc.id, type: "ADJUSTMENT", amount: r.diff, date: d, note: r.b.note || "Ajuste para igualar el saldo de la plataforma" }, stageId);
+  window.dispatchEvent(new HashChangeEvent("hashchange"));
+  toast("Saldos igualados.", { tone: "ok", timeout: 3000 });
 }
