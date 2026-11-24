@@ -97,12 +97,23 @@ export async function renderImportar(ctx){
   el('details',{},[el('summary',{text:'Exportador de MT5: generar el CSV cada minuto'}),el('p',{className:'hint',text:'Preparado y compilado. Requiere instalarlo y verificar el primer archivo en MT5. Genera el CSV con MT5 abierto; después lo arrastrás aquí y confirmás.'}),el('a',{className:'journal-link',href:'./mt5/MacaAutoExport.zip',download:'MacaAutoExport.zip',text:'Descargar exportador e instrucciones'}),el('p',{className:'hint',text:'No abre operaciones. La sincronización directa con el journal todavía no está habilitada.'})]),link('Respaldos y exportación','sistema')])];
 }
 
+// Cuenta propuesta para cada importador: la del link, la última usada, la que encaja con el broker, o la única.
+function pickImportAccount(list, { queryId, lastId, prefer } = {}) {
+ const has = (id) => id && list.some((a) => a.id === id);
+ if (has(queryId)) return queryId;
+ if (has(lastId)) return lastId;
+ const p = prefer ? list.find(prefer) : null;
+ if (p) return p.id;
+ return list.length === 1 ? list[0].id : '';
+}
+
 // ---------- Tradovate (CSV de Informes de cuenta → Desempeño) ----------
 async function tradovatePanel(ctx, accounts, active) {
  const meta = await getMeta();
  const pref = meta?.tradovateImport || {};
- const account = el('select', { className: 'input', name: 'tv-account' }, [el('option', { value: '', text: 'Elegí la cuenta destino' }), ...accounts.map(a => el('option', { value: a.id, text: a.name + ' · ' + label(a.context) }))]);
- account.value = ctx.route.query.account || active?.id || (accounts.length === 1 ? accounts[0].id : '');
+ const tvAccounts = accounts.filter(a => a.context !== 'LIVE' && !/vantage/i.test(a.name)).length ? accounts.filter(a => a.context !== 'LIVE' && !/vantage/i.test(a.name)) : accounts;
+ const account = el('select', { className: 'input', name: 'tv-account' }, [el('option', { value: '', text: 'Elegí la cuenta destino' }), ...tvAccounts.map(a => el('option', { value: a.id, text: a.name + ' · ' + label(a.context) }))]);
+ account.value = pickImportAccount(tvAccounts, { queryId: ctx.route.query.account, lastId: pref.accountId, prefer: a => a.id === active?.id });
  const zone = el('select', { className: 'input', name: 'tv-zone' }, TRADOVATE_SOURCE_TIMEZONES.map(z => el('option', { value: z, text: z === 'Europe/Rome' ? 'Europe/Rome (hora de Italia)' : z === 'America/Chicago' ? 'America/Chicago (CST)' : z })));
  zone.value = TRADOVATE_SOURCE_TIMEZONES.includes(pref.timeZone) ? pref.timeZone : 'Europe/Rome';
  const fee = el('input', { className: 'input', name: 'tv-fee', inputmode: 'decimal', placeholder: 'Ej.: 1.00 (vacío = sin descontar)', value: pref.fee ?? '' });
@@ -154,7 +165,7 @@ async function tradovatePanel(ctx, accounts, active) {
   if (!pending || busy || confirm.disabled) return; busy = true; confirm.disabled = true; account.disabled = zone.disabled = fee.disabled = file.disabled = true;
   try {
    const result = await syncTradovateCsv(pending.text, ctx.stage.id, pending.options);
-   const current = await getMeta(); await putMeta({ ...current, tradovateImport: { timeZone: pending.options.timeZone, fee: pending.options.feePerContract ?? '' } });
+   const current = await getMeta(); await putMeta({ ...current, tradovateImport: { timeZone: pending.options.timeZone, fee: pending.options.feePerContract ?? '', accountId: pending.options.accountId } });
    await setActiveAccount(pending.options.accountId);
    preview.replaceChildren(el('h2', { text: result.created + ' operaciones importadas' }), el('p', { text: result.duplicates + ' ya estaban cargadas. Tus resultados y el saldo ya están actualizados.' }), el('div', { className: 'journal-actions' }, [link('Ver operaciones', 'historial?account=' + pending.options.accountId), link('Ver estadísticas', 'numeros?account=' + pending.options.accountId + '&universe=' + (pending.options.context === 'DEMO' ? 'DEMO' : 'REAL')), link('Ver saldo', 'cuentas?account=' + pending.options.accountId)]));
    pending = null; file.value = ''; refreshFees();
@@ -202,8 +213,10 @@ async function tradovatePanel(ctx, accounts, active) {
 // ---------- Vantage (texto copiado de «Historial de posiciones» del portal) ----------
 async function vantagePanel(ctx, accounts, active) {
  const meta = await getMeta();
- const account = el('select', { className: 'input', name: 'vt-account' }, [el('option', { value: '', text: 'Elegí la cuenta destino' }), ...accounts.map(a => el('option', { value: a.id, text: a.name + ' · ' + label(a.context) }))]);
- account.value = ctx.route.query.account || active?.id || (accounts.length === 1 ? accounts[0].id : '');
+ const isProp = a => a.context === 'PROP_CHALLENGE' || a.context === 'FUNDED';
+ const vtAccounts = accounts.filter(a => !isProp(a)).length ? accounts.filter(a => !isProp(a)) : accounts;
+ const account = el('select', { className: 'input', name: 'vt-account' }, [el('option', { value: '', text: 'Elegí la cuenta destino' }), ...vtAccounts.map(a => el('option', { value: a.id, text: a.name + ' · ' + label(a.context) }))]);
+ account.value = pickImportAccount(vtAccounts, { queryId: ctx.route.query.account, lastId: meta?.vantageImport?.accountId, prefer: a => /vantage/i.test(a.name) });
  const zone = el('select', { className: 'input', name: 'vt-zone' }, MT5_SOURCE_TIMEZONES.map(z => el('option', { value: z, text: z === 'Europe/Athens' ? 'Europe/Athens (servidor de Vantage, GMT+2)' : z })));
  zone.value = MT5_SOURCE_TIMEZONES.includes(meta?.vantageImport?.timeZone) ? meta.vantageImport.timeZone : 'Europe/Athens';
  const text = el('textarea', { className: 'input', name: 'vt-text', rows: 10, placeholder: 'Pegá aquí lo que copiaste de Historial de posiciones (Buy / NAS100 / 0.1/0.1 / precios / P&L / fechas / #posición / Cerrado…)' });
@@ -246,7 +259,7 @@ async function vantagePanel(ctx, accounts, active) {
   if (!pending || busy || confirm.disabled) return; busy = true; confirm.disabled = true; account.disabled = zone.disabled = text.disabled = review.disabled = true;
   try {
    const result = await syncVantagePaste(pending.text, ctx.stage.id, pending.options);
-   const current = await getMeta(); await putMeta({ ...current, vantageImport: { timeZone: pending.options.timeZone } });
+   const current = await getMeta(); await putMeta({ ...current, vantageImport: { timeZone: pending.options.timeZone, accountId: pending.options.accountId } });
    await setActiveAccount(pending.options.accountId);
    preview.replaceChildren(el('h2', { text: result.created + ' operaciones importadas' }), el('p', { text: result.duplicates + ' ya estaban cargadas. Tus resultados y el saldo ya están actualizados.' }), el('div', { className: 'journal-actions' }, [link('Ver operaciones', 'historial?account=' + pending.options.accountId), link('Ver saldo', 'cuentas?account=' + pending.options.accountId)]));
    pending = null; text.value = '';
