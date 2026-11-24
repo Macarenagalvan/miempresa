@@ -44,7 +44,7 @@ export async function syncVantagePaste(text, stageId, opts = {}) {
   if (account.context !== opts.context) throw new Error("context incompatible con la Account");
   const importBatchId = opts.importBatchId || createId();
   const report = await mapRows(text, { ...opts, importBatchId });
-  if (report.invalid) throw new Error("Hay posiciones que no se pudieron leer; no se guardó nada.");
+  // Las posiciones que no se pudieron leer se informan y se saltean; las válidas se guardan.
   for (const draft of report.drafts) await importClosedMt5Trade({ ...draft, importBatchId }, stageId);
   const { drafts, ...summary } = report;
   return { ...summary, importBatchId };
