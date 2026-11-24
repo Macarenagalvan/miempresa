@@ -1,0 +1,74 @@
+import { el } from './render.js';
+import { deleteButton } from './delete-button.js';
+import { listStageAccounts, accountBalance, getActiveAccount, setActiveAccount } from '../domain/account.js';
+import { listTrades } from '../storage/repos/trades.js';
+import { listMovements } from '../storage/repos/movements.js';
+import { compute, filterTrades, realizedR } from '../domain/stats.js';
+import { FAMILIES, EMOTIONS, PLAN, ERRORS, labelOf } from '../domain/process.js';
+import { sessionLabel } from '../config.js';
+import { isMovementLive, isTradePnlForBalance } from '../domain/integrity.js';
+import { go } from './router.js';
+
+export const money = (n, currency = '') => n == null ? '—' : Number(n).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) + (currency ? ' '+currency : '');
+export const label = value => ({PROP_CHALLENGE:'Challenge', LIVE:'Cuenta propia', FUNDED:'Fondeada', DEMO:'Demo', BACKTEST:'Backtest', LONG:'Compra', SHORT:'Venta', UNCLASSIFIED:'Sin clasificar', WIN:'Ganada', LOSS:'Perdida', BE:'En equilibrio'})[value] || value || 'Sin clasificar';
+export const link = (text, path) => el('a', {href:'#/'+path, className:'journal-link', text});
+export function kpi(title, value, note = '') {
+ return el('div',{className:'metric'},[el('span',{className:'kicker',text:title}),el('strong',{className:'num',text:value}),el('small',{className:'meta',text:note})]);
+}
+export function curve(title, points, unit, caption) {
+ const host=el('section',{className:'panel journal-chart'},[el('h2',{text:title}),el('p',{className:'hint',text:caption})]);
+ if(points.length<2){host.append(el('p',{className:'empty',text:'La curva aparecerá cuando haya operaciones cerradas.'}));return host;}
+ const values=points.map(p=>p.value), min=Math.min(...values), max=Math.max(...values), span=max-min||1;
+ const ns='http://www.w3.org/2000/svg', svg=document.createElementNS(ns,'svg');
+ svg.setAttribute('viewBox','0 0 760 210');svg.setAttribute('role','img');svg.setAttribute('aria-label',title+': '+money(values[0],unit)+' a '+money(values.at(-1),unit));
+ const path=document.createElementNS(ns,'polyline');path.setAttribute('points',points.map((p,i)=>`${18+i/(points.length-1)*724},${175-(p.value-min)/span*145}`).join(' '));
+ path.setAttribute('fill','none');path.setAttribute('stroke','currentColor');path.setAttribute('stroke-width','3');svg.append(path);
+ for(const [i,p] of points.entries()){
+  const dot=document.createElementNS(ns,'circle');dot.setAttribute('cx',18+i/(points.length-1)*724);dot.setAttribute('cy',175-(p.value-min)/span*145);dot.setAttribute('r','4');dot.setAttribute('fill','currentColor');
+  const tip=document.createElementNS(ns,'title');tip.textContent=p.date+' · '+money(p.value,unit);dot.append(tip);svg.append(dot);
+ }
+ host.append(svg,el('div',{className:'journal-chart-labels'},[el('span',{text:points[0].date+' · '+money(values[0],unit)}),el('strong',{text:points.at(-1).date+' · '+money(values.at(-1),unit)})]));
+ return host;
+}
+export function resultCharts(trades, filters, currency = '', prep = null) {
+ const dayOf=t=>{const d=new Date(t.openedAt||t.closedAt||0);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+ const prepKey=(field,yes,no)=>t=>{const r=prep&&prep[dayOf(t)];return r?(r[field]?yes:no):null;};
+ const closed=filterTrades(trades,filters).filter(t=>t.lifecycle==='CLOSED'&&!t.isDraft&&t.netPnl!=null).sort((a,b)=>String(a.closedAt).localeCompare(String(b.closedAt)));
+ let total=0;const points=[{date:'Inicio del período',value:0},...closed.map(t=>({date:t.closedAt.slice(0,10),value:(total+=Number(t.netPnl))}))];
+ const decidedAll=filterTrades(trades,filters).filter(t=>t.lifecycle==='CLOSED'&&!t.isDraft);
+ function bars(title,keyFn,labelFn=(k)=>k){
+  const groups=new Map();for(const t of decidedAll){for(const raw of [].concat(keyFn(t))){if(raw==null||raw==='')continue;const k=labelFn(raw);const a=groups.get(k)||[];a.push(t);groups.set(k,a);}}
+  if(!groups.size)return null;
+  return el('section',{className:'panel'},[el('h2',{text:title}),...Array.from(groups,([k,rows])=>{
+   const wins=rows.filter(t=>t.result==='WIN').length,decided=rows.filter(t=>t.result==='WIN'||t.result==='LOSS').length,pct=decided?wins/decided*100:0;
+   const rs=rows.map(t=>realizedR(t)).filter(v=>v!=null&&Number.isFinite(Number(v))).map(Number);const avg=rs.length?rs.reduce((x,y)=>x+y,0)/rs.length:null;
+   const progress=el('progress',{max:'100',value:String(pct),'aria-label':k+' porcentaje de acierto'});
+   return el('div',{className:'journal-bar'},[el('strong',{text:k}),progress,el('span',{text:(decided?pct.toFixed(0)+'%':'—')+' · '+rows.length+' ops'+(avg==null?'':' · '+(avg>0?'+':'')+avg.toFixed(2)+'R')})]);
+  })]);
+ }
+ return el('div',{className:'journal-analysis'},[curve('Evolución del resultado neto',points,currency,'Resultado acumulado de las operaciones seleccionadas; no incluye depósitos ni retiros.'),decidedAll.length?el('div',{className:'journal-two'},[bars('Días con rutina de cuerpo',prepKey('yoga','Con rutina de cuerpo','Sin rutina de cuerpo')),bars('Días con rutina de mente',prepKey('meditation','Con rutina de mente','Sin rutina de mente')),bars('Sesgo del día',t=>{const r=prep&&prep[dayOf(t)];return r&&r.bias?r.bias:null;},k=>({BULL:'Alcista',BEAR:'Bajista',RANGE:'Rango'})[k]||k),bars('¿Seguiste el plan?',t=>t.process?.plan,k=>labelOf(PLAN,k)),bars('Por tipo de setup',t=>t.process?.family,k=>labelOf(FAMILIES,k)),bars('Cómo estabas al entrar',t=>t.process?.emotion,k=>labelOf(EMOTIONS,k)),bars('Errores marcados',t=>t.process?.errors,k=>labelOf(ERRORS,k)),bars('Por sesión',t=>t.session,sessionLabel),bars('Por hora de entrada (Italia)',t=>t.openedAt?String(new Date(t.openedAt).getHours()).padStart(2,'0')+':00':null),bars('Por activo',t=>t.asset),bars('Por dirección',t=>t.direction,k=>label(k))]):el('p',{className:'empty',text:'Sin operaciones para estos filtros.'})]);
+}
+export async function accountOverview(ctx, compact=false){
+ const accounts=await listStageAccounts(ctx.stage.id), active=await getActiveAccount(), trades=await listTrades(),movements=await listMovements();
+ const requested=ctx.route?.query?.account;
+ const selected=accounts.find(a=>a.id===requested)||accounts.find(a=>a.id===active?.id)||accounts[0];
+ const pick=el('select',{className:'input','aria-label':'Cuenta del resumen'},accounts.map(a=>el('option',{value:a.id,text:a.name+' · '+label(a.context)})));
+ if(selected)pick.value=selected.id;
+ pick.addEventListener('change',async()=>{await setActiveAccount(pick.value);go(ctx.route.name+'?account='+encodeURIComponent(pick.value));});
+ const intro=el('section',{className:'panel journal-overview'},[
+  el('div',{className:'journal-heading'},[el('div',{},[el('h1',{text:compact?'Tu trading, de un vistazo':'Cartera y evolución'})]),accounts.length?pick:link('Crear mi primera cuenta','cuentas/nueva')]),
+  el('div',{className:'journal-actions'},[link('Importar informe de MT5','importar'),link('Ver historial','historial'+(selected?'?account='+selected.id:'')),link('Ver estadísticas','numeros'+(selected?'?account='+selected.id+'&universe='+(selected.context==='DEMO'?'DEMO':'REAL'):''))]),
+ ]);
+ if(!selected){intro.append(el('p',{className:'empty',text:'Creá tu cuenta con el capital inicial. Después podés registrar una operación o importar el informe HTML de MT5.'}));return intro;}
+ intro.querySelector('.journal-actions').append(link('Depósito / retiro','cuenta/'+selected.id+'?mov=1'));
+ const own=trades.filter(t=>t.accountId===selected.id&&t.stageId===ctx.stage.id&&!t.isDraft&&t.lifecycle!=='VOID');
+ const stats=compute(own,{universe:selected.context==='DEMO'?'DEMO':'REAL',accountId:selected.id});
+ intro.append(el('div',{className:'journal-kpis'},[kpi('Saldo actual',money(accountBalance(selected,movements,trades),selected.currency),'Inicial: '+money(selected.initialAmount,selected.currency)),kpi('Resultado neto',money(stats.netPnl,selected.currency),'Operaciones cerradas · todo el historial'),kpi('Operaciones cerradas',String(stats.nClosed),stats.nWins+' ganadas · '+stats.nLosses+' perdidas'),kpi('Porcentaje de acierto',stats.winRate==null?'—':(stats.winRate*100).toFixed(1)+'%','Ganadas / ganadas y perdidas')]));
+ const events=[...trades.filter(t=>isTradePnlForBalance(t,selected.id)).map(t=>({date:t.closedAt,value:Number(t.netPnl)})),...movements.filter(m=>m.accountId===selected.id&&isMovementLive(m)).map(m=>({date:m.date,value:Number(m.amount)}))].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+ let amount=Number(selected.initialAmount);
+ const points=[{date:'Capital inicial',value:amount},...events.map(e=>({date:String(e.date).slice(0,10),value:(amount+=e.value)}))];
+ // Only display a balance curve when it reconciles with the authoritative balance.
+ if(Math.abs(amount-accountBalance(selected,movements,trades))<0.005)intro.append(curve('Evolución del saldo',points,selected.currency,'Operaciones cerradas y movimientos de esta cuenta.'));
+ else intro.append(resultCharts(own,{universe:selected.context==='DEMO'?'DEMO':'REAL'},selected.currency));
+ return intro;
+}
