@@ -140,3 +140,7 @@ body[data-route="hoy"] .top-quick { visibility: hidden; }
 
 /* Edición neutra: el sistema de colores no se usa */
 .legacy-filters { display: none !important; }
+.prep-bias{display:flex;align-items:center;gap:10px;margin:6px 0 8px}.prep-bias select{max-width:200px}
+
+/* Importaciones recientes */
+.import-batch { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid #ffffff14; }

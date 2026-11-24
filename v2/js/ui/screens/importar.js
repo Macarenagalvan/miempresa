@@ -5,6 +5,7 @@ import { decodeMt5File, parseMt5Html } from '../../adapters/mt5-html.js';
 import { parseMt5Csv } from '../../adapters/mt5.js';
 import { listStageAccounts, getActiveAccount, setActiveAccount } from '../../domain/account.js';
 import { previewMt5Csv, syncMt5Csv } from '../../domain/trade.js';
+import { importHistoryPanel } from '../import-history.js';
 import { getMeta, putMeta } from '../../storage/repos/meta.js';
 import { MT5_SOURCE_TIMEZONES } from '../../config.js';
 import { money, link, label } from '../journal-insights.js';
@@ -90,7 +91,7 @@ export async function renderImportar(ctx){
   }catch(e){err.textContent='No se completó la importación: '+e.message+'. Revisá el historial antes de repetir; las posiciones MT5 ya guardadas se omitirán.';pending=null;file.value='';}
   finally{busy=false;account.disabled=zone.disabled=file.disabled=broker.disabled=sourceLogin.disabled=saveSettings.disabled=false;}
  });
- return [await tradovatePanel(ctx,accounts,active),await vantagePanel(ctx,accounts,active),el('section',{className:'panel form'},[el('p',{className:'kicker',text:'MT5 → Journal → Resultados'}),el('h1',{text:'Importar operaciones'}),el('p',{className:'meta',text:'Subí el informe HTML de MT5 directamente. También podés usar el CSV del exportador MACA.'}),
+ return [await importHistoryPanel(ctx),await tradovatePanel(ctx,accounts,active),await vantagePanel(ctx,accounts,active),el('section',{className:'panel form'},[el('p',{className:'kicker',text:'MT5 → Journal → Resultados'}),el('h1',{text:'Importar operaciones'}),el('p',{className:'meta',text:'Subí el informe HTML de MT5 directamente. También podés usar el CSV del exportador MACA.'}),
   el('ol',{className:'journal-guide'},[el('li',{text:'En MT5: Historial → Todo el historial → Informe HTML.'}),el('li',{text:'Elegí aquí la cuenta y el horario del servidor del broker.'}),el('li',{text:'Seleccioná el archivo, revisá las posiciones y confirmá.'})]),
   !accounts.length?el('p',{},[el('span',{text:'Todavía no tenés una cuenta. '}),link('Crear cuenta','cuentas/nueva')]):null,
   field('1. Cuenta destino',account),deleteButton('account',()=>accounts.find(a=>a.id===account.value),'importar'),field('Broker / servidor (opcional)',broker),field('Número de cuenta MT5 (opcional)',sourceLogin),field('2. Zona horaria de MT5',zone),el('p',{className:'hint',text:'Es el horario del servidor, no el de tu computadora. Se recuerda por cuenta y origen; no se copia a otros brokers.'}),saveSettings,saved,field('3. Informe HTML o archivo CSV',drop),err,preview,confirm,

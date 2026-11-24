@@ -137,3 +137,6 @@ body[data-route="hoy"] .top-quick { visibility: hidden; }
 .parte a { color: var(--gold, #d4a94a); }
 .parte-sources { word-break: break-word; }
 .prep-bias{display:flex;align-items:center;gap:10px;margin:6px 0 8px}.prep-bias select{max-width:200px}
+
+/* Importaciones recientes */
+.import-batch { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid #ffffff14; }
