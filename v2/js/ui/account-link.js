@@ -16,10 +16,19 @@ function decode(raw) {
   const b64 = String(raw).replace(/-/g, "+").replace(/_/g, "/");
   const bin = atob(b64 + "===".slice((b64.length + 3) % 4));
   const data = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
-  if (data && Array.isArray(data.balances)) {
-    const balances = data.balances.slice(0, 20).map((b) => ({ account: String(b.account || ""), target: Number(b.target), note: typeof b.note === "string" ? b.note.slice(0, 120) : "" }));
-    if (!balances.length || balances.some((b) => !b.account || !Number.isFinite(b.target))) throw new Error("Link inválido.");
-    return { balances };
+  if (data && (Array.isArray(data.balances) || Array.isArray(data.newAccounts))) {
+    const balances = (data.balances || []).slice(0, 20).map((b) => ({ account: String(b.account || ""), target: Number(b.target), note: typeof b.note === "string" ? b.note.slice(0, 120) : "" }));
+    if (balances.some((b) => !b.account || !Number.isFinite(b.target))) throw new Error("Link inválido.");
+    const newAccounts = (data.newAccounts || []).slice(0, 10).map((n) => ({
+      account: String(n.account || ""), context: n.context, currency: String(n.currency || ""), initialAmount: Number(n.initialAmount),
+      challenge: n.challenge && typeof n.challenge === "object" ? { firm: String(n.challenge.firm || ""), purchasedAt: String(n.challenge.purchasedAt || ""), cost: Number(n.challenge.cost), currency: String(n.challenge.currency || "USD"), size: Number(n.challenge.size || 25), note: typeof n.challenge.note === "string" ? n.challenge.note.slice(0, 160) : null } : null,
+    }));
+    for (const n of newAccounts) {
+      if (!n.account || !["PROP_CHALLENGE", "FUNDED", "LIVE", "DEMO"].includes(n.context) || !n.currency || !Number.isFinite(n.initialAmount)) throw new Error("Link inválido.");
+      if (n.challenge && (!n.challenge.firm || !/^\d{4}-\d{2}-\d{2}$/.test(n.challenge.purchasedAt) || !Number.isFinite(n.challenge.cost))) throw new Error("Link inválido.");
+    }
+    if (!balances.length && !newAccounts.length) throw new Error("Link inválido.");
+    return { balances, newAccounts };
   }
   if (!data || typeof data.account !== "string") throw new Error("Link inválido.");
   const movements = Array.isArray(data.movements) ? data.movements.slice(0, 200) : [];
@@ -40,6 +49,7 @@ export async function applyAccountLink(raw, stageId) {
   let pack;
   try { pack = decode(raw); } catch (_) { toast("El link no se pudo leer.", { tone: "error" }); return; }
   const accounts = await listStageAccounts(stageId, { includeArchived: true });
+  if (pack.newAccounts && pack.newAccounts.length) return applyBundle(pack, accounts, stageId);
   if (pack.balances) return applyBalances(pack.balances, accounts, stageId);
   let acc = accounts.find((a) => a.name === pack.account);
   if (!acc && pack.create) return createFromLink(pack, stageId);
@@ -124,4 +134,39 @@ async function applyBalances(list, accounts, stageId) {
   for (const r of todo) await createMovement({ accountId: r.acc.id, type: "ADJUSTMENT", amount: r.diff, date: d, note: r.b.note || "Ajuste para igualar el saldo de la plataforma" }, stageId);
   window.dispatchEvent(new HashChangeEvent("hashchange"));
   toast("Saldos igualados.", { tone: "ok", timeout: 3000 });
+}
+
+// Varias cuentas nuevas (cada una con su propio fondeo) y, opcionalmente, saldos a igualar: un solo aviso.
+async function applyBundle(pack, accounts, stageId) {
+  const ctxLabel = { PROP_CHALLENGE: "Challenge", FUNDED: "Fondeada", LIVE: "Cuenta propia", DEMO: "Demo" };
+  const money = (v) => v.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const toCreate = pack.newAccounts.filter((n) => !accounts.some((a) => a.name === n.account));
+  const body = [];
+  for (const n of pack.newAccounts) {
+    if (!toCreate.includes(n)) { body.push(`${n.account}: ya existe, no se toca.`); continue; }
+    const ch = n.challenge ? ` · fondeo ${n.challenge.firm} del ${n.challenge.purchasedAt.split("-").reverse().join("/")}, costo ${money(n.challenge.cost)} ${n.challenge.currency}` : "";
+    body.push(`Nueva: ${n.account} · ${ctxLabel[n.context]} · ${money(n.initialAmount)} ${n.currency}${ch}`);
+  }
+  const adj = [];
+  for (const b of pack.balances) {
+    const acc = accounts.find((a) => a.name === b.account);
+    if (!acc) { body.push(`${b.account}: no la encontré, no se ajusta.`); continue; }
+    const current = Math.round(Number(await balanceFor(acc.id)) * 100) / 100;
+    const diff = Math.round((b.target - current) * 100) / 100;
+    if (diff === 0) { body.push(`${acc.name}: ya está en ${money(b.target)}.`); continue; }
+    body.push(`${acc.name}: ${money(current)} → ${money(b.target)} (ajuste ${diff > 0 ? "+" : ""}${money(diff)})`);
+    adj.push({ acc, diff, note: b.note });
+  }
+  if (!toCreate.length && !adj.length) { await confirmDialog({ title: "Ya está todo cargado", body, confirmText: "Listo", cancelText: "Cerrar" }); return; }
+  const ok = await confirmDialog({ title: "¿Aplicar estos cambios?", body, confirmText: "Sí, aplicar" });
+  if (!ok) return;
+  for (const n of toCreate) {
+    let target = null;
+    if (n.challenge) target = await createChallenge({ firm: n.challenge.firm, purchasedAt: n.challenge.purchasedAt, cost: n.challenge.cost, currency: n.challenge.currency, size: n.challenge.size, note: n.challenge.note }, stageId);
+    await createAccount({ name: n.account, currency: n.currency, context: n.context, initialAmount: n.initialAmount, challengeId: target ? target.id : null }, stageId);
+  }
+  const today = new Date(); const d = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
+  for (const r of adj) await createMovement({ accountId: r.acc.id, type: "ADJUSTMENT", amount: r.diff, date: d, note: r.note || "Ajuste para igualar el saldo de la plataforma" }, stageId);
+  window.dispatchEvent(new HashChangeEvent("hashchange"));
+  toast("Cambios aplicados.", { tone: "ok", timeout: 3000 });
 }
