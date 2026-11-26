@@ -74,13 +74,11 @@ export async function hoyPulse(ctx) {
         el("span", { className: "pulse-r num", text: rv == null ? "" : (rv > 0 ? "+" : "") + Number(rv).toFixed(2) + "R" }),
       ]);
     }))
-    : el("p", { className: "empty", text: "Todavía no hay registros. El primero es el más importante." });
+    : el("p", { className: "empty", text: "Todavía no hay registros." });
 
   const message = doneToday
     ? "Hoy ya registraste. Así se construye el sistema."
-    : streak
-      ? `Llevás ${streak} día${streak === 1 ? "" : "s"} seguidos. Registrá algo hoy para no cortar la racha.`
-      : "Un registro hoy, aunque sea un NO TRADE, ya cuenta.";
+    : "Un registro hoy, aunque sea un NO TRADE, ya cuenta.";
 
   // Respaldo: los datos viven en este navegador. Recordatorio cada 7 días.
   const meta = await getMeta();
@@ -108,10 +106,6 @@ export async function hoyPulse(ctx) {
         el("p", { className: "pulse-date", text: longDate() }),
         el("h1", { className: "pulse-hello", text: greetingLine(ctx.meta) }),
       ]),
-      el("div", { className: "pulse-streak" + (doneToday ? " is-lit" : "") }, [
-        el("strong", { text: String(streak) }),
-        el("span", { text: streak === 1 ? "día seguido" : "días seguidos" }),
-      ]),
     ]),
     el("p", { className: "pulse-message", text: message }),
     backupBanner,
@@ -119,6 +113,7 @@ export async function hoyPulse(ctx) {
       quickCard("+ Trade", "Operación real o demo", "nuevo/trade", "is-gold"),
       quickCard("+ Backtest", "WIN / LOSS / BE en segundos", "backtesting?quick=bt", ""),
       quickCard("No trade", "Estudié y no había entrada", "backtesting?quick=nt", ""),
+      quickCard("Importar operaciones", "Tradovate · Vantage · MT5", "importar", ""),
     ]),
     el("div", { className: "pulse-grid" }, [
       el("div", { className: "pulse-box" }, [

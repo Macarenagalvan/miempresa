@@ -77,8 +77,9 @@ export async function run() {
   check(badFee, 'rechaza comisión negativa');
 
   const nodes = await renderImportar({ stage, route: { query: {} } });
-  check(nodes[0].id === 'importar-tradovate' && nodes[0].querySelector('input[name="tv-report"]'), 'pantalla Importar muestra Tradovate');
+  const tv = nodes.find((x) => x.id === 'importar-tradovate');
+  check(tv && tv.querySelector('input[name="tv-report"]') && nodes[0].querySelectorAll('button.broker-tab').length === 3, 'pantalla Importar muestra Tradovate');
   const withFees = await renderImportar({ stage, route: { query: { account: raw.id } } });
-  check(withFees[0].querySelector('input[name="tv-fee-MGC"]')?.value === '1.6', 'pantalla muestra comisiones de la cuenta');
+  check(withFees.find((x) => x.id === 'importar-tradovate').querySelector('input[name="tv-fee-MGC"]')?.value === '1.6', 'pantalla muestra comisiones de la cuenta');
   document.getElementById('out').textContent += '\nTradovate: ' + n + ' tests OK';
 }

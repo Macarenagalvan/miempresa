@@ -21,14 +21,14 @@ export async function importHistoryPanel(ctx) {
       groups.set(t.importBatchId, g);
     }
     const list = [...groups.values()].sort((a, b) => b.at - a.at).slice(0, 8);
-    box.replaceChildren(el("h2", { text: "Importaciones recientes" }),
-      el("p", { className: "meta", text: "Si te equivocaste de archivo o de cuenta, borrá la importación entera. Podés deshacerlo." }));
+    box.replaceChildren(el("div", { className: "import-head" }, [el("h2", { text: "Importaciones recientes" }),
+      el("details", { className: "help-pop" }, [el("summary", { "aria-label": "Ayuda", title: "Ayuda", text: "?" }), el("div", { className: "help-body" }, [el("p", { text: "Si te equivocaste de archivo o de cuenta, borrá la importación entera. Podés deshacerlo." })])])]));
     if (!list.length) { box.append(el("p", { className: "meta", text: "Todavía no importaste nada." })); return; }
     for (const g of list) {
       const acc = byId.get(g.trades[0].accountId);
       const net = g.trades.reduce((s, t) => s + (Number(t.netPnl) || 0), 0);
       const when = new Date(g.at).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
-      const del = el("button", { type: "button", className: "danger-btn", text: "Borrar esta importación" });
+      const del = el("button", { type: "button", className: "ghost btn-delete", text: "Borrar importación" });
       del.addEventListener("click", async () => {
         const ok = await confirmDialog({ title: "¿Borrar esta importación?", body: [`${g.trades.length} operaciones · ${acc ? acc.name : "cuenta"} · neto ${fmt(net, acc?.currency)}`, "Se borran solo las operaciones de esta importación."], confirmText: "Sí, borrar", danger: true });
         if (!ok) return;

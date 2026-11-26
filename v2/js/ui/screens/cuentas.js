@@ -63,7 +63,7 @@ export async function renderCuentas(ctx) {
       ]),
       el("div", { className: "list table-wrap" }, list),
     ]),
-    el("section", { className: "panel" }, [el("h2", {text:"Traer operaciones de MT5"}), link("Importar HTML o CSV de MT5", "importar")]),
+    el("section", { className: "panel" }, [el("h2", {text:"Traer operaciones del broker"}), link("Importar operaciones", "importar")]),
     ...(await renderFondeo({ ...ctx, route: { ...ctx.route, rest: "" } })),
   ];
 }
