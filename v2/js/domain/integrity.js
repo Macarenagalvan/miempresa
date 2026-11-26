@@ -1,3 +1,4 @@
+import { normalizeTags } from "./tags.js";
 import { validDay } from "./execution.js";
 import { META_ID, JOURNAL_EDITION, SCHEMA_VERSION } from "../config.js";
 import {
@@ -230,6 +231,7 @@ export function assertTrade(trade) {
     if (!trade.voidedAt || !trade.voidReason) throw new Error("VOID requiere voidedAt y voidReason");
     if (!Object.values(VoidReason).includes(trade.voidReason)) throw new Error("voidReason inválido");
   }
+  if (trade.tags != null) normalizeTags(trade.tags);
   if (trade.riskPercent != null) parseRiskNum(trade.riskPercent);
   if (trade.riskMoney != null) parseRiskNum(trade.riskMoney);
 }
