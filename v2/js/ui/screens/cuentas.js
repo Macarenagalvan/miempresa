@@ -42,7 +42,7 @@ export async function renderCuentas(ctx) {
         el("span", { text: label(a.context) }),
         el("span", { text: a.currency }),
         el("span", { className: "num", text: money(bal, a.currency) }),
-        el("span", { text: a.status==='ARCHIVED' ? 'Archivada' : isOn ? "activa" : "" }),
+        el("span", { text: a.status==='ARCHIVED' ? 'Archivada' : isOn ? "Activa" : "" }),
       ]);
       item.addEventListener("click", () => go("cuenta/" + a.id));
       const mov = el("button", { type: "button", className: "ghost acct-mov", text: "Depósito / retiro", title: "Cargar un depósito, retiro, comisión o ajuste" });
@@ -55,14 +55,14 @@ export async function renderCuentas(ctx) {
       el("button", { type: "button", className: "ghost", text: "Nueva cuenta", onclick: () => go("cuentas/nueva") }),
     ])];
   return [
-    await accountOverview(ctx),
-    el("section", { className: "panel" }, [
-      el("h1", { text: "Cuentas" }),
-      el("div", { className: "row-actions" }, [
-        el("button", { type: "button", text: "Nueva cuenta", onclick: () => go("cuentas/nueva") }),
+    el("section", { className: "panel accounts-list" }, [
+      el("div", { className: "screen-head" }, [
+        el("h1", { text: "Cuentas" }),
+        el("button", { type: "button", className: "ghost", text: "Nueva cuenta", onclick: () => go("cuentas/nueva") }),
       ]),
       el("div", { className: "list table-wrap" }, list),
     ]),
+    await accountOverview(ctx),
     el("section", { className: "panel" }, [el("h2", {text:"Traer operaciones del broker"}), link("Importar operaciones", "importar")]),
     ...(await renderFondeo({ ...ctx, route: { ...ctx.route, rest: "" } })),
   ];

@@ -39,13 +39,12 @@ export function quickBacktest(ctx) {
   const proc = processFields(null, { emotion: false, errors: true });
   const procBox = el("details", { className: "quick-process" }, [el("summary", { text: "Setup, confluencias y plan (opcional)" }), proc.node]);
   const controls = el("fieldset", { className: "quick-bt-fields" }, [
-    el("div", { className: "trade-fields-grid" }, [field("Fecha de sesión histórica", date), field("Activo", asset)]),
-    field("Dirección (opcional en NO TRADE)", choiceButtons(direction, "Dirección")),
-    field("Resultado", choiceButtons(outcome, "Resultado")), rField,
-    field("Captura (opcional) · hasta 6", captureDrop(files, { label: "Captura del backtest" })),
+    el("div", { className: "quick-row quick-row-3" }, [field("Fecha de sesión", date), field("Activo", asset), field("Dirección", choiceButtons(direction, "Dirección"))]),
+    el("div", { className: "quick-row quick-row-2" }, [field("Resultado", choiceButtons(outcome, "Resultado")), rField]),
+    field("Capturas (opcional) · hasta 6", captureDrop(files, { label: "Captura del backtest" })),
     procBox,
     el("details", {}, [el("summary", { text: "Notas (opcional)" }), field("Notas", note)]),
-    save,
+    el("div", { className: "quick-save-bar" }, [save]),
   ]);
   const quickMode = ctx.route?.query?.quick;
   if (quickMode === "nt") outcome.value = "NO_TRADE";

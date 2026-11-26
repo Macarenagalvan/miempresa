@@ -95,21 +95,17 @@ export async function renderEstudio(ctx) {
 
   return [
     el("section", { className: "panel" }, [
-      el("h1", { text: "Estudio" }),
-      el("p", { className: "hint", text: "Acá guardás lo que observás en el mercado y las oportunidades que querés seguir. No es el historial de trades ni el backtesting." }),
-      el("div", { className: "estudio-explain" }, [
-        el("div", { className: "estudio-step" }, [
-          el("strong", { text: "1. Notas de mercado" }),
-          el("p", { text: "Una lectura, un nivel, una observación o un aprendizaje. No hace falta que exista una oportunidad." }),
-        ]),
-        el("div", { className: "estudio-step" }, [
-          el("strong", { text: "2. Ideas / Setups" }),
-          el("p", { text: "Una posible operación que estás siguiendo. Podés validarla, descartarla o registrarla como trade." }),
-        ]),
+      el("div", { className: "screen-head" }, [
+        el("h1", { text: "Estudio" }),
+        el("details", { className: "help-pop" }, [el("summary", { "aria-label": "Ayuda", title: "Ayuda", text: "?" }), el("div", { className: "help-body" }, [
+          el("p", { text: "Acá guardás lo que observás en el mercado y las oportunidades que querés seguir. No es el historial de trades ni el backtesting." }),
+          el("p", {}, [el("strong", { text: "Notas de mercado: " }), "una lectura, un nivel, una observación o un aprendizaje."]),
+          el("p", {}, [el("strong", { text: "Ideas / Setups: " }), "una posible operación que estás siguiendo. Podés validarla, descartarla o registrarla como trade."]),
+        ])]),
       ]),
       tabs,
       el("div", { className: "estudio-actions" }, [
-        el("p", { className: "hint", text: tab === "setups" ? "Estás viendo ideas en seguimiento." : "Estás viendo tus observaciones de mercado." }),
+        el("span", {}),
         el("button", {
           type: "button",
           text: tab === "setups" ? "+ Nueva idea" : "+ Nueva nota",

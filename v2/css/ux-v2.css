@@ -132,3 +132,77 @@ button.row.hist.journal-history-row > span:first-child { color: var(--muted); }
   .journal-hist-head, button.row.hist.journal-history-row { grid-template-columns: 90px 80px 105px minmax(160px, 1fr) 90px 70px 120px 60px; }
 }
 .journal-hist-head span:last-child { width: auto; }
+
+/* ---------- Parte 3 ---------- */
+
+/* Backtesting: carga rápida compacta y Guardar siempre a la vista mientras completás */
+.quick-row { display: grid; gap: 0 16px; align-items: start; }
+.quick-row-3 { grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(170px, auto); }
+.quick-row-2 { grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr); }
+@media (max-width: 900px) { .quick-row-3, .quick-row-2 { grid-template-columns: 1fr; } }
+.quick-save-bar {
+  position: sticky; bottom: 0; z-index: 5; display: flex; justify-content: flex-end;
+  margin: 16px -24px -24px; padding: 14px 24px; background: var(--panel); border-top: 1px solid var(--line);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.quick-save-bar button { min-height: 40px; }
+
+/* Mi plan y rutina: resumen de reglas */
+.rules-summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 12px; }
+.rules-summary-item { background: var(--elev); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.rules-summary-item span { color: var(--muted); font-size: 13px; }
+.rules-summary-item strong { font-size: 22px; color: var(--text); }
+
+/* Estadísticas: 4 números grandes y el resto más chicos */
+.metrics.metrics-key { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.metrics.metrics-key .metric { min-height: 120px; border-color: var(--line-strong); }
+.metrics.metrics-key .metric strong { font-size: 34px; }
+.metrics.metrics-key .metric .kicker { font-size: 12px; }
+.metrics.metrics-rest { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.metrics.metrics-rest .metric strong { font-size: 22px; }
+
+/* Detalle de trade: franja con el resultado arriba */
+.trade-strip {
+  display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap;
+  margin: 12px 0 20px; padding: 18px 20px; background: var(--elev); border: 1px solid var(--line-strong); border-radius: var(--radius);
+}
+.trade-strip-main { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.trade-strip-main h1 { margin: 0; font-size: 28px; }
+.trade-strip-main .meta { margin: 0; flex-basis: 100%; }
+.trade-strip-nums { display: flex; gap: 32px; }
+.trade-strip-nums > div { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.trade-strip-nums .meta { margin: 0; }
+.trade-strip-nums strong { font-size: 30px; color: var(--text); }
+.trade-strip-nums strong.is-win { color: var(--win); }
+.trade-strip-nums strong.is-loss { color: var(--loss); }
+.trade-strip .tag-chip {
+  display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 6px;
+  border: 1px solid var(--line-strong); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: var(--text);
+}
+.trade-strip .tag-chip.result.is-win { color: var(--win); border-color: var(--win); }
+.trade-strip .tag-chip.result.is-loss { color: var(--loss); border-color: var(--loss); }
+.trade-strip .tag-chip.result.is-be { color: var(--be); border-color: var(--be); }
+.trade-notes { margin: 16px 0; }
+.trade-notes h2, .trade-facts-title { font-size: 16px; margin: 20px 0 8px; }
+.trade-notes p { white-space: pre-wrap; line-height: 1.6; max-width: 860px; }
+
+/* Cuentas: lista primero; borrar en gris, separado de Depósito / retiro */
+.accounts-list .list { margin-top: 12px; }
+.accounts-list button.row.hist { min-height: 56px; }
+.accounts-list button.row.hist strong { font-size: 15px; }
+button.delete-entity:not(.delete-dialog button) {
+  color: var(--muted) !important; border: 1px solid var(--line) !important; background: transparent !important;
+}
+button.delete-entity:not(.delete-dialog button):hover { color: var(--danger) !important; border-color: var(--danger) !important; }
+.deletable-row > .delete-entity { margin-left: 16px; }
+
+/* Patrones: muestra chica con aviso, sin apagar la fila */
+.badge.badge-warn { color: var(--warn-text, #e4d0b0); background: var(--warn-bg, #2a2216); border: 1px solid #5a4a2a; }
+.trade-strip-nums strong.is-empty { color: var(--muted); font-size: 20px; }
+.trade-detail .row-actions button.btn-danger-ghost {
+  margin-left: auto; color: var(--muted); border: 1px solid var(--line); background: transparent;
+}
+.trade-detail .row-actions button.btn-danger-ghost:hover { color: var(--danger); border-color: var(--danger); }
+.metrics .metric strong.is-empty, .metrics.metrics-key .metric strong.is-empty, .metrics.metrics-rest .metric strong.is-empty { font-size: 16px; color: var(--muted); font-family: var(--font); }
+.rules-summary { margin-bottom: 16px; }
+.rules-summary + .journal-two { margin-bottom: 16px; }
