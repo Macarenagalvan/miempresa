@@ -10,6 +10,7 @@ import { renderSetupDetail } from "./screens/setup-detail.js";
 import { renderHistorial } from "./screens/historial.js";
 import { renderTradeDetail } from "./screens/trade-detail.js";
 import { renderNumeros } from "./screens/numeros.js";
+import { renderPatrones } from "./screens/patrones.js";
 import { renderCuentas } from "./screens/cuentas.js";
 import { renderCuentaDetail } from "./screens/cuenta-detail.js";
 import { renderFondeo } from "./screens/fondeo.js";
@@ -62,6 +63,7 @@ export function routeList() {
     historial: true,
     backtesting: true,
     numeros: true,
+    patrones: true,
     estudio: true,
     senales: true,
     cuentas: true,
@@ -115,6 +117,9 @@ export async function paint(ctx) {
   } else if (parsed.name === "numeros") {
     title = "Estadísticas";
     nodes = await renderNumeros(viewCtx);
+  } else if (parsed.name === "patrones") {
+    title = "Patrones";
+    nodes = await renderPatrones(viewCtx);
   } else if (parsed.name === "senales") {
     title = "Señales";
     nodes = await renderSenales(viewCtx);
