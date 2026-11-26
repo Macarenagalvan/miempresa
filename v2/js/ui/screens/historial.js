@@ -119,7 +119,7 @@ export async function renderHistorial(ctx) {
         kind: "operaciones",
         getData: async () => ({ trades: rows, accounts }),
         extra: [
-          el("button", { type: "button", className: "tool-btn", onclick: () => go("importar") }, [el("span", { text: "Importar MT5" })]),
+          el("button", { type: "button", className: "tool-btn", onclick: () => go("importar") }, [el("span", { text: "Importar operaciones" })]),
           el("button", { type: "button", className: "tool-btn is-quiet", onclick: () => go("numeros" + (filters.accountId ? "?account=" + filters.accountId : "")) }, [el("span", { text: "Estadísticas" })]),
           el("button", { type: "button", className: "tool-btn is-quiet", onclick: () => go("backtesting") }, [el("span", { text: "Backtesting →" })]),
         ],

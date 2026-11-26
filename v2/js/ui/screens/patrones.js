@@ -98,9 +98,11 @@ export async function renderPatrones(ctx) {
   const apply = () => go("patrones" + qs({ universe: uni.value, asset: asset.value, from: from.value, to: to.value }));
   [uni, asset, from, to].forEach((n) => n.addEventListener("change", apply));
 
+  const importer = tagsImporter(trades);
+  const upload = el("button", { type: "button", className: "ghost", text: "Subir etiquetas", onclick: () => { importer.open = true; importer.scrollIntoView({ behavior: "smooth", block: "start" }); importer.querySelector("input")?.focus(); } });
   const head = el("section", { className: "panel" }, [
     el("p", { className: "kicker", text: "Qué te funciona" }),
-    el("h1", { text: "Patrones" }),
+    el("div", { className: "screen-head" }, [el("h1", { text: "Patrones" }), upload]),
     el("p", { className: "meta", text: "Tus resultados separados por las etiquetas de tu estrategia. Cada fila dice cuántos trades hay, cuántos ganaste y cuánto ganás en promedio." }),
     el("div", { className: "chips filters" }, [uni, asset, from, to]),
     el("p", {}, [
@@ -109,7 +111,6 @@ export async function renderPatrones(ctx) {
     el("p", { className: "hint", text: `${p.tagged} con etiquetas · ${p.untagged} sin etiquetas. Muestra: menos de ${SAMPLE_FEW} trades = muy pocos (en gris, no te fíes); de ${SAMPLE_FEW} a ${SAMPLE_RELIABLE - 1} = orientativo; ${SAMPLE_RELIABLE} o más = confiable.` }),
   ]);
 
-  const importer = tagsImporter(trades);
   if (!p.groups.length) {
     return [head, importer, el("section", { className: "panel" }, [
       el("h2", { text: "Todavía no hay trades con etiquetas" }),

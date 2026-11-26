@@ -61,6 +61,7 @@ export async function run() {
   check(fixed === 1 && after.direction === 'SHORT' && after.entry === 20050.5 && after.exit === 20000.5 && after.netPnl === target.netPnl, 'corrige un Vantage viejo: intercambia precios y dirección, sin tocar el PnL');
   check(await repairVantageDirections() === 0, 'la corrección no vuelve a escribir');
   const nodes = await renderImportar({ stage, route: { query: {} } });
-  check(nodes[1].id === 'importar-vantage' && nodes[1].querySelector('textarea[name="vt-text"]'), 'pantalla Importar muestra Vantage');
+  const vt = nodes.find((x) => x.id === 'importar-vantage');
+  check(vt && vt.querySelector('textarea[name="vt-text"]'), 'pantalla Importar muestra Vantage');
   document.getElementById('out').textContent += '\nVantage: ' + n + ' tests OK';
 }

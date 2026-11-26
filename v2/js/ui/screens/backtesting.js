@@ -65,6 +65,8 @@ export async function renderBacktesting(ctx) {
   ]) : null;
 
   return [
+    el("div", { className: "screen-bar" }, [el("p", { className: "meta", text: "Cargá tus backtests a mano o importá el archivo que te arma Claude." }), importer.button]),
+    importer.panel,
     quickBacktest(ctx),
     el("section", { className: "panel" }, [
       el("div", { className: "bt-summary" }, [
@@ -81,7 +83,6 @@ export async function renderBacktesting(ctx) {
         ],
       })]),
     ]),
-    importer.panel,
     el("section", { className: "panel bt-register" }, [
       el("div", { className: "bt-section-heading" }, [
         el("div", {}, [
@@ -96,7 +97,6 @@ export async function renderBacktesting(ctx) {
           el("p", { className: "hint", text: "Cargá el primero en el formulario de arriba (o con la tecla B)." }),
         ]),
       qa,
-      el("div", { className: "bt-json-import" }, [importer.button, el("span", { className: "hint", text: "¿Tenés un JSON o ZIP con capturas? Usá este importador." })]),
     ]),
     el("section", { className: "panel" }, [
       el("h2", { text: "Estudios" }),

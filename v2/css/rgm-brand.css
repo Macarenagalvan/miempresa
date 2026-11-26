@@ -126,7 +126,7 @@ button.trade-form-submit:hover, form.quick-bt button[type="submit"]:hover, .tq-m
 .pulse-streak.is-lit { border-color: rgba(212, 166, 74, 0.6); box-shadow: 0 0 28px rgba(212, 166, 74, 0.18); }
 .pulse-streak.is-lit strong { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .pulse-message { margin: 16px 0 18px; color: var(--text); font-size: 15px; }
-.pulse-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pulse-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .pulse-action {
   display: grid; gap: 4px; text-align: left; padding: 16px 18px; border-radius: 14px; min-height: 76px;
   background: var(--elev); color: var(--text); border: 1px solid var(--line-strong);
@@ -168,7 +168,7 @@ button.trade-form-submit:hover, form.quick-bt button[type="submit"]:hover, .tq-m
 
 @media (max-width: 900px) {
   .pulse-grid { grid-template-columns: 1fr; }
-  .pulse-actions { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .pulse-actions { grid-template-columns: 1fr 1fr; gap: 8px; }
   .pulse-action { padding: 12px; min-height: 64px; }
   .pulse-action span { display: none; }
 }

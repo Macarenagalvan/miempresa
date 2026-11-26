@@ -1,5 +1,4 @@
 import { el } from '../render.js';
-import { deleteButton } from '../delete-button.js';
 import { field } from '../forms/observation.js';
 import { decodeMt5File, parseMt5Html } from '../../adapters/mt5-html.js';
 import { parseMt5Csv } from '../../adapters/mt5.js';
@@ -16,6 +15,23 @@ import { isTradovatePerformanceCsv } from '../../adapters/tradovate.js';
 import { previewVantagePaste, syncVantagePaste } from '../../domain/vantage-import.js';
 import { previewTradovateCsv, syncTradovateCsv, tradovateCommissionSummary, applyTradovateCommissions } from '../../domain/tradovate-import.js';
 
+// ---------- piezas visuales comunes (solo diseño) ----------
+// Botón «Elegir archivo» en español en lugar del control del navegador.
+function filePicker(input){
+ input.classList.add('file-native');
+ const name=el('span',{className:'file-name',text:'Ningún archivo seleccionado'});
+ const sync=()=>{name.textContent=input.files&&input.files[0]?input.files[0].name:'Ningún archivo seleccionado';};
+ input.addEventListener('change',sync);
+ const node=el('label',{className:'file-pick'},[input,el('span',{className:'file-btn',text:'Elegir archivo'}),name]);
+ return {node,clear(){input.value='';sync();}};
+}
+// Ayuda plegada detrás de un botón «?».
+function help(title,items){return el('details',{className:'help-pop'},[el('summary',{'aria-label':'Cómo hacerlo',title:'Cómo hacerlo',text:'?'}),el('div',{className:'help-body'},[el('strong',{text:title}),el('ol',{},items.map(text=>el('li',{text})))])]);}
+function panelHead(title,line,helpTitle,steps){return el('div',{className:'import-head'},[el('div',{},[el('h2',{text:title}),el('p',{className:'meta',text:line})]),help(helpTitle,steps)]);}
+// Barra final: aviso de qué falta + botón principal a la derecha.
+function actionBar(confirm,note){confirm.classList.add('btn-primary');return el('div',{className:'import-actionbar'},[note,confirm]);}
+function setReady(confirm,note,base,{created,ready,why}){confirm.textContent=created>0?'Importar '+created+(created===1?' operación':' operaciones'):base;note.textContent=ready?'':why;}
+
 export async function renderImportar(ctx){
  const accounts=await listStageAccounts(ctx.stage.id),active=await getActiveAccount();let meta=await getMeta();
  const account=el('select',{className:'input',name:'import-account'},[el('option',{value:'',text:'Elegí la cuenta destino'}),...accounts.map(a=>el('option',{value:a.id,text:a.name+' · '+label(a.context)}))]);
@@ -25,16 +41,16 @@ export async function renderImportar(ctx){
  const saved=el('p',{role:'status',className:'hint'}),saveSettings=el('button',{type:'button',className:'ghost',text:'Guardar este origen'});
  function restoreSettings(){const pref=importPreference(meta,account.value);zone.value=pref?.timeZone||'';broker.value=pref?.broker||'';sourceLogin.value=pref?.login||accounts.find(a=>a.id===account.value)?.mt5Login||'';saved.textContent=pref?'Origen recordado para esta cuenta. Podés corregirlo aquí.':'';}
  restoreSettings();
- const file=el('input',{type:'file',className:'input',name:'mt5-report',accept:'.html,.htm,.csv,.txt'});
+ const file=el('input',{type:'file',className:'input',name:'mt5-report',accept:'.html,.htm,.csv,.txt'}),picker=filePicker(file);
  const preview=el('div',{'aria-live':'polite'}),err=el('p',{className:'err',role:'alert'});
- const confirm=el('button',{type:'button',text:'Importar operaciones',disabled:true});confirm.disabled=true;
+ const BASE='Importar operaciones',confirm=el('button',{type:'button',text:BASE,disabled:true});confirm.disabled=true;const note=el('span',{className:'hint',text:'Elegí la cuenta, el horario y el informe.'});
  let pending=null,version=0,busy=false;
- function invalidate(){version++;pending=null;confirm.disabled=true;preview.replaceChildren();err.textContent='';}
- account.addEventListener('change',()=>{invalidate();restoreSettings();file.value='';});
- zone.addEventListener('change',()=>{invalidate();file.value='';});
- for(const input of [broker,sourceLogin])input.addEventListener('input',()=>{invalidate();file.value='';});
+ function invalidate(){version++;pending=null;confirm.disabled=true;preview.replaceChildren();err.textContent='';setReady(confirm,note,BASE,{created:0,ready:false,why:'Elegí la cuenta, el horario y el informe.'});}
+ account.addEventListener('change',()=>{invalidate();restoreSettings();picker.clear();});
+ zone.addEventListener('change',()=>{invalidate();picker.clear();});
+ for(const input of [broker,sourceLogin])input.addEventListener('input',()=>{invalidate();picker.clear();});
  saveSettings.onclick=async()=>{saveSettings.disabled=true;try{await saveImportPreference(account.value,{timeZone:zone.value,broker:broker.value,login:sourceLogin.value});meta=await getMeta();saved.textContent='Guardado: esta cuenta recordará su broker, número MT5 y horario.';}catch(e){err.textContent=e.message;}finally{saveSettings.disabled=false;}};
- const drop=el('div',{className:'import-drop',tabindex:'0','aria-label':'Arrastrá aquí un informe HTML o CSV'},[el('strong',{text:'Arrastrá aquí tu informe HTML o CSV'}),el('p',{className:'hint',text:'O elegilo desde tu computadora. Primero indicá cuenta y horario.'}),file]);
+ const drop=el('div',{className:'import-drop',tabindex:'0','aria-label':'Arrastrá aquí un informe HTML o CSV'},[el('strong',{text:'Arrastrá aquí tu informe HTML o CSV'}),el('p',{className:'hint',text:'O elegilo desde tu computadora. Primero indicá cuenta y horario.'}),picker.node]);
  drop.addEventListener('dragover',e=>{e.preventDefault();if(!busy)drop.classList.add('is-dragging');});
  drop.addEventListener('dragleave',()=>drop.classList.remove('is-dragging'));
  drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-dragging');if(busy)return;const files=e.dataTransfer?.files;if(files?.length!==1){invalidate();err.textContent='Arrastrá un solo informe por vez.';return;}loadFile(files[0]);});
@@ -66,17 +82,17 @@ export async function renderImportar(ctx){
    const known=Boolean(login&&detectedLogin);
    const acknowledge=el('input',{type:'checkbox','aria-label':'Confirmo que el informe pertenece a esta cuenta'});
    const ready=()=>result.invalid===0&&result.unknownSymbols===0&&result.created>0&&(!report||known||acknowledge.checked);
-   acknowledge.addEventListener('change',()=>confirm.disabled=!ready());
+   const upd=()=>{confirm.disabled=!ready();setReady(confirm,note,BASE,{created:result.created,ready:ready(),why:result.created>0?'Marcá la casilla de confirmación de arriba.':'No hay operaciones nuevas para importar.'});};acknowledge.addEventListener('change',upd);
    const table=el('table',{className:'journal-table'});
    table.append(el('tr',{},['Posición','Activo','Apertura (servidor)','Neto'].map(text=>el('th',{text}))));
    for(const {rec} of parsed.rows.slice(0,100)) table.append(el('tr',{},[rec.ID,rec.Activo,rec.Fecha+' '+rec.Hora,money(rec['B/P Neto'],acc.currency)].map(text=>el('td',{text}))));
-   preview.replaceChildren(...[el('h2',{text:'Revisá antes de guardar'}),el('p',{text:chosen.name}),el('p',{text:acc.name+' · '+zone.value+(report?.login?' · MT5 '+report.login:'')}),
+   preview.replaceChildren(...[el('h3',{text:'Vista previa'}),el('p',{className:'meta',text:chosen.name}),el('p',{className:'meta',text:acc.name+' · '+zone.value+(report?.login?' · MT5 '+report.login:'')}),
     el('div',{className:'journal-kpis'},[el('strong',{text:result.created+' nuevas'}),el('strong',{text:result.duplicates+' ya cargadas'}),el('strong',{text:result.invalid+' inválidas'}),el('strong',{text:'Neto nuevo: '+money(net,acc.currency)})]),
     report&&!known?el('label',{className:'journal-confirm'},[acknowledge,el('span',{text:'Confirmo que el informe MT5 '+(report.login||'sin número identificado')+' pertenece a '+acc.name})]):null,
     ...result.errors.map(e=>el('p',{className:'err',text:'Posición '+(e.id||'—')+': '+e.error})),
     el('div',{className:'table-wrap'},[table]),
     el('p',{className:'hint',text:'Las posiciones ya cargadas se omiten. El depósito inicial del informe no se suma otra vez. Si cargaste operaciones a mano, revisá el historial para evitar duplicarlas.'})].filter(Boolean));
-   pending={csv,options,name:chosen.name,details:report?.details,login:detectedLogin||login||'',broker:broker.value||exportNotes[0]?.match(/\|server=([^|]+)/)?.[1]||''};confirm.disabled=!ready();
+   pending={csv,options,name:chosen.name,details:report?.details,login:detectedLogin||login||'',broker:broker.value||exportNotes[0]?.match(/\|server=([^|]+)/)?.[1]||''};upd();
   }catch(e){if(v===version){pending=null;err.textContent=e.message;}}
  }
  confirm.addEventListener('click',async()=>{
@@ -87,15 +103,23 @@ export async function renderImportar(ctx){
    await saveImportPreference(pending.options.accountId,{timeZone:pending.options.timeZone,broker:pending.broker,login:pending.login});meta=await getMeta();restoreSettings();
    await setActiveAccount(pending.options.accountId);
    preview.replaceChildren(el('h2',{text:result.created+' operaciones importadas'}),el('p',{text:result.duplicates+' ya estaban cargadas. Tus resultados y el saldo ya están actualizados.'}),el('div',{className:'journal-actions'},[link('Ver operaciones','historial?account='+pending.options.accountId),link('Ver estadísticas','numeros?account='+pending.options.accountId+'&universe='+(pending.options.context==='DEMO'?'DEMO':'REAL')),link('Ver saldo','cuentas?account='+pending.options.accountId)]));
-   pending=null;file.value='';
-  }catch(e){err.textContent='No se completó la importación: '+e.message+'. Revisá el historial antes de repetir; las posiciones MT5 ya guardadas se omitirán.';pending=null;file.value='';}
+   confirm.textContent=BASE;note.textContent='';pending=null;picker.clear();
+  }catch(e){err.textContent='No se completó la importación: '+e.message+'. Revisá el historial antes de repetir; las posiciones MT5 ya guardadas se omitirán.';pending=null;picker.clear();}
   finally{busy=false;account.disabled=zone.disabled=file.disabled=broker.disabled=sourceLogin.disabled=saveSettings.disabled=false;}
  });
- return [await importHistoryPanel(ctx),await tradovatePanel(ctx,accounts,active),await vantagePanel(ctx,accounts,active),el('section',{className:'panel form'},[el('p',{className:'kicker',text:'MT5 → Journal → Resultados'}),el('h1',{text:'Importar operaciones'}),el('p',{className:'meta',text:'Subí el informe HTML de MT5 directamente. También podés usar el CSV del exportador MACA.'}),
-  el('ol',{className:'journal-guide'},[el('li',{text:'En MT5: Historial → Todo el historial → Informe HTML.'}),el('li',{text:'Elegí aquí la cuenta y el horario del servidor del broker.'}),el('li',{text:'Seleccioná el archivo, revisá las posiciones y confirmá.'})]),
+ const mt5=el('section',{className:'panel form import-panel',id:'importar-mt5'},[panelHead('Importar desde MT5','Informe HTML de MT5 o CSV del exportador MACA.','Cómo bajar el informe de MT5',['En MT5: Historial → Todo el historial → Informe HTML.','Acá: elegí la cuenta y el horario del servidor del broker.','Elegí el archivo, revisá la vista previa y tocá Importar.']),
   !accounts.length?el('p',{},[el('span',{text:'Todavía no tenés una cuenta. '}),link('Crear cuenta','cuentas/nueva')]):null,
-  field('1. Cuenta destino',account),deleteButton('account',()=>accounts.find(a=>a.id===account.value),'importar'),field('Broker / servidor (opcional)',broker),field('Número de cuenta MT5 (opcional)',sourceLogin),field('2. Zona horaria de MT5',zone),el('p',{className:'hint',text:'Es el horario del servidor, no el de tu computadora. Se recuerda por cuenta y origen; no se copia a otros brokers.'}),saveSettings,saved,field('3. Informe HTML o archivo CSV',drop),err,preview,confirm,
-  el('details',{},[el('summary',{text:'Exportador de MT5: generar el CSV cada minuto'}),el('p',{className:'hint',text:'Preparado y compilado. Requiere instalarlo y verificar el primer archivo en MT5. Genera el CSV con MT5 abierto; después lo arrastrás aquí y confirmás.'}),el('a',{className:'journal-link',href:'./mt5/MacaAutoExport.zip',download:'MacaAutoExport.zip',text:'Descargar exportador e instrucciones'}),el('p',{className:'hint',text:'No abre operaciones. La sincronización directa con el journal todavía no está habilitada.'})]),link('Respaldos y exportación','sistema')])];
+  el('div',{className:'import-grid'},[field('Cuenta destino',account),field('Horario del servidor',zone),field('Broker / servidor (opcional)',broker),field('Número de cuenta MT5 (opcional)',sourceLogin)]),
+  el('p',{className:'hint',text:'Es el horario del servidor, no el de tu computadora. Se recuerda por cuenta.'}),el('div',{className:'import-inline'},[saveSettings,saved]),field('Informe HTML o CSV',drop),err,preview,actionBar(confirm,note),
+  el('details',{className:'import-more'},[el('summary',{text:'Exportador de MT5: generar el CSV cada minuto'}),el('p',{className:'hint',text:'Preparado y compilado. Requiere instalarlo y verificar el primer archivo en MT5. Genera el CSV con MT5 abierto; después lo arrastrás aquí y confirmás.'}),el('a',{className:'journal-link',href:'./mt5/MacaAutoExport.zip',download:'MacaAutoExport.zip',text:'Descargar exportador e instrucciones'}),el('p',{className:'hint',text:'No abre operaciones. La sincronización directa con el journal todavía no está habilitada.'})])].filter(Boolean));
+ const panels={tradovate:await tradovatePanel(ctx,accounts,active),vantage:await vantagePanel(ctx,accounts,active),mt5};
+ const tabs=el('div',{className:'broker-tabs',role:'tablist','aria-label':'Elegí de dónde importar'});
+ const intro=el('p',{className:'meta broker-intro',text:'Elegí de dónde querés importar tus operaciones.'});
+ const choose=(key)=>{for(const [k,node] of Object.entries(panels)){node.hidden=k!==key;}for(const b of tabs.children){const on=b.dataset.key===key;b.setAttribute('aria-selected',String(on));b.classList.toggle('is-on',on);}intro.hidden=Boolean(key);};
+ for(const [key,text] of [['tradovate','Tradovate'],['vantage','Vantage'],['mt5','MT5']])tabs.append(el('button',{type:'button',className:'broker-tab',role:'tab','aria-selected':'false','data-key':key,text,onclick:()=>choose(key)}));
+ const start=['tradovate','vantage','mt5'].includes(ctx.route.query.origen)?ctx.route.query.origen:'';
+ choose(start);
+ return [el('section',{className:'panel import-picker'},[tabs,intro]),panels.tradovate,panels.vantage,panels.mt5,await importHistoryPanel(ctx)];
 }
 
 // Cuenta propuesta para cada importador: la del link, la última usada, la que encaja con el broker, o la única.
@@ -118,16 +142,16 @@ async function tradovatePanel(ctx, accounts, active) {
  const zone = el('select', { className: 'input', name: 'tv-zone' }, TRADOVATE_SOURCE_TIMEZONES.map(z => el('option', { value: z, text: z === 'Europe/Rome' ? 'Europe/Rome (hora de Italia)' : z === 'America/Chicago' ? 'America/Chicago (CST)' : z })));
  zone.value = TRADOVATE_SOURCE_TIMEZONES.includes(pref.timeZone) ? pref.timeZone : 'Europe/Rome';
  const fee = el('input', { className: 'input', name: 'tv-fee', inputmode: 'decimal', placeholder: 'Ej.: 1.00 (vacío = sin descontar)', value: pref.fee ?? '' });
- const file = el('input', { type: 'file', className: 'input', name: 'tv-report', accept: '.csv,.txt' });
+ const file = el('input', { type: 'file', className: 'input', name: 'tv-report', accept: '.csv,.txt' }), picker = filePicker(file);
  const preview = el('div', { 'aria-live': 'polite' }), err = el('p', { className: 'err', role: 'alert' });
- const confirm = el('button', { type: 'button', text: 'Importar operaciones de Tradovate', disabled: true }); confirm.disabled = true;
+ const BASE = 'Importar operaciones', WHY = 'Elegí la cuenta y el CSV de Desempeño.', confirm = el('button', { type: 'button', text: BASE, disabled: true }); confirm.disabled = true; const note = el('span', { className: 'hint', text: WHY });
  let pending = null, version = 0, busy = false;
- const invalidate = () => { version++; pending = null; confirm.disabled = true; preview.replaceChildren(); err.textContent = ''; };
- for (const c of [account, zone]) c.addEventListener('change', () => { invalidate(); file.value = ''; });
+ const invalidate = () => { version++; pending = null; confirm.disabled = true; preview.replaceChildren(); err.textContent = ''; setReady(confirm, note, BASE, { created: 0, ready: false, why: WHY }); };
+ for (const c of [account, zone]) c.addEventListener('change', () => { invalidate(); picker.clear(); });
  account.addEventListener('change', () => refreshFees());
- fee.addEventListener('input', () => { invalidate(); file.value = ''; });
+ fee.addEventListener('input', () => { invalidate(); picker.clear(); });
  const feeValue = () => { const raw = String(fee.value || '').trim().replace(',', '.'); if (!raw) return null; const n = Number(raw); if (!Number.isFinite(n) || n < 0) throw new Error('La comisión tiene que ser un número mayor o igual a 0.'); return n; };
- const drop = el('div', { className: 'import-drop', tabindex: '0', 'aria-label': 'Arrastrá aquí el CSV de Desempeño de Tradovate' }, [el('strong', { text: 'Arrastrá aquí el CSV de Desempeño' }), el('p', { className: 'hint', text: 'O elegilo desde tu computadora. Primero indicá la cuenta.' }), file]);
+ const drop = el('div', { className: 'import-drop', tabindex: '0', 'aria-label': 'Arrastrá aquí el CSV de Desempeño de Tradovate' }, [el('strong', { text: 'Arrastrá aquí el CSV de Desempeño' }), el('p', { className: 'hint', text: 'O elegilo desde tu computadora. Primero indicá la cuenta.' }), picker.node]);
  drop.addEventListener('dragover', e => { e.preventDefault(); if (!busy) drop.classList.add('is-dragging'); });
  drop.addEventListener('dragleave', () => drop.classList.remove('is-dragging'));
  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('is-dragging'); if (busy) return; const files = e.dataTransfer?.files; if (files?.length !== 1) { invalidate(); err.textContent = 'Arrastrá un solo archivo por vez.'; return; } loadFile(files[0]); });
@@ -147,11 +171,11 @@ async function tradovatePanel(ctx, accounts, active) {
    const cents = result.drafts.reduce((s, t) => s + Math.round(t.netPnl * 100), 0) / 100;
    const acknowledge = el('input', { type: 'checkbox', 'aria-label': 'Confirmo que el archivo es de esta cuenta' });
    const ready = () => result.created > 0 && acknowledge.checked;
-   acknowledge.addEventListener('change', () => confirm.disabled = !ready());
+   const upd = () => { confirm.disabled = !ready(); setReady(confirm, note, BASE, { created: result.created, ready: ready(), why: result.created > 0 ? 'Marcá la casilla de confirmación de arriba.' : 'No hay operaciones nuevas para importar.' }); }; acknowledge.addEventListener('change', upd);
    const table = el('table', { className: 'journal-table' });
    table.append(el('tr', {}, ['Apertura', 'Activo', 'Dirección', 'Contratos', 'Entrada', 'Salida', 'Neto'].map(text => el('th', { text }))));
    for (const t of result.drafts.slice(0, 200)) table.append(el('tr', {}, [t.sourceRef.openedWall.replace('T', ' '), t.asset, t.direction, String(t.lots), String(t.entry), String(t.exit), money(t.netPnl, acc.currency || 'USD')].map(text => el('td', { text }))));
-   preview.replaceChildren(...[el('h2', { text: 'Revisá antes de guardar' }), el('p', { text: chosen.name + ' · ' + acc.name + ' · ' + zone.value }),
+   preview.replaceChildren(...[el('h3', { text: 'Vista previa' }), el('p', { className: 'meta', text: chosen.name + ' · ' + acc.name + ' · ' + zone.value }),
     el('div', { className: 'journal-kpis' }, [el('strong', { text: result.created + ' nuevas' }), el('strong', { text: result.duplicates + ' ya cargadas' }), el('strong', { text: result.invalid + ' inválidas' }), el('strong', { text: 'Neto nuevo: ' + money(cents, acc.currency || 'USD') })]),
     options.feePerContract == null ? el('p', { className: 'hint', text: 'Sin comisión: el neto es el P&L bruto de Tradovate. Si querés que coincida con el saldo, poné la comisión por contrato.' }) : el('p', { className: 'hint', text: 'Neto = P&L de Tradovate − ' + options.feePerContract + ' USD por contrato.' }),
     el('label', { className: 'journal-confirm' }, [acknowledge, el('span', { text: 'Confirmo que este CSV es de ' + acc.name + ' (el archivo de Tradovate no dice de qué cuenta es).' })]),
@@ -159,7 +183,7 @@ async function tradovatePanel(ctx, accounts, active) {
     ...result.errors.map(e => el('p', { className: 'err', text: 'Fila ' + e.index + (e.brokerSymbol ? ' (' + e.brokerSymbol + ')' : '') + ': ' + e.error })),
     el('div', { className: 'table-wrap' }, [table]),
     el('p', { className: 'hint', text: 'Los trades ya cargados se omiten, así que podés subir el mismo rango otra vez. Quedan sin estrategia: clasificalos desde el historial.' })]);
-   pending = { text, options }; confirm.disabled = !ready();
+   pending = { text, options }; upd();
   } catch (e) { if (v === version) { pending = null; err.textContent = e.message; } }
  }
  confirm.addEventListener('click', async () => {
@@ -169,8 +193,8 @@ async function tradovatePanel(ctx, accounts, active) {
    const current = await getMeta(); await putMeta({ ...current, tradovateImport: { timeZone: pending.options.timeZone, fee: pending.options.feePerContract ?? '', accountId: pending.options.accountId } });
    await setActiveAccount(pending.options.accountId);
    preview.replaceChildren(el('h2', { text: result.created + ' operaciones importadas' }), el('p', { text: result.duplicates + ' ya estaban cargadas. Tus resultados y el saldo ya están actualizados.' }), el('div', { className: 'journal-actions' }, [link('Ver operaciones', 'historial?account=' + pending.options.accountId), link('Ver estadísticas', 'numeros?account=' + pending.options.accountId + '&universe=' + (pending.options.context === 'DEMO' ? 'DEMO' : 'REAL')), link('Ver saldo', 'cuentas?account=' + pending.options.accountId)]));
-   pending = null; file.value = ''; refreshFees();
-  } catch (e) { err.textContent = 'No se completó la importación: ' + e.message + '. Revisá el historial antes de repetir; los trades ya guardados se omitirán.'; pending = null; file.value = ''; }
+   confirm.textContent = BASE; note.textContent = ''; pending = null; picker.clear(); refreshFees();
+  } catch (e) { err.textContent = 'No se completó la importación: ' + e.message + '. Revisá el historial antes de repetir; los trades ya guardados se omitirán.'; pending = null; picker.clear(); }
   finally { busy = false; account.disabled = zone.disabled = fee.disabled = file.disabled = false; }
  });
  // Comisiones de trades ya importados: neto = P&L bruto de Tradovate − comisión × contratos.
@@ -190,7 +214,7 @@ async function tradovatePanel(ctx, accounts, active) {
    inputs[r.asset].addEventListener('input', calc);
    table.append(el('tr', {}, [el('td', { text: r.asset }), el('td', { text: String(r.trades) }), el('td', { text: String(r.contracts) }), el('td', { text: money(r.gross, cur) }), el('td', { text: r.mixed ? 'varía' : money(r.commission, cur) }), el('td', { text: money(r.net, cur) }), el('td', {}, [inputs[r.asset]])]));
   }
-  const apply = el('button', { type: 'button', text: 'Aplicar comisiones' });
+  const apply = el('button', { type: 'button', className: 'ghost', text: 'Aplicar comisiones' });
   apply.addEventListener('click', async () => {
    apply.disabled = true; msg.textContent = '';
    try {
@@ -201,14 +225,14 @@ async function tradovatePanel(ctx, accounts, active) {
    } catch (e) { ferr.textContent = e.message; apply.disabled = false; }
   });
   calc();
-  feesBox.replaceChildren(el('h2', { text: 'Comisiones de trades ya importados' }), el('p', { className: 'hint', text: 'Para ' + acc.name + '. El neto se recalcula desde el P&L bruto de Tradovate, así que podés corregirlo las veces que quieras. Dejá vacío un activo para no tocarlo.' }), el('div', { className: 'table-wrap' }, [table]), total, ferr, apply, msg);
+  feesBox.replaceChildren(el('h3', { text: 'Comisiones de trades ya importados' }), el('p', { className: 'hint', text: 'Para ' + acc.name + '. El neto se recalcula desde el P&L bruto de Tradovate, así que podés corregirlo las veces que quieras. Dejá vacío un activo para no tocarlo.' }), el('div', { className: 'table-wrap' }, [table]), total, ferr, apply, msg);
  }
  await refreshFees();
- return el('section', { className: 'panel form', id: 'importar-tradovate' }, [el('p', { className: 'kicker', text: 'Tradovate → Journal → Resultados' }), el('h1', { text: 'Importar desde Tradovate' }), el('p', { className: 'meta', text: 'Para MNQ y demás futuros. Usá el CSV de Desempeño, que trae cada trade con entrada, salida, horario y P&L.' }),
-  el('ol', { className: 'journal-guide' }, [el('li', { text: 'En Tradovate: Informes de cuenta → elegí la cuenta → pestaña Desempeño.' }), el('li', { text: 'En Fecha elegí el rango (De / Para), tocá Ir y después Descargar CSV.' }), el('li', { text: 'Aquí: elegí la misma cuenta, seleccioná el archivo, revisá y confirmá.' })]),
+ return el('section', { className: 'panel form import-panel', id: 'importar-tradovate' }, [panelHead('Importar desde Tradovate', 'Para MNQ y demás futuros: CSV de Desempeño.', 'Cómo bajar el CSV de Tradovate', ['En Tradovate: Informes de cuenta → elegí la cuenta → pestaña Desempeño.', 'En Fecha elegí el rango (De / Para), tocá Ir y después Descargar CSV.', 'Acá: elegí la misma cuenta, elegí el archivo, revisá la vista previa y tocá Importar.']),
   !accounts.length ? el('p', {}, [el('span', { text: 'Todavía no tenés una cuenta. ' }), link('Crear cuenta', 'cuentas/nueva')]) : null,
-  field('1. Cuenta destino', account), field('Horario del archivo', zone), el('p', { className: 'hint', text: 'Tradovate exporta con el horario de tu navegador; si operás desde Italia, dejá Europe/Rome.' }),
-  field('Comisión por contrato, ida y vuelta (USD, opcional)', fee), field('2. CSV de Desempeño', drop), err, preview, confirm, feesBox].filter(Boolean));
+  el('div', { className: 'import-grid' }, [field('Cuenta destino', account), field('Horario del archivo', zone), field('Comisión por contrato, ida y vuelta (USD, opcional)', fee)]),
+  el('p', { className: 'hint', text: 'Tradovate exporta con el horario de tu navegador; si operás desde Italia, dejá Europe/Rome.' }),
+  field('CSV de Desempeño', drop), err, preview, actionBar(confirm, note), feesBox].filter(Boolean));
 }
 
 // ---------- Vantage (texto copiado de «Historial de posiciones» del portal) ----------
@@ -221,14 +245,16 @@ async function vantagePanel(ctx, accounts, active) {
  const zone = el('select', { className: 'input', name: 'vt-zone' }, MT5_SOURCE_TIMEZONES.map(z => el('option', { value: z, text: z === 'Europe/Athens' ? 'Europe/Athens (servidor de Vantage, GMT+2)' : z })));
  zone.value = MT5_SOURCE_TIMEZONES.includes(meta?.vantageImport?.timeZone) ? meta.vantageImport.timeZone : 'Europe/Athens';
  const text = el('textarea', { className: 'input', name: 'vt-text', rows: 10, placeholder: 'Pegá aquí lo que copiaste de Historial de posiciones (Buy / NAS100 / 0.1/0.1 / precios / P&L / fechas / #posición / Cerrado…)' });
- const review = el('button', { type: 'button', className: 'ghost', text: 'Revisar' });
- const preview = el('div', { 'aria-live': 'polite' }), err = el('p', { className: 'err', role: 'alert' });
- const confirm = el('button', { type: 'button', text: 'Importar operaciones de Vantage', disabled: true }); confirm.disabled = true;
+  const preview = el('div', { 'aria-live': 'polite' }), err = el('p', { className: 'err', role: 'alert' });
+ const BASE = 'Importar operaciones', WHY = 'Elegí la cuenta y pegá el historial.', confirm = el('button', { type: 'button', text: BASE, disabled: true }); confirm.disabled = true; const note = el('span', { className: 'hint', text: WHY });
  let pending = null, version = 0, busy = false;
- const invalidate = () => { version++; pending = null; confirm.disabled = true; preview.replaceChildren(); err.textContent = ''; };
- for (const c of [account, zone]) c.addEventListener('change', invalidate);
- text.addEventListener('input', invalidate);
- review.addEventListener('click', async () => {
+ const invalidate = () => { version++; pending = null; confirm.disabled = true; preview.replaceChildren(); err.textContent = ''; setReady(confirm, note, BASE, { created: 0, ready: false, why: WHY }); };
+ // Vista previa automática: al pegar o cambiar la cuenta/horario (sin botón «Revisar»).
+ let timer = null;
+ const schedule = (ms) => { invalidate(); clearTimeout(timer); if (!String(text.value || '').trim()) return; timer = setTimeout(review, ms); };
+ for (const c of [account, zone]) c.addEventListener('change', () => schedule(0));
+ text.addEventListener('input', () => schedule(400));
+ async function review() {
   if (busy) return; invalidate();
   const v = version, acc = accounts.find(a => a.id === account.value);
   try {
@@ -241,34 +267,34 @@ async function vantagePanel(ctx, accounts, active) {
    const cents = result.drafts.reduce((s, t) => s + Math.round(t.netPnl * 100), 0) / 100;
    const acknowledge = el('input', { type: 'checkbox', 'aria-label': 'Confirmo que el historial es de esta cuenta' });
    const ready = () => result.created > 0 && acknowledge.checked;
-   acknowledge.addEventListener('change', () => confirm.disabled = !ready());
+   const upd = () => { confirm.disabled = !ready(); setReady(confirm, note, BASE, { created: result.created, ready: ready(), why: result.created > 0 ? 'Marcá la casilla de confirmación de arriba.' : 'No hay operaciones nuevas para importar.' }); }; acknowledge.addEventListener('change', upd);
    const table = el('table', { className: 'journal-table' });
    table.append(el('tr', {}, ['Apertura (servidor)', 'Activo', 'Dirección', 'Lote', 'Entrada', 'Salida', 'Neto'].map(t => el('th', { text: t }))));
    for (const t of result.drafts.slice(0, 300)) table.append(el('tr', {}, [t.sourceRef.openedWall.replace('T', ' '), t.asset, t.direction, String(t.lots), String(t.entry), String(t.exit), money(t.netPnl, cur)].map(x => el('td', { text: x }))));
-   preview.replaceChildren(...[el('h2', { text: 'Revisá antes de guardar' }), el('p', { text: acc.name + ' · ' + zone.value }),
+   preview.replaceChildren(...[el('h3', { text: 'Vista previa' }), el('p', { className: 'meta', text: acc.name + ' · ' + zone.value }),
     el('div', { className: 'journal-kpis' }, [el('strong', { text: result.created + ' nuevas' }), el('strong', { text: result.duplicates + ' ya cargadas' }), el('strong', { text: result.invalid + ' inválidas' }), el('strong', { text: 'Neto nuevo: ' + money(cents, cur) })]),
     result.truncated ? el('p', { className: 'err', text: 'El final del texto quedó cortado (' + result.truncated + ' posición incompleta). Esa no se importa: copiala de nuevo junto con las que falten.' }) : null,
     el('label', { className: 'journal-confirm' }, [acknowledge, el('span', { text: 'Confirmo que este historial es de ' + acc.name + '.' })]),
     result.errors.length ? el('p', { className: 'meta', text: result.errors.length === 1 ? 'Esta no se importa; las demás sí:' : 'Estas no se importan; las demás sí:' }) : '',
     ...result.errors.map(e => el('p', { className: 'err', text: 'Posición ' + (e.id || '—') + (e.brokerSymbol ? ' (' + e.brokerSymbol + ')' : '') + ': ' + e.error })),
     el('div', { className: 'table-wrap' }, [table]),
-    el('p', { className: 'hint', text: 'La dirección se toma al revés del lado de cierre (Buy = cerró un short). Las ya cargadas se omiten, así que podés pegar el historial entero cada vez.' })].filter(Boolean));
-   pending = { text: text.value, options }; confirm.disabled = !ready();
+    el('p', { className: 'hint', text: 'Las ya cargadas se omiten, así que podés pegar el historial entero cada vez.' })].filter(Boolean));
+   pending = { text: text.value, options }; upd();
   } catch (e) { if (v === version) { pending = null; err.textContent = e.message; } }
- });
+ }
  confirm.addEventListener('click', async () => {
-  if (!pending || busy || confirm.disabled) return; busy = true; confirm.disabled = true; account.disabled = zone.disabled = text.disabled = review.disabled = true;
+  if (!pending || busy || confirm.disabled) return; busy = true; confirm.disabled = true; account.disabled = zone.disabled = text.disabled = true;
   try {
    const result = await syncVantagePaste(pending.text, ctx.stage.id, pending.options);
    const current = await getMeta(); await putMeta({ ...current, vantageImport: { timeZone: pending.options.timeZone, accountId: pending.options.accountId } });
    await setActiveAccount(pending.options.accountId);
    preview.replaceChildren(el('h2', { text: result.created + ' operaciones importadas' }), el('p', { text: result.duplicates + ' ya estaban cargadas. Tus resultados y el saldo ya están actualizados.' }), el('div', { className: 'journal-actions' }, [link('Ver operaciones', 'historial?account=' + pending.options.accountId), link('Ver saldo', 'cuentas?account=' + pending.options.accountId)]));
-   pending = null; text.value = '';
+   confirm.textContent = BASE; note.textContent = ''; pending = null; text.value = '';
   } catch (e) { err.textContent = 'No se completó la importación: ' + e.message; pending = null; }
-  finally { busy = false; account.disabled = zone.disabled = text.disabled = review.disabled = false; }
+  finally { busy = false; account.disabled = zone.disabled = text.disabled = false; }
  });
- return el('section', { className: 'panel form', id: 'importar-vantage' }, [el('p', { className: 'kicker', text: 'Vantage → Journal → Resultados' }), el('h1', { text: 'Pegar historial de Vantage' }), el('p', { className: 'meta', text: 'Para la cuenta de Vantage que no exporta archivo. Copiás el historial del portal y lo pegás acá.' }),
-  el('ol', { className: 'journal-guide' }, [el('li', { text: 'En el portal de Vantage: Web Trader → elegí la cuenta → abajo, Historial de posiciones.' }), el('li', { text: 'Seleccioná desde el primer Buy/Sell hasta el último «Cerrado» y copiá (Ctrl+C).' }), el('li', { text: 'Aquí: elegí la cuenta, pegá, tocá Revisar y confirmá.' })]),
-  field('1. Cuenta destino', account), field('Horario del servidor', zone), el('p', { className: 'hint', text: 'El portal muestra la hora del servidor (GMT+2 en invierno, GMT+3 en verano): Europe/Athens lo convierte bien.' }),
-  field('2. Historial copiado', text), review, err, preview, confirm]);
+ return el('section', { className: 'panel form import-panel', id: 'importar-vantage' }, [panelHead('Importar desde Vantage', 'Copiás el historial del portal y lo pegás acá. La vista previa aparece sola.', 'Cómo copiar el historial de Vantage', ['En el portal de Vantage: Web Trader → elegí la cuenta → abajo, Historial de posiciones.', 'Seleccioná desde el primer Buy/Sell hasta el último «Cerrado» y copiá (Ctrl+C).', 'Acá: elegí la cuenta, pegá, revisá la vista previa y tocá Importar.']),
+  el('div', { className: 'import-grid' }, [field('Cuenta destino', account), field('Horario del servidor', zone)]),
+  el('p', { className: 'hint', text: 'El portal muestra la hora del servidor (GMT+2 en invierno, GMT+3 en verano): Europe/Athens lo convierte bien.' }),
+  field('Historial copiado', text), err, preview, actionBar(confirm, note)]);
 }

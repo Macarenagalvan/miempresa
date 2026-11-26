@@ -28,7 +28,7 @@ export async function importHistoryPanel(ctx) {
       const acc = byId.get(g.trades[0].accountId);
       const net = g.trades.reduce((s, t) => s + (Number(t.netPnl) || 0), 0);
       const when = new Date(g.at).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
-      const del = el("button", { type: "button", className: "danger-btn", text: "Borrar esta importación" });
+      const del = el("button", { type: "button", className: "ghost btn-delete", text: "Borrar importación" });
       del.addEventListener("click", async () => {
         const ok = await confirmDialog({ title: "¿Borrar esta importación?", body: [`${g.trades.length} operaciones · ${acc ? acc.name : "cuenta"} · neto ${fmt(net, acc?.currency)}`, "Se borran solo las operaciones de esta importación."], confirmText: "Sí, borrar", danger: true });
         if (!ok) return;

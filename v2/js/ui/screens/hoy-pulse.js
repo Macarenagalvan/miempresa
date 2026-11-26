@@ -119,6 +119,7 @@ export async function hoyPulse(ctx) {
       quickCard("+ Trade", "Operación real o demo", "nuevo/trade", "is-gold"),
       quickCard("+ Backtest", "WIN / LOSS / BE en segundos", "backtesting?quick=bt", ""),
       quickCard("No trade", "Estudié y no había entrada", "backtesting?quick=nt", ""),
+      quickCard("Importar operaciones", "Tradovate · Vantage · MT5", "importar", ""),
     ]),
     el("div", { className: "pulse-grid" }, [
       el("div", { className: "pulse-box" }, [
