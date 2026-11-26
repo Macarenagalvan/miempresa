@@ -74,7 +74,7 @@ export async function hoyPulse(ctx) {
         el("span", { className: "pulse-r num", text: rv == null ? "" : (rv > 0 ? "+" : "") + Number(rv).toFixed(2) + "R" }),
       ]);
     }))
-    : el("p", { className: "empty", text: "Todavía no hay registros. El primero es el más importante." });
+    : el("p", { className: "empty", text: "Todavía no hay registros." });
 
   const message = doneToday
     ? "Hoy ya registraste. Así se construye el sistema."

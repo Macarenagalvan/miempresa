@@ -26,8 +26,8 @@ function filePicker(input){
  return {node,clear(){input.value='';sync();}};
 }
 // Ayuda plegada detrás de un botón «?».
-function help(title,items){return el('details',{className:'help-pop'},[el('summary',{'aria-label':'Cómo hacerlo',title:'Cómo hacerlo',text:'?'}),el('div',{className:'help-body'},[el('strong',{text:title}),el('ol',{},items.map(text=>el('li',{text})))])]);}
-function panelHead(title,line,helpTitle,steps){return el('div',{className:'import-head'},[el('div',{},[el('h2',{text:title}),el('p',{className:'meta',text:line})]),help(helpTitle,steps)]);}
+function help(title,items,intro){return el('details',{className:'help-pop'},[el('summary',{'aria-label':'Cómo hacerlo',title:'Cómo hacerlo',text:'?'}),el('div',{className:'help-body'},[intro?el('p',{text:intro}):null,el('strong',{text:title}),el('ol',{},items.map(text=>el('li',{text})))])]);}
+function panelHead(title,line,helpTitle,steps){return el('div',{className:'import-head'},[el('h2',{text:title}),help(helpTitle,steps,line)]);}
 // Barra final: aviso de qué falta + botón principal a la derecha.
 function actionBar(confirm,note){confirm.classList.add('btn-primary');return el('div',{className:'import-actionbar'},[note,confirm]);}
 function setReady(confirm,note,base,{created,ready,why}){confirm.textContent=created>0?'Importar '+created+(created===1?' operación':' operaciones'):base;note.textContent=ready?'':why;}
