@@ -206,3 +206,43 @@ button.delete-entity:not(.delete-dialog button):hover { color: var(--danger) !im
 .metrics .metric strong.is-empty, .metrics.metrics-key .metric strong.is-empty, .metrics.metrics-rest .metric strong.is-empty { font-size: 16px; color: var(--muted); font-family: var(--font); }
 .rules-summary { margin-bottom: 16px; }
 .rules-summary + .journal-two { margin-bottom: 16px; }
+
+/* ---------- Ajustes ---------- */
+
+/* Barras de desplazamiento oscuras y finas; se marcan más al pasar el mouse */
+* { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+*:hover { scrollbar-color: var(--line-strong) transparent; }
+html, body { scrollbar-color: var(--line-strong) var(--bg); }
+::-webkit-scrollbar { width: 8px; height: 8px; background: transparent; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: transparent; border-radius: 8px; }
+*:hover::-webkit-scrollbar-thumb { background: var(--line-strong); }
+::-webkit-scrollbar-thumb:hover { background: #4a4a55; }
+html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background: var(--line-strong); }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* No olvidar: accesos compactos al plan y a la rutina */
+.plan-links { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+button.plan-link {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; text-align: left;
+  background: var(--elev); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 12px 14px;
+}
+button.plan-link:hover { border-color: var(--accent); background: var(--accent-soft); filter: none; }
+button.plan-link strong { font-size: 14px; }
+button.plan-link span { color: var(--accent); font-size: 13px; font-weight: 500; }
+
+/* Mi plan y rutina: el plan se lee cómodo y se edita con un botón */
+.routine-section, .plan-section { margin-bottom: 16px; }
+.routine-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 1000px) { .routine-grid { grid-template-columns: 1fr; } }
+.plan-edit[hidden], .plan-read[hidden] { display: none; }
+.plan-read { max-width: 900px; margin-top: 12px; }
+.plan-read h3 {
+  break-after: avoid; margin: 18px 0 8px; font-size: 13px; letter-spacing: 0.12em; color: var(--accent); font-weight: 700;
+}
+.plan-read h3:first-child { margin-top: 0; }
+.plan-read p { margin: 0 0 8px; line-height: 1.65; color: var(--text); break-inside: avoid; }
+.plan-read ul, .plan-read ol { margin: 0 0 10px; padding-left: 22px; }
+.plan-read li { margin: 0 0 6px; line-height: 1.6; break-inside: avoid; }
+.plan-read li::marker { color: var(--accent); }
+.plan-edit textarea { min-height: 420px; }

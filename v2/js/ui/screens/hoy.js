@@ -276,8 +276,26 @@ function notePaper(note, ctx) {
   return card;
 }
 
+// El plan y la rutina se guardan como notas, pero se leen en «Mi plan y rutina»:
+// en «No olvidar» se muestran como un acceso compacto en lugar del texto entero.
+const PLAN_NOTE = "Mi plan de trading\n";
+const ROUTINE_NOTE = /^Mi rutina · /;
+function planShortcuts(all) {
+  const plan = all.find((n) => String(n.text || "").startsWith(PLAN_NOTE));
+  const routine = all.some((n) => ROUTINE_NOTE.test(String(n.text || "")));
+  if (!plan && !routine) return null;
+  const btn = (title, line) => el("button", { type: "button", className: "plan-link", onclick: () => go("practica") }, [
+    el("strong", { text: title }), el("span", { text: line }),
+  ]);
+  return el("div", { className: "plan-links" }, [
+    plan ? btn("Mi plan de trading", "Abrir y leer completo →") : null,
+    routine ? btn("Mi rutina de hoy", "Ver checklist y reflexión →") : null,
+  ]);
+}
+
 async function buildNotesCard(ctx) {
-  const notes = await listHoyNotes();
+  const allNotes = await listHoyNotes();
+  const notes = allNotes.filter((n) => !String(n.text || "").startsWith(PLAN_NOTE) && !ROUTINE_NOTE.test(String(n.text || "")));
   const err = el("p", { className: "err note-err", text: "" });
   const field = el("textarea", {
     className: "input note-input",
@@ -313,6 +331,7 @@ async function buildNotesCard(ctx) {
   return officeCard("No olvidar", ICONS.pin, el("div", { className: "note-panel" }, [
     composer,
     err,
+    planShortcuts(allNotes),
     empty,
     grid,
   ]), "office-notes");
