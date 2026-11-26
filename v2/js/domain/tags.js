@@ -16,6 +16,7 @@ export const TAG_DICTIONARY = Object.freeze([
   t("htfZone", "Zona HTF", "Contexto", [["FVG", "FVG"], ["IFVG", "iFVG"], ["MIT", "MIT"], ["TRENDLINE", "Directriz"], ["PRIOR_ACCUMULATION", "Acumulación previa"], ["DAILY_RANGE_EXTREME", "Extremo del rango D"], ["NONE", "Ninguna"]], true),
   t("location", "Ubicación", "Contexto", [["PREMIUM", "Premium"], ["EQ", "EQ 50%"], ["DISCOUNT", "Discount"]]),
   t("smt", "SMT", "Contexto", [["FOR", "A favor"], ["AGAINST", "En contra"], ["NONE", "Sin SMT"], ["NOT_CHECKED", "No mirado"]]),
+  t("rsi15", "RSI 15m (línea naranja en el RSI de 1m)", "Contexto", [["FOR", "A favor (venta < 40 · compra > 60)"], ["NEUTRAL", "Entre 40 y 60"], ["AGAINST", "En contra"], ["NOT_VISIBLE", "No visible"]]),
   t("po3Phase", "Fase PO3 / AMD", "Contexto", [["ACCUMULATION", "Acumulación"], ["MANIPULATION", "Manipulación"], ["DISTRIBUTION", "Distribución"]]),
   t("sweep", "Barrida previa", "Liquidez", [["ASIA_H", "Asia H"], ["ASIA_L", "Asia L"], ["LONDON_H", "Londres H"], ["LONDON_L", "Londres L"], ["NY_H", "NY H"], ["NY_L", "NY L"], ["TF_LINE", "Línea de temporalidad"], ["EQUAL_HL", "Mínimos/máximos iguales"], ["NONE", "Ninguna"]], true),
   t("trigger", "Gatillo", "Ejecución", [["CHOCH_FVG", "CHOCH + FVG"], ["CHOCH_BREAK", "CHOCH + rotura con fuerza"], ["PULLBACK", "Retroceso tras desplazamiento"]]),
