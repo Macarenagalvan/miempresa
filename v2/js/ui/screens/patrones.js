@@ -79,7 +79,7 @@ function tagsImporter(trades) {
   });
   return el("details", { className: "panel" }, [
     el("summary", { text: "Etiquetar trades reales (archivo de Claude)" }),
-    el("p", { className: "meta", text: `Subí el archivo .json que te arma Claude. Cada ficha se pega al trade del mismo activo y dirección abierto a ±${MATCH_WINDOW_MINUTES} minutos. Nada se guarda hasta que confirmes.` }),
+    el("p", { className: "meta", text: `Subí el archivo .json que te arma Claude. Cada ficha se pega al trade del mismo activo, dirección y precio de entrada (si la ficha no trae entrada, por la hora: ±${MATCH_WINDOW_MINUTES} minutos). Nada se guarda hasta que confirmes.` }),
     input, err, preview, el("div", { className: "row-actions" }, [confirm]),
   ]);
 }

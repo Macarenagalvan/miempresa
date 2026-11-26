@@ -25,7 +25,7 @@ export async function run() {
   const stamp = Date.now().toString(36);
   const asset = "TAGI" + stamp.slice(-5).toUpperCase();
   const base = { asset, direction: "SHORT", closedAt: "2026-11-26T12:00:00-05:00", initialSL: 110, tp: 90, exit: 110, netPnl: -50, strategy: "MACA", result: "LOSS", note: "tags import test" };
-  const a = await importBacktest(JSON.stringify({ format: "maca-backtest", version: 1, importId: `ti-${stamp}-a`, backtest: { ...base, openedAt: "2026-11-26T10:45:30-05:00", entry: 100 } }), stage.id);
+  const a = await importBacktest(JSON.stringify({ format: "maca-backtest", version: 1, importId: `ti-${stamp}-a`, backtest: { ...base, openedAt: "2026-11-26T10:45:30-05:00", entry: 105 } }), stage.id);
   // Dos trades a la misma hora: solo la entrada los separa.
   const b1 = await importBacktest(JSON.stringify({ format: "maca-backtest", version: 1, importId: `ti-${stamp}-b1`, backtest: { ...base, openedAt: "2026-11-26T11:30:00-05:00", entry: 100 } }), stage.id);
   await importBacktest(JSON.stringify({ format: "maca-backtest", version: 1, importId: `ti-${stamp}-b2`, backtest: { ...base, openedAt: "2026-11-26T11:31:00-05:00", entry: 101, initialSL: 111, exit: 111 } }), stage.id);
@@ -33,23 +33,27 @@ export async function run() {
   const items = parseTagsFile(file([
     { ...ok, asset, openedAt: "2026-11-26T10:48:00-05:00", entry: undefined },
     { ...ok, asset, openedAt: "2026-11-26T11:30:00-05:00", entry: 100 },
-    { ...ok, asset, openedAt: "2026-11-26T11:30:00-05:00", entry: undefined },
+    { ...ok, asset, openedAt: "2026-11-26T11:30:30-05:00", entry: undefined },
     { ...ok, asset, openedAt: "2026-11-26T10:52:00-05:00" },
     { ...ok, asset, direction: "LONG", openedAt: "2026-11-26T10:45:00-05:00" },
+    { ...ok, asset, openedAt: "2026-11-26T16:45:00-05:00", entry: 105 },
+    { ...ok, asset, openedAt: "2026-11-26T10:45:00-05:00", entry: 300 },
   ]));
   const rows = matchTags(await listTrades(), items);
   assert(rows[0].status === "MATCH" && rows[0].trade.id === a.id && !rows[0].replaces, "No encontró el trade a 2,5 min");
   assert(rows[1].status === "MATCH" && rows[1].trade.id === b1.id, "La entrada no desempató");
-  assert(rows[2].status === "AMBIGUOUS" && rows[2].count === 2, "Sin entrada debería ser ambiguo");
+  assert(rows[2].status === "AMBIGUOUS" && rows[2].count === 2, "Sin entrada y a la misma distancia debería ser ambiguo");
   assert(rows[3].status === "NOT_FOUND", "Fuera de ±5 min no debería coincidir");
   assert(rows[4].status === "NOT_FOUND", "Otra dirección no debería coincidir");
+  assert(rows[5].status === "MATCH" && rows[5].trade.id === a.id, "Con entrada debería encontrarlo aunque la hora esté corrida 6 h");
+  assert(rows[6].status === "NOT_FOUND", "Una entrada distinta no debería coincidir");
 
   const saved = await applyTags(rows);
-  assert(saved === 2, "Debería guardar 2, guardó " + saved);
+  assert(saved === 3, "Debería guardar 3, guardó " + saved);
   const stored = await getTrade(a.id);
   assert(stored.tags.model === "A_REVERSAL" && stored.tags.trigger === "CHOCH_FVG", "No guardó las etiquetas");
   assert(stored.session === "NY_AM", "No completó la sesión vacía");
   const again = matchTags(await listTrades(), items.slice(0, 1));
   assert(again[0].replaces === true, "No avisa que reemplaza etiquetas");
-  console.log("Etiquetas para trades existentes: validación del archivo, emparejamiento ±5 min, desempate por entrada, ambiguos y guardado OK");
+  console.log("Etiquetas para trades existentes: validación del archivo, emparejamiento por precio de entrada o ±5 min, desempate, ambiguos y guardado OK");
 }

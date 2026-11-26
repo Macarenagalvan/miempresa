@@ -41,17 +41,32 @@ export function parseTagsFile(text) {
   });
 }
 
-/** Busca el trade de cada ficha: mismo activo y dirección, apertura a ±5 minutos. */
+/**
+ * Busca el trade de cada ficha. Si la ficha trae entrada, manda el precio: mismo activo y dirección,
+ * entrada igual (tolerancia 0,02%) y apertura dentro de ±36 h (cubre cualquier zona horaria de broker).
+ * Sin entrada, se usa la hora: apertura a ±5 minutos. Si quedan varios, gana el más cercano en hora.
+ */
 export function matchTags(trades, items, windowMinutes = MATCH_WINDOW_MINUTES) {
-  const windowMs = windowMinutes * 60_000;
   const live = trades.filter((t) => t.lifecycle !== Lifecycle.VOID && t.openedAt);
   return items.map((item) => {
-    let found = live.filter((t) => normalizeAsset(t.asset) === item.asset && t.direction === item.direction
-      && Math.abs(Date.parse(t.openedAt) - item.openedMs) <= windowMs);
+    const same = live.filter((t) => normalizeAsset(t.asset) === item.asset && t.direction === item.direction);
+    const dt = (t) => Math.abs(Date.parse(t.openedAt) - item.openedMs);
+    let found;
+    if (item.entry != null) {
+      const tol = Math.max(item.entry * 0.0002, 1e-9);
+      found = same.filter((t) => Math.abs(Number(t.entry) - item.entry) <= tol && dt(t) <= 36 * 3_600_000);
+    } else {
+      found = same.filter((t) => dt(t) <= windowMinutes * 60_000);
+    }
+    // Desempate: primero la entrada más parecida, después la hora más cercana.
     if (found.length > 1 && item.entry != null) {
-      const near = (t) => Math.abs(Number(t.entry) - item.entry);
-      const best = Math.min(...found.map(near));
-      found = found.filter((t) => near(t) === best);
+      const de = (t) => Math.abs(Number(t.entry) - item.entry);
+      const best = Math.min(...found.map(de));
+      found = found.filter((t) => de(t) === best);
+    }
+    if (found.length > 1) {
+      const best = Math.min(...found.map(dt));
+      found = found.filter((t) => dt(t) === best);
     }
     if (!found.length) return { item, trade: null, status: "NOT_FOUND" };
     if (found.length > 1) return { item, trade: null, status: "AMBIGUOUS", count: found.length };
