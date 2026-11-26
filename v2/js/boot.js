@@ -1,4 +1,5 @@
 import { ensureJournalSeed } from "./domain/stage.js";
+import { repairVantageDirections } from "./domain/vantage-import.js";
 import { downloadExport } from "./services/backup.js";
 import { restoreAuthSession } from "./services/auth.js";
 import {
@@ -96,6 +97,7 @@ export async function boot() {
     await discardVirginSeedIfCloudHasJournal().catch(() => {});
   }
   const ctx = await ensureJournalSeed();
+  await repairVantageDirections().catch(() => 0);
   applyIdentity(ctx.meta, ctx.stage);
   bindNetworkSync();
   syncNow({ reason: "boot" }).catch(() => {});

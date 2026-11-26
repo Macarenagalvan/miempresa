@@ -67,6 +67,17 @@ export function parseVantagePositionHistory(text) {
   return { positions, errors, truncated };
 }
 
+/**
+ * Dirección del trade. Manda la plata: si el precio subió y se ganó (o bajó y se perdió) fue LONG; al revés, SHORT.
+ * El texto Buy/Sell de Vantage no siempre es el lado del cierre, así que solo se usa si el precio o el P&L son 0.
+ */
+export function vantageDirection(p) {
+  const move = Number(p.closePrice) - Number(p.openPrice);
+  const money = Number(p.pnl ?? p.net);
+  if (Number.isFinite(move) && Number.isFinite(money) && move !== 0 && money !== 0) return move * money > 0 ? "LONG" : "SHORT";
+  return p.closeSide === "BUY" ? "SHORT" : "LONG";
+}
+
 export function vantagePositionToDraft(p, opts = {}) {
   const { accountId, context, timeZone } = opts;
   if (!accountId) return { ok: false, error: "accountId requerido" };
@@ -88,7 +99,7 @@ export function vantagePositionToDraft(p, opts = {}) {
       asset,
       brokerSymbol: p.symbol,
       context,
-      direction: p.closeSide === "BUY" ? "SHORT" : "LONG",
+      direction: vantageDirection(p),
       accountId,
       openedAt: opened.iso,
       closedAt: closed.iso,

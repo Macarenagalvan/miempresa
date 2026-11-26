@@ -1,9 +1,12 @@
 // Importa el «Historial de posiciones» copiado del portal de Vantage a una cuenta del journal.
-import { createId } from "./ids.js";
+import { createId, nowIso } from "./ids.js";
 import { getAccount } from "../storage/repos/accounts.js";
 import { findTradeByMt5Position, importClosedMt5Trade } from "./trade.js";
 import { parseVantagePositionHistory, vantagePositionToDraft } from "../adapters/vantage-paste.js";
 import { MT5_SOURCE_TIMEZONES } from "../config.js";
+import { vantageDirection } from "../adapters/vantage-paste.js";
+import { listTrades, putTrade } from "../storage/repos/trades.js";
+import { assertTrade } from "./integrity.js";
 
 function checkOptions(opts) {
   if (!opts.accountId) throw new Error("Elegí la cuenta destino.");
@@ -48,4 +51,22 @@ export async function syncVantagePaste(text, stageId, opts = {}) {
   for (const draft of report.drafts) await importClosedMt5Trade({ ...draft, importBatchId }, stageId);
   const { drafts, ...summary } = report;
   return { ...summary, importBatchId };
+}
+
+/**
+ * Corrige la dirección de los trades de Vantage ya importados cuando contradice precio y P&L
+ * (versiones anteriores leían el Buy/Sell de Vantage al revés). Se puede correr siempre: si no hay nada que corregir, no escribe.
+ */
+export async function repairVantageDirections() {
+  let fixed = 0;
+  for (const t of await listTrades()) {
+    if (t.sourceRef?.kind !== "VANTAGE_POSITION_HISTORY") continue;
+    const right = vantageDirection({ openPrice: t.entry, closePrice: t.exit, pnl: t.sourceRef.grossPnl ?? t.netPnl, closeSide: t.direction === "SHORT" ? "BUY" : "SELL" });
+    if (right === t.direction) continue;
+    const next = { ...t, direction: right, updatedAt: nowIso() };
+    assertTrade(next);
+    await putTrade(next);
+    fixed++;
+  }
+  return fixed;
 }
