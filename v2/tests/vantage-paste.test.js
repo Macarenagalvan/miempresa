@@ -1,10 +1,10 @@
 import './test-safety.js';
 import { ensureJournalSeed } from '../js/domain/stage.js';
 import { createAccount, balanceFor } from '../js/domain/account.js';
-import { listTrades } from '../js/storage/repos/trades.js';
+import { listTrades, putTrade } from '../js/storage/repos/trades.js';
 import { mapBrokerSymbolToAsset } from '../js/adapters/mt5.js';
 import { parseVantageNumber, parseVantagePositionHistory, vantagePositionToDraft } from '../js/adapters/vantage-paste.js';
-import { previewVantagePaste, syncVantagePaste } from '../js/domain/vantage-import.js';
+import { previewVantagePaste, syncVantagePaste, repairVantageDirections } from '../js/domain/vantage-import.js';
 import { renderImportar } from '../js/ui/screens/importar.js';
 
 // Texto sintético con la forma del «Historial de posiciones» del portal de Vantage.
@@ -29,6 +29,11 @@ export async function run() {
   const c = vantagePositionToDraft(parsed.positions[2], opts).draft;
   check(c.asset === 'GER40' && c.netPnl === -22.4 && c.commission === -0.5, 'usa el neto y guarda costos');
   check(vantagePositionToDraft({ ...parsed.positions[0], symbol: 'FOOBAR99' }, opts).code === 'UNKNOWN_SYMBOL', 'símbolo desconocido se rechaza');
+  // Caso real (26/11/2026): un corto que Vantage muestra como «Sell». Manda precio + P&L.
+  const realShort = parseVantagePositionHistory(block('Sell', 'GBPUSD', '0.4/0.4', '1.30963', '1.31053', '+36.00', '+26.40', '26/11/2026 13:10:00', '26/11/2026 13:30:00', '900000020')).positions[0];
+  check(vantagePositionToDraft(realShort, opts).draft.direction === 'SHORT', 'corto con «Sell»: bajó y ganó = SHORT');
+  const realLoss = parseVantagePositionHistory(block('Sell', 'NAS100', '0.1/0.1', '26,266.65', '26,251.55', '-10.71', '-10.71', '26/11/2026 17:45:00', '26/11/2026 18:13:00', '900000021')).positions[0];
+  check(vantagePositionToDraft(realLoss, opts).draft.direction === 'SHORT', 'corto perdedor con «Sell»: subió y perdió = SHORT');
 
   const { stage } = await ensureJournalSeed();
   const acc = await createAccount({ name: 'TEST Vantage', context: 'LIVE', currency: 'USD', initialAmount: 500 }, stage.id);
@@ -46,6 +51,13 @@ export async function run() {
   const res = await syncVantagePaste(mixed, stage.id, src);
   check(res.invalid === 1 && res.created === 1 && (await listTrades()).filter(t => t.accountId === acc.id).length === before + 1, 'símbolo desconocido se saltea y el resto se guarda');
   check((await listTrades()).some(t => t.accountId === acc.id && t.asset === 'XAUUSD' && t.netPnl === -2.9), 'XAUUSD+ se lee como XAUUSD');
+  // Trades viejos guardados al revés se corrigen solos, una sola vez.
+  const mine = (await listTrades()).filter(t => t.accountId === acc.id);
+  const target = mine.find(t => t.entry === 20000.5);
+  await putTrade({ ...target, direction: 'SHORT' });
+  const fixed = await repairVantageDirections();
+  check(fixed >= 1 && (await listTrades()).find(t => t.id === target.id).direction === 'LONG', 'repara la dirección de un Vantage guardado al revés');
+  check(await repairVantageDirections() === 0, 'la reparación no vuelve a escribir');
   const nodes = await renderImportar({ stage, route: { query: {} } });
   check(nodes[1].id === 'importar-vantage' && nodes[1].querySelector('textarea[name="vt-text"]'), 'pantalla Importar muestra Vantage');
   document.getElementById('out').textContent += '\nVantage: ' + n + ' tests OK';
