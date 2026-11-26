@@ -44,6 +44,27 @@ Todos los campos de `backtest` pueden omitirse o tener `null` si se desconocen. 
 | `strategy` | `MACA`, `BLUE`, `RED`, `PINK`, `WHITE`, `BLACK`, `GREEN`, `GREEN_CRYPTO` o `UNCLASSIFIED`. Otras estrategias se describen en `note`, usando `UNCLASSIFIED`. |
 | `result` | `WIN`, `LOSS`, `BE` o `null`. Debe coincidir con el signo de `netPnl` cuando ambos se conocen. En borradores se conserva como resultado declarado, visible en el origen del registro. |
 | `note` | Texto de hasta 20.000 caracteres, conserva saltos de línea; no se interpreta como HTML ni ejecuta instrucciones. |
+| `session` | Opcional: `ASIA`, `LONDON`, `NY_AM` o `NY_PM`. |
+| `tags` | Opcional: etiquetas de la estrategia, objeto `{ "etiqueta": "VALOR" }`. Solo se aceptan las etiquetas y los valores del diccionario (`v2/js/domain/tags.js`); cualquier otro rechaza el archivo. Las etiquetas marcadas como múltiples (`htfZone`, `sweep`) aceptan una lista. `runAfterTpR` es un número de 0 a 100. Ejemplo: `{ "model": "A_REVERSAL", "withDaily": "YES", "sweep": ["ASIA_H", "TF_LINE"], "trigger": "CHOCH_BREAK", "tpVsLiquidity": "BEFORE" }`. |
+
+### Diccionario de etiquetas (versión 1)
+
+| Etiqueta | Valores |
+| --- | --- |
+| `model` | `A_REVERSAL` (giro tras barrida), `B_CONTINUATION` (continuación apertura NY) |
+| `withDaily` | `YES`, `NO` |
+| `crt` | `D`, `H12`, `H8`, `H4`, `H1`, `NONE` |
+| `htfZone` (múltiple) | `FVG`, `IFVG`, `MIT`, `TRENDLINE`, `PRIOR_ACCUMULATION`, `DAILY_RANGE_EXTREME`, `NONE` |
+| `location` | `PREMIUM`, `EQ`, `DISCOUNT` |
+| `smt` | `FOR`, `AGAINST`, `NONE`, `NOT_CHECKED` |
+| `po3Phase` | `ACCUMULATION`, `MANIPULATION`, `DISTRIBUTION` |
+| `sweep` (múltiple) | `ASIA_H`, `ASIA_L`, `LONDON_H`, `LONDON_L`, `NY_H`, `NY_L`, `TF_LINE`, `EQUAL_HL`, `NONE` |
+| `trigger` | `CHOCH_FVG`, `CHOCH_BREAK`, `PULLBACK` |
+| `execTf` | `M1`, `M2`, `M3`, `M5` |
+| `tpVsLiquidity` | `BEFORE`, `AT`, `HTF_LINE` |
+| `breakEven` | `YES`, `NO` |
+| `newsNearby` | `YES`, `NO` |
+| `runAfterTpR` | Número de 0 a 100 (R que recorrió el precio después del TP) |
 
 Si falta cualquiera de activo, dirección, ambas fechas, entrada, SL, TP, salida, PnL, estrategia clasificada o resultado, se guarda **BORRADOR**. Un archivo completo también puede guardarse como borrador marcando la opción. Los borradores no computan como operaciones cerradas; se completan y cierran desde el registro existente.
 

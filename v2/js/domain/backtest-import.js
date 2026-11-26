@@ -6,9 +6,12 @@ import { STORES } from "../config.js";
 import { buildTradeImage } from "../storage/repos/attachments.js";
 import { isTestRecord } from "./test-record.js";
 import { assertExecution, missingExecution, validInstant } from "./execution.js";
+import { normalizeTags } from "./tags.js";
+
+const SESSIONS = ["ASIA", "LONDON", "NY_AM", "NY_PM"];
 
 export const MAX_BACKTEST_BYTES = 65536;
-const fields = ["asset", "direction", "openedAt", "closedAt", "entry", "initialSL", "tp", "exit", "netPnl", "strategy", "result", "note"];
+const fields = ["asset", "direction", "openedAt", "closedAt", "entry", "initialSL", "tp", "exit", "netPnl", "strategy", "result", "note", "session", "tags"];
 function object(value) { return value && typeof value === "object" && !Array.isArray(value); }
 export function parseBacktest(text) {
   if (typeof text !== "string" || new TextEncoder().encode(text).length > MAX_BACKTEST_BYTES) throw new Error("El archivo supera 64 KB.");
@@ -22,6 +25,7 @@ export function parseBacktest(text) {
   for (const key of fields) {
     const v = raw.backtest[key];
     if (v == null) { b[key] = null; continue; }
+    if (key === "tags") { b.tags = normalizeTags(v); continue; }
     if (["entry", "initialSL", "tp", "exit", "netPnl"].includes(key)) {
       if (typeof v !== "number" || !Number.isFinite(v) || (key !== "netPnl" && v <= 0)) throw new Error(key + ": debe ser un número válido" + (key === "netPnl" ? "." : " mayor que cero."));
       b[key] = v;
@@ -34,6 +38,7 @@ export function parseBacktest(text) {
   if (b.asset && !/^[A-Z0-9._/-]{1,40}$/.test(b.asset)) throw new Error("Activo inválido.");
   if (b.direction && !["LONG", "SHORT"].includes(b.direction)) throw new Error("direction debe ser LONG o SHORT.");
   if (b.strategy && !Object.values(Strategy).includes(b.strategy)) throw new Error("Estrategia no admitida; usá UNCLASSIFIED y describila en note.");
+  if (b.session && !SESSIONS.includes(b.session)) throw new Error("session debe ser ASIA, LONDON, NY_AM o NY_PM.");
   if (b.result && !["WIN", "LOSS", "BE"].includes(b.result)) throw new Error("result debe ser WIN, LOSS o BE.");
   for (const key of ["openedAt", "closedAt"]) {
     if (!b[key]) continue;
@@ -82,7 +87,7 @@ export function buildImportedBacktest(preview, stageId, forceDraft = false) {
     draftExit: draft ? b.exit : null, draftClosedAt: draft ? b.closedAt : null, draftNetPnl: draft ? b.netPnl : null,
     closeType: draft ? null : "UNKNOWN", draftCloseType: draft ? "UNKNOWN" : null,
     note: b.note || null, management: null, hasPartials: false, commission: null, swap: null,
-    lots: null, setupId: null, deskSignalId: null, style: null, variant: null, session: null,
+    lots: null, setupId: null, deskSignalId: null, style: null, variant: null, session: b.session || null, tags: b.tags || null,
     riskPercent: null, riskMoney: null, rrPlanned: null, importBatchId: null,
     sourceRef: { kind: "BACKTEST_JSON", importId, signature: signature(b), declaredResult: b.result },
     createdAt: now, updatedAt: now, voidedAt: null, voidReason: null, costComplete: false,

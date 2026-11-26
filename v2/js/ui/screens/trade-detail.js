@@ -18,6 +18,7 @@ import { editQuickBacktest, editManualExecution, isQuickBacktest, isMt5Trade, ex
 import { findSimilarQuickBacktest, describeRecord } from "../../domain/duplicates.js";
 import { captureDrop } from "../capture-drop.js";
 import { processFields } from "../forms/process-fields.js";
+import { describeTags } from "../../domain/tags.js";
 import { setTradeProcess, FAMILIES, CONFLUENCES, EMOTIONS, PLAN, ERRORS, labelOf } from "../../domain/process.js";
 
 function partialsSelect(current) {
@@ -156,6 +157,7 @@ async function renderCard(trade, setup, asr) {
       trade.closeType ? metaLine("Tipo de cierre", trade.closeType) : null,
       ]),
       processSummary(trade.process),
+      tagsSummary(trade.tags),
       trade.note ? el("p", { className: "meta", text: `Notas: ${trade.note}` }) : null,
       el("p", { className: "meta origen", text: origenLine(trade) }),
       setup ? el("p", { className: "meta", text: `plannedEntry ${setup.plannedEntry ?? "—"} ≠ actual ${trade.entry}` }) : null,
@@ -585,6 +587,15 @@ function renderVoid(trade) {
       ]),
     ]),
   ];
+}
+
+function tagsSummary(tags) {
+  const rows = describeTags(tags);
+  if (!rows.length) return null;
+  return el("div", { className: "trade-tags" }, [
+    el("p", { className: "kicker", text: "Etiquetas de la estrategia" }),
+    ...rows.map((r) => el("p", { className: "meta", text: `${r.label}: ${r.text}` })),
+  ]);
 }
 
 function processSummary(p) {

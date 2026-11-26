@@ -1,3 +1,4 @@
+import { tagsMatch } from "./tags.js";
 import { Context, Lifecycle, Result, Disposition, Resolution } from "./enums.js";
 import { computeRrRealized, hasPartialsRecorded, isDeskResolved, normalizeAsset, universeContexts } from "./integrity.js";
 import { filterSignals } from "./signal.js";
@@ -50,6 +51,7 @@ export function filterTrades(trades, filters = {}) {
     if (filters.variant && t.variant !== filters.variant) return false;
     if (filters.direction && t.direction !== filters.direction) return false;
     if (filters.session && t.session !== filters.session) return false;
+    if (filters.tags && !tagsMatch(t.tags, filters.tags)) return false;
     if (from || to) {
       const day = (t.sourceRef?.sessionDate || t.closedAt || t.openedAt || "").slice(0, 10);
       if (from && day < from) return false;
@@ -117,6 +119,7 @@ export function compute(trades, filters = {}) {
     variant: filters.variant || null,
     direction: filters.direction || null,
     session: filters.session || null,
+    tags: filters.tags || null,
     from: filters.from || null,
     to: filters.to || null,
   };
