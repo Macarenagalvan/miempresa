@@ -62,7 +62,7 @@ export async function renderHistorial(ctx) {
   const variant = select(filters.variant, [["", "variante"], ...Object.values(BlueVariant).map((v) => [v, v])]);
   const direction = select(filters.direction, [["", "Dirección"], ...Object.values(Direction).map((d) => [d, uiLabel(d)])]);
   const session = select(filters.session, [["", "sesión"], ...ALL_SESSIONS.map((s) => [s, sessionLabel(s)])]);
-  const lifecycle = select(q.lifecycle, [["", "Operaciones"], ["DRAFT", "BORRADOR"], [Lifecycle.OPEN, "Abiertas"], [Lifecycle.CLOSED, "Cerradas"], [Lifecycle.VOID, "Anuladas"]]);
+  const lifecycle = select(q.lifecycle, [["", "Todos los estados"], ["DRAFT", "Borradores"], [Lifecycle.OPEN, "Abiertas"], [Lifecycle.CLOSED, "Cerradas"], [Lifecycle.VOID, "Anuladas"]]);
   const from = el("input", { className: "input slim", type: "date", value: filters.from });
   const to = el("input", { className: "input slim", type: "date", value: filters.to });
   function apply() {
@@ -91,12 +91,11 @@ export async function renderHistorial(ctx) {
         el("span", { text: when }),
         el("strong", { text: t.asset }),
         el("span", { text: label(t.context) }),
-        el("span", { text: `${label(t.direction)} · ${t.process?.family ? labelOf(FAMILIES, t.process.family) : (t.strategy && t.strategy !== "UNCLASSIFIED" ? strategyLabel(t.strategy) : "—")}` }),
+        el("span", { text: `${t.direction || "—"} · ${t.process?.family ? labelOf(FAMILIES, t.process.family) : (t.strategy && t.strategy !== "UNCLASSIFIED" ? strategyLabel(t.strategy) : "—")}` }),
         stateBadge(t),
-        el("span", { text: t.result ? label(t.result) : "—" }),
+        el("span", { text: t.result || "—" }),
         el("span", { className: "num", text: t.netPnl == null ? "—" : money(t.netPnl, accounts.find(a=>a.id===t.accountId)?.currency || "") }),
         el("span", { className: "num", text: r }),
-        el("span", { text: isAsrPending(t, asrByTrade[t.id]) ? "Revisión pendiente" : asrByTrade[t.id] ? "Revisada" : "—" }),
       ]);
       item.addEventListener("click", () => go("trade/" + t.id));
       return el("div", { className: "row-wrap" }, [item, rowActions(t, { editable: t.lifecycle !== "VOID" })]);
@@ -111,7 +110,7 @@ export async function renderHistorial(ctx) {
     el("section", { className: "panel" }, [
       el("div", { className: "historial-header" }, [
         el("div", {}, [
-          el("h1", { text: "Operaciones" }),
+          el("h1", { text: "Historial" }),
           el("p", { className: "meta", text: "Tocá una fila para ver el detalle. Lápiz para editar, tacho para borrar." }),
         ]),
       ]),
@@ -139,8 +138,8 @@ export async function renderHistorial(ctx) {
       })(),
       stageEmpty
         ? null
-        : el("p", { className: "meta historial-count", text: `${rows.length} operaciones · ${pendingCount} revisiones pendientes` }),
-      el("div", {className:"journal-hist-head", "aria-hidden":"true"}, ["Fecha","Activo","Tipo","Dirección / setup","Estado","Resultado","Neto","R","Revisión",""].map(text=>el("span",{text}))),
+        : el("p", { className: "meta historial-count", text: `${rows.length} operaciones` }),
+      el("div", {className:"journal-hist-head", "aria-hidden":"true"}, ["Fecha","Activo","Tipo","Dirección / setup","Estado","Resultado","Neto","R"].map(text=>el("span",{text}))),
       el("div", { className: "list table-wrap" }, list),
     ]),
   ];

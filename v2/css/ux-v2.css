@@ -103,3 +103,32 @@ button.broker-tab.is-on {
 .screen-head h1 { margin: 0; }
 .screen-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
 .screen-bar .meta { margin: 0; }
+
+/* ---------- Parte 2: Hoy, Mi escritorio e Historial ---------- */
+
+/* Hoy: preparación (60%) y reglas (40%) lado a lado */
+.hoy-prep-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start; }
+.hoy-prep-row > .panel { margin: 0; }
+.hoy-prep-row { margin: 16px 0; }
+.day-prep .plan-signals .journal-confirm { margin: 6px 0; }
+.day-prep .plan-signals { margin: 8px 0 12px; }
+@media (max-width: 1100px) { .hoy-prep-row { grid-template-columns: 1fr; } }
+.hoy-week .pulse-grid { margin: 0; }
+
+/* Mi escritorio: el parte del Nasdaq con líneas cómodas de leer */
+.hoy-desk + .panel p { max-width: 860px; }
+
+/* Historial: fila neutra; color solo en Resultado y Neto */
+button.row.hist.journal-history-row.is-win,
+button.row.hist.journal-history-row.is-loss,
+button.row.hist.journal-history-row.is-be { color: var(--text); }
+button.row.hist.journal-history-row.is-win > span:nth-child(6),
+button.row.hist.journal-history-row.is-win > span:nth-child(7) { color: var(--win); }
+button.row.hist.journal-history-row.is-loss > span:nth-child(6),
+button.row.hist.journal-history-row.is-loss > span:nth-child(7) { color: var(--loss); }
+button.row.hist.journal-history-row.is-be > span:nth-child(6) { color: var(--be); }
+button.row.hist.journal-history-row > span:first-child { color: var(--muted); }
+@media (min-width: 1201px) {
+  .journal-hist-head, button.row.hist.journal-history-row { grid-template-columns: 90px 80px 105px minmax(160px, 1fr) 90px 70px 120px 60px; }
+}
+.journal-hist-head span:last-child { width: auto; }

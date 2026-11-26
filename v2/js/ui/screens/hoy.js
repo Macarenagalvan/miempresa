@@ -318,7 +318,11 @@ async function buildNotesCard(ctx) {
   ]), "office-notes");
 }
 
-export async function renderHoy(ctx) {
+export async function renderEscritorio(ctx) {
+  return renderHoy(ctx, "escritorio");
+}
+
+export async function renderHoy(ctx, mode = "hoy") {
   const stageName = ctx.stage ? ctx.stage.name : "-";
   const today = localYmd();
   const trades = await listStageTrades(ctx.stage.id, { includeVoid: false });
@@ -395,40 +399,49 @@ export async function renderHoy(ctx) {
     ideas.length ? el("div", { className: "list table-wrap" }, ideaList) : null,
   ];
 
-  return [
-    await hoyPulse(ctx),
-    await partePanel(ctx),
-    await dayPrepPanel(),
-    await planTodayPanel(ctx),
-    await accountOverview(ctx, true),
-    el("details", { className: "journal-office" }, [el("summary", {text:"Mi escritorio · tareas, notas, calendario e ideas"}), el("div", { className: "hoy-desk" }, [
-      el("section", { className: "panel identity-band hoy-ident" }, [
-        el("p", { className: "kicker", text: "Trading Office" }),
-        el("h1", { text: greetingLine(ctx.meta) }),
-        el("p", { className: "meta", text: longDate() + " · Etapa " + stageName }),
-        accountBlock,
-        summaryCards,
-      ]),
-      el("section", { className: "panel hoy-actions" }, [
-        el("h2", { className: "hoy-col-title", text: "Registrar" }),
-        el("div", { className: "choice-grid hoy-capture" }, [
-          choice("Nota", "Algo que vi o aprendí.", "nuevo/observacion", ICONS.note),
-          choice("Idea", "Una oportunidad que estoy siguiendo.", "nuevo/setup", ICONS.idea),
-          choice("Operación", "Un trade que ejecuté o quiero registrar.", "nuevo/trade", ICONS.trade),
+  // Mi escritorio: tareas, notas, calendario, ideas y el parte del Nasdaq (pantalla propia).
+  if (mode === "escritorio") {
+    return [
+      el("div", { className: "hoy-desk" }, [
+        el("section", { className: "panel identity-band hoy-ident" }, [
+          el("p", { className: "kicker", text: "Trading Office" }),
+          el("p", { className: "meta", text: longDate() + " · Etapa " + stageName }),
+          accountBlock,
+          summaryCards,
+        ]),
+        el("section", { className: "panel hoy-actions" }, [
+          el("h2", { className: "hoy-col-title", text: "Registrar" }),
+          el("div", { className: "choice-grid hoy-capture" }, [
+            choice("Nota", "Algo que vi o aprendí.", "nuevo/observacion", ICONS.note),
+            choice("Idea", "Una oportunidad que estoy siguiendo.", "nuevo/setup", ICONS.idea),
+            choice("Operación", "Un trade que ejecuté o quiero registrar.", "nuevo/trade", ICONS.trade),
+          ]),
+        ]),
+        el("section", { className: "panel hoy-trading" }, [
+          el("h2", { className: "hoy-col-title", text: "Actividad operativa" }),
+          ...tradingBlocks,
+        ]),
+        el("div", { className: "hoy-day" }, [
+          el("h2", { className: "hoy-col-title day-label", text: "Mi Día" }),
+          await buildTasksCard(ctx),
+          await buildNotesCard(ctx),
+          await buildCalCard(ctx),
+          await buildShortcutsCard(ctx),
         ]),
       ]),
-      el("section", { className: "panel hoy-trading" }, [
-        el("h2", { className: "hoy-col-title", text: "Actividad operativa" }),
-        ...tradingBlocks,
-      ]),
-      el("div", { className: "hoy-day" }, [
-        el("h2", { className: "hoy-col-title day-label", text: "Mi Día" }),
-        await buildTasksCard(ctx),
-        await buildNotesCard(ctx),
-        await buildCalCard(ctx),
-        await buildShortcutsCard(ctx),
-      ]),
-    ])]),
+      await partePanel(ctx),
+    ];
+  }
+
+  // Hoy: arriba saludo y accesos; después la preparación del día junto a las reglas; después la semana.
+  const pulse = await hoyPulse(ctx);
+  const week = pulse.querySelector(".pulse-grid");
+  if (week) week.remove();
+  return [
+    pulse,
+    el("div", { className: "hoy-prep-row" }, [await dayPrepPanel(), await planTodayPanel(ctx)]),
+    week ? el("section", { className: "panel hoy-week" }, [week]) : null,
+    await accountOverview(ctx, true),
   ];
 }
 
