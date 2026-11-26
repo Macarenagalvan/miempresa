@@ -57,6 +57,7 @@ Todos los campos de `backtest` pueden omitirse o tener `null` si se desconocen. 
 | `htfZone` (múltiple) | `FVG`, `IFVG`, `MIT`, `TRENDLINE`, `PRIOR_ACCUMULATION`, `DAILY_RANGE_EXTREME`, `NONE` |
 | `location` | `PREMIUM`, `EQ`, `DISCOUNT` |
 | `smt` | `FOR`, `AGAINST`, `NONE`, `NOT_CHECKED` |
+| `rsi15` | `FOR` (venta con RSI 15m < 40 o compra con > 60), `NEUTRAL` (entre 40 y 60), `AGAINST`, `NOT_VISIBLE` |
 | `po3Phase` | `ACCUMULATION`, `MANIPULATION`, `DISTRIBUTION` |
 | `sweep` (múltiple) | `ASIA_H`, `ASIA_L`, `LONDON_H`, `LONDON_L`, `NY_H`, `NY_L`, `TF_LINE`, `EQUAL_HL`, `NONE` |
 | `trigger` | `CHOCH_FVG`, `CHOCH_BREAK`, `PULLBACK` |
