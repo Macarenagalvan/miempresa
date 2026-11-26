@@ -10,7 +10,7 @@ import { isMovementLive, isTradePnlForBalance } from '../domain/integrity.js';
 import { go } from './router.js';
 
 export const money = (n, currency = '') => n == null ? '—' : Number(n).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) + (currency ? ' '+currency : '');
-export const label = value => ({PROP_CHALLENGE:'Challenge', LIVE:'Cuenta propia', FUNDED:'Fondeada', DEMO:'Demo', BACKTEST:'Backtest', LONG:'Compra', SHORT:'Venta', UNCLASSIFIED:'Sin clasificar', WIN:'Ganada', LOSS:'Perdida', BE:'En equilibrio'})[value] || value || 'Sin clasificar';
+export const label = value => ({PROP_CHALLENGE:'Challenge', LIVE:'Cuenta propia', FUNDED:'Fondeada', DEMO:'Demo', BACKTEST:'Backtest', LONG:'LONG', SHORT:'SHORT', UNCLASSIFIED:'Sin clasificar', WIN:'WIN', LOSS:'LOSS', BE:'BE'})[value] || value || 'Sin clasificar';
 export const link = (text, path) => el('a', {href:'#/'+path, className:'journal-link', text});
 export function kpi(title, value, note = '') {
  return el('div',{className:'metric'},[el('span',{className:'kicker',text:title}),el('strong',{className:'num',text:value}),el('small',{className:'meta',text:note})]);

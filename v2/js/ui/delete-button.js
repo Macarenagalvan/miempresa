@@ -3,7 +3,7 @@ import {go} from './router.js';
 import {previewDeletion,deleteEntity} from '../domain/delete-entity.js';
 
 export function deleteButton(kind,record,after){
- const button=el('button',{type:'button',className:'ghost delete-entity',text:'Borrar','aria-label':'Borrar '+(typeof record==='function'?'cuenta seleccionada':record.name||record.firm)});
+ const button=el('button',{type:'button',className:'ghost delete-entity',text:kind==='account'?'Borrar cuenta':kind==='challenge'?'Borrar fondeo':'Borrar','aria-label':'Borrar '+(typeof record==='function'?'cuenta seleccionada':record.name||record.firm)});
  button.addEventListener('click',async()=>{
   const target=typeof record==='function'?record():record;if(!target)return;
   button.disabled=true;

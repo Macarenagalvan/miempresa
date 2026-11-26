@@ -99,7 +99,7 @@ async function renderCard(trade, setup, asr) {
   }
   if (trade.lifecycle === Lifecycle.CLOSED) {
     actions.push(el("button", {
-      type: "button",
+      type: "button", className: "ghost",
       text: asr ? "Ver / editar revisión" : "Revisar operación",
       onclick: () => go("trade/" + trade.id + "/asr"),
     }));
@@ -108,30 +108,32 @@ async function renderCard(trade, setup, asr) {
     actions.push(el("button", { type: "button", className: "ghost", text: "Ver idea", onclick: () => go("setup/" + setup.id) }));
   }
   actions.push(el("button", {
-    type: "button", className: "btn-danger-ghost", text: "Borrar",
+    type: "button", className: "btn-danger-ghost", text: isQuickBacktest(trade) ? "Borrar backtest" : "Borrar operación",
     onclick: () => deleteTradeFlow(trade, { after: trade.context === "BACKTEST" ? "backtesting" : "historial" }).catch((e) => toast(e.message, { tone: "error" })),
   }));
 
   let rLabel = "R al cierre";
   if (trade.lifecycle === Lifecycle.CLOSED) {
-    if (trade.hasPartials) rLabel = "R n/a · parciales (exit no es media ponderada)";
-    else if (trade.rrRealized == null) rLabel = "R n/a";
+    if (trade.hasPartials) rLabel = "R: Sin dato · parciales (la salida no es media ponderada)";
+    else if (trade.rrRealized == null) rLabel = "R: Sin dato";
     else rLabel = `R ${trade.rrRealized.toFixed(2)}`;
   } else if (trade.incompleteForR) {
     rLabel = "INCOMPLETO PARA R / RISK";
   } else if (trade.hasPartials) {
-    rLabel = "R n/a al cierre · parciales";
+    rLabel = "R al cierre: Sin dato · parciales";
   }
 
   return [
     el("section", { className: "panel trade-detail" }, [
       el("div", { className: "trade-detail-top" }, [
         stateBadge(trade),
-        el("a", { href: trade.context === "BACKTEST" ? "#/backtesting" : "#/historial", text: trade.context === "BACKTEST" ? "← Backtesting" : "← Operaciones" }),
+        el("a", { href: trade.context === "BACKTEST" ? "#/backtesting" : "#/historial", text: trade.context === "BACKTEST" ? "← Backtesting" : "← Historial" }),
       ]),
-      el("p", { className: "kicker", text: trade.context }),
-      el("h1", { text: `${trade.asset} ${trade.direction}` }),
+      tradeStrip(trade, account),
       trade.isDraft && trade.lifecycle !== Lifecycle.VOID ? el("p", { className: "draft-notice", text: "Este borrador no cuenta como operación abierta ni como resultado. Completá sus datos y marcá la apertura o registrá el cierre." }) : null,
+      renderCaptures(trade, images, err),
+      trade.note ? el("div", { className: "trade-notes" }, [el("h2", { text: "Notas" }), el("p", { text: trade.note })]) : null,
+      el("h2", { className: "trade-facts-title", text: "Datos de la operación" }),
       el("div", { className: "trade-facts" }, [
       metaLine("Fecha de sesión histórica", trade.sourceRef?.sessionDate),
       metaLine("Resultado en R", trade.rrRealized),
@@ -154,16 +156,14 @@ async function renderCard(trade, setup, asr) {
       metaLine("Riesgo monetario", trade.riskMoney),
       trade.lifecycle === Lifecycle.CLOSED ? metaLine("Comisiones", trade.commission) : null,
       trade.lifecycle === Lifecycle.CLOSED ? metaLine("Swap", trade.swap) : null,
-      trade.closeType ? metaLine("Tipo de cierre", trade.closeType) : null,
+      trade.closeType ? metaLine("Tipo de cierre", trade.closeType === "UNKNOWN" ? "Sin dato" : trade.closeType) : null,
       ]),
       processSummary(trade.process),
       tagsSummary(trade.tags),
-      trade.note ? el("p", { className: "meta", text: `Notas: ${trade.note}` }) : null,
       el("p", { className: "meta origen", text: origenLine(trade) }),
       setup ? el("p", { className: "meta", text: `plannedEntry ${setup.plannedEntry ?? "—"} ≠ actual ${trade.entry}` }) : null,
       el("p", { className: "meta", text: rLabel + " · basado en precios, sin costes" }),
-      trade.result ? el("p", { className: "trade-result-summary", text: `${trade.result} · Resultado neto ${trade.netPnl}` }) : null,
-      asrLabel ? el("p", { className: "meta", text: asrLabel }) : null,
+      asrLabel ? el("p", { className: "meta", text: asrLabel === "ASR hecho" ? "Revisión hecha" : asrLabel === "ASR pendiente" ? "Revisión pendiente" : asrLabel }) : null,
       trade.lifecycle === Lifecycle.OPEN ? field("Stop Loss actual", sl) : null,
       trade.lifecycle === Lifecycle.OPEN
         ? field("Hubo cierres parciales", partials)
@@ -172,9 +172,29 @@ async function renderCard(trade, setup, asr) {
       trade.voidReason ? el("p", { className: "hint", text: `VOID ${trade.voidReason} ${trade.voidedAt}` }) : null,
       err,
       el("div", { className: "row-actions" }, actions),
-      renderCaptures(trade, images, err),
     ]),
   ];
+}
+
+// Franja de arriba: lo que querés reconocer de un vistazo.
+function tradeStrip(trade, account) {
+  const cur = account?.currency || "USD";
+  const pnl = trade.netPnl == null ? "Sin dato" : (trade.netPnl > 0 ? "+" : "") + Number(trade.netPnl).toFixed(2).replace(".", ",") + " " + cur;
+  const r = trade.rrRealized == null ? "Sin dato" : (trade.rrRealized > 0 ? "+" : "") + Number(trade.rrRealized).toFixed(2) + " R";
+  const tone = trade.result === "WIN" ? "is-win" : trade.result === "LOSS" ? "is-loss" : trade.result === "BE" ? "is-be" : "";
+  const when = (trade.sourceRef?.sessionDate || localDateTimeValue(trade.closedAt || trade.openedAt) || "").replace("T", " ");
+  return el("div", { className: "trade-strip" }, [
+    el("div", { className: "trade-strip-main" }, [
+      el("h1", { text: trade.asset }),
+      trade.direction ? el("span", { className: "tag-chip", text: trade.direction }) : null,
+      trade.result ? el("span", { className: "tag-chip result " + tone, text: trade.result }) : null,
+      el("span", { className: "meta", text: [when, account ? account.name : null].filter(Boolean).join(" · ") }),
+    ]),
+    el("div", { className: "trade-strip-nums" }, [
+      el("div", {}, [el("span", { className: "meta", text: "P&L" }), el("strong", { className: "num " + (trade.netPnl == null ? "is-empty" : tone), text: pnl })]),
+      el("div", {}, [el("span", { className: "meta", text: "Resultado en R" }), el("strong", { className: "num " + (trade.rrRealized == null ? "is-empty" : tone), text: r })]),
+    ]),
+  ]);
 }
 
 function renderCaptures(trade, images, err) {
@@ -239,7 +259,7 @@ function renderCaptures(trade, images, err) {
     list,
     captureDrop(file, { label: "Agregar captura" }),
     status,
-    el("p", { className: "hint", text: "Pegá con Ctrl+V, arrastrá o hacé clic para elegir: se guarda sola. PNG, JPEG o WEBP, máx 8 MB. Local en este dispositivo." }),
+    el("p", { className: "hint", text: "PNG, JPEG o WEBP · máx 8 MB · se guarda sola. Local en este dispositivo." }),
   );
   return box;
 }

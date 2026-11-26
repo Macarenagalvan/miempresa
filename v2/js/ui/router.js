@@ -1,4 +1,5 @@
 import { setMain } from "./render.js";
+import { enhanceFileInputs } from "./file-picker.js";
 import { renderHoy, renderEscritorio } from "./screens/hoy.js";
 import { renderSenales } from "./screens/senales.js";
 import { renderSignalDetail } from "./screens/signal-detail.js";
@@ -168,6 +169,7 @@ export async function paint(ctx) {
     topNew.setAttribute("aria-label", isBacktest ? "Registrar nuevo backtest" : "Registrar nueva operación");
   }
   setMain(nodes);
+  enhanceFileInputs(document.getElementById("app"));
   const nextPath = parsed.name + "/" + parsed.rest;
   if (paintedPath !== nextPath) window.scrollTo({ top: 0, behavior: "instant" });
   paintedPath = nextPath;

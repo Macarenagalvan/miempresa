@@ -32,11 +32,13 @@ function rulesPanel(rules) {
         funded: { ladder: f.ladder.value.split(/[\/;,\s]+/).filter(Boolean), dropAfter: f.drop.value, weeklyStop: f.fWeek.value, weeklyCap: f.fWeekCap.value },
       });
       status.textContent = 'Reglas guardadas. En Hoy vas a ver cómo vas.';
+      toast('Reglas guardadas.', { timeout: 2500 });
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
     } catch (e) { status.textContent = e.message; } finally { save.disabled = false; }
   });
   const grid = (items) => el('div', { className: 'plan-rule-grid' }, items.map(([label, input]) => field(label, input)));
   return el('section', { className: 'panel' }, [
-    el('h2', { text: 'Reglas en números' }),
+    el('h2', { text: 'Configuración de reglas' }),
     el('p', { className: 'meta', text: 'El journal las controla en Hoy. Vacío = regla apagada. Montos en la moneda de cada cuenta.' }),
     el('h3', { text: 'Para mí (todas las cuentas juntas)' }),
     grid([['Ideas máximas por día', f.maxIdeas], ['Pérdidas que cierran el día', f.maxLosses], ['Señales que cierran el día', f.signalsLimit]]),
@@ -47,6 +49,23 @@ function rulesPanel(rules) {
     el('h3', { text: 'Fondeada: escalera de riesgo' }),
     grid([['Riesgo por escalón (sube con cada cobro)', f.ladder], ['Bajar un escalón si caigo', f.drop], ['Stop semanal (si es distinto)', f.fWeek], ['Techo semanal (si es distinto)', f.fWeekCap]]),
     save, status,
+  ]);
+}
+
+// Resumen de solo lectura de las reglas (arriba de la pantalla).
+function rulesSummary(rules) {
+  const r = rules || normalizeRules({});
+  const v = (x, suf = '') => (x == null || x === '' ? null : String(x) + suf);
+  const items = [
+    ['Ideas máximas por día', v(r.maxIdeas)], ['Pérdidas que cierran el día', v(r.maxLosses)], ['Señales que cierran el día', v(r.signalsLimit)],
+    ['Riesgo por trade · challenge/fondeada', v(r.prop.risk)], ['Stop diario · challenge/fondeada', v(r.prop.dailyStop)],
+    ['Riesgo por trade · capital propio', v(r.own.risk)], ['Stop diario · capital propio', v(r.own.dailyStop)],
+  ].filter(([, val]) => val != null);
+  return el('section', { className: 'panel rules-summary' }, [
+    el('h2', { text: 'Mis reglas de riesgo' }),
+    items.length
+      ? el('div', { className: 'rules-summary-grid' }, items.map(([label, val]) => el('div', { className: 'rules-summary-item' }, [el('span', { text: label }), el('strong', { className: 'num', text: val })])))
+      : el('p', { className: 'meta', text: 'Todavía no cargaste reglas. Las completás abajo, en «Configuración de reglas».' }),
   ]);
 }
 
@@ -97,5 +116,5 @@ export async function renderPractice(ctx) {
  journal.value=routine?.text.split('\nReflexión:\n')[1]||'';
  const saveRoutine=el('button',{type:'button',text:'Guardar rutina de hoy'}),routineStatus=el('p',{role:'status'});
  saveRoutine.addEventListener('click',async()=>{saveRoutine.disabled=true;err.textContent='';try{const text=routinePrefix+boxes.map(({text,box})=>(box.checked?'[x] ':'[ ] ')+text).join('\n')+'\nReflexión:\n'+journal.value;routine=routine?await updateOfficeNote(routine.id,{text}):await addOfficeNote({text});routineStatus.textContent='Rutina del '+day+' guardada.';}catch(e){err.textContent=e.message;}finally{saveRoutine.disabled=false;}});
- return [el('section',{className:'panel'},[el('h1',{text:'Mi plan y rutina'})]),rulesPanel(rules),el('div',{className:'journal-two'},[el('section',{className:'panel'},[el('h2',{text:'Mi plan de trading'}),field('Plan completo',planText),save,result]),el('section',{className:'panel'},[el('h2',{text:'Rutina · '+day}),...boxes.map(({text,box})=>el('label',{className:'journal-confirm'},[box,el('span',{text})])),field('Reflexión del día',journal),saveRoutine,routineStatus])]),err];
+ return [rulesSummary(rules),el('div',{className:'journal-two'},[el('section',{className:'panel'},[el('h2',{text:'Mi plan de trading'}),field('Plan completo',planText),save,result]),el('section',{className:'panel'},[el('h2',{text:'Rutina · '+day}),...boxes.map(({text,box})=>el('label',{className:'journal-confirm'},[box,el('span',{text})])),field('Reflexión del día',journal),saveRoutine,routineStatus])]),rulesPanel(rules),err];
 }

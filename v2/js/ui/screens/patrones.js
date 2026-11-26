@@ -19,21 +19,21 @@ function select(current, options, label) {
   return node;
 }
 
-const pct = (v) => (v == null ? "—" : Math.round(v * 100) + "%");
-const r = (v) => (v == null ? "—" : (v > 0 ? "+" : "") + v.toFixed(2) + "R");
+const pct = (v) => (v == null ? "Sin dato" : Math.round(v * 100) + "%");
+const r = (v) => (v == null ? "Sin dato" : (v > 0 ? "+" : "") + v.toFixed(2) + "R");
 
 function table(rows, firstHeader) {
   const t = el("table", { className: "journal-table" });
   t.append(el("tr", {}, [firstHeader, "Trades", "Ganadas", "R promedio", "vs. tu promedio", "Muestra"].map((text) => el("th", { text }))));
   for (const x of rows) {
     const few = x.sample === "FEW";
-    t.append(el("tr", { style: few ? "opacity:.55" : "" }, [
+    t.append(el("tr", {}, [
       el("td", { text: x.label, style: "white-space:normal" }),
       el("td", { text: String(x.n) }),
       el("td", { text: pct(x.winRate) }),
       el("td", { text: r(x.expectancyR) }),
       el("td", { text: r(x.vsBaseR) }),
-      el("td", {}, [el("span", { className: "badge", text: SAMPLE_TEXT[x.sample] })]),
+      el("td", {}, [el("span", { className: "badge" + (few ? " badge-warn" : ""), text: (few ? "⚠ " : "") + SAMPLE_TEXT[x.sample] })]),
     ]));
   }
   return el("div", { className: "table-wrap" }, [t]);
@@ -108,7 +108,7 @@ export async function renderPatrones(ctx) {
     el("p", {}, [
       el("strong", { text: `Todos: ${p.base.n} trades · ganadas ${pct(p.base.winRate)} · ${r(p.base.expectancyR)} por trade` }),
     ]),
-    el("p", { className: "hint", text: `${p.tagged} con etiquetas · ${p.untagged} sin etiquetas. Muestra: menos de ${SAMPLE_FEW} trades = muy pocos (en gris, no te fíes); de ${SAMPLE_FEW} a ${SAMPLE_RELIABLE - 1} = orientativo; ${SAMPLE_RELIABLE} o más = confiable.` }),
+    el("p", { className: "hint", text: `${p.tagged} con etiquetas · ${p.untagged} sin etiquetas. Muestra: menos de ${SAMPLE_FEW} trades = muy pocos (marcado con ⚠, no te fíes); de ${SAMPLE_FEW} a ${SAMPLE_RELIABLE - 1} = orientativo; ${SAMPLE_RELIABLE} o más = confiable.` }),
   ]);
 
   if (!p.groups.length) {

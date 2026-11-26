@@ -27,7 +27,7 @@ function select(current, options) {
 }
 
 function fmt(value, kind) {
-  if (value == null) return "—";
+  if (value == null) return "Sin dato";
   if (value === Number.POSITIVE_INFINITY) return "∞";
   if (kind === "pct") return (value * 100).toFixed(1) + "%";
   if (kind === "r") return Number(value).toFixed(2);
@@ -38,7 +38,7 @@ function fmt(value, kind) {
 function metric(label, value, kind, note) {
   return el("div", { className: "metric" }, [
     el("span", { className: "kicker", text: label }),
-    el("strong", { className: "num", text: fmt(value, kind) }),
+    el("strong", { className: "num" + (value == null ? " is-empty" : ""), text: fmt(value, kind) }),
     note ? el("span", { className: "meta", text: note }) : null,
   ]);
 }
@@ -152,17 +152,19 @@ export async function renderNumeros(ctx) {
       el("div", { className: "journal-stat-filters" }, [field("Resultados",uni),field("Cuenta",accountSel),field("Tipo de cuenta",ctxSel),field("Activo",asset),field("Dirección",direction),field("Sesión",session),field("Desde",from),field("Hasta",to)]),
       (() => { const d = el("details", { className: "legacy-filters" }, [el("summary", { text: "Sistema de colores (anterior)" }), el("div", { className: "journal-stat-filters" }, [field("Estrategia", strategy), field("Variante", variant)])]); d.open = Boolean(filters.strategy || filters.variant); return d; })(),
       el("button", {type:"button",className:"ghost",text:"Limpiar filtros",onclick:()=>go("numeros")}),
-      el("div", { className: "metrics" }, [
-        metric("Operaciones cerradas", stats.nClosed),
-        metric("Ganadas", stats.nWins),
-        metric("Perdidas", stats.nLosses),
-        metric("En equilibrio", stats.nBe),
-        metric("Porcentaje de acierto", stats.winRate, "pct", `WIN / (WIN + LOSS): ${stats.nWins}/${stats.nDecided}; BE excluido`),
+      el("div", { className: "metrics metrics-key" }, [
         metric("Resultado neto", stats.netPnl, "n", `${stats.nMoney} operaciones · ${currency}`),
+        metric("Winrate", stats.winRate, "pct", `WIN / (WIN + LOSS): ${stats.nWins}/${stats.nDecided}; BE excluido`),
+        metric("Expectativa en R", stats.expectancyR, "r", `${stats.nR} con riesgo conocido`),
+        metric("Drawdown máximo", stats.maxDrawdown, "n", "Calculado al cierre de cada operación"),
+      ]),
+      el("div", { className: "metrics metrics-rest" }, [
+        metric("Operaciones cerradas", stats.nClosed),
+        metric("Ganadas (WIN)", stats.nWins),
+        metric("Perdidas (LOSS)", stats.nLosses),
+        metric("En equilibrio (BE)", stats.nBe),
         metric("Factor de beneficio", stats.profitFactorUsd, "n", `${stats.nMoney} operaciones · ${currency}`),
         metric("Promedio por operación", stats.expectancyUsd, "n", `${stats.nMoney} operaciones · ${currency}`),
-        metric("Promedio en R", stats.expectancyR, "r", `${stats.nR} con riesgo conocido`),
-        metric("Caída máxima al cierre", stats.maxDrawdown),
         metric("Máx. ganadas seguidas", stats.maxConsecWins),
         metric("Máx. perdidas seguidas", stats.maxConsecLosses),
       ]),
