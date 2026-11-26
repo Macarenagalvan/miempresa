@@ -66,6 +66,7 @@
     import { run as runParte } from "./rgm-parte.test.js";
     import { run as runPrep } from "./rgm-prep.test.js";
     import { run as runTags } from "./tags.test.js";
+    import { run as runPatterns } from "./patterns.test.js";
     const out = document.getElementById("out");
     Promise.resolve()
       .then(() => run0())
@@ -117,6 +118,7 @@
       .then(() => runP01())
       .then(() => runP02())
       .then(() => runTags())
+      .then(() => runPatterns())
       .then(() => { document.body.dataset.testStatus = "passed"; console.log(out.textContent); })
       .catch((err) => {
         out.className = "fail";
