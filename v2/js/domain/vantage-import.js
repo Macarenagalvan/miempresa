@@ -54,16 +54,19 @@ export async function syncVantagePaste(text, stageId, opts = {}) {
 }
 
 /**
- * Corrige la dirección de los trades de Vantage ya importados cuando contradice precio y P&L
- * (versiones anteriores leían el Buy/Sell de Vantage al revés). Se puede correr siempre: si no hay nada que corregir, no escribe.
+ * Versiones anteriores del importador leían el historial de Vantage al revés: tomaban el precio de cierre
+ * como entrada (y la apertura como salida) y daban vuelta la dirección. Esta corrección intercambia entrada y
+ * salida una sola vez por trade (marca sourceRef.vantageFormat = 2) y recalcula la dirección con precio y P&L.
+ * No cambia PnL, comisiones, fechas ni saldos.
  */
 export async function repairVantageDirections() {
   let fixed = 0;
   for (const t of await listTrades()) {
-    if (t.sourceRef?.kind !== "VANTAGE_POSITION_HISTORY") continue;
-    const right = vantageDirection({ openPrice: t.entry, closePrice: t.exit, pnl: t.sourceRef.grossPnl ?? t.netPnl, closeSide: t.direction === "SHORT" ? "BUY" : "SELL" });
-    if (right === t.direction) continue;
-    const next = { ...t, direction: right, updatedAt: nowIso() };
+    if (t.sourceRef?.kind !== "VANTAGE_POSITION_HISTORY" || t.sourceRef.vantageFormat === 2) continue;
+    const entry = t.exit, exit = t.entry;
+    const fallback = t.direction === "SHORT" ? "BUY" : "SELL";
+    const direction = vantageDirection({ openPrice: entry, closePrice: exit, pnl: t.sourceRef.grossPnl ?? t.netPnl, side: fallback });
+    const next = { ...t, entry, exit, direction, sourceRef: { ...t.sourceRef, vantageFormat: 2 }, updatedAt: nowIso() };
     assertTrade(next);
     await putTrade(next);
     fixed++;

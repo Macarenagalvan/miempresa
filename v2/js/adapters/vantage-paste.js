@@ -1,8 +1,8 @@
 // Vantage (portal web) → Journal: lee el texto copiado de «Historial de posiciones».
 // Cada posición viene en bloques de líneas:
-//   Buy|Sell (lado del CIERRE) · símbolo · cerrado/total · precio de cierre · precio de apertura ·
+//   Buy|Sell (lado de la POSICIÓN) · símbolo · cerrado/total · precio de apertura · precio de cierre ·
 //   P&L · P&L neto · a/b (costos) · apertura <tab> cierre · #posición · estado
-// La dirección del trade es la contraria al lado del cierre.
+// Verificado con trades reales del 26/11/2026: un corto aparece como «Sell» con la apertura primero.
 import { mapBrokerSymbolToAsset, wallClockToIso } from "./mt5.js";
 
 const SIDE = { BUY: "BUY", SELL: "SELL", COMPRA: "BUY", COMPRAR: "BUY", VENTA: "SELL", VENDER: "SELL" };
@@ -50,14 +50,14 @@ export function parseVantagePositionHistory(text) {
     const id = (idLine.match(/^#?(\d{5,})$/) || [])[1];
     const fields = dates ? lines.slice(i + 2, j) : [];
     if (!dates || !id || fields.length < 5) { truncated += 1; continue; }
-    const [volume, closeRaw, openRaw, pnlRaw, netRaw, costsRaw] = fields;
+    const [volume, openRaw, closeRaw, pnlRaw, netRaw, costsRaw] = fields;
     const vol = String(volume).split("/").map(parseVantageNumber);
     const closePrice = parseVantageNumber(closeRaw), openPrice = parseVantageNumber(openRaw);
     const pnl = parseVantageNumber(pnlRaw), net = netRaw == null ? pnl : parseVantageNumber(netRaw);
     const costs = costsRaw && /\//.test(costsRaw) ? costsRaw.split("/").map(parseVantageNumber) : null;
     const status = lines[j + 2] || "";
     const opened = parseVantageDateTime(dates[0]), closed = parseVantageDateTime(dates[1]);
-    const rec = { id, closeSide: side, symbol: lines[i + 1], lots: vol[0], totalLots: vol[1] ?? vol[0], closePrice, openPrice, pnl, net, costs, opened, closed, status };
+    const rec = { id, side, symbol: lines[i + 1], lots: vol[0], totalLots: vol[1] ?? vol[0], closePrice, openPrice, pnl, net, costs, opened, closed, status };
     if ([rec.lots, closePrice, openPrice, net].some((v) => v == null)) errors.push({ id, error: "números ilegibles" });
     else positions.push(rec);
     i = j + 1;
@@ -68,14 +68,14 @@ export function parseVantagePositionHistory(text) {
 }
 
 /**
- * Dirección del trade. Manda la plata: si el precio subió y se ganó (o bajó y se perdió) fue LONG; al revés, SHORT.
- * El texto Buy/Sell de Vantage no siempre es el lado del cierre, así que solo se usa si el precio o el P&L son 0.
+ * Dirección del trade: sale de precio y P&L (subió y ganó, o bajó y perdió = LONG).
+ * Si el precio o el P&L son 0, se usa el lado que muestra Vantage (Buy = LONG, Sell = SHORT).
  */
 export function vantageDirection(p) {
   const move = Number(p.closePrice) - Number(p.openPrice);
   const money = Number(p.pnl ?? p.net);
   if (Number.isFinite(move) && Number.isFinite(money) && move !== 0 && money !== 0) return move * money > 0 ? "LONG" : "SHORT";
-  return p.closeSide === "BUY" ? "SHORT" : "LONG";
+  return p.side === "SELL" ? "SHORT" : "LONG";
 }
 
 export function vantagePositionToDraft(p, opts = {}) {
@@ -128,6 +128,7 @@ export function vantagePositionToDraft(p, opts = {}) {
       importBatchId: opts.importBatchId || null,
       sourceRef: {
         kind: "VANTAGE_POSITION_HISTORY",
+        vantageFormat: 2,
         broker: "Vantage",
         mt5Ticket: null,
         mt5Position: p.id,
