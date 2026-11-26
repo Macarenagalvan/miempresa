@@ -1,6 +1,6 @@
 import './test-safety.js';
 import { ensureJournalSeed } from "../js/domain/stage.js";
-import { renderHoy } from "../js/ui/screens/hoy.js";
+import { renderEscritorio as renderHoy, renderHoy as renderHoyReal } from "../js/ui/screens/hoy.js";
 import { greetingLine } from "../js/ui/identity.js";
 
 const results = [];
@@ -24,7 +24,8 @@ async function run() {
 
   assert("Hoy renderiza escritorio", Boolean(host.querySelector(".hoy-desk")) && Boolean(host.querySelector(".hoy-ident")) && Boolean(host.querySelector(".hoy-day")));
   assert("kicker Trading Office", Boolean(host.querySelector(".identity-band .kicker") && host.querySelector(".identity-band .kicker").textContent === "Trading Office"));
-  assert("saludo contextual", text.includes(greet) && /Buen( día|as tardes|as noches)/.test(greet));
+  const hoyText = (await renderHoyReal(seed)).filter(Boolean).map((n) => n.textContent).join(" ");
+  assert("saludo contextual (en Hoy)", hoyText.includes(greet) && /Buen( día|as tardes|as noches)/.test(greet));
   assert("muestra etapa", text.includes("Etapa ") && Boolean(seed.stage && seed.stage.name && text.includes(seed.stage.name)));
   assert("sin cuenta no inventa balance", !text.includes("Abrir Cuentas") && !text.includes("Todavía no hay una cuenta activa."));
   assert("columna operativa", Boolean(host.querySelector(".hoy-trading")) && text.includes("Abiertas"));

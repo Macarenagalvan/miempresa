@@ -1,5 +1,5 @@
 import { setMain } from "./render.js";
-import { renderHoy } from "./screens/hoy.js";
+import { renderHoy, renderEscritorio } from "./screens/hoy.js";
 import { renderSenales } from "./screens/senales.js";
 import { renderSignalDetail } from "./screens/signal-detail.js";
 import { renderNuevo } from "./screens/nuevo.js";
@@ -58,7 +58,7 @@ export function currentRoute() {
 
 export function routeList() {
   return {
-    hoy: true, importar: true, practica: true, inversiones: true,
+    hoy: true, escritorio: true, importar: true, practica: true, inversiones: true,
     nuevo: true,
     historial: true,
     backtesting: true,
@@ -103,13 +103,16 @@ export async function paint(ctx) {
   } else if (parsed.name === "hoy") {
     title = "Hoy";
     nodes = await renderHoy(viewCtx);
+  } else if (parsed.name === "escritorio") {
+    title = "Mi escritorio";
+    nodes = await renderEscritorio(viewCtx);
   } else if (parsed.name === "trade") {
     title = "Operación";
     const trade = await getTrade(parsed.rest.split("/")[0]);
     nav = trade && trade.context === "BACKTEST" ? "backtesting" : "historial";
     nodes = await renderTradeDetail(viewCtx);
   } else if (parsed.name === "historial") {
-    title = "Operaciones";
+    title = "Historial";
     nodes = await renderHistorial(viewCtx);
   } else if (parsed.name === "backtesting") {
     title = "Backtesting";

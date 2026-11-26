@@ -19,7 +19,7 @@ import {
 } from "../js/services/backup.js";
 import { compute } from "../js/domain/stats.js";
 import { emptyV2, STAGE_EMPTY } from "./slice12.payloads.js";
-import { renderHoy } from "../js/ui/screens/hoy.js";
+import { renderEscritorio as renderHoy } from "../js/ui/screens/hoy.js";
 import { renderSistema } from "../js/ui/screens/sistema.js";
 
 const results = [];
