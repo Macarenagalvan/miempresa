@@ -78,9 +78,7 @@ export async function hoyPulse(ctx) {
 
   const message = doneToday
     ? "Hoy ya registraste. Así se construye el sistema."
-    : streak
-      ? `Llevás ${streak} día${streak === 1 ? "" : "s"} seguidos. Registrá algo hoy para no cortar la racha.`
-      : "Un registro hoy, aunque sea un NO TRADE, ya cuenta.";
+    : "Un registro hoy, aunque sea un NO TRADE, ya cuenta.";
 
   // Respaldo: los datos viven en este navegador. Recordatorio cada 7 días.
   const meta = await getMeta();
@@ -107,10 +105,6 @@ export async function hoyPulse(ctx) {
       el("div", {}, [
         el("p", { className: "pulse-date", text: longDate() }),
         el("h1", { className: "pulse-hello", text: greetingLine(ctx.meta) }),
-      ]),
-      el("div", { className: "pulse-streak" + (doneToday ? " is-lit" : "") }, [
-        el("strong", { text: String(streak) }),
-        el("span", { text: streak === 1 ? "día seguido" : "días seguidos" }),
       ]),
     ]),
     el("p", { className: "pulse-message", text: message }),
